@@ -57,11 +57,11 @@ func setupInteractions(ui *UI, entries map[string]processors.Entry, config *Conf
 	search := ui.search.Cast().(*gtk.Entry)
 
 	keycontroller := gtk.NewEventControllerKey()
-	keycontroller.ConnectKeyPressed(handleKeys(ui, entries, config.Terminal))
+	keycontroller.ConnectKeyPressed(handleKeys(ui, entries, config))
 
 	search.AddController(keycontroller)
 	search.Connect("changed", process(procs, ui, entries))
-	search.Connect("activate", activateItem(ui, entries, config.Terminal, false))
+	search.Connect("activate", activateItem(ui, entries, config, false))
 
 	// sigchnl := make(chan os.Signal, 1)
 	// signal.Notify(sigchnl)
@@ -80,12 +80,12 @@ func hideUI(ui *UI) {
 	ui.app.Quit()
 }
 
-func handleKeys(ui *UI, entries map[string]processors.Entry, terminal string) KeyPressHandler {
+func handleKeys(ui *UI, entries map[string]processors.Entry, config *Config) KeyPressHandler {
 	return func(val uint, code uint, modifier gdk.ModifierType) bool {
 		switch val {
 		case gdk.KEY_Return:
 			if modifier == gdk.ControlMask {
-				activateItem(ui, entries, terminal, true)(ui.search.Cast().(*gtk.Entry))
+				activateItem(ui, entries, config, true)(ui.search.Cast().(*gtk.Entry))
 			}
 		case gdk.KEY_Escape:
 			hideUI(ui)
@@ -125,7 +125,7 @@ func handleKeys(ui *UI, entries map[string]processors.Entry, terminal string) Ke
 	}
 }
 
-func activateItem(ui *UI, entries map[string]processors.Entry, terminal string, keepOpen bool) func(search *gtk.Entry) {
+func activateItem(ui *UI, entries map[string]processors.Entry, config *Config, keepOpen bool) func(search *gtk.Entry) {
 	return func(search *gtk.Entry) {
 		obj := ui.items.Item(ui.selection.Selected())
 		str := obj.Cast().(*gtk.StringObject).String()
@@ -133,9 +133,9 @@ func activateItem(ui *UI, entries map[string]processors.Entry, terminal string, 
 		entry := entries[str]
 		f := strings.Fields(entry.Exec)
 
-		if terminal != "" {
+		if config.Terminal != "" {
 			if entry.Terminal {
-				f = append([]string{terminal, "-e"}, f...)
+				f = append([]string{config.Terminal, "-e"}, f...)
 			}
 		} else {
 			log.Println("terminal is not set")
@@ -150,9 +150,32 @@ func activateItem(ui *UI, entries map[string]processors.Entry, terminal string, 
 
 		cmd := exec.Command(pth, f[1:]...)
 
-		err = cmd.Start()
-		if err != nil {
-			log.Println(err)
+		if entry.Notifyable {
+			if !keepOpen {
+				ui.appwin.SetVisible(false)
+			}
+
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				log.Println(err)
+
+				notify, err := exec.LookPath("notify-send")
+				if err != nil {
+					log.Println(err)
+				}
+
+				if notify != "" {
+					if config.NotifyOnFail {
+						n := exec.Command("notify-send", "Walker", string(out), "--app-name=Walker")
+						n.Start()
+					}
+				}
+			}
+		} else {
+			err := cmd.Start()
+			if err != nil {
+				log.Println(err)
+			}
 		}
 
 		if !keepOpen {

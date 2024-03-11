@@ -1,6 +1,7 @@
 {
   "terminal": "foot",
   "placeholder": "Search...",
+  "notify_on_fail": true,
   "fullscreen": true,
   "align": {
     "width": 400,

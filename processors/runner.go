@@ -45,6 +45,7 @@ func (r Runner) Entries(term string) []Entry {
 		Img:        "",
 		Exec:       term,
 		Searchable: term,
+		Notifyable: true,
 	}
 
 	entries = append(entries, n)

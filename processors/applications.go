@@ -17,6 +17,7 @@ type Entry struct {
 	Terminal   bool
 	Icon       string
 	Searchable string
+	Notifyable bool
 }
 
 type Applications struct {

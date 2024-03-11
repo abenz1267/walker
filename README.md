@@ -8,6 +8,7 @@ WIP.
 - Runner (default prefix: `!`)
 - Websearch (default prefix: `?`)
 - Icons
+- notify via `notify-send` on cmd failure
 
 ## Requirements
 

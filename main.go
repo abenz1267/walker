@@ -13,14 +13,15 @@ import (
 )
 
 type Config struct {
-	Placeholder string                 `json:"placeholder"`
-	Terminal    string                 `json:"terminal"`
-	Orientation string                 `json:"orientation"`
-	Fullscreen  bool                   `json:"fullscreen"`
-	Processors  []processors.Processor `json:"processors"`
-	Icons       Icons                  `json:"icons"`
-	Align       Align                  `json:"align"`
-	List        List                   `json:"list"`
+	Placeholder  string                 `json:"placeholder"`
+	NotifyOnFail bool                   `json:"notify_on_fail"`
+	Terminal     string                 `json:"terminal"`
+	Orientation  string                 `json:"orientation"`
+	Fullscreen   bool                   `json:"fullscreen"`
+	Processors   []processors.Processor `json:"processors"`
+	Icons        Icons                  `json:"icons"`
+	Align        Align                  `json:"align"`
+	List         List                   `json:"list"`
 }
 
 type Icons struct {
@@ -65,9 +66,10 @@ func activate(app *gtk.Application) {
 	cfgName := filepath.Join(cfgDir, "config.json")
 
 	config := &Config{
-		Terminal:    "foot",
-		Fullscreen:  true,
-		Placeholder: "Search...",
+		Terminal:     "foot",
+		Fullscreen:   true,
+		Placeholder:  "Search...",
+		NotifyOnFail: true,
 		Icons: Icons{
 			Hide: false,
 			Size: 32,

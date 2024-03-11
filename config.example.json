@@ -1,0 +1,38 @@
+{
+  "terminal": "foot",
+  "placeholder": "Search...",
+  "fullscreen": true,
+  "align": {
+    "width": 400,
+    "horizontal": "center",
+    "vertical": "start",
+    "margins": {
+      "top": 300,
+      "bottom": 0,
+      "end": 0,
+      "start": 0
+    }
+  },
+  "list": {
+    "max_height": 300
+  },
+  "orientation": "vertical",
+  "icons": {
+    "hide": false,
+    "size": 38
+  },
+  "processors": [
+    {
+      "name": "runner",
+      "prefix": "!"
+    },
+    {
+      "name": "applications",
+      "prefix": ""
+    },
+    {
+      "name": "websearch",
+      "prefix": "?"
+    }
+  ]
+}

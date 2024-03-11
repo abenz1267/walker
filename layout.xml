@@ -1,0 +1,30 @@
+<interface>
+  <object class="GtkApplicationWindow" id="win">
+    <property name="title">Walker</property>
+    <property name="name">window</property>
+    <child>
+      <object class="GtkBox" id="box">
+        <property name="orientation">vertical</property>
+        <property name="name">box</property>
+        <child>
+          <object class="GtkEntry" id="search">
+            <property name="name">search</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkScrolledWindow" id="scroll">
+            <property name="propagate-natural-height">true</property>
+            <property name="propagate-natural-width">true</property>
+            <property name="hscrollbar-policy">never</property>
+            <property name="overlay-scrolling">true</property>
+            <child>
+              <object class="GtkListView" id="list">
+                <property name="name">list</property>
+              </object>
+            </child>
+          </object>
+        </child>
+      </object>
+    </child>
+  </object>
+</interface>

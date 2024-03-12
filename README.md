@@ -2,6 +2,8 @@
 
 WIP.
 
+![Screenshot](https://github.com/abenz1267/walker/blob/master/screenshot.png?raw=true)
+
 ## Features
 
 - Desktop Entries with actions

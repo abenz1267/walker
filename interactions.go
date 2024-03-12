@@ -220,7 +220,7 @@ func process(procs map[string][]Processor, ui *UI, entries map[string]processors
 
 		ui.appwin.SetCSSClasses([]string{})
 
-		text := search.Text()
+		text := strings.TrimSpace(search.Text())
 		if text == "" {
 			ui.items.Splice(0, ui.items.NItems(), []string{})
 			return
@@ -247,7 +247,7 @@ func process(procs map[string][]Processor, ui *UI, entries map[string]processors
 		}
 
 		for _, proc := range p {
-			e := proc.Entries(strings.TrimSpace(text))
+			e := proc.Entries(text)
 
 			for _, entry := range e {
 				str := randomString(5)

@@ -81,8 +81,11 @@ func setupInteractions(ui *UI, entries map[string]processors.Entry, config *Conf
 
 func hideUI(ui *UI, keepOpen bool) {
 	if keepOpen {
-		ui.appwin.Cast().(*gtk.ApplicationWindow).SetVisible(false)
-		ui.search.Cast().(*gtk.Entry).SetText("")
+		if !ui.ListAlwaysShow {
+			ui.appwin.SetVisible(false)
+		}
+
+		ui.search.SetText("")
 		ui.items.Splice(0, ui.items.NItems(), []string{})
 		return
 	}
@@ -211,8 +214,10 @@ func process(procs map[string][]Processor, ui *UI, entries map[string]processors
 	return func(search *gtk.Entry) {
 		clear(entries)
 
-		view := ui.list.Cast().(*gtk.ListView)
-		view.SetVisible(false)
+		if !ui.ListAlwaysShow {
+			ui.list.SetVisible(false)
+		}
+
 		ui.appwin.SetCSSClasses([]string{})
 
 		text := search.Text()
@@ -301,7 +306,7 @@ func process(procs map[string][]Processor, ui *UI, entries map[string]processors
 
 		if ui.selection.NItems() > 0 {
 			ui.selection.SetSelected(0)
-			view.SetVisible(true)
+			ui.list.SetVisible(true)
 		}
 	}
 }

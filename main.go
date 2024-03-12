@@ -46,7 +46,9 @@ type Margins struct {
 }
 
 type List struct {
-	MaxHeight int `json:"max_height"`
+	Height     int    `json:"height"`
+	Style      string `json:"style"`
+	AlwaysShow bool   `json:"always_show"`
 }
 
 func main() {
@@ -107,7 +109,9 @@ func activate(app *gtk.Application) {
 			{Name: "applications", Prefix: ""},
 		},
 		List: List{
-			MaxHeight: 300,
+			Height:     300,
+			Style:      "dynamic",
+			AlwaysShow: false,
 		},
 	}
 

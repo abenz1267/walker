@@ -19,17 +19,18 @@ var layout string
 var style string
 
 type UI struct {
-	app           *gtk.Application
-	builder       *gtk.Builder
-	scroll        *gtk.ScrolledWindow
-	box           *gtk.Box
-	appwin        *gtk.ApplicationWindow
-	search        *gtk.Entry
-	list          *gtk.ListView
-	items         *gtk.StringList
-	selection     *gtk.SingleSelection
-	factory       *gtk.SignalListItemFactory
-	prefixClasses map[string][]string
+	app            *gtk.Application
+	builder        *gtk.Builder
+	scroll         *gtk.ScrolledWindow
+	box            *gtk.Box
+	appwin         *gtk.ApplicationWindow
+	search         *gtk.Entry
+	list           *gtk.ListView
+	items          *gtk.StringList
+	selection      *gtk.SingleSelection
+	factory        *gtk.SignalListItemFactory
+	prefixClasses  map[string][]string
+	ListAlwaysShow bool
 }
 
 func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Config) *UI {
@@ -60,17 +61,18 @@ func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Co
 	items := gtk.NewStringList([]string{})
 
 	ui := &UI{
-		app:           app,
-		builder:       builder,
-		scroll:        builder.GetObject("scroll").Cast().(*gtk.ScrolledWindow),
-		box:           builder.GetObject("box").Cast().(*gtk.Box),
-		appwin:        builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
-		search:        builder.GetObject("search").Cast().(*gtk.Entry),
-		list:          builder.GetObject("list").Cast().(*gtk.ListView),
-		items:         items,
-		selection:     gtk.NewSingleSelection(items),
-		factory:       gtk.NewSignalListItemFactory(),
-		prefixClasses: make(map[string][]string),
+		app:            app,
+		builder:        builder,
+		scroll:         builder.GetObject("scroll").Cast().(*gtk.ScrolledWindow),
+		box:            builder.GetObject("box").Cast().(*gtk.Box),
+		appwin:         builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
+		search:         builder.GetObject("search").Cast().(*gtk.Entry),
+		list:           builder.GetObject("list").Cast().(*gtk.ListView),
+		items:          items,
+		selection:      gtk.NewSingleSelection(items),
+		factory:        gtk.NewSignalListItemFactory(),
+		prefixClasses:  make(map[string][]string),
+		ListAlwaysShow: config.List.AlwaysShow,
 	}
 
 	alignments := make(map[string]gtk.Align)
@@ -83,8 +85,12 @@ func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Co
 		ui.box.SetSizeRequest(config.Align.Width, -1)
 	}
 
-	if config.List.MaxHeight != 0 {
-		ui.scroll.SetMaxContentHeight(config.List.MaxHeight)
+	if config.List.Height != 0 {
+		ui.scroll.SetMaxContentHeight(config.List.Height)
+
+		if config.List.Style == "fixed" {
+			ui.list.SetSizeRequest(-1, config.List.Height)
+		}
 	}
 
 	if config.Align.Horizontal != "" {
@@ -182,10 +188,12 @@ func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Co
 		}
 	})
 
-	list := ui.list.Cast().(*gtk.ListView)
-	list.SetModel(ui.selection)
-	list.SetFactory(&ui.factory.ListItemFactory)
-	list.SetVisible(false)
+	ui.list.SetModel(ui.selection)
+	ui.list.SetFactory(&ui.factory.ListItemFactory)
+
+	if !config.List.AlwaysShow {
+		ui.list.SetVisible(false)
+	}
 
 	return ui
 }

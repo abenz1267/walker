@@ -34,6 +34,58 @@ Config in `.config/walker/`.
 
 See `config.example.json` and `style.example.css`.
 
+```json
+{
+  "terminal": "foot",
+  "placeholder": "Search...",
+  "shell_config": "/home/andrej/.zshrc", // for parsing shell aliases
+  "keep_open": false,
+  "notify_on_fail": true,
+  "fullscreen": true,
+  "align": {
+    "width": 400,
+    "horizontal": "center", // fill, start, end, center
+    "vertical": "start", // fill, start, end, center
+    "margins": {
+      "top": 300,
+      "bottom": 0,
+      "end": 0,
+      "start": 0
+    }
+  },
+  "list": {
+    "height": 300,
+    "style": "fixed", // dynamic, fixed
+    "always_show": true
+  },
+  "orientation": "vertical", // vertical, horizontal
+  "icons": {
+    "hide": false,
+    "size": 38
+  },
+  "processors": [
+    {
+      "name": "runner",
+      "prefix": "!"
+    },
+    {
+      "name": "applications",
+      "prefix": ""
+    },
+    {
+      "name": "websearch",
+      "prefix": "?"
+    }
+  ]
+}
+```
+
+### Dynamic Styling
+
+The window and items will have a class based on the source. Selecting an item will change the windows class to the current selections source. Using a prefix will apply that sources classes to the window.
+
+F.e. search = `!somecommand` => `#window.runner`
+
 ## Keybinds
 
 | Key          | Description                        |

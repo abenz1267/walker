@@ -17,7 +17,9 @@
     }
   },
   "list": {
-    "max_height": 300
+    "height": 300,
+    "style": "fixed",
+    "always_show": true
   },
   "orientation": "vertical",
   "icons": {

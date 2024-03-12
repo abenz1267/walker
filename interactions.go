@@ -6,6 +6,7 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
+	"os/signal"
 	"slices"
 	"sort"
 	"strings"
@@ -63,20 +64,26 @@ func setupInteractions(ui *UI, entries map[string]processors.Entry, config *Conf
 	search.Connect("changed", process(procs, ui, entries))
 	search.Connect("activate", activateItem(ui, entries, config, false))
 
-	// sigchnl := make(chan os.Signal, 1)
-	// signal.Notify(sigchnl)
-	// go func() {
-	// 	for {
-	// 		s := <-sigchnl
-	// 		signalHandler(appwin, s)
-	// 	}
-	// }()
+	if config.KeepOpen {
+		sigchnl := make(chan os.Signal, 1)
+		signal.Notify(sigchnl)
+		go func() {
+			for {
+				s := <-sigchnl
+				signalHandler(ui.appwin, s)
+			}
+		}()
+	}
 }
 
-func hideUI(ui *UI) {
-	// ui.appwin.Cast().(*gtk.ApplicationWindow).SetVisible(false)
-	// ui.search.Cast().(*gtk.Entry).SetText("")
-	// ui.items.Splice(0, ui.items.NItems(), []string{})
+func hideUI(ui *UI, keepOpen bool) {
+	if keepOpen {
+		ui.appwin.Cast().(*gtk.ApplicationWindow).SetVisible(false)
+		ui.search.Cast().(*gtk.Entry).SetText("")
+		ui.items.Splice(0, ui.items.NItems(), []string{})
+		return
+	}
+
 	ui.app.Quit()
 }
 
@@ -88,7 +95,7 @@ func handleKeys(ui *UI, entries map[string]processors.Entry, config *Config) Key
 				activateItem(ui, entries, config, true)(ui.search.Cast().(*gtk.Entry))
 			}
 		case gdk.KEY_Escape:
-			hideUI(ui)
+			hideUI(ui, config.KeepOpen)
 		case gdk.KEY_j:
 			if modifier == gdk.ControlMask {
 				items := ui.selection.NItems()
@@ -157,8 +164,6 @@ func activateItem(ui *UI, entries map[string]processors.Entry, config *Config, k
 
 			out, err := cmd.CombinedOutput()
 			if err != nil {
-				log.Println(err)
-
 				notify, err := exec.LookPath("notify-send")
 				if err != nil {
 					log.Println(err)
@@ -179,7 +184,7 @@ func activateItem(ui *UI, entries map[string]processors.Entry, config *Config, k
 		}
 
 		if !keepOpen {
-			hideUI(ui)
+			hideUI(ui, config.KeepOpen)
 			return
 		}
 

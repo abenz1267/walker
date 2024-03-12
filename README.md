@@ -9,6 +9,7 @@ WIP.
 - Websearch (default prefix: `?`)
 - Icons
 - notify via `notify-send` on cmd failure
+- stay open in background (open via `USR1` signal)
 
 ## Requirements
 
@@ -29,7 +30,7 @@ See `config.example.json` and `style.example.css`.
 | `Ctrl+Enter` | activate selection without closing |
 | `Ctrl+j`     | next entry                         |
 | `Ctrl+k`     | previous entry                     |
-| `Escape`     | close                              |
+| `Escape`     | close (hide if config.keep_open)   |
 
 ## Watchout for...
 

@@ -15,6 +15,7 @@ import (
 type Config struct {
 	Placeholder  string                 `json:"placeholder"`
 	NotifyOnFail bool                   `json:"notify_on_fail"`
+	KeepOpen     bool                   `json:"keep_open"`
 	ShellConfig  string                 `json:"shell_config"`
 	Terminal     string                 `json:"terminal"`
 	Orientation  string                 `json:"orientation"`
@@ -69,6 +70,8 @@ func activate(app *gtk.Application) {
 	config := &Config{
 		Terminal:     "foot",
 		Fullscreen:   true,
+		KeepOpen:     false,
+		ShellConfig:  "",
 		Placeholder:  "Search...",
 		NotifyOnFail: true,
 		Icons: Icons{
@@ -92,7 +95,7 @@ func activate(app *gtk.Application) {
 			{Name: "applications", Prefix: ""},
 		},
 		List: List{
-			MaxHeight: 0,
+			MaxHeight: 300,
 		},
 	}
 
@@ -142,5 +145,8 @@ func activate(app *gtk.Application) {
 	}
 
 	appwin.Show()
-	// appwin.SetVisible(false)
+
+	if config.KeepOpen {
+		appwin.SetVisible(false)
+	}
 }

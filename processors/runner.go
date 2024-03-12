@@ -68,6 +68,10 @@ func (r *Runner) Entries(term string) []Entry {
 }
 
 func (r *Runner) parseAliases() {
+	if r.ShellConfig == "" {
+		return
+	}
+
 	r.Aliases = make(map[string]string)
 
 	file, err := os.Open(r.ShellConfig)

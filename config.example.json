@@ -2,6 +2,7 @@
   "terminal": "foot",
   "placeholder": "Search...",
   "shell_config": "/home/andrej/.zshrc",
+  "keep_open": false,
   "notify_on_fail": true,
   "fullscreen": true,
   "align": {

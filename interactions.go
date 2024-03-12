@@ -305,5 +305,6 @@ func signalHandler(win *gtk.ApplicationWindow, signal os.Signal) {
 	case syscall.SIGUSR1:
 		win.SetVisible(true)
 	default:
+		log.Println(signal)
 	}
 }

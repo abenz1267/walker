@@ -234,7 +234,7 @@ func process(procs map[string][]Processor, ui *UI, entries map[string]processors
 		}
 
 		for _, proc := range p {
-			e := proc.Entries(text)
+			e := proc.Entries(strings.TrimSpace(text))
 
 			for _, entry := range e {
 				str := randomString(5)

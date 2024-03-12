@@ -60,6 +60,7 @@ func (r *Runner) Entries(term string) []Entry {
 		Exec:       term,
 		Searchable: term,
 		Notifyable: true,
+		Class:      "runner",
 	}
 
 	entries = append(entries, n)

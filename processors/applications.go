@@ -18,6 +18,7 @@ type Entry struct {
 	Icon       string
 	Searchable string
 	Notifyable bool
+	Class      string
 }
 
 type Applications struct {
@@ -97,7 +98,9 @@ func parse() []Application {
 			scanner := bufio.NewScanner(file)
 
 			app := Application{
-				Generic: Entry{},
+				Generic: Entry{
+					Class: "applications",
+				},
 				Actions: []Entry{},
 			}
 
@@ -111,6 +114,7 @@ func parse() []Application {
 						Sub:      app.Generic.Label,
 						Icon:     app.Generic.Icon,
 						Terminal: app.Generic.Terminal,
+						Class:    "applications",
 					})
 
 					isAction = true

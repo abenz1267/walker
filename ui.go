@@ -19,16 +19,17 @@ var layout string
 var style string
 
 type UI struct {
-	app       *gtk.Application
-	builder   *gtk.Builder
-	scroll    *gtk.ScrolledWindow
-	box       *gtk.Box
-	appwin    *gtk.ApplicationWindow
-	search    *gtk.Entry
-	list      *gtk.ListView
-	items     *gtk.StringList
-	selection *gtk.SingleSelection
-	factory   *gtk.SignalListItemFactory
+	app           *gtk.Application
+	builder       *gtk.Builder
+	scroll        *gtk.ScrolledWindow
+	box           *gtk.Box
+	appwin        *gtk.ApplicationWindow
+	search        *gtk.Entry
+	list          *gtk.ListView
+	items         *gtk.StringList
+	selection     *gtk.SingleSelection
+	factory       *gtk.SignalListItemFactory
+	prefixClasses map[string][]string
 }
 
 func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Config) *UI {
@@ -59,16 +60,17 @@ func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Co
 	items := gtk.NewStringList([]string{})
 
 	ui := &UI{
-		app:       app,
-		builder:   builder,
-		scroll:    builder.GetObject("scroll").Cast().(*gtk.ScrolledWindow),
-		box:       builder.GetObject("box").Cast().(*gtk.Box),
-		appwin:    builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
-		search:    builder.GetObject("search").Cast().(*gtk.Entry),
-		list:      builder.GetObject("list").Cast().(*gtk.ListView),
-		items:     items,
-		selection: gtk.NewSingleSelection(items),
-		factory:   gtk.NewSignalListItemFactory(),
+		app:           app,
+		builder:       builder,
+		scroll:        builder.GetObject("scroll").Cast().(*gtk.ScrolledWindow),
+		box:           builder.GetObject("box").Cast().(*gtk.Box),
+		appwin:        builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
+		search:        builder.GetObject("search").Cast().(*gtk.Entry),
+		list:          builder.GetObject("list").Cast().(*gtk.ListView),
+		items:         items,
+		selection:     gtk.NewSingleSelection(items),
+		factory:       gtk.NewSignalListItemFactory(),
+		prefixClasses: make(map[string][]string),
 	}
 
 	alignments := make(map[string]gtk.Align)
@@ -118,6 +120,8 @@ func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Co
 	})
 
 	ui.factory.ConnectBind(func(item *gtk.ListItem) {
+		key := item.Item().Cast().(*gtk.StringObject).String()
+
 		if item.Selected() {
 			child := item.Child()
 			if child != nil {
@@ -131,8 +135,6 @@ func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Co
 			}
 		}
 
-		key := item.Item().Cast().(*gtk.StringObject).String()
-
 		if val, ok := entries[key]; ok {
 			child := item.Child()
 
@@ -141,7 +143,7 @@ func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Co
 				if !ok {
 					log.Fatalln("child is not a box")
 				}
-				box.SetCSSClasses([]string{"item"})
+				box.SetCSSClasses([]string{"item", val.Class})
 
 				if box.FirstChild() != nil {
 					return

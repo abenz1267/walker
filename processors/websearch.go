@@ -36,6 +36,7 @@ func (w Websearch) Entries(term string) []Entry {
 		Img:        "",
 		Exec:       "xdg-open https://www.google.com/search?q=" + url.QueryEscape(term),
 		Searchable: term,
+		Class:      "websearch",
 	}
 
 	entries = append(entries, n)

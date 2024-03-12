@@ -38,7 +38,10 @@ func setupInteractions(ui *UI, entries map[string]processors.Entry, config *Conf
 		if _, ok := ps[v.Name]; !ok {
 			fmt.Println(v.Name)
 			delete(ps, v.Name)
+			continue
 		}
+
+		ui.prefixClasses[v.Prefix] = append(ui.prefixClasses[v.Prefix], v.Name)
 	}
 
 	for _, v := range config.Processors {
@@ -210,6 +213,7 @@ func process(procs map[string][]Processor, ui *UI, entries map[string]processors
 
 		view := ui.list.Cast().(*gtk.ListView)
 		view.SetVisible(false)
+		ui.appwin.SetCSSClasses([]string{})
 
 		text := search.Text()
 		if text == "" {
@@ -231,6 +235,10 @@ func process(procs map[string][]Processor, ui *UI, entries map[string]processors
 		if !ok {
 			p = procs[""]
 			hasPrefix = false
+		}
+
+		if hasPrefix {
+			ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
 		}
 
 		for _, proc := range p {

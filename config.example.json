@@ -1,6 +1,7 @@
 {
   "terminal": "foot",
   "placeholder": "Search...",
+  "shell_config": "/home/andrej/.zshrc",
   "notify_on_fail": true,
   "fullscreen": true,
   "align": {

@@ -30,7 +30,7 @@ type Processor interface {
 func setupInteractions(ui *UI, entries map[string]processors.Entry, config *Config) {
 	ps := make(map[string]Processor)
 	ps["applications"] = processors.GetApplications()
-	ps["runner"] = &processors.Runner{}
+	ps["runner"] = &processors.Runner{ShellConfig: config.ShellConfig}
 	ps["websearch"] = &processors.Websearch{}
 
 	for _, v := range config.Processors {

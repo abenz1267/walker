@@ -15,6 +15,7 @@ import (
 type Config struct {
 	Placeholder  string                 `json:"placeholder"`
 	NotifyOnFail bool                   `json:"notify_on_fail"`
+	ShellConfig  string                 `json:"shell_config"`
 	Terminal     string                 `json:"terminal"`
 	Orientation  string                 `json:"orientation"`
 	Fullscreen   bool                   `json:"fullscreen"`

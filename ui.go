@@ -131,6 +131,7 @@ func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Co
 				}
 
 				box.GrabFocus()
+				ui.appwin.SetCSSClasses([]string{entries[key].Class})
 				ui.search.GrabFocusWithoutSelecting()
 			}
 		}

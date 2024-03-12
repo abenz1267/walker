@@ -12,6 +12,7 @@ WIP.
 - Icons
 - notify via `notify-send` on cmd failure
 - stay open in background (open via `USR1` signal)
+- extend with... anything?
 
 ## Requirements
 
@@ -80,6 +81,50 @@ See `config.example.json` and `style.example.css`.
     }
   ]
 }
+```
+
+## Providing your own processors
+
+If you want to extend walker with your own processors, you can do that in the config.
+
+```json
+{
+  "processors": [
+    {
+      "prefix": "!",
+      "name": "myprocessor",
+      "cmd": "node /path/to/myscript.js"
+    }
+  ]
+}
+```
+
+Your plugin simply needs to return json with the following format:
+
+```go
+type Entry struct {
+	Label      string `json:"label,omitempty"`
+	Sub        string `json:"sub,omitempty"`
+	Exec       string `json:"exec,omitempty"`
+	Terminal   bool   `json:"terminal,omitempty"`
+	Icon       string `json:"icon,omitempty"`
+	Searchable string `json:"searchable,omitempty"`
+	Notifyable bool   `json:"notifyable,omitempty"`
+	Class      string `json:"class,omitempty"`
+}
+```
+
+```json
+[
+  {
+    "label": "First Item",
+    "sub": "subtext",
+    "exec": "remindme in 1s test",
+    "searchable": "first item",
+    "notifyable": true,
+    "class": "custom"
+  }
+]
 ```
 
 ### Dynamic Styling

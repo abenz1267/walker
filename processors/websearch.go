@@ -33,7 +33,6 @@ func (w Websearch) Entries(term string) []Entry {
 	n := Entry{
 		Label:      "Search with Google",
 		Sub:        "Websearch",
-		Img:        "",
 		Exec:       "xdg-open https://www.google.com/search?q=" + url.QueryEscape(term),
 		Searchable: term,
 		Class:      "websearch",

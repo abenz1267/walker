@@ -56,7 +56,6 @@ func (r *Runner) Entries(term string) []Entry {
 	n := Entry{
 		Label:      str,
 		Sub:        "Runner",
-		Img:        "",
 		Exec:       term,
 		Searchable: term,
 		Notifyable: true,

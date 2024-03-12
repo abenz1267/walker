@@ -12,15 +12,14 @@ import (
 const ApplicationsName = "applications"
 
 type Entry struct {
-	Label      string
-	Sub        string
-	Img        string
-	Exec       string
-	Terminal   bool
-	Icon       string
-	Searchable string
-	Notifyable bool
-	Class      string
+	Label      string `json:"label,omitempty"`
+	Sub        string `json:"sub,omitempty"`
+	Exec       string `json:"exec,omitempty"`
+	Terminal   bool   `json:"terminal,omitempty"`
+	Icon       string `json:"icon,omitempty"`
+	Searchable string `json:"searchable,omitempty"`
+	Notifyable bool   `json:"notifyable,omitempty"`
+	Class      string `json:"class,omitempty"`
 }
 
 type Applications struct {

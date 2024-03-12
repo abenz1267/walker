@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -29,32 +28,34 @@ type Processor interface {
 }
 
 func setupInteractions(ui *UI, entries map[string]processors.Entry, config *Config) {
-	ps := make(map[string]Processor)
-	ps["applications"] = processors.GetApplications()
-	ps["runner"] = &processors.Runner{ShellConfig: config.ShellConfig}
-	ps["websearch"] = &processors.Websearch{}
+	internal := make(map[string]Processor)
+	internal["applications"] = processors.GetApplications()
+	internal["runner"] = &processors.Runner{ShellConfig: config.ShellConfig}
+	internal["websearch"] = &processors.Websearch{}
+
+	enabled := []Processor{}
 
 	for _, v := range config.Processors {
-		if _, ok := ps[v.Name]; !ok {
-			fmt.Println(v.Name)
-			delete(ps, v.Name)
+		if val, ok := internal[v.Name]; ok {
+			val.SetPrefix(v.Prefix)
+			enabled = append(enabled, val)
 			continue
 		}
 
-		ui.prefixClasses[v.Prefix] = append(ui.prefixClasses[v.Prefix], v.Name)
+		enabled = append(enabled, &processors.External{
+			Prfx: v.Prefix,
+			Nme:  v.Name,
+			Cmd:  v.Cmd,
+		})
 	}
 
-	for _, v := range config.Processors {
-		for m, n := range ps {
-			if n.Name() == v.Name {
-				ps[m].SetPrefix(v.Prefix)
-			}
-		}
+	for _, v := range enabled {
+		ui.prefixClasses[v.Prefix()] = append(ui.prefixClasses[v.Prefix()], v.Name())
 	}
 
 	procs := make(map[string][]Processor)
 
-	for _, v := range ps {
+	for _, v := range enabled {
 		procs[v.Prefix()] = append(procs[v.Prefix()], v)
 	}
 

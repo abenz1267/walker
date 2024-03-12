@@ -9,6 +9,8 @@ import (
 	"strings"
 )
 
+const ApplicationsName = "applications"
+
 type Entry struct {
 	Label      string
 	Sub        string
@@ -48,7 +50,7 @@ func GetApplications() *Applications {
 }
 
 func (a Applications) Name() string {
-	return "applications"
+	return ApplicationsName
 }
 
 func (a *Applications) SetPrefix(val string) {
@@ -78,7 +80,7 @@ func (a Applications) Entries(_ string) []Entry {
 func parse() []Application {
 	apps := []Application{}
 
-	ok := readCache("applications", &apps)
+	ok := readCache(ApplicationsName, &apps)
 	if ok {
 		return apps
 	}
@@ -99,7 +101,7 @@ func parse() []Application {
 
 			app := Application{
 				Generic: Entry{
-					Class: "applications",
+					Class: ApplicationsName,
 				},
 				Actions: []Entry{},
 			}
@@ -114,7 +116,7 @@ func parse() []Application {
 						Sub:      app.Generic.Label,
 						Icon:     app.Generic.Icon,
 						Terminal: app.Generic.Terminal,
-						Class:    "applications",
+						Class:    ApplicationsName,
 					})
 
 					isAction = true
@@ -184,7 +186,7 @@ func parse() []Application {
 		return nil
 	})
 
-	writeCache("applications", apps)
+	writeCache(ApplicationsName, apps)
 
 	return apps
 }

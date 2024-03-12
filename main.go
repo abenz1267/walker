@@ -50,6 +50,18 @@ type List struct {
 }
 
 func main() {
+	tmp := os.TempDir()
+	if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
+		log.Println("lockfile exists. exiting.")
+		return
+	}
+
+	err := os.WriteFile(filepath.Join(tmp, "walker.lock"), []byte{}, 0o600)
+	if err != nil {
+		log.Fatalln(err)
+	}
+	defer os.Remove(filepath.Join(tmp, "walker.lock"))
+
 	app := gtk.NewApplication("dev.benz.walker", 0)
 	app.Connect("activate", activate)
 

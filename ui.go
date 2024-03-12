@@ -2,9 +2,11 @@ package main
 
 import (
 	_ "embed"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/abenz1267/walker/processors"
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
@@ -74,6 +76,15 @@ func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Co
 		prefixClasses:  make(map[string][]string),
 		ListAlwaysShow: config.List.AlwaysShow,
 	}
+
+	fc := gtk.NewEventControllerFocus()
+	fc.Connect("enter", func() {
+		if !measured {
+			fmt.Printf("startup time: %s", time.Since(now))
+			measured = true
+		}
+	})
+	ui.search.AddController(fc)
 
 	alignments := make(map[string]gtk.Align)
 	alignments["fill"] = gtk.AlignFill

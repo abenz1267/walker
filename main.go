@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/abenz1267/walker/processors"
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
@@ -51,7 +52,14 @@ type List struct {
 	AlwaysShow bool   `json:"always_show"`
 }
 
+var (
+	now      time.Time
+	measured bool
+)
+
 func main() {
+	now = time.Now()
+
 	tmp := os.TempDir()
 	if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
 		log.Println("lockfile exists. exiting.")

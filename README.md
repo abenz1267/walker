@@ -44,6 +44,7 @@ See `config.example.json` and `style.example.css`.
   "shell_config": "/home/andrej/.zshrc", // for parsing shell aliases
   "keep_open": false,
   "notify_on_fail": true,
+  "show_initial_entries": true, // always shows entries for emtpy search
   "fullscreen": true,
   "align": {
     "width": 400,

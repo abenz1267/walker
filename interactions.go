@@ -53,7 +53,7 @@ func setupInteractions() {
 		ui.prefixClasses[v.Prefix()] = append(ui.prefixClasses[v.Prefix()], v.Name())
 	}
 
-	procs := make(map[string][]Processor)
+	procs = make(map[string][]Processor)
 
 	for _, v := range enabled {
 		procs[v.Prefix()] = append(procs[v.Prefix()], v)
@@ -63,8 +63,12 @@ func setupInteractions() {
 	keycontroller.ConnectKeyPressed(handleKeys())
 
 	ui.search.AddController(keycontroller)
-	ui.search.Connect("changed", process(procs))
+	ui.search.Connect("changed", process())
 	ui.search.Connect("activate", func() { activateItem(false) })
+
+	if config.ShowInitialEntries {
+		setInitials()
+	}
 
 	if config.KeepOpen {
 		sigchnl := make(chan os.Signal, 1)
@@ -207,7 +211,7 @@ func randomString(length int) string {
 	return string(b)
 }
 
-func process(procs map[string][]Processor) func() {
+func process() func() {
 	return func() {
 		clear(entries)
 
@@ -220,6 +224,11 @@ func process(procs map[string][]Processor) func() {
 		text := strings.TrimSpace(ui.search.Text())
 		if text == "" {
 			ui.items.Splice(0, ui.items.NItems(), []string{})
+
+			if config.ShowInitialEntries {
+				setInitials()
+			}
+
 			return
 		}
 
@@ -317,4 +326,34 @@ func signalHandler(signal os.Signal) {
 	default:
 		log.Println(signal)
 	}
+}
+
+func setInitials() {
+	ui.list.SetVisible(true)
+
+	sorted := []processors.Entry{}
+
+	for _, v := range procs {
+		for _, proc := range v {
+			e := proc.Entries("")
+
+			for _, entry := range e {
+				str := randomString(5)
+				entry.Identifier = str
+
+				sorted = append(sorted, entry)
+				entries[str] = entry
+			}
+		}
+	}
+
+	slices.SortFunc(sorted, func(a, b processors.Entry) int {
+		return strings.Compare(strings.ToLower(a.Label), strings.ToLower(b.Label))
+	})
+
+	for _, v := range sorted {
+		ui.items.Append(v.Identifier)
+	}
+
+	ui.selection.SetSelected(0)
 }

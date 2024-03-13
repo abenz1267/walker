@@ -20,6 +20,7 @@ type Entry struct {
 	Searchable string `json:"searchable,omitempty"`
 	Notifyable bool   `json:"notifyable,omitempty"`
 	Class      string `json:"class,omitempty"`
+	Identifier string `json:"-"`
 }
 
 type Applications struct {
@@ -89,7 +90,7 @@ func parse() []Application {
 	flags := []string{"%f", "%F", "%u", "%U", "%d", "%D", "%n", "%N", "%i", "%c", "%k", "%v", "%m"}
 
 	filepath.Walk(dir, func(path string, info fs.FileInfo, err error) error {
-		if !info.IsDir() {
+		if !info.IsDir() && filepath.Ext(path) == ".desktop" {
 			file, err := os.Open(path)
 			if err != nil {
 				return err
@@ -132,9 +133,8 @@ func parse() []Application {
 				}
 
 				if !isAction {
-
 					if strings.HasPrefix(line, "Name=") {
-						app.Generic.Label = strings.TrimPrefix(line, "Name=")
+						app.Generic.Label = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
 						continue
 					}
 
@@ -173,7 +173,7 @@ func parse() []Application {
 					}
 
 					if strings.HasPrefix(line, "Name=") {
-						app.Actions[len(app.Actions)-1].Label = strings.TrimPrefix(line, "Name=")
+						app.Actions[len(app.Actions)-1].Label = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
 						continue
 					}
 				}

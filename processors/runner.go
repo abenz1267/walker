@@ -28,9 +28,13 @@ func (Runner) Name() string {
 }
 
 func (r *Runner) Entries(term string) []Entry {
-	r.parseAliases()
-
 	entries := []Entry{}
+
+	if term == "" {
+		return entries
+	}
+
+	r.parseAliases()
 
 	if r.Prfx != "" && len(term) < 2 {
 		return entries

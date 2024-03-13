@@ -24,6 +24,10 @@ func (Websearch) Name() string {
 func (w Websearch) Entries(term string) []Entry {
 	entries := []Entry{}
 
+	if term == "" {
+		return entries
+	}
+
 	if w.Prfx != "" && len(term) < 2 {
 		return entries
 	}

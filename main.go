@@ -14,17 +14,18 @@ import (
 )
 
 type Config struct {
-	Placeholder  string                 `json:"placeholder"`
-	NotifyOnFail bool                   `json:"notify_on_fail"`
-	KeepOpen     bool                   `json:"keep_open"`
-	ShellConfig  string                 `json:"shell_config"`
-	Terminal     string                 `json:"terminal"`
-	Orientation  string                 `json:"orientation"`
-	Fullscreen   bool                   `json:"fullscreen"`
-	Processors   []processors.Processor `json:"processors"`
-	Icons        Icons                  `json:"icons"`
-	Align        Align                  `json:"align"`
-	List         List                   `json:"list"`
+	Placeholder        string                 `json:"placeholder"`
+	NotifyOnFail       bool                   `json:"notify_on_fail"`
+	KeepOpen           bool                   `json:"keep_open"`
+	ShowInitialEntries bool                   `json:"show_initial_entries"`
+	ShellConfig        string                 `json:"shell_config"`
+	Terminal           string                 `json:"terminal"`
+	Orientation        string                 `json:"orientation"`
+	Fullscreen         bool                   `json:"fullscreen"`
+	Processors         []processors.Processor `json:"processors"`
+	Icons              Icons                  `json:"icons"`
+	Align              Align                  `json:"align"`
+	List               List                   `json:"list"`
 }
 
 type Icons struct {
@@ -58,6 +59,7 @@ var (
 	config   *Config
 	ui       *UI
 	entries  map[string]processors.Entry
+	procs    map[string][]Processor
 )
 
 func main() {
@@ -93,12 +95,13 @@ func activate(app *gtk.Application) {
 	cfgName := filepath.Join(cfgDir, "config.json")
 
 	config = &Config{
-		Terminal:     "foot",
-		Fullscreen:   true,
-		KeepOpen:     false,
-		ShellConfig:  "",
-		Placeholder:  "Search...",
-		NotifyOnFail: true,
+		Terminal:           "",
+		Fullscreen:         true,
+		KeepOpen:           false,
+		ShowInitialEntries: false,
+		ShellConfig:        "",
+		Placeholder:        "Search...",
+		NotifyOnFail:       true,
 		Icons: Icons{
 			Hide: false,
 			Size: 32,

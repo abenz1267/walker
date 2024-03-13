@@ -4,6 +4,7 @@
   "shell_config": "/home/andrej/.zshrc",
   "keep_open": false,
   "notify_on_fail": true,
+  "show_initial_entries": true,
   "fullscreen": true,
   "align": {
     "width": 400,

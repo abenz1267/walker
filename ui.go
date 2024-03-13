@@ -59,7 +59,8 @@ func createUI(app *gtk.Application) {
 
 	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
 
-	items := gtk.NewStringList([]string{})
+	// initializing with non-empty list improves performance.
+	items := gtk.NewStringList([]string{""})
 
 	ui = &UI{
 		app:            app,

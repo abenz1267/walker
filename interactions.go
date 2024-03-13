@@ -331,6 +331,8 @@ func signalHandler(signal os.Signal) {
 func setInitials() {
 	ui.list.SetVisible(true)
 
+	ui.items.Splice(0, ui.items.NItems(), []string{})
+
 	sorted := []processors.Entry{}
 
 	for _, v := range procs {

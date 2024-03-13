@@ -55,6 +55,9 @@ type List struct {
 var (
 	now      time.Time
 	measured bool
+	config   *Config
+	ui       *UI
+	entries  map[string]processors.Entry
 )
 
 func main() {
@@ -89,7 +92,7 @@ func activate(app *gtk.Application) {
 	cfgDir = filepath.Join(cfgDir, "walker")
 	cfgName := filepath.Join(cfgDir, "config.json")
 
-	config := &Config{
+	config = &Config{
 		Terminal:     "foot",
 		Fullscreen:   true,
 		KeepOpen:     false,
@@ -140,37 +143,32 @@ func activate(app *gtk.Application) {
 		}
 	}
 
-	entries := make(map[string]processors.Entry)
+	entries = make(map[string]processors.Entry)
 
-	ui := getUI(app, entries, config)
+	createUI(app)
 
-	setupInteractions(ui, entries, config)
+	setupInteractions()
 
-	appwin, ok := ui.appwin.Cast().(*gtk.ApplicationWindow)
-	if !ok {
-		log.Fatalln("Unable to load application window")
-	}
+	ui.appwin.SetApplication(app)
 
-	appwin.SetApplication(app)
-
-	gtk4layershell.InitForWindow(&appwin.Window)
-	gtk4layershell.SetKeyboardMode(&appwin.Window, gtk4layershell.LayerShellKeyboardModeExclusive)
+	gtk4layershell.InitForWindow(&ui.appwin.Window)
+	gtk4layershell.SetKeyboardMode(&ui.appwin.Window, gtk4layershell.LayerShellKeyboardModeExclusive)
 
 	if !config.Fullscreen {
-		gtk4layershell.SetLayer(&appwin.Window, gtk4layershell.LayerShellLayerTop)
-		gtk4layershell.SetAnchor(&appwin.Window, gtk4layershell.LayerShellEdgeTop, true)
+		gtk4layershell.SetLayer(&ui.appwin.Window, gtk4layershell.LayerShellLayerTop)
+		gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeTop, true)
 	} else {
-		gtk4layershell.SetLayer(&appwin.Window, gtk4layershell.LayerShellLayerOverlay)
-		gtk4layershell.SetAnchor(&appwin.Window, gtk4layershell.LayerShellEdgeTop, true)
-		gtk4layershell.SetAnchor(&appwin.Window, gtk4layershell.LayerShellEdgeBottom, true)
-		gtk4layershell.SetAnchor(&appwin.Window, gtk4layershell.LayerShellEdgeLeft, true)
-		gtk4layershell.SetAnchor(&appwin.Window, gtk4layershell.LayerShellEdgeRight, true)
-		gtk4layershell.SetExclusiveZone(&appwin.Window, -1)
+		gtk4layershell.SetLayer(&ui.appwin.Window, gtk4layershell.LayerShellLayerOverlay)
+		gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeTop, true)
+		gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeBottom, true)
+		gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeLeft, true)
+		gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeRight, true)
+		gtk4layershell.SetExclusiveZone(&ui.appwin.Window, -1)
 	}
 
-	appwin.Show()
+	ui.appwin.Show()
 
 	if config.KeepOpen {
-		appwin.SetVisible(false)
+		ui.appwin.SetVisible(false)
 	}
 }

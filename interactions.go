@@ -27,7 +27,7 @@ type Processor interface {
 	Name() string
 }
 
-func setupInteractions(ui *UI, entries map[string]processors.Entry, config *Config) {
+func setupInteractions() {
 	internal := make(map[string]Processor)
 	internal["applications"] = processors.GetApplications()
 	internal["runner"] = &processors.Runner{ShellConfig: config.ShellConfig}
@@ -59,14 +59,12 @@ func setupInteractions(ui *UI, entries map[string]processors.Entry, config *Conf
 		procs[v.Prefix()] = append(procs[v.Prefix()], v)
 	}
 
-	search := ui.search.Cast().(*gtk.Entry)
-
 	keycontroller := gtk.NewEventControllerKey()
-	keycontroller.ConnectKeyPressed(handleKeys(ui, entries, config))
+	keycontroller.ConnectKeyPressed(handleKeys())
 
-	search.AddController(keycontroller)
-	search.Connect("changed", process(procs, ui, entries))
-	search.Connect("activate", activateItem(ui, entries, config, false))
+	ui.search.AddController(keycontroller)
+	ui.search.Connect("changed", process(procs))
+	ui.search.Connect("activate", func() { activateItem(false) })
 
 	if config.KeepOpen {
 		sigchnl := make(chan os.Signal, 1)
@@ -74,14 +72,14 @@ func setupInteractions(ui *UI, entries map[string]processors.Entry, config *Conf
 		go func() {
 			for {
 				s := <-sigchnl
-				signalHandler(ui.appwin, s)
+				signalHandler(s)
 			}
 		}()
 	}
 }
 
-func hideUI(ui *UI, keepOpen bool) {
-	if keepOpen {
+func hideUI() {
+	if config.KeepOpen {
 		if !ui.ListAlwaysShow {
 			ui.appwin.SetVisible(false)
 		}
@@ -94,15 +92,15 @@ func hideUI(ui *UI, keepOpen bool) {
 	ui.app.Quit()
 }
 
-func handleKeys(ui *UI, entries map[string]processors.Entry, config *Config) KeyPressHandler {
+func handleKeys() KeyPressHandler {
 	return func(val uint, code uint, modifier gdk.ModifierType) bool {
 		switch val {
 		case gdk.KEY_Return:
 			if modifier == gdk.ControlMask {
-				activateItem(ui, entries, config, true)(ui.search.Cast().(*gtk.Entry))
+				activateItem(true)
 			}
 		case gdk.KEY_Escape:
-			hideUI(ui, config.KeepOpen)
+			hideUI()
 		case gdk.KEY_j:
 			if modifier == gdk.ControlMask {
 				items := ui.selection.NItems()
@@ -139,64 +137,62 @@ func handleKeys(ui *UI, entries map[string]processors.Entry, config *Config) Key
 	}
 }
 
-func activateItem(ui *UI, entries map[string]processors.Entry, config *Config, keepOpen bool) func(search *gtk.Entry) {
-	return func(search *gtk.Entry) {
-		obj := ui.items.Item(ui.selection.Selected())
-		str := obj.Cast().(*gtk.StringObject).String()
+func activateItem(keepOpen bool) {
+	obj := ui.items.Item(ui.selection.Selected())
+	str := obj.Cast().(*gtk.StringObject).String()
 
-		entry := entries[str]
-		f := strings.Fields(entry.Exec)
+	entry := entries[str]
+	f := strings.Fields(entry.Exec)
 
-		if config.Terminal != "" {
-			if entry.Terminal {
-				f = append([]string{config.Terminal, "-e"}, f...)
-			}
-		} else {
-			log.Println("terminal is not set")
-			return
+	if config.Terminal != "" {
+		if entry.Terminal {
+			f = append([]string{config.Terminal, "-e"}, f...)
+		}
+	} else {
+		log.Println("terminal is not set")
+		return
+	}
+
+	pth, err := exec.LookPath(f[0])
+	if err != nil {
+		log.Println("command not found")
+		return
+	}
+
+	cmd := exec.Command(pth, f[1:]...)
+
+	if entry.Notifyable {
+		if !keepOpen {
+			ui.appwin.SetVisible(false)
 		}
 
-		pth, err := exec.LookPath(f[0])
+		out, err := cmd.CombinedOutput()
 		if err != nil {
-			log.Println("command not found")
-			return
-		}
-
-		cmd := exec.Command(pth, f[1:]...)
-
-		if entry.Notifyable {
-			if !keepOpen {
-				ui.appwin.SetVisible(false)
-			}
-
-			out, err := cmd.CombinedOutput()
-			if err != nil {
-				notify, err := exec.LookPath("notify-send")
-				if err != nil {
-					log.Println(err)
-				}
-
-				if notify != "" {
-					if config.NotifyOnFail {
-						n := exec.Command("notify-send", "Walker", string(out), "--app-name=Walker")
-						n.Start()
-					}
-				}
-			}
-		} else {
-			err := cmd.Start()
+			notify, err := exec.LookPath("notify-send")
 			if err != nil {
 				log.Println(err)
 			}
-		}
 
-		if !keepOpen {
-			hideUI(ui, config.KeepOpen)
-			return
+			if notify != "" {
+				if config.NotifyOnFail {
+					n := exec.Command("notify-send", "Walker", string(out), "--app-name=Walker")
+					n.Start()
+				}
+			}
 		}
-
-		ui.search.Cast().(*gtk.Entry).SetText("")
+	} else {
+		err := cmd.Start()
+		if err != nil {
+			log.Println(err)
+		}
 	}
+
+	if !keepOpen {
+		hideUI()
+		return
+	}
+
+	ui.search.SetText("")
 }
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
@@ -211,8 +207,8 @@ func randomString(length int) string {
 	return string(b)
 }
 
-func process(procs map[string][]Processor, ui *UI, entries map[string]processors.Entry) func(search *gtk.Entry) {
-	return func(search *gtk.Entry) {
+func process(procs map[string][]Processor) func() {
+	return func() {
 		clear(entries)
 
 		if !ui.ListAlwaysShow {
@@ -221,7 +217,7 @@ func process(procs map[string][]Processor, ui *UI, entries map[string]processors
 
 		ui.appwin.SetCSSClasses([]string{})
 
-		text := strings.TrimSpace(search.Text())
+		text := strings.TrimSpace(ui.search.Text())
 		if text == "" {
 			ui.items.Splice(0, ui.items.NItems(), []string{})
 			return
@@ -312,12 +308,12 @@ func process(procs map[string][]Processor, ui *UI, entries map[string]processors
 	}
 }
 
-func signalHandler(win *gtk.ApplicationWindow, signal os.Signal) {
+func signalHandler(signal os.Signal) {
 	switch signal {
 	case syscall.SIGTERM, syscall.SIGINT:
 		os.Exit(0)
 	case syscall.SIGUSR1:
-		win.SetVisible(true)
+		ui.appwin.SetVisible(true)
 	default:
 		log.Println(signal)
 	}

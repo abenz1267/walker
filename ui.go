@@ -8,7 +8,6 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/abenz1267/walker/processors"
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -35,7 +34,7 @@ type UI struct {
 	ListAlwaysShow bool
 }
 
-func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Config) *UI {
+func createUI(app *gtk.Application) {
 	if !gtk4layershell.IsSupported() {
 		log.Fatalln("gtk-layer-shell not supported")
 	}
@@ -62,7 +61,7 @@ func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Co
 
 	items := gtk.NewStringList([]string{})
 
-	ui := &UI{
+	ui = &UI{
 		app:            app,
 		builder:        builder,
 		scroll:         builder.GetObject("scroll").Cast().(*gtk.ScrolledWindow),
@@ -161,11 +160,25 @@ func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Co
 				if !ok {
 					log.Fatalln("child is not a box")
 				}
-				box.SetCSSClasses([]string{"item", val.Class})
 
 				if box.FirstChild() != nil {
 					return
 				}
+
+				box.SetCSSClasses([]string{"item", val.Class})
+
+				motion := gtk.NewEventControllerMotion()
+				motion.ConnectEnter(func(_, _ float64) {
+					ui.selection.SetSelected(item.Position())
+				})
+
+				click := gtk.NewGestureClick()
+				click.ConnectPressed(func(m int, _, _ float64) {
+					activateItem(false)
+				})
+
+				box.AddController(click)
+				box.AddController(motion)
 
 				wrapper := gtk.NewBox(gtk.OrientationVertical, 0)
 				wrapper.SetCSSClasses([]string{"textwrapper"})
@@ -205,6 +218,4 @@ func getUI(app *gtk.Application, entries map[string]processors.Entry, config *Co
 	if !config.List.AlwaysShow {
 		ui.list.SetVisible(false)
 	}
-
-	return ui
 }

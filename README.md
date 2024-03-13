@@ -117,13 +117,22 @@ type Entry struct {
 [
   {
     "label": "First Item",
-    "sub": "subtext",
     "exec": "remindme in 1s test",
     "searchable": "first item",
-    "notifyable": true,
-    "class": "custom"
+    "notifyable": true
   }
 ]
+```
+
+You can also do:
+
+```json
+{
+  "name": "filesystem",
+  "prefix": "/",
+  "src": "fd --base-directory /home/andrej/%TERM%",
+  "cmd": "xdg-open file://%RESULT%"
+}
 ```
 
 ### Dynamic Styling

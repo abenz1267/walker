@@ -12,6 +12,7 @@ import (
 type Processor struct {
 	Prefix string `json:"prefix"`
 	Name   string `json:"name"`
+	Src    string `json:"src"`
 	Cmd    string `json:"cmd"`
 }
 

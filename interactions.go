@@ -45,6 +45,7 @@ func setupInteractions() {
 		enabled = append(enabled, &processors.External{
 			Prfx: v.Prefix,
 			Nme:  v.Name,
+			Src:  v.Src,
 			Cmd:  v.Cmd,
 		})
 	}

@@ -16,13 +16,11 @@ WIP.
 
 ## Requirements
 
-- gtk4
 - gtk4-layer-shell
 
 ## Installation
 
-Make sure you have [gtk4-layer-shell](https://github.com/wmww/gtk4-layer-shell) installed properly.
-Additionally, you need to make sure `/usr/local/lib/` is in your `LD_LIBRARY_PATH`. That's where the gtk4-layer-shell lib is located. `/usr/local/lib/pkgconfig` needs to be in your `PKG_CONFIG_PATH` as well.
+If you have problems installing `gtk4-layer-shell`, try switching your GTK4 theme to a default one. You can switch back after installing.
 
 **_Building can take quite a while, be patient_**
 

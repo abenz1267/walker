@@ -14,6 +14,8 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
+const VERSION = "0.0.9"
+
 type Config struct {
 	Placeholder        string                 `json:"placeholder,omitempty"`
 	NotifyOnFail       bool                   `json:"notify_on_fail,omitempty"`
@@ -69,7 +71,7 @@ func main() {
 		if len(os.Args) > 0 {
 			switch args[0] {
 			case "--version":
-				fmt.Println("0.0.9-git")
+				fmt.Println(VERSION)
 				return
 			case "--help", "-h":
 				fmt.Println("see README.md at https://github.com/abenz1267/walker")

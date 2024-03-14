@@ -11,7 +11,6 @@ WIP.
 - Websearch (default prefix: `?`)
 - Icons
 - notify via `notify-send` on cmd failure
-- stay open in background (open via `USR1` signal)
 - extend with... anything?
 
 ## Requirements
@@ -40,7 +39,6 @@ See `config.example.json` and `style.example.css`.
   "terminal": "foot",
   "placeholder": "Search...",
   "shell_config": "/home/andrej/.zshrc", // for parsing shell aliases
-  "keep_open": false,
   "notify_on_fail": true,
   "show_initial_entries": true, // always shows entries for emtpy search
   "fullscreen": true,
@@ -149,7 +147,7 @@ F.e. search = `!somecommand` => `#window.runner`
 | `Ctrl+Enter` | activate selection without closing |
 | `Ctrl+j`     | next entry                         |
 | `Ctrl+k`     | previous entry                     |
-| `Escape`     | close (hide if config.keep_open)   |
+| `Escape`     | close                              |
 
 ## Watchout for...
 

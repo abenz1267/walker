@@ -5,7 +5,6 @@ import (
 	"math/rand"
 	"os"
 	"os/exec"
-	"os/signal"
 	"slices"
 	"sort"
 	"strings"
@@ -70,31 +69,6 @@ func setupInteractions() {
 	if config.ShowInitialEntries {
 		setInitials()
 	}
-
-	if config.KeepOpen {
-		sigchnl := make(chan os.Signal, 1)
-		signal.Notify(sigchnl)
-		go func() {
-			for {
-				s := <-sigchnl
-				signalHandler(s)
-			}
-		}()
-	}
-}
-
-func hideUI() {
-	if config.KeepOpen {
-		if !ui.ListAlwaysShow {
-			ui.appwin.SetVisible(false)
-		}
-
-		ui.search.SetText("")
-		ui.items.Splice(0, ui.items.NItems(), []string{})
-		return
-	}
-
-	ui.app.Quit()
 }
 
 func handleKeys() KeyPressHandler {
@@ -105,7 +79,7 @@ func handleKeys() KeyPressHandler {
 				activateItem(true)
 			}
 		case gdk.KEY_Escape:
-			hideUI()
+			ui.app.Quit()
 		case gdk.KEY_j:
 			if modifier == gdk.ControlMask {
 				items := ui.selection.NItems()
@@ -193,7 +167,7 @@ func activateItem(keepOpen bool) {
 	}
 
 	if !keepOpen {
-		hideUI()
+		ui.app.Quit()
 		return
 	}
 

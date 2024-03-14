@@ -17,7 +17,6 @@ import (
 type Config struct {
 	Placeholder        string                 `json:"placeholder"`
 	NotifyOnFail       bool                   `json:"notify_on_fail"`
-	KeepOpen           bool                   `json:"keep_open"`
 	ShowInitialEntries bool                   `json:"show_initial_entries"`
 	ShellConfig        string                 `json:"shell_config"`
 	Terminal           string                 `json:"terminal"`
@@ -64,19 +63,6 @@ var (
 )
 
 func main() {
-	args := os.Args[1:]
-
-	if len(os.Args) > 0 {
-		switch args[0] {
-		case "--version":
-			fmt.Println("0.0.9-git")
-			return
-		case "--help", "-h":
-			fmt.Println("see README.md at https://github.com/abenz1267/walker")
-			return
-		default:
-			fmt.Printf("Unsupported option '%s'\n", args[0])
-			return
 	if len(os.Args) > 1 {
 		args := os.Args[1:]
 
@@ -131,7 +117,6 @@ func activate(app *gtk.Application) {
 	config = &Config{
 		Terminal:           "",
 		Fullscreen:         true,
-		KeepOpen:           false,
 		ShowInitialEntries: false,
 		ShellConfig:        "",
 		Placeholder:        "Search...",
@@ -204,8 +189,4 @@ func activate(app *gtk.Application) {
 	}
 
 	ui.appwin.Show()
-
-	if config.KeepOpen {
-		ui.appwin.SetVisible(false)
-	}
 }

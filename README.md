@@ -141,13 +141,13 @@ F.e. search = `!somecommand` => `#window.runner`
 
 ## Keybinds
 
-| Key          | Description                        |
-| ------------ | ---------------------------------- |
-| `Enter`      | activate selection                 |
-| `Ctrl+Enter` | activate selection without closing |
-| `Ctrl+j`     | next entry                         |
-| `Ctrl+k`     | previous entry                     |
-| `Escape`     | close                              |
+| Key                                     | Description                        |
+| --------------------------------------- | ---------------------------------- |
+| `Enter`                                 | activate selection                 |
+| `Ctrl+Enter`                            | activate selection without closing |
+| `Ctrl+j`, `Down`, `Tab`                 | next entry                         |
+| `Ctrl+k`, `Up`, `LEFT_TAB` (shift+tab?) | previous entry                     |
+| `Escape`                                | close                              |
 
 ## Watchout for...
 

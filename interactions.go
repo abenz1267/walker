@@ -71,6 +71,34 @@ func setupInteractions() {
 	}
 }
 
+func selectNext() {
+	items := ui.selection.NItems()
+
+	if items == 0 {
+		return
+	}
+
+	current := ui.selection.Selected()
+
+	if current+1 < items {
+		ui.selection.SetSelected(current + 1)
+	}
+}
+
+func selectPrev() {
+	items := ui.selection.NItems()
+
+	if items == 0 {
+		return
+	}
+
+	current := ui.selection.Selected()
+
+	if current > 0 {
+		ui.selection.SetSelected(current - 1)
+	}
+}
+
 func handleKeys() KeyPressHandler {
 	return func(val uint, code uint, modifier gdk.ModifierType) bool {
 		switch val {
@@ -80,33 +108,21 @@ func handleKeys() KeyPressHandler {
 			}
 		case gdk.KEY_Escape:
 			ui.app.Quit()
+		case gdk.KEY_Down:
+			selectNext()
+		case gdk.KEY_Up:
+			selectPrev()
+		case gdk.KEY_Tab:
+			selectNext()
+		case gdk.KEY_ISO_Left_Tab:
+			selectPrev()
 		case gdk.KEY_j:
 			if modifier == gdk.ControlMask {
-				items := ui.selection.NItems()
-
-				if items == 0 {
-					return true
-				}
-
-				current := ui.selection.Selected()
-
-				if current+1 < items {
-					ui.selection.SetSelected(current + 1)
-				}
+				selectNext()
 			}
 		case gdk.KEY_k:
 			if modifier == gdk.ControlMask {
-				items := ui.selection.NItems()
-
-				if items == 0 {
-					return true
-				}
-
-				current := ui.selection.Selected()
-
-				if current > 0 {
-					ui.selection.SetSelected(current - 1)
-				}
+				selectPrev()
 			}
 		default:
 			return true

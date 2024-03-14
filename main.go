@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/json"
+	"fmt"
 	"io"
 	"log"
 	"os"
@@ -63,6 +64,37 @@ var (
 )
 
 func main() {
+	args := os.Args[1:]
+
+	if len(os.Args) > 0 {
+		switch args[0] {
+		case "--version":
+			fmt.Println("0.0.9-git")
+			return
+		case "--help", "-h":
+			fmt.Println("see README.md at https://github.com/abenz1267/walker")
+			return
+		default:
+			fmt.Printf("Unsupported option '%s'\n", args[0])
+			return
+	if len(os.Args) > 1 {
+		args := os.Args[1:]
+
+		if len(os.Args) > 0 {
+			switch args[0] {
+			case "--version":
+				fmt.Println("0.0.9-git")
+				return
+			case "--help", "-h":
+				fmt.Println("see README.md at https://github.com/abenz1267/walker")
+				return
+			default:
+				fmt.Printf("Unsupported option '%s'\n", args[0])
+				return
+			}
+		}
+	}
+
 	now = time.Now()
 
 	tmp := os.TempDir()
@@ -79,6 +111,8 @@ func main() {
 
 	app := gtk.NewApplication("dev.benz.walker", 0)
 	app.Connect("activate", activate)
+
+	app.Flags()
 
 	if code := app.Run(os.Args); code > 0 {
 		os.Exit(code)

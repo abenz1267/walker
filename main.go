@@ -15,42 +15,42 @@ import (
 )
 
 type Config struct {
-	Placeholder        string                 `json:"placeholder"`
-	NotifyOnFail       bool                   `json:"notify_on_fail"`
-	ShowInitialEntries bool                   `json:"show_initial_entries"`
-	ShellConfig        string                 `json:"shell_config"`
-	Terminal           string                 `json:"terminal"`
-	Orientation        string                 `json:"orientation"`
-	Fullscreen         bool                   `json:"fullscreen"`
-	Processors         []processors.Processor `json:"processors"`
-	Icons              Icons                  `json:"icons"`
-	Align              Align                  `json:"align"`
-	List               List                   `json:"list"`
+	Placeholder        string                 `json:"placeholder,omitempty"`
+	NotifyOnFail       bool                   `json:"notify_on_fail,omitempty"`
+	ShowInitialEntries bool                   `json:"show_initial_entries,omitempty"`
+	ShellConfig        string                 `json:"shell_config,omitempty"`
+	Terminal           string                 `json:"terminal,omitempty"`
+	Orientation        string                 `json:"orientation,omitempty"`
+	Fullscreen         bool                   `json:"fullscreen,omitempty"`
+	Processors         []processors.Processor `json:"processors,omitempty"`
+	Icons              Icons                  `json:"icons,omitempty"`
+	Align              Align                  `json:"align,omitempty"`
+	List               List                   `json:"list,omitempty"`
 }
 
 type Icons struct {
-	Hide bool `json:"hide"`
-	Size int  `json:"size"`
+	Hide bool `json:"hide,omitempty"`
+	Size int  `json:"size,omitempty"`
 }
 
 type Align struct {
-	Horizontal string  `json:"horizontal"`
-	Vertical   string  `json:"vertical"`
-	Width      int     `json:"width"`
-	Margins    Margins `json:"margins"`
+	Horizontal string  `json:"horizontal,omitempty"`
+	Vertical   string  `json:"vertical,omitempty"`
+	Width      int     `json:"width,omitempty"`
+	Margins    Margins `json:"margins,omitempty"`
 }
 
 type Margins struct {
-	Top    int `json:"top"`
-	Bottom int `json:"bottom"`
-	End    int `json:"end"`
-	Start  int `json:"start"`
+	Top    int `json:"top,omitempty"`
+	Bottom int `json:"bottom,omitempty"`
+	End    int `json:"end,omitempty"`
+	Start  int `json:"start,omitempty"`
 }
 
 type List struct {
-	Height     int    `json:"height"`
-	Style      string `json:"style"`
-	AlwaysShow bool   `json:"always_show"`
+	Height     int    `json:"height,omitempty"`
+	Style      string `json:"style,omitempty"`
+	AlwaysShow bool   `json:"always_show,omitempty"`
 }
 
 var (

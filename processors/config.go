@@ -10,10 +10,10 @@ import (
 )
 
 type Processor struct {
-	Prefix string `json:"prefix"`
-	Name   string `json:"name"`
-	Src    string `json:"src"`
-	Cmd    string `json:"cmd"`
+	Prefix string `json:"prefix,omitempty"`
+	Name   string `json:"name,omitempty"`
+	Src    string `json:"src,omitempty"`
+	Cmd    string `json:"cmd,omitempty"`
 }
 
 func readCache(name string, data any) bool {

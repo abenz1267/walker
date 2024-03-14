@@ -10,7 +10,7 @@ WIP.
 - Runner (default prefix: `!`)
 - Websearch (default prefix: `?`)
 - Icons
-- notify via `notify-send` on cmd failure
+- notifications on failure configurable
 - extend with... anything?
 
 ## Requirements

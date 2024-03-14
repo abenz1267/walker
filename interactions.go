@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"math/rand"
 	"os"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/abenz1267/walker/processors"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
@@ -157,17 +159,9 @@ func activateItem(keepOpen bool) {
 
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			notify, err := exec.LookPath("notify-send")
-			if err != nil {
-				log.Println(err)
-			}
-
-			if notify != "" {
-				if config.NotifyOnFail {
-					n := exec.Command("notify-send", "Walker", string(out), "--app-name=Walker")
-					n.Start()
-				}
-			}
+			n := gio.NewNotification("Error running command...")
+			n.SetBody(fmt.Sprintf("%s\n %s", cmd.String(), out))
+			ui.app.SendNotification("Error", n)
 		}
 	} else {
 		err := cmd.Start()

@@ -42,6 +42,10 @@ See `config.example.json` and `style.example.css`.
   "notify_on_fail": true,
   "show_initial_entries": true, // always shows entries for emtpy search
   "fullscreen": true,
+  "search": {
+    "delay": 150, // in ms
+    "hide_icons": true
+  },
   "align": {
     "width": 400,
     "horizontal": "center", // fill, start, end, center

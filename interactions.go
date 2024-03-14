@@ -63,7 +63,7 @@ func setupInteractions() {
 	keycontroller.ConnectKeyPressed(handleKeys())
 
 	ui.search.AddController(keycontroller)
-	ui.search.Connect("changed", process())
+	ui.search.Connect("search-changed", process)
 	ui.search.Connect("activate", func() { activateItem(false) })
 
 	if config.ShowInitialEntries {
@@ -180,109 +180,107 @@ func randomString(length int) string {
 	return string(b)
 }
 
-func process() func() {
-	return func() {
-		clear(entries)
+func process() {
+	clear(entries)
 
-		if !ui.ListAlwaysShow {
-			ui.list.SetVisible(false)
+	if !ui.ListAlwaysShow {
+		ui.list.SetVisible(false)
+	}
+
+	ui.appwin.SetCSSClasses([]string{})
+
+	text := strings.TrimSpace(ui.search.Text())
+	if text == "" {
+		ui.items.Splice(0, ui.items.NItems(), []string{})
+
+		if config.ShowInitialEntries {
+			setInitials()
 		}
 
-		ui.appwin.SetCSSClasses([]string{})
+		return
+	}
 
-		text := strings.TrimSpace(ui.search.Text())
-		if text == "" {
-			ui.items.Splice(0, ui.items.NItems(), []string{})
+	list := []string{}
 
-			if config.ShowInitialEntries {
-				setInitials()
-			}
+	prefix := text
 
-			return
+	if len(prefix) > 1 {
+		prefix = text[0:1]
+	}
+
+	hasPrefix := true
+
+	p, ok := procs[prefix]
+	if !ok {
+		p = procs[""]
+		hasPrefix = false
+	}
+
+	if hasPrefix {
+		ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
+	}
+
+	for _, proc := range p {
+		e := proc.Entries(text)
+
+		for _, entry := range e {
+			str := randomString(5)
+
+			entries[str] = entry
 		}
+	}
 
-		list := []string{}
+	if hasPrefix {
+		text = text[1:]
+	}
 
-		prefix := text
+	searchables := []string{}
 
-		if len(prefix) > 1 {
-			prefix = text[0:1]
+	sm := make(map[string][]string)
+
+	for k, entry := range entries {
+		sm[entry.Searchable] = append(sm[entry.Searchable], k)
+		searchables = append(searchables, entries[k].Searchable)
+	}
+
+	slices.Sort(searchables)
+
+	if len(searchables) == 0 {
+		return
+	}
+
+	j := 0
+	for i := 1; i < len(searchables); i++ {
+		if searchables[j] == searchables[i] {
+			continue
 		}
+		j++
+		searchables[j] = searchables[i]
+	}
+	result := searchables[:j+1]
 
-		hasPrefix := true
+	matches := fuzzy.RankFindFold(text, result)
+	sort.Sort(matches)
 
-		p, ok := procs[prefix]
-		if !ok {
-			p = procs[""]
-			hasPrefix = false
+	for _, v := range matches {
+		for _, m := range sm[v.Target] {
+			list = append(list, m)
 		}
+	}
 
-		if hasPrefix {
-			ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
+	current := ui.items.NItems()
+
+	if current == 0 {
+		for _, str := range list {
+			ui.items.Append(str)
 		}
+	} else {
+		ui.items.Splice(0, current, list)
+	}
 
-		for _, proc := range p {
-			e := proc.Entries(text)
-
-			for _, entry := range e {
-				str := randomString(5)
-
-				entries[str] = entry
-			}
-		}
-
-		if hasPrefix {
-			text = text[1:]
-		}
-
-		searchables := []string{}
-
-		sm := make(map[string][]string)
-
-		for k, entry := range entries {
-			sm[entry.Searchable] = append(sm[entry.Searchable], k)
-			searchables = append(searchables, entries[k].Searchable)
-		}
-
-		slices.Sort(searchables)
-
-		if len(searchables) == 0 {
-			return
-		}
-
-		j := 0
-		for i := 1; i < len(searchables); i++ {
-			if searchables[j] == searchables[i] {
-				continue
-			}
-			j++
-			searchables[j] = searchables[i]
-		}
-		result := searchables[:j+1]
-
-		matches := fuzzy.RankFindFold(text, result)
-		sort.Sort(matches)
-
-		for _, v := range matches {
-			for _, m := range sm[v.Target] {
-				list = append(list, m)
-			}
-		}
-
-		current := ui.items.NItems()
-
-		if current == 0 {
-			for _, str := range list {
-				ui.items.Append(str)
-			}
-		} else {
-			ui.items.Splice(0, current, list)
-		}
-
-		if ui.selection.NItems() > 0 {
-			ui.selection.SetSelected(0)
-			ui.list.SetVisible(true)
-		}
+	if ui.selection.NItems() > 0 {
+		ui.selection.SetSelected(0)
+		ui.list.SetVisible(true)
 	}
 }
 

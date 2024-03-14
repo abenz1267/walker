@@ -25,7 +25,7 @@ type UI struct {
 	scroll         *gtk.ScrolledWindow
 	box            *gtk.Box
 	appwin         *gtk.ApplicationWindow
-	search         *gtk.Entry
+	search         *gtk.SearchEntry
 	list           *gtk.ListView
 	items          *gtk.StringList
 	selection      *gtk.SingleSelection
@@ -68,7 +68,7 @@ func createUI(app *gtk.Application) {
 		scroll:         builder.GetObject("scroll").Cast().(*gtk.ScrolledWindow),
 		box:            builder.GetObject("box").Cast().(*gtk.Box),
 		appwin:         builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
-		search:         builder.GetObject("search").Cast().(*gtk.Entry),
+		search:         builder.GetObject("search").Cast().(*gtk.SearchEntry),
 		list:           builder.GetObject("list").Cast().(*gtk.ListView),
 		items:          items,
 		selection:      gtk.NewSingleSelection(items),
@@ -84,7 +84,17 @@ func createUI(app *gtk.Application) {
 			measured = true
 		}
 	})
+
 	ui.search.AddController(fc)
+
+	if config.Search.Delay != 150 {
+		ui.search.SetObjectProperty("search-delay", config.Search.Delay)
+	}
+
+	if config.Search.HideIcons {
+		ui.search.FirstChild().(*gtk.Image).Hide()
+		ui.search.LastChild().(*gtk.Image).Hide()
+	}
 
 	alignments := make(map[string]gtk.Align)
 	alignments["fill"] = gtk.AlignFill
@@ -115,12 +125,10 @@ func createUI(app *gtk.Application) {
 	if config.Orientation == "horizontal" {
 		ui.box.SetObjectProperty("orientation", gtk.OrientationHorizontal)
 		ui.search.SetVAlign(gtk.AlignStart)
-
-		// ui.list.SetObjectProperty("orientation", gtk.OrientationHorizontal)
 	}
 
 	if config.Placeholder != "" {
-		ui.search.SetPlaceholderText(config.Placeholder)
+		ui.search.SetObjectProperty("placeholder-text", config.Placeholder)
 	}
 
 	ui.box.SetMarginBottom(config.Align.Margins.Bottom)
@@ -149,7 +157,7 @@ func createUI(app *gtk.Application) {
 
 				box.GrabFocus()
 				ui.appwin.SetCSSClasses([]string{entries[key].Class})
-				ui.search.GrabFocusWithoutSelecting()
+				ui.search.GrabFocus()
 			}
 		}
 

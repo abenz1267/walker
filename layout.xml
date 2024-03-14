@@ -7,7 +7,7 @@
         <property name="orientation">vertical</property>
         <property name="name">box</property>
         <child>
-          <object class="GtkEntry" id="search">
+          <object class="GtkSearchEntry" id="search">
             <property name="name">search</property>
           </object>
         </child>

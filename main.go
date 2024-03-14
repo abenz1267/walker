@@ -29,6 +29,12 @@ type Config struct {
 	Icons              Icons                  `json:"icons,omitempty"`
 	Align              Align                  `json:"align,omitempty"`
 	List               List                   `json:"list,omitempty"`
+	Search             Search                 `json:"search,omitempty"`
+}
+
+type Search struct {
+	Delay     int  `json:"delay,omitempty"`
+	HideIcons bool `json:"hide_icons,omitempty"`
 }
 
 type Icons struct {
@@ -127,6 +133,10 @@ func activate(app *gtk.Application) {
 		Icons: Icons{
 			Hide: false,
 			Size: 32,
+		},
+		Search: Search{
+			Delay:     150,
+			HideIcons: false,
 		},
 		Align: Align{
 			Horizontal: "center",

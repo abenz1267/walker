@@ -110,7 +110,7 @@ func handleKeys() KeyPressHandler {
 				activateItem(true)
 			}
 		case gdk.KEY_Escape:
-			ui.app.Quit()
+			quit()
 		case gdk.KEY_Down:
 			selectNext()
 		case gdk.KEY_Up:
@@ -184,7 +184,7 @@ func activateItem(keepOpen bool) {
 	}
 
 	if !keepOpen {
-		ui.app.Quit()
+		quit()
 		return
 	}
 
@@ -432,5 +432,15 @@ func saveToHistory(searchterm string) {
 	err = os.WriteFile(filepath.Join(cacheDir, "history.json"), b, 0644)
 	if err != nil {
 		log.Println(err)
+	}
+}
+
+func quit() {
+	if isService {
+		measured = false
+		ui.app.Hold()
+		ui.appwin.Close()
+	} else {
+		ui.app.Quit()
 	}
 }

@@ -69,13 +69,14 @@ type HistoryEntry struct {
 }
 
 var (
-	now      time.Time
-	measured bool
-	config   *Config
-	ui       *UI
-	entries  map[string]processors.Entry
-	procs    map[string][]Processor
-	history  map[string]HistoryEntry
+	now       time.Time
+	measured  bool
+	config    *Config
+	ui        *UI
+	entries   map[string]processors.Entry
+	procs     map[string][]Processor
+	history   map[string]HistoryEntry
+	isService bool
 )
 
 func main() {
@@ -87,9 +88,10 @@ func main() {
 			case "--version":
 				fmt.Println(VERSION)
 				return
-			case "--help", "-h":
-				fmt.Println("see README.md at https://github.com/abenz1267/walker")
-				return
+			case "--gapplication-service":
+				isService = true
+			case "--help", "-h", "--help-all":
+			// handled by gtk
 			default:
 				fmt.Printf("Unsupported option '%s'\n", args[0])
 				return
@@ -103,22 +105,29 @@ func main() {
 
 	loadHistory()
 
-	tmp := os.TempDir()
-	if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
-		log.Println("lockfile exists. exiting.")
-		return
-	}
+	if !isService {
+		tmp := os.TempDir()
+		if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
+			log.Println("lockfile exists. exiting.")
+			return
+		}
 
-	err := os.WriteFile(filepath.Join(tmp, "walker.lock"), []byte{}, 0o600)
-	if err != nil {
-		log.Fatalln(err)
+		err := os.WriteFile(filepath.Join(tmp, "walker.lock"), []byte{}, 0o600)
+		if err != nil {
+			log.Fatalln(err)
+		}
+		defer os.Remove(filepath.Join(tmp, "walker.lock"))
 	}
-	defer os.Remove(filepath.Join(tmp, "walker.lock"))
 
 	app := gtk.NewApplication("dev.benz.walker", 0)
+
 	app.Connect("activate", activate)
 
 	app.Flags()
+
+	if isService {
+		app.Hold()
+	}
 
 	if code := app.Run(os.Args); code > 0 {
 		os.Exit(code)
@@ -126,6 +135,10 @@ func main() {
 }
 
 func activate(app *gtk.Application) {
+	if isService {
+		now = time.Now()
+	}
+
 	cfgDir, err := os.UserConfigDir()
 	if err != nil {
 		log.Fatalln(err)

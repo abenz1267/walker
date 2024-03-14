@@ -12,6 +12,7 @@ WIP.
 - Icons
 - notifications on failure configurable
 - extend with... anything?
+- start as service for faster startup
 
 ## Requirements
 
@@ -142,6 +143,10 @@ You can also do:
 The window and items will have a class based on the source. Selecting an item will change the windows class to the current selections source. Using a prefix will apply that sources classes to the window.
 
 F.e. search = `!somecommand` => `#window.runner`
+
+### Starting as service
+
+Start with `walker --gapplication-service` to start in service-mode. Calling `walker` normally afterwards should be rather fast.
 
 ## Keybinds
 

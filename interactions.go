@@ -132,13 +132,7 @@ func activateItem(keepOpen bool) {
 		return
 	}
 
-	pth, err := exec.LookPath(f[0])
-	if err != nil {
-		log.Println("command not found")
-		return
-	}
-
-	cmd := exec.Command(pth, f[1:]...)
+	cmd := exec.Command(f[0], f[1:]...)
 
 	if entry.Notifyable {
 		if !keepOpen {

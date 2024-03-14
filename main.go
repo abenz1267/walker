@@ -6,6 +6,7 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"time"
 
@@ -167,6 +168,8 @@ func activate(app *gtk.Application) {
 		}
 	}
 
+	go setTerminal()
+
 	entries = make(map[string]processors.Entry)
 
 	createUI(app)
@@ -191,4 +194,66 @@ func activate(app *gtk.Application) {
 	}
 
 	ui.appwin.Show()
+}
+
+func setTerminal() {
+	if config.Terminal != "" {
+		path, _ := exec.LookPath(config.Terminal)
+
+		if path != "" {
+			config.Terminal = path
+		}
+
+		return
+	}
+
+	t := []string{
+		"x-terminal-emulator",
+		"mate-terminal",
+		"gnome-terminal",
+		"terminator",
+		"xfce4-terminal",
+		"urxvt",
+		"rxvt",
+		"termit",
+		"Eterm",
+		"aterm",
+		"uxterm",
+		"xterm",
+		"roxterm",
+		"termite",
+		"lxterminal",
+		"terminology",
+		"st",
+		"qterminal",
+		"lilyterm",
+		"tilix",
+		"terminix",
+		"konsole",
+		"foot",
+		"kitty",
+		"guake",
+		"tilda",
+		"alacritty",
+		"hyper",
+	}
+
+	term, ok := os.LookupEnv("TERM")
+	if ok {
+		t = append([]string{term}, t...)
+	}
+
+	terminal, ok := os.LookupEnv("TERMINAL")
+	if ok {
+		t = append([]string{terminal}, t...)
+	}
+
+	for _, v := range t {
+		path, _ := exec.LookPath(v)
+
+		if path != "" {
+			config.Terminal = path
+			break
+		}
+	}
 }

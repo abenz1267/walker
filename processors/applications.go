@@ -14,15 +14,21 @@ import (
 const ApplicationsName = "applications"
 
 type Entry struct {
-	Label      string `json:"label,omitempty"`
-	Sub        string `json:"sub,omitempty"`
-	Exec       string `json:"exec,omitempty"`
-	Terminal   bool   `json:"terminal,omitempty"`
-	Icon       string `json:"icon,omitempty"`
-	Searchable string `json:"searchable,omitempty"`
-	Notifyable bool   `json:"notifyable,omitempty"`
-	Class      string `json:"class,omitempty"`
-	Identifier string `json:"-"`
+	Label           string   `json:"label,omitempty"`
+	Sub             string   `json:"sub,omitempty"`
+	Exec            string   `json:"exec,omitempty"`
+	Terminal        bool     `json:"terminal,omitempty"`
+	Icon            string   `json:"icon,omitempty"`
+	Searchable      string   `json:"searchable,omitempty"`
+	Categories      []string `json:"categories,omitempty"`
+	Notifyable      bool     `json:"notifyable,omitempty"`
+	Class           string   `json:"class,omitempty"`
+	History         bool     `json:"history,omitempty"`
+	Identifier      string   `json:"-"`
+	Used            int      `json:"-"`
+	DaysSinceUsed   int      `json:"-"`
+	ScoreFuzzy      int      `json:"-"`
+	ScoreFuzzyFinal float64  `json:"-"`
 }
 
 type Applications struct {
@@ -108,7 +114,8 @@ func parse() []Application {
 
 				app := Application{
 					Generic: Entry{
-						Class: ApplicationsName,
+						Class:   ApplicationsName,
+						History: true,
 					},
 					Actions: []Entry{},
 				}
@@ -120,10 +127,12 @@ func parse() []Application {
 
 					if strings.HasPrefix(line, "[Desktop Action") {
 						app.Actions = append(app.Actions, Entry{
-							Sub:      app.Generic.Label,
-							Icon:     app.Generic.Icon,
-							Terminal: app.Generic.Terminal,
-							Class:    ApplicationsName,
+							Sub:        app.Generic.Label,
+							Icon:       app.Generic.Icon,
+							Terminal:   app.Generic.Terminal,
+							Class:      ApplicationsName,
+							Categories: app.Generic.Categories,
+							History:    app.Generic.History,
 						})
 
 						isAction = true
@@ -145,23 +154,35 @@ func parse() []Application {
 							continue
 						}
 
+						if strings.HasPrefix(line, "Categories=") {
+							cats := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "Categories=")), ";")
+							app.Generic.Categories = append(app.Generic.Categories, cats...)
+							continue
+						}
+
+						if strings.HasPrefix(line, "Keywords=") {
+							cats := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "Keywords=")), ";")
+							app.Generic.Categories = append(app.Generic.Categories, cats...)
+							continue
+						}
+
 						if strings.HasPrefix(line, "GenericName=") {
-							app.Generic.Sub = strings.TrimPrefix(line, "GenericName=")
+							app.Generic.Sub = strings.TrimSpace(strings.TrimPrefix(line, "GenericName="))
 							continue
 						}
 
 						if strings.HasPrefix(line, "Terminal=") {
-							app.Generic.Terminal = strings.TrimPrefix(line, "Terminal=") == "true"
+							app.Generic.Terminal = strings.TrimSpace(strings.TrimPrefix(line, "Terminal=")) == "true"
 							continue
 						}
 
 						if strings.HasPrefix(line, "Icon=") {
-							app.Generic.Icon = strings.TrimPrefix(line, "Icon=")
+							app.Generic.Icon = strings.TrimSpace(strings.TrimPrefix(line, "Icon="))
 							continue
 						}
 
 						if strings.HasPrefix(line, "Exec=") {
-							app.Generic.Exec = strings.TrimPrefix(line, "Exec=")
+							app.Generic.Exec = strings.TrimSpace(strings.TrimPrefix(line, "Exec="))
 
 							for _, v := range flags {
 								app.Generic.Exec = strings.ReplaceAll(app.Generic.Exec, v, "")
@@ -171,7 +192,7 @@ func parse() []Application {
 						}
 					} else {
 						if strings.HasPrefix(line, "Exec=") {
-							app.Actions[len(app.Actions)-1].Exec = strings.TrimPrefix(line, "Exec=")
+							app.Actions[len(app.Actions)-1].Exec = strings.TrimSpace(strings.TrimPrefix(line, "Exec="))
 
 							for _, v := range flags {
 								app.Actions[len(app.Actions)-1].Exec = strings.ReplaceAll(app.Actions[len(app.Actions)-1].Exec, v, "")

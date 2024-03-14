@@ -62,6 +62,12 @@ type List struct {
 	AlwaysShow bool   `json:"always_show,omitempty"`
 }
 
+type HistoryEntry struct {
+	LastUsed      time.Time `json:"last_used,omitempty"`
+	Used          int       `json:"used,omitempty"`
+	daysSinceUsed int
+}
+
 var (
 	now      time.Time
 	measured bool
@@ -69,6 +75,7 @@ var (
 	ui       *UI
 	entries  map[string]processors.Entry
 	procs    map[string][]Processor
+	history  map[string]HistoryEntry
 )
 
 func main() {
@@ -91,6 +98,10 @@ func main() {
 	}
 
 	now = time.Now()
+
+	history = make(map[string]HistoryEntry)
+
+	loadHistory()
 
 	tmp := os.TempDir()
 	if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
@@ -264,6 +275,43 @@ func setTerminal() {
 		if path != "" {
 			config.Terminal = path
 			break
+		}
+	}
+}
+
+func loadHistory() {
+	cacheDir, err := os.UserCacheDir()
+	if err != nil {
+		log.Println(err)
+		log.Fatalf("failed to get cache dir: %s", err)
+	}
+
+	cacheDir = filepath.Join(cacheDir, "walker")
+
+	path := filepath.Join(cacheDir, "history.json")
+
+	if _, err := os.Stat(path); err == nil {
+		file, err := os.Open(path)
+		if err != nil {
+			log.Println(err)
+		}
+		defer file.Close()
+
+		b, err := io.ReadAll(file)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err = json.Unmarshal(b, &history)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		for k, v := range history {
+			today := time.Now()
+			v.daysSinceUsed = int(today.Sub(v.LastUsed).Hours() / 24)
+
+			history[k] = v
 		}
 	}
 }

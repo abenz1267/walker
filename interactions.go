@@ -1,15 +1,15 @@
 package main
 
 import (
+	"encoding/json"
 	"fmt"
 	"log"
 	"math/rand"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
-	"sort"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/abenz1267/walker/processors"
@@ -44,10 +44,11 @@ func setupInteractions() {
 		}
 
 		enabled = append(enabled, &processors.External{
-			Prfx: v.Prefix,
-			Nme:  v.Name,
-			Src:  v.Src,
-			Cmd:  v.Cmd,
+			Prfx:    v.Prefix,
+			Nme:     v.Name,
+			Src:     v.Src,
+			Cmd:     v.Cmd,
+			History: v.History,
 		})
 	}
 
@@ -141,6 +142,10 @@ func activateItem(keepOpen bool) {
 	entry := entries[str]
 	f := strings.Fields(entry.Exec)
 
+	if len(f) == 0 {
+		return
+	}
+
 	if config.Terminal != "" {
 		if entry.Terminal {
 			f = append([]string{config.Terminal, "-e"}, f...)
@@ -150,7 +155,15 @@ func activateItem(keepOpen bool) {
 		return
 	}
 
-	cmd := exec.Command(f[0], f[1:]...)
+	cmd := exec.Command(f[0])
+
+	if len(f) > 1 {
+		cmd = exec.Command(f[0], f[1:]...)
+	}
+
+	if entry.History {
+		saveToHistory(entry.Searchable)
+	}
 
 	if entry.Notifyable {
 		if !keepOpen {
@@ -230,52 +243,103 @@ func process() {
 		ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
 	}
 
+	entrySlice := []processors.Entry{}
+
 	for _, proc := range p {
 		e := proc.Entries(text)
 
 		for _, entry := range e {
 			str := randomString(5)
 
+			if val, ok := history[entry.Searchable]; ok {
+				entry.Used = val.Used
+				entry.DaysSinceUsed = val.daysSinceUsed
+			}
+
+			entry.Identifier = str
+
 			entries[str] = entry
+			entrySlice = append(entrySlice, entry)
 		}
+	}
+
+	if len(entries) == 0 {
+		return
 	}
 
 	if hasPrefix {
 		text = text[1:]
 	}
 
-	searchables := []string{}
+	tm := 1.0 / float64(len(text))
 
-	sm := make(map[string][]string)
+	calcScore := func(text, target string) int {
+		final := 100
+		score := fuzzy.RankMatchFold(text, target)
 
-	for k, entry := range entries {
-		sm[entry.Searchable] = append(sm[entry.Searchable], k)
-		searchables = append(searchables, entries[k].Searchable)
-	}
-
-	slices.Sort(searchables)
-
-	if len(searchables) == 0 {
-		return
-	}
-
-	j := 0
-	for i := 1; i < len(searchables); i++ {
-		if searchables[j] == searchables[i] {
-			continue
+		if score == -1 {
+			return 0
+		} else {
+			score = score
+			return final - score
 		}
-		j++
-		searchables[j] = searchables[i]
 	}
-	result := searchables[:j+1]
 
-	matches := fuzzy.RankFindFold(text, result)
-	sort.Sort(matches)
+	for k, v := range entrySlice {
+		v.Categories = append(v.Categories, v.Label, v.Sub)
 
-	for _, v := range matches {
-		for _, m := range sm[v.Target] {
-			list = append(list, m)
+		for _, t := range v.Categories {
+			if t == "" {
+				continue
+			}
+
+			score := calcScore(text, t)
+			if score > entrySlice[k].ScoreFuzzy {
+				entrySlice[k].ScoreFuzzy = score
+			}
+
+			if score == 100 {
+				break
+			}
 		}
+
+		usageModifier := func(item processors.Entry) int {
+			base := 10
+
+			if item.Used > 0 {
+				if item.DaysSinceUsed > 0 {
+					base -= item.DaysSinceUsed
+				}
+
+				return base * item.Used
+			}
+
+			return 0
+		}
+
+		usageScore := usageModifier(v)
+
+		entrySlice[k].ScoreFuzzyFinal = float64(usageScore)*tm + float64(entrySlice[k].ScoreFuzzy)/tm
+	}
+
+	slices.SortFunc(entrySlice, func(a, b processors.Entry) int {
+		if a.ScoreFuzzyFinal == b.ScoreFuzzyFinal {
+			return strings.Compare(a.Label, b.Label)
+		}
+
+		if a.ScoreFuzzyFinal > b.ScoreFuzzyFinal {
+			return -1
+		}
+
+		if a.ScoreFuzzyFinal < b.ScoreFuzzyFinal {
+			return 1
+		}
+
+		return 0
+	})
+
+	for _, v := range entrySlice {
+		list = append(list, v.Identifier)
 	}
 
 	current := ui.items.NItems()
@@ -291,17 +355,6 @@ func process() {
 	if ui.selection.NItems() > 0 {
 		ui.selection.SetSelected(0)
 		ui.list.SetVisible(true)
-	}
-}
-
-func signalHandler(signal os.Signal) {
-	switch signal {
-	case syscall.SIGTERM, syscall.SIGINT:
-		os.Exit(0)
-	case syscall.SIGUSR1:
-		ui.appwin.SetVisible(true)
-	default:
-		log.Println(signal)
 	}
 }
 
@@ -335,4 +388,49 @@ func setInitials() {
 	}
 
 	ui.selection.SetSelected(0)
+}
+
+func saveToHistory(searchterm string) {
+	cacheDir, err := os.UserCacheDir()
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	cacheDir = filepath.Join(cacheDir, "walker")
+
+	h, ok := history[searchterm]
+	if !ok {
+		h = HistoryEntry{
+			LastUsed: time.Now(),
+			Used:     1,
+		}
+	} else {
+		h.Used++
+
+		if h.Used > 10 {
+			h.Used = 10
+		}
+
+		h.LastUsed = time.Now()
+	}
+
+	history[searchterm] = h
+
+	b, err := json.Marshal(history)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	err = os.MkdirAll(cacheDir, 0755)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	err = os.WriteFile(filepath.Join(cacheDir, "history.json"), b, 0644)
+	if err != nil {
+		log.Println(err)
+	}
 }

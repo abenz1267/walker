@@ -80,7 +80,7 @@ func createUI(app *gtk.Application) {
 	fc := gtk.NewEventControllerFocus()
 	fc.Connect("enter", func() {
 		if !measured {
-			fmt.Printf("startup time: %s", time.Since(now))
+			fmt.Printf("startup time: %s\n", time.Since(now))
 			measured = true
 		}
 	})

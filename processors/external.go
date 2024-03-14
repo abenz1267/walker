@@ -9,10 +9,11 @@ import (
 )
 
 type External struct {
-	Prfx string
-	Nme  string
-	Src  string
-	Cmd  string
+	Prfx    string
+	Nme     string
+	Src     string
+	Cmd     string
+	History bool
 }
 
 func (e External) Name() string {
@@ -67,6 +68,7 @@ func (e External) Entries(term string) []Entry {
 					Class:      e.Nme,
 					Exec:       strings.ReplaceAll(e.Cmd, "%RESULT%", txt),
 					Searchable: txt,
+					History:    e.History,
 				}
 
 				entries = append(entries, e)

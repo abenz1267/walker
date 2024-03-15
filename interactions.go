@@ -317,6 +317,7 @@ func process() {
 			if val, ok := history[entry.Searchable]; ok {
 				entry.Used = val.Used
 				entry.DaysSinceUsed = val.daysSinceUsed
+				entry.LastUsed = val.LastUsed
 			}
 
 			entry.Identifier = str
@@ -366,40 +367,12 @@ func process() {
 			}
 		}
 
-		usageModifier := func(item processors.Entry) int {
-			base := 10
-
-			if item.Used > 0 {
-				if item.DaysSinceUsed > 0 {
-					base -= item.DaysSinceUsed
-				}
-
-				return base * item.Used
-			}
-
-			return 0
-		}
-
 		usageScore := usageModifier(v)
 
 		entrySlice[k].ScoreFuzzyFinal = float64(usageScore)*tm + float64(entrySlice[k].ScoreFuzzy)/tm
 	}
 
-	slices.SortFunc(entrySlice, func(a, b processors.Entry) int {
-		if a.ScoreFuzzyFinal == b.ScoreFuzzyFinal {
-			return strings.Compare(a.Label, b.Label)
-		}
-
-		if a.ScoreFuzzyFinal > b.ScoreFuzzyFinal {
-			return -1
-		}
-
-		if a.ScoreFuzzyFinal < b.ScoreFuzzyFinal {
-			return 1
-		}
-
-		return 0
-	})
+	sortEntries(entrySlice)
 
 	for _, v := range entrySlice {
 		list = append(list, v.Identifier)
@@ -438,9 +411,14 @@ func setInitials() {
 				if val, ok := history[entry.Searchable]; ok {
 					entry.Used = val.Used
 					entry.DaysSinceUsed = val.daysSinceUsed
+					entry.LastUsed = val.LastUsed
 				}
 
 				entry.Identifier = str
+
+				usageScore := usageModifier(entry)
+
+				entry.ScoreFuzzyFinal = float64(usageScore)
 
 				entries[str] = entry
 				entrySlice = append(entrySlice, entry)
@@ -452,28 +430,36 @@ func setInitials() {
 		return
 	}
 
-	for k, v := range entrySlice {
-		usageModifier := func(item processors.Entry) int {
-			base := 10
+	sortEntries(entrySlice)
 
-			if item.Used > 0 {
-				if item.DaysSinceUsed > 0 {
-					base -= item.DaysSinceUsed
-				}
-
-				return base * item.Used
-			}
-
-			return 0
-		}
-
-		usageScore := usageModifier(v)
-
-		entrySlice[k].ScoreFuzzyFinal = float64(usageScore)
+	for _, v := range entrySlice {
+		ui.items.Append(v.Identifier)
 	}
 
-	slices.SortFunc(entrySlice, func(a, b processors.Entry) int {
+	ui.selection.SetSelected(0)
+}
+
+func usageModifier(item processors.Entry) int {
+	base := 10
+
+	if item.Used > 0 {
+		if item.DaysSinceUsed > 0 {
+			base -= item.DaysSinceUsed
+		}
+
+		return base * item.Used
+	}
+
+	return 0
+}
+
+func sortEntries(entries []processors.Entry) {
+	slices.SortFunc(entries, func(a, b processors.Entry) int {
 		if a.ScoreFuzzyFinal == b.ScoreFuzzyFinal {
+			if !a.LastUsed.IsZero() && !b.LastUsed.IsZero() {
+				return b.LastUsed.Compare(a.LastUsed)
+			}
+
 			return strings.Compare(a.Label, b.Label)
 		}
 
@@ -487,12 +473,6 @@ func setInitials() {
 
 		return 0
 	})
-
-	for _, v := range entrySlice {
-		ui.items.Append(v.Identifier)
-	}
-
-	ui.selection.SetSelected(0)
 }
 
 func saveToHistory(searchterm string) {

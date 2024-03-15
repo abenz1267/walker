@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/adrg/xdg"
 )
@@ -14,21 +15,22 @@ import (
 const ApplicationsName = "applications"
 
 type Entry struct {
-	Label           string   `json:"label,omitempty"`
-	Sub             string   `json:"sub,omitempty"`
-	Exec            string   `json:"exec,omitempty"`
-	Terminal        bool     `json:"terminal,omitempty"`
-	Icon            string   `json:"icon,omitempty"`
-	Searchable      string   `json:"searchable,omitempty"`
-	Categories      []string `json:"categories,omitempty"`
-	Notifyable      bool     `json:"notifyable,omitempty"`
-	Class           string   `json:"class,omitempty"`
-	History         bool     `json:"history,omitempty"`
-	Identifier      string   `json:"-"`
-	Used            int      `json:"-"`
-	DaysSinceUsed   int      `json:"-"`
-	ScoreFuzzy      int      `json:"-"`
-	ScoreFuzzyFinal float64  `json:"-"`
+	Label           string    `json:"label,omitempty"`
+	Sub             string    `json:"sub,omitempty"`
+	Exec            string    `json:"exec,omitempty"`
+	Terminal        bool      `json:"terminal,omitempty"`
+	Icon            string    `json:"icon,omitempty"`
+	Searchable      string    `json:"searchable,omitempty"`
+	Categories      []string  `json:"categories,omitempty"`
+	Notifyable      bool      `json:"notifyable,omitempty"`
+	Class           string    `json:"class,omitempty"`
+	History         bool      `json:"history,omitempty"`
+	Identifier      string    `json:"-"`
+	Used            int       `json:"-"`
+	DaysSinceUsed   int       `json:"-"`
+	LastUsed        time.Time `json:"-"`
+	ScoreFuzzy      int       `json:"-"`
+	ScoreFuzzyFinal float64   `json:"-"`
 }
 
 type Applications struct {

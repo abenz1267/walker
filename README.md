@@ -12,6 +12,7 @@
 - extend with... anything?
 - start as service for faster startup
 - run result via label
+- display images
 
 ## Requirements
 
@@ -66,7 +67,8 @@ See `config.example.json` and `style.example.css`.
   "orientation": "vertical", // vertical, horizontal
   "icons": {
     "hide": false,
-    "size": 38
+    "size": 38,
+    "image_height": 200
   },
   "processors": [
     {
@@ -105,14 +107,18 @@ Your plugin simply needs to return json with the following format:
 
 ```go
 type Entry struct {
-	Label      string `json:"label,omitempty"`
-	Sub        string `json:"sub,omitempty"`
-	Exec       string `json:"exec,omitempty"`
-	Terminal   bool   `json:"terminal,omitempty"`
-	Icon       string `json:"icon,omitempty"`
-	Searchable string `json:"searchable,omitempty"`
-	Notifyable bool   `json:"notifyable,omitempty"`
-	Class      string `json:"class,omitempty"`
+	Label           string    `json:"label,omitempty"`
+	Sub             string    `json:"sub,omitempty"`
+	Exec            string    `json:"exec,omitempty"`
+	Terminal        bool      `json:"terminal,omitempty"`
+	Icon            string    `json:"icon,omitempty"`
+	IconIsImage     bool      `json:"icon_is_image,omitempty"`
+	HideText        bool      `json:"hide_text,omitempty"`
+	Searchable      string    `json:"searchable,omitempty"`
+	Categories      []string  `json:"categories,omitempty"`
+	Notifyable      bool      `json:"notifyable,omitempty"`
+	Class           string    `json:"class,omitempty"`
+	History         bool      `json:"history,omitempty"`
 }
 ```
 

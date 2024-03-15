@@ -20,6 +20,8 @@ type Entry struct {
 	Exec            string    `json:"exec,omitempty"`
 	Terminal        bool      `json:"terminal,omitempty"`
 	Icon            string    `json:"icon,omitempty"`
+	IconIsImage     bool      `json:"icon_is_image,omitempty"`
+	HideText        bool      `json:"hide_text,omitempty"`
 	Searchable      string    `json:"searchable,omitempty"`
 	Categories      []string  `json:"categories,omitempty"`
 	Notifyable      bool      `json:"notifyable,omitempty"`

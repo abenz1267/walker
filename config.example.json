@@ -30,7 +30,8 @@
   "orientation": "vertical",
   "icons": {
     "hide": false,
-    "size": 38
+    "size": 38,
+    "image_height": 200
   },
   "processors": [
     {

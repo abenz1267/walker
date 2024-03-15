@@ -198,14 +198,27 @@ func createUI(app *gtk.Application) {
 				wrapper.SetHExpand(true)
 
 				if config.Icons.Hide || val.Icon != "" {
-					icon := gtk.NewImageFromIconName(val.Icon)
-					icon.SetIconSize(gtk.IconSizeLarge)
-					icon.SetPixelSize(config.Icons.Size)
-					icon.SetCSSClasses([]string{"icon"})
-					box.Append(icon)
+					if val.IconIsImage {
+						image := gtk.NewPictureForFilename(val.Icon)
+						image.SetMarginEnd(10)
+						image.SetSizeRequest(0, 200)
+						image.SetCanShrink(true)
+						if val.HideText {
+							image.SetHExpand(true)
+						}
+						box.Append(image)
+					} else {
+						icon := gtk.NewImageFromIconName(val.Icon)
+						icon.SetIconSize(gtk.IconSizeLarge)
+						icon.SetPixelSize(config.Icons.Size)
+						icon.SetCSSClasses([]string{"icon"})
+						box.Append(icon)
+					}
 				}
 
-				box.Append(wrapper)
+				if !val.HideText {
+					box.Append(wrapper)
+				}
 
 				top := gtk.NewLabel(val.Label)
 				top.SetHAlign(gtk.AlignStart)

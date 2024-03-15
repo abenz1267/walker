@@ -15,7 +15,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
-const VERSION = "0.0.18-git"
+const VERSION = "0.0.18"
 
 type Config struct {
 	Placeholder           string                 `json:"placeholder,omitempty"`
@@ -39,8 +39,9 @@ type Search struct {
 }
 
 type Icons struct {
-	Hide bool `json:"hide,omitempty"`
-	Size int  `json:"size,omitempty"`
+	Hide        bool `json:"hide,omitempty"`
+	Size        int  `json:"size,omitempty"`
+	ImageHeight int  `json:"image_height,omitempty"`
 }
 
 type Align struct {
@@ -168,8 +169,9 @@ func activate(app *gtk.Application) {
 		DisableActivationMode: false,
 		NotifyOnFail:          true,
 		Icons: Icons{
-			Hide: false,
-			Size: 32,
+			Hide:        false,
+			Size:        32,
+			ImageHeight: 100,
 		},
 		Search: Search{
 			Delay:     150,

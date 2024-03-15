@@ -179,6 +179,8 @@ Activation-Mode can be triggered by holding `LCtrl`. The window will get an addi
 
 ## Startup "Benchmarks"
 
+System: Arch Linux, Hyprland, Amd 7950x, 32gb DDR5-6000, SSD
+
 | Mode         | Startup time    |
 | ------------ | --------------- |
 | normal       | 13.5ms - 15.7ms |

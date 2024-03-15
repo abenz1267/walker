@@ -15,7 +15,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
-const VERSION = "0.0.18"
+const VERSION = "0.0.19-git"
 
 type Config struct {
 	Placeholder           string                 `json:"placeholder,omitempty"`

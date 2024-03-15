@@ -3,6 +3,7 @@
   mkGoEnv,
   gomod2nix,
   go,
+  pkg-config,
   gtk4-layer-shell,
 }:
 
@@ -15,6 +16,6 @@ mkShell {
     go
 
     # Dependencies
-    gtk4-layer-shell
+    # gtk4-layer-shell
   ];
 }

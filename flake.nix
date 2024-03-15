@@ -7,7 +7,7 @@
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
-    inputs.gomod2nix = {
+    gomod2nix = {
       url = "github:nix-community/gomod2nix";
       inputs.nixpkgs.follows = "nixpkgs";
     };
@@ -35,7 +35,7 @@
         devShells.default = callPackage ./shell.nix {inherit (gomod2nixPkgs) mkGoEnv gomod2nix;};
 
         packages = rec {
-          default = callPackage ./package.nix {inherit (gomod2nixPkgs) buildGoApplication;};
+          default = callPackage ./. {inherit (gomod2nixPkgs) buildGoApplication;};
           walker = default;
         };
       };

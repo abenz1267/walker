@@ -2,6 +2,8 @@
 
 ![Screenshot](https://github.com/abenz1267/walker/blob/master/screenshot.png?raw=true)
 
+(example styling, not default)
+
 ## Features
 
 - Icons

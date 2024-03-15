@@ -19,13 +19,24 @@
         ...
       }: let
         inherit (pkgs) callPackage;
+
+        dependencies = with pkgs; [
+          glib
+          gobject-introspection
+          gtk4
+          gtk4-layer-shell
+          gdk-pixbuf
+          graphene
+          cairo
+          pango
+        ];
       in {
         formatter = pkgs.alejandra;
 
-        devShells.default = callPackage ./shell.nix {};
+        devShells.default = callPackage ./shell.nix {inherit dependencies;};
 
         packages = rec {
-          default = callPackage ./. {};
+          default = callPackage ./. {inherit dependencies;};
           walker = default;
         };
       };

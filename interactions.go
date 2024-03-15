@@ -328,8 +328,6 @@ func process() {
 		return
 	}
 
-	list := []string{}
-
 	prefix := text
 
 	if len(prefix) > 1 {
@@ -379,18 +377,6 @@ func process() {
 
 	tm := 1.0 / float64(len(text))
 
-	calcScore := func(text, target string) int {
-		final := 100
-		score := fuzzy.RankMatchFold(text, target)
-
-		if score == -1 {
-			return 0
-		} else {
-			score = score
-			return final - score
-		}
-	}
-
 	for k, v := range entrySlice {
 		v.Categories = append(v.Categories, v.Label, v.Sub)
 
@@ -399,7 +385,7 @@ func process() {
 				continue
 			}
 
-			score := calcScore(text, t)
+			score := calculateFuzzyScore(text, t)
 			if score > entrySlice[k].ScoreFuzzy {
 				entrySlice[k].ScoreFuzzy = score
 			}
@@ -415,6 +401,8 @@ func process() {
 	}
 
 	sortEntries(entrySlice)
+
+	list := []string{}
 
 	for _, v := range entrySlice {
 		list = append(list, v.Identifier)
@@ -433,6 +421,18 @@ func process() {
 	if ui.selection.NItems() > 0 {
 		ui.selection.SetSelected(0)
 		ui.list.SetVisible(true)
+	}
+}
+
+func calculateFuzzyScore(text, target string) int {
+	final := 100
+	score := fuzzy.RankMatchFold(text, target)
+
+	if score == -1 {
+		return 0
+	} else {
+		score = score
+		return final - score
 	}
 }
 

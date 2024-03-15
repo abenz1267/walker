@@ -175,6 +175,13 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 
 Activation-Mode can be triggered by holding `LCtrl`. The window will get an additional class `activation` you can use for styling. While activated, you can run items by pressing their respective label. This only works for the top 8 items.
 
+## Startup "Benchmarks"
+
+| Mode         | Startup time    |
+| ------------ | --------------- |
+| normal       | 13.5ms - 15.7ms |
+| with service | 835µs - 2.12ms  |
+
 ## Watchout for...
 
 - Desktop entries will be parsed and cached in `.cache/walker`... currently no mechanism to refresh cache, so delete manually if needed

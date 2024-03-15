@@ -1,6 +1,7 @@
 package main
 
 import (
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -15,7 +16,8 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
-const VERSION = "0.0.19-git"
+//go:embed version.txt
+var version string
 
 type Config struct {
 	Placeholder           string                 `json:"placeholder,omitempty"`
@@ -95,7 +97,7 @@ func main() {
 		if len(os.Args) > 0 {
 			switch args[0] {
 			case "--version":
-				fmt.Println(VERSION)
+				fmt.Println(version)
 				return
 			case "--gapplication-service":
 				isService = true

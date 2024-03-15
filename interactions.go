@@ -426,7 +426,7 @@ func setInitials() {
 
 	ui.items.Splice(0, ui.items.NItems(), []string{})
 
-	sorted := []processors.Entry{}
+	entrySlice := []processors.Entry{}
 
 	for _, v := range procs {
 		for _, proc := range v {
@@ -434,19 +434,62 @@ func setInitials() {
 
 			for _, entry := range e {
 				str := randomString(5)
+
+				if val, ok := history[entry.Searchable]; ok {
+					entry.Used = val.Used
+					entry.DaysSinceUsed = val.daysSinceUsed
+				}
+
 				entry.Identifier = str
 
-				sorted = append(sorted, entry)
 				entries[str] = entry
+				entrySlice = append(entrySlice, entry)
 			}
 		}
 	}
 
-	slices.SortFunc(sorted, func(a, b processors.Entry) int {
-		return strings.Compare(strings.ToLower(a.Label), strings.ToLower(b.Label))
+	if len(entries) == 0 {
+		return
+	}
+
+	for k, v := range entrySlice {
+		usageModifier := func(item processors.Entry) int {
+			base := 10
+
+			if item.Used > 0 {
+				if item.DaysSinceUsed > 0 {
+					base -= item.DaysSinceUsed
+				}
+
+				return base * item.Used
+			}
+
+			return 0
+		}
+
+		usageScore := usageModifier(v)
+
+		entrySlice[k].ScoreFuzzyFinal = float64(usageScore)
+		fmt.Println(v.Label, entrySlice[k].ScoreFuzzyFinal)
+	}
+
+	slices.SortFunc(entrySlice, func(a, b processors.Entry) int {
+		if a.ScoreFuzzyFinal == b.ScoreFuzzyFinal {
+			return strings.Compare(a.Label, b.Label)
+		}
+
+		if a.ScoreFuzzyFinal > b.ScoreFuzzyFinal {
+			return -1
+		}
+
+		if a.ScoreFuzzyFinal < b.ScoreFuzzyFinal {
+			return 1
+		}
+
+		return 0
 	})
 
-	for _, v := range sorted {
+	for _, v := range entrySlice {
 		ui.items.Append(v.Identifier)
 	}
 

@@ -77,9 +77,14 @@ var (
 	procs     map[string][]Processor
 	history   map[string]HistoryEntry
 	isService bool
+	isRunning bool
 )
 
 func main() {
+	if isRunning {
+		return
+	}
+
 	withArgs := false
 
 	if len(os.Args) > 1 {
@@ -136,8 +141,13 @@ func main() {
 }
 
 func activate(app *gtk.Application) {
+	if isRunning {
+		return
+	}
+
 	if isService {
 		now = time.Now()
+		isRunning = true
 	}
 
 	cfgDir, err := os.UserConfigDir()

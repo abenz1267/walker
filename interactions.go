@@ -437,6 +437,7 @@ func saveToHistory(searchterm string) {
 
 func quit() {
 	if isService {
+		isRunning = false
 		measured = false
 		ui.app.Hold()
 		ui.appwin.Close()

@@ -28,6 +28,8 @@ type Processor interface {
 
 var keys map[uint]uint
 
+var activationEnabled bool
+
 func setupInteractions() {
 	keys = make(map[uint]uint)
 	keys[gdk.KEY_j] = 0
@@ -38,6 +40,14 @@ func setupInteractions() {
 	keys[gdk.KEY_s] = 5
 	keys[gdk.KEY_d] = 6
 	keys[gdk.KEY_f] = 7
+	keys[gdk.KEY_J] = 0
+	keys[gdk.KEY_K] = 1
+	keys[gdk.KEY_L] = 2
+	keys[gdk.KEY_colon] = 3
+	keys[gdk.KEY_A] = 4
+	keys[gdk.KEY_S] = 5
+	keys[gdk.KEY_D] = 6
+	keys[gdk.KEY_F] = 7
 
 	internal := make(map[string]Processor)
 	internal["applications"] = processors.GetApplications()
@@ -120,14 +130,21 @@ func selectPrev() {
 	}
 }
 
-func selectActivationMode(val uint) {
+func selectActivationMode(val uint, keepOpen bool) {
 	ui.selection.SetSelected(keys[val])
+
+	if keepOpen {
+		activateItem(true)
+		return
+	}
+
 	activateItem(false)
 }
 
 func handleListKeysReleased(val uint, code uint, modifier gdk.ModifierType) {
 	if !config.DisableActivationMode {
 		if val == gdk.KEY_Control_L {
+			activationEnabled = true
 			c := ui.appwin.CSSClasses()
 			n, _ := slices.BinarySearch(c, "activation")
 			c = slices.Delete(c, n, n+1)
@@ -139,10 +156,16 @@ func handleListKeysReleased(val uint, code uint, modifier gdk.ModifierType) {
 
 func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	switch val {
+	case gdk.KEY_J, gdk.KEY_K, gdk.KEY_L, gdk.KEY_colon, gdk.KEY_A, gdk.KEY_S, gdk.KEY_D, gdk.KEY_F:
+		if !config.DisableActivationMode {
+			if modifier.Has(gdk.ShiftMask) && modifier.Has(gdk.ControlMask) {
+				selectActivationMode(val, true)
+			}
+		}
 	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_semicolon, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
 		if !config.DisableActivationMode {
 			if modifier == gdk.ControlMask {
-				selectActivationMode(val)
+				selectActivationMode(val, false)
 			}
 		}
 	default:
@@ -159,6 +182,7 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			c = append(c, "activation")
 			ui.appwin.SetCSSClasses(c)
 			ui.list.GrabFocus()
+			activationEnabled = true
 
 			return true
 		}
@@ -251,7 +275,9 @@ func activateItem(keepOpen bool) {
 		return
 	}
 
-	ui.search.SetText("")
+	if !activationEnabled {
+		ui.search.SetText("")
+	}
 }
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"

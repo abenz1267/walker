@@ -157,9 +157,11 @@ func createUI(app *gtk.Application) {
 					log.Fatalln("child is not a box")
 				}
 
-				box.GrabFocus()
-				ui.appwin.SetCSSClasses([]string{entries[key].Class})
-				ui.search.GrabFocus()
+				if !activationEnabled {
+					box.GrabFocus()
+					ui.appwin.SetCSSClasses([]string{entries[key].Class})
+					ui.search.GrabFocus()
+				}
 			}
 		}
 

@@ -157,6 +157,9 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 | `Ctrl+j` (if ActivationMode is disabled), `Down`, `Tab`                 | next entry                         |
 | `Ctrl+k` (if ActivationMode is disabled), `Up`, `LEFT_TAB` (shift+tab?) | previous entry                     |
 | `Escape`                                                                | close                              |
+| Hold `Ctrl`                                                             | start activation mode              |
+| Hold `Ctrl+<label>`                                                     | activate item                      |
+| Hold `Ctrl+Shift+<label>`                                               | activate item (don't close)        |
 
 ### Activation Mode
 

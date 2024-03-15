@@ -1,4 +1,4 @@
-package processors
+package modules
 
 import (
 	"net/url"

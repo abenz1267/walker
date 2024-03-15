@@ -4,15 +4,19 @@
 
 ## Features
 
-- Desktop Entries with actions
-- Runner (default prefix: `!`)
-- Websearch (default prefix: `?`)
 - Icons
 - notifications on failure configurable
 - extend with... anything?
 - start as service for faster startup
 - run result via label
 - display images
+
+## Builtin Modules
+
+- runner
+- desktop applications
+- websearch
+- hyprland windows
 
 ## Requirements
 
@@ -70,7 +74,7 @@ See `config.example.json` and `style.example.css`.
     "size": 38,
     "image_height": 200
   },
-  "processors": [
+  "modules": [
     {
       "name": "runner",
       "prefix": "!"
@@ -87,16 +91,16 @@ See `config.example.json` and `style.example.css`.
 }
 ```
 
-## Providing your own processors
+## Providing your own modules
 
-If you want to extend walker with your own processors, you can do that in the config.
+If you want to extend walker with your own modules, you can do that in the config.
 
 ```json
 {
-  "processors": [
+  "modules": [
     {
       "prefix": "!",
-      "name": "myprocessor",
+      "name": "mymodule",
       "cmd": "node /path/to/myscript.js"
     }
   ]

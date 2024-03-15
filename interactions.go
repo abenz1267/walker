@@ -12,15 +12,15 @@ import (
 	"strings"
 	"time"
 
-	"github.com/abenz1267/walker/processors"
+	"github.com/abenz1267/walker/modules"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
-type Processor interface {
-	Entries(term string) []processors.Entry
+type Module interface {
+	Entries(term string) []modules.Entry
 	Prefix() string
 	SetPrefix(val string)
 	Name() string
@@ -49,21 +49,22 @@ func setupInteractions() {
 	keys[gdk.KEY_D] = 6
 	keys[gdk.KEY_F] = 7
 
-	internal := make(map[string]Processor)
-	internal["applications"] = processors.GetApplications()
-	internal["runner"] = &processors.Runner{ShellConfig: config.ShellConfig}
-	internal["websearch"] = &processors.Websearch{}
+	internal := make(map[string]Module)
+	internal["applications"] = modules.GetApplications()
+	internal["runner"] = &modules.Runner{ShellConfig: config.ShellConfig}
+	internal["websearch"] = &modules.Websearch{}
+	internal["hyprland"] = &modules.Hyprland{}
 
-	enabled := []Processor{}
+	enabled := []Module{}
 
-	for _, v := range config.Processors {
+	for _, v := range config.Modules {
 		if val, ok := internal[v.Name]; ok {
 			val.SetPrefix(v.Prefix)
 			enabled = append(enabled, val)
 			continue
 		}
 
-		enabled = append(enabled, &processors.External{
+		enabled = append(enabled, &modules.External{
 			Prfx:    v.Prefix,
 			Nme:     v.Name,
 			Src:     v.Src,
@@ -76,7 +77,7 @@ func setupInteractions() {
 		ui.prefixClasses[v.Prefix()] = append(ui.prefixClasses[v.Prefix()], v.Name())
 	}
 
-	procs = make(map[string][]Processor)
+	procs = make(map[string][]Module)
 
 	for _, v := range enabled {
 		procs[v.Prefix()] = append(procs[v.Prefix()], v)
@@ -302,6 +303,14 @@ func randomString(length int) string {
 func process() {
 	clear(entries)
 
+	if ui.search.Text() == "" {
+		if !ui.ListAlwaysShow {
+			setInitials()
+		}
+
+		return
+	}
+
 	if !ui.ListAlwaysShow {
 		ui.list.SetVisible(false)
 	}
@@ -339,7 +348,7 @@ func process() {
 		ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
 	}
 
-	entrySlice := []processors.Entry{}
+	entrySlice := []modules.Entry{}
 
 	for _, proc := range p {
 		e := proc.Entries(text)
@@ -432,7 +441,7 @@ func setInitials() {
 
 	ui.items.Splice(0, ui.items.NItems(), []string{})
 
-	entrySlice := []processors.Entry{}
+	entrySlice := []modules.Entry{}
 
 	for _, v := range procs {
 		for _, proc := range v {
@@ -472,7 +481,7 @@ func setInitials() {
 	ui.selection.SetSelected(0)
 }
 
-func usageModifier(item processors.Entry) int {
+func usageModifier(item modules.Entry) int {
 	base := 10
 
 	if item.Used > 0 {
@@ -486,8 +495,8 @@ func usageModifier(item processors.Entry) int {
 	return 0
 }
 
-func sortEntries(entries []processors.Entry) {
-	slices.SortFunc(entries, func(a, b processors.Entry) int {
+func sortEntries(entries []modules.Entry) {
+	slices.SortFunc(entries, func(a, b modules.Entry) int {
 		if a.ScoreFuzzyFinal == b.ScoreFuzzyFinal {
 			if !a.LastUsed.IsZero() && !b.LastUsed.IsZero() {
 				return b.LastUsed.Compare(a.LastUsed)
@@ -560,6 +569,6 @@ func quit() {
 		ui.app.Hold()
 		ui.appwin.Close()
 	} else {
-		ui.app.Quit()
+		ui.appwin.Close()
 	}
 }

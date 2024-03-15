@@ -11,7 +11,7 @@ import (
 	"path/filepath"
 	"time"
 
-	"github.com/abenz1267/walker/processors"
+	"github.com/abenz1267/walker/modules"
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -20,19 +20,19 @@ import (
 var version string
 
 type Config struct {
-	Placeholder           string                 `json:"placeholder,omitempty"`
-	NotifyOnFail          bool                   `json:"notify_on_fail,omitempty"`
-	ShowInitialEntries    bool                   `json:"show_initial_entries,omitempty"`
-	ShellConfig           string                 `json:"shell_config,omitempty"`
-	Terminal              string                 `json:"terminal,omitempty"`
-	Orientation           string                 `json:"orientation,omitempty"`
-	Fullscreen            bool                   `json:"fullscreen,omitempty"`
-	Processors            []processors.Processor `json:"processors,omitempty"`
-	Icons                 Icons                  `json:"icons,omitempty"`
-	Align                 Align                  `json:"align,omitempty"`
-	List                  List                   `json:"list,omitempty"`
-	Search                Search                 `json:"search,omitempty"`
-	DisableActivationMode bool                   `json:"disable_activation_mode,omitempty"`
+	Placeholder           string           `json:"placeholder,omitempty"`
+	NotifyOnFail          bool             `json:"notify_on_fail,omitempty"`
+	ShowInitialEntries    bool             `json:"show_initial_entries,omitempty"`
+	ShellConfig           string           `json:"shell_config,omitempty"`
+	Terminal              string           `json:"terminal,omitempty"`
+	Orientation           string           `json:"orientation,omitempty"`
+	Fullscreen            bool             `json:"fullscreen,omitempty"`
+	Modules               []modules.Module `json:"modules,omitempty"`
+	Icons                 Icons            `json:"icons,omitempty"`
+	Align                 Align            `json:"align,omitempty"`
+	List                  List             `json:"list,omitempty"`
+	Search                Search           `json:"search,omitempty"`
+	DisableActivationMode bool             `json:"disable_activation_mode,omitempty"`
 }
 
 type Search struct {
@@ -77,8 +77,8 @@ var (
 	measured  bool
 	config    *Config
 	ui        *UI
-	entries   map[string]processors.Entry
-	procs     map[string][]Processor
+	entries   map[string]modules.Entry
+	procs     map[string][]Module
 	history   map[string]HistoryEntry
 	isService bool
 	isRunning bool
@@ -190,7 +190,7 @@ func activate(app *gtk.Application) {
 				Start:  0,
 			},
 		},
-		Processors: []processors.Processor{
+		Modules: []modules.Module{
 			{Name: "runner", Prefix: "!"},
 			{Name: "websearch", Prefix: "?"},
 			{Name: "applications", Prefix: ""},
@@ -221,7 +221,7 @@ func activate(app *gtk.Application) {
 
 	go setTerminal()
 
-	entries = make(map[string]processors.Entry)
+	entries = make(map[string]modules.Entry)
 
 	createUI(app)
 

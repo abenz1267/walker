@@ -33,7 +33,7 @@
     "size": 38,
     "image_height": 200
   },
-  "processors": [
+  "modules": [
     {
       "name": "runner",
       "prefix": "!"

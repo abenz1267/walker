@@ -1,4 +1,4 @@
-package processors
+package modules
 
 import (
 	"encoding/json"
@@ -9,7 +9,7 @@ import (
 	"path/filepath"
 )
 
-type Processor struct {
+type Module struct {
 	Prefix  string `json:"prefix,omitempty"`
 	Name    string `json:"name,omitempty"`
 	Src     string `json:"src,omitempty"`

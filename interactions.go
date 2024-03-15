@@ -470,7 +470,6 @@ func setInitials() {
 		usageScore := usageModifier(v)
 
 		entrySlice[k].ScoreFuzzyFinal = float64(usageScore)
-		fmt.Println(v.Label, entrySlice[k].ScoreFuzzyFinal)
 	}
 
 	slices.SortFunc(entrySlice, func(a, b processors.Entry) int {

@@ -24,7 +24,7 @@ type Module interface {
 	Prefix() string
 	SetPrefix(val string)
 	Name() string
-	IsAvailable() bool
+	// IsAvailable() bool
 }
 
 var keys map[uint]uint

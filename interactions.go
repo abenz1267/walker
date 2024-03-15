@@ -24,6 +24,7 @@ type Module interface {
 	Prefix() string
 	SetPrefix(val string)
 	Name() string
+	IsAvailable() bool
 }
 
 var keys map[uint]uint
@@ -53,7 +54,14 @@ func setupInteractions() {
 	internal["applications"] = modules.GetApplications()
 	internal["runner"] = &modules.Runner{ShellConfig: config.ShellConfig}
 	internal["websearch"] = &modules.Websearch{}
-	internal["hyprland"] = &modules.Hyprland{}
+
+	hyprctl, _ := exec.LookPath("hyprctl")
+
+	if hyprctl != "" {
+		internal["hyprland"] = &modules.Hyprland{}
+	} else {
+		fmt.Println("hyprland not found. disabling hyprland module.")
+	}
 
 	enabled := []Module{}
 

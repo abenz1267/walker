@@ -1,7 +1,5 @@
 # Walker - Application Runner
 
-WIP.
-
 ![Screenshot](https://github.com/abenz1267/walker/blob/master/screenshot.png?raw=true)
 
 ## Features
@@ -13,6 +11,7 @@ WIP.
 - notifications on failure configurable
 - extend with... anything?
 - start as service for faster startup
+- run result via label
 
 ## Requirements
 
@@ -42,6 +41,7 @@ See `config.example.json` and `style.example.css`.
   "shell_config": "/home/andrej/.zshrc", // for parsing shell aliases
   "notify_on_fail": true,
   "show_initial_entries": true, // always shows entries for emtpy search
+  "disable_activation_mode": false,
   "fullscreen": true,
   "search": {
     "delay": 150, // in ms
@@ -150,13 +150,17 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 
 ## Keybinds
 
-| Key                                     | Description                        |
-| --------------------------------------- | ---------------------------------- |
-| `Enter`                                 | activate selection                 |
-| `Ctrl+Enter`                            | activate selection without closing |
-| `Ctrl+j`, `Down`, `Tab`                 | next entry                         |
-| `Ctrl+k`, `Up`, `LEFT_TAB` (shift+tab?) | previous entry                     |
-| `Escape`                                | close                              |
+| Key                                                                     | Description                        |
+| ----------------------------------------------------------------------- | ---------------------------------- |
+| `Enter`                                                                 | activate selection                 |
+| `Ctrl+Enter`                                                            | activate selection without closing |
+| `Ctrl+j` (if ActivationMode is disabled), `Down`, `Tab`                 | next entry                         |
+| `Ctrl+k` (if ActivationMode is disabled), `Up`, `LEFT_TAB` (shift+tab?) | previous entry                     |
+| `Escape`                                                                | close                              |
+
+### Activation Mode
+
+Activation-Mode can be triggered by holding `LCtrl`. The window will get an additional class `activation` you can use for styling. While activated, you can run items by pressing their respective label. This only works for the top 8 items.
 
 ## Watchout for...
 

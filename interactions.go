@@ -19,8 +19,6 @@ import (
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
-type KeyPressHandler func(uint, uint, gdk.ModifierType) bool
-
 type Processor interface {
 	Entries(term string) []processors.Entry
 	Prefix() string
@@ -28,7 +26,19 @@ type Processor interface {
 	Name() string
 }
 
+var keys map[uint]uint
+
 func setupInteractions() {
+	keys = make(map[uint]uint)
+	keys[gdk.KEY_j] = 0
+	keys[gdk.KEY_k] = 1
+	keys[gdk.KEY_l] = 2
+	keys[gdk.KEY_h] = 3
+	keys[gdk.KEY_a] = 4
+	keys[gdk.KEY_s] = 5
+	keys[gdk.KEY_d] = 6
+	keys[gdk.KEY_f] = 7
+
 	internal := make(map[string]Processor)
 	internal["applications"] = processors.GetApplications()
 	internal["runner"] = &processors.Runner{ShellConfig: config.ShellConfig}
@@ -63,11 +73,19 @@ func setupInteractions() {
 	}
 
 	keycontroller := gtk.NewEventControllerKey()
-	keycontroller.ConnectKeyPressed(handleKeys())
+	keycontroller.ConnectKeyPressed(handleSearchKeysPressed)
 
 	ui.search.AddController(keycontroller)
 	ui.search.Connect("search-changed", process)
 	ui.search.Connect("activate", func() { activateItem(false) })
+
+	if !config.DisableActivationMode {
+		listkc := gtk.NewEventControllerKey()
+		listkc.ConnectKeyReleased(handleListKeysReleased)
+		listkc.ConnectKeyPressed(handleListKeysPressed)
+
+		ui.list.AddController(listkc)
+	}
 
 	if config.ShowInitialEntries {
 		setInitials()
@@ -102,37 +120,82 @@ func selectPrev() {
 	}
 }
 
-func handleKeys() KeyPressHandler {
-	return func(val uint, code uint, modifier gdk.ModifierType) bool {
-		switch val {
-		case gdk.KEY_Return:
+func selectActivationMode(val uint) {
+	ui.selection.SetSelected(keys[val])
+	activateItem(false)
+}
+
+func handleListKeysReleased(val uint, code uint, modifier gdk.ModifierType) {
+	if !config.DisableActivationMode {
+		if val == gdk.KEY_Control_L {
+			c := ui.appwin.CSSClasses()
+			n, _ := slices.BinarySearch(c, "activation")
+			c = slices.Delete(c, n, n+1)
+			ui.appwin.SetCSSClasses(c)
+			ui.search.GrabFocus()
+		}
+	}
+}
+
+func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
+	switch val {
+	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_h, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
+		if !config.DisableActivationMode {
 			if modifier == gdk.ControlMask {
-				activateItem(true)
+				selectActivationMode(val)
 			}
-		case gdk.KEY_Escape:
-			quit()
-		case gdk.KEY_Down:
+		}
+	default:
+		return false
+	}
+
+	return true
+}
+
+func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
+	if !config.DisableActivationMode {
+		if val == gdk.KEY_Control_L {
+			c := ui.appwin.CSSClasses()
+			c = append(c, "activation")
+			ui.appwin.SetCSSClasses(c)
+			ui.list.GrabFocus()
+
+			return true
+		}
+	}
+
+	switch val {
+	case gdk.KEY_Return:
+		if modifier == gdk.ControlMask {
+			activateItem(true)
+		}
+	case gdk.KEY_Escape:
+		quit()
+	case gdk.KEY_Down:
+		selectNext()
+	case gdk.KEY_Up:
+		selectPrev()
+	case gdk.KEY_Tab:
+		selectNext()
+	case gdk.KEY_ISO_Left_Tab:
+		selectPrev()
+	case gdk.KEY_j:
+		if config.DisableActivationMode {
 			selectNext()
-		case gdk.KEY_Up:
+		}
+	case gdk.KEY_k:
+		if config.DisableActivationMode {
 			selectPrev()
-		case gdk.KEY_Tab:
-			selectNext()
-		case gdk.KEY_ISO_Left_Tab:
-			selectPrev()
-		case gdk.KEY_j:
-			if modifier == gdk.ControlMask {
-				selectNext()
-			}
-		case gdk.KEY_k:
-			if modifier == gdk.ControlMask {
-				selectPrev()
-			}
-		default:
+		}
+	default:
+		if modifier == gdk.ControlMask {
 			return true
 		}
 
-		return true
+		return false
 	}
+
+	return true
 }
 
 func activateItem(keepOpen bool) {

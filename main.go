@@ -15,21 +15,22 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
-const VERSION = "0.0.12-git"
+const VERSION = "0.0.12"
 
 type Config struct {
-	Placeholder        string                 `json:"placeholder,omitempty"`
-	NotifyOnFail       bool                   `json:"notify_on_fail,omitempty"`
-	ShowInitialEntries bool                   `json:"show_initial_entries,omitempty"`
-	ShellConfig        string                 `json:"shell_config,omitempty"`
-	Terminal           string                 `json:"terminal,omitempty"`
-	Orientation        string                 `json:"orientation,omitempty"`
-	Fullscreen         bool                   `json:"fullscreen,omitempty"`
-	Processors         []processors.Processor `json:"processors,omitempty"`
-	Icons              Icons                  `json:"icons,omitempty"`
-	Align              Align                  `json:"align,omitempty"`
-	List               List                   `json:"list,omitempty"`
-	Search             Search                 `json:"search,omitempty"`
+	Placeholder           string                 `json:"placeholder,omitempty"`
+	NotifyOnFail          bool                   `json:"notify_on_fail,omitempty"`
+	ShowInitialEntries    bool                   `json:"show_initial_entries,omitempty"`
+	ShellConfig           string                 `json:"shell_config,omitempty"`
+	Terminal              string                 `json:"terminal,omitempty"`
+	Orientation           string                 `json:"orientation,omitempty"`
+	Fullscreen            bool                   `json:"fullscreen,omitempty"`
+	Processors            []processors.Processor `json:"processors,omitempty"`
+	Icons                 Icons                  `json:"icons,omitempty"`
+	Align                 Align                  `json:"align,omitempty"`
+	List                  List                   `json:"list,omitempty"`
+	Search                Search                 `json:"search,omitempty"`
+	DisableActivationMode bool                   `json:"disable_activation_mode,omitempty"`
 }
 
 type Search struct {
@@ -159,12 +160,13 @@ func activate(app *gtk.Application) {
 	cfgName := filepath.Join(cfgDir, "config.json")
 
 	config = &Config{
-		Terminal:           "",
-		Fullscreen:         true,
-		ShowInitialEntries: false,
-		ShellConfig:        "",
-		Placeholder:        "Search...",
-		NotifyOnFail:       true,
+		Terminal:              "",
+		Fullscreen:            true,
+		ShowInitialEntries:    false,
+		ShellConfig:           "",
+		Placeholder:           "Search...",
+		DisableActivationMode: false,
+		NotifyOnFail:          true,
 		Icons: Icons{
 			Hide: false,
 			Size: 32,

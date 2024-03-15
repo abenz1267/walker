@@ -19,6 +19,8 @@ var layout string
 //go:embed defaultstyle.css
 var style string
 
+var labels = []string{"j", "k", "l", "h", "a", "s", "d", "f"}
+
 type UI struct {
 	app            *gtk.Application
 	builder        *gtk.Builder
@@ -191,6 +193,7 @@ func createUI(app *gtk.Application) {
 
 				wrapper := gtk.NewBox(gtk.OrientationVertical, 0)
 				wrapper.SetCSSClasses([]string{"textwrapper"})
+				wrapper.SetHExpand(true)
 
 				if config.Icons.Hide || val.Icon != "" {
 					icon := gtk.NewImageFromIconName(val.Icon)
@@ -216,6 +219,14 @@ func createUI(app *gtk.Application) {
 					wrapper.Append(bottom)
 				} else {
 					wrapper.SetVAlign(gtk.AlignCenter)
+				}
+
+				if !config.DisableActivationMode {
+					if item.Position()+1 <= uint(len(labels)) {
+						l := gtk.NewLabel(labels[item.Position()])
+						l.SetCSSClasses([]string{"activationlabel"})
+						box.Append(l)
+					}
 				}
 			}
 		}

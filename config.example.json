@@ -6,6 +6,11 @@
   "notify_on_fail": true,
   "show_initial_entries": true,
   "fullscreen": true,
+  "disable_activation_mode": false,
+  "search": {
+    "delay": 150, // in ms
+    "hide_icons": true
+  },
   "align": {
     "width": 400,
     "horizontal": "center",

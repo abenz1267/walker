@@ -145,10 +145,17 @@ func handleListKeysReleased(val uint, code uint, modifier gdk.ModifierType) {
 	if !config.DisableActivationMode {
 		if val == gdk.KEY_Control_L {
 			activationEnabled = false
+
 			c := ui.appwin.CSSClasses()
-			n, _ := slices.BinarySearch(c, "activation")
-			c = slices.Delete(c, n, n+1)
+
+			for k, v := range c {
+				if v == "activation" {
+					c = slices.Delete(c, k, k+1)
+				}
+			}
+
 			ui.appwin.SetCSSClasses(c)
+
 			ui.search.GrabFocus()
 		}
 	}

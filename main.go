@@ -80,6 +80,8 @@ var (
 )
 
 func main() {
+	withArgs := false
+
 	if len(os.Args) > 1 {
 		args := os.Args[1:]
 
@@ -91,7 +93,7 @@ func main() {
 			case "--gapplication-service":
 				isService = true
 			case "--help", "-h", "--help-all":
-			// handled by gtk
+				withArgs = true
 			default:
 				fmt.Printf("Unsupported option '%s'\n", args[0])
 				return
@@ -105,7 +107,7 @@ func main() {
 
 	loadHistory()
 
-	if !isService {
+	if !isService && !withArgs {
 		tmp := os.TempDir()
 		if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
 			log.Println("lockfile exists. exiting.")
@@ -120,7 +122,6 @@ func main() {
 	}
 
 	app := gtk.NewApplication("dev.benz.walker", 0)
-
 	app.Connect("activate", activate)
 
 	app.Flags()

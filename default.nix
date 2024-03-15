@@ -1,20 +1,34 @@
 {
-  buildGoApplication,
+  buildGoModule,
   lib,
-  go,
   pkg-config,
   glib,
+  gobject-introspection,
+  gtk4,
+  gtk4-layer-shell,
+  gdk-pixbuf,
+  graphene,
+  cairo,
+  pango
 }:
-buildGoApplication {
+buildGoModule {
   pname = "walker";
   version = lib.fileContents ./version.txt;
 
-  pwd = ./.;
   src = ./.;
-  modules = ./gomod2nix.toml;
-  inherit go;
+  vendorHash = "sha256-mey6LyBKWhSlrjSztMHOX+g/fqlX3yvVIa6Rfgt6t/k=";
 
-  nativeBuildInputs = [pkg-config glib];
+  nativeBuildInputs = [pkg-config];
+  buildInputs = [
+    glib
+    gobject-introspection
+    gtk4
+    gtk4-layer-shell
+    gdk-pixbuf
+    graphene
+    cairo
+    pango
+  ];
 
   meta = with lib; {
     description = "Wayland-native application runner";

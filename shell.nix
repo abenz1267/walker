@@ -1,20 +1,30 @@
 {
   mkShell,
-  mkGoEnv,
-  gomod2nix,
   go,
   pkg-config,
+  glib,
+  gobject-introspection,
+  gtk4,
   gtk4-layer-shell,
+  gdk-pixbuf,
+  graphene,
+  cairo,
+  pango,
 }:
 mkShell {
   packages = [
-    (mkGoEnv {pwd = ./.;})
-
     # Build
-    gomod2nix
     go
+    pkg-config
 
     # Dependencies
-    # gtk4-layer-shell
+    glib
+    gobject-introspection
+    gtk4
+    gtk4-layer-shell
+    gdk-pixbuf
+    graphene
+    cairo
+    pango
   ];
 }

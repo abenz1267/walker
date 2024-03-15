@@ -19,7 +19,7 @@ var layout string
 //go:embed defaultstyle.css
 var style string
 
-var labels = []string{"j", "k", "l", "h", "a", "s", "d", "f"}
+var labels = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
 
 type UI struct {
 	app            *gtk.Application

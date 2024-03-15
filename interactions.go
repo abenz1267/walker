@@ -33,7 +33,7 @@ func setupInteractions() {
 	keys[gdk.KEY_j] = 0
 	keys[gdk.KEY_k] = 1
 	keys[gdk.KEY_l] = 2
-	keys[gdk.KEY_h] = 3
+	keys[gdk.KEY_semicolon] = 3
 	keys[gdk.KEY_a] = 4
 	keys[gdk.KEY_s] = 5
 	keys[gdk.KEY_d] = 6
@@ -139,7 +139,7 @@ func handleListKeysReleased(val uint, code uint, modifier gdk.ModifierType) {
 
 func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	switch val {
-	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_h, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
+	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_semicolon, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
 		if !config.DisableActivationMode {
 			if modifier == gdk.ControlMask {
 				selectActivationMode(val)

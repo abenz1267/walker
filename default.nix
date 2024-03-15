@@ -3,7 +3,7 @@
   lib,
   go,
   pkg-config,
-  glibc,
+  glib,
 }:
 buildGoApplication {
   pname = "walker";
@@ -14,7 +14,7 @@ buildGoApplication {
   modules = ./gomod2nix.toml;
   inherit go;
 
-  nativeBuildInputs = [pkg-config glibc];
+  nativeBuildInputs = [pkg-config glib];
 
   meta = with lib; {
     description = "Wayland-native application runner";

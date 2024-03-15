@@ -144,7 +144,7 @@ func selectActivationMode(val uint, keepOpen bool) {
 func handleListKeysReleased(val uint, code uint, modifier gdk.ModifierType) {
 	if !config.DisableActivationMode {
 		if val == gdk.KEY_Control_L {
-			activationEnabled = true
+			activationEnabled = false
 			c := ui.appwin.CSSClasses()
 			n, _ := slices.BinarySearch(c, "activation")
 			c = slices.Delete(c, n, n+1)

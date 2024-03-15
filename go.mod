@@ -1,6 +1,6 @@
 module github.com/abenz1267/walker
 
-go 1.22.1
+go 1.21.7
 
 require (
 	github.com/diamondburned/gotk4-layer-shell/pkg v0.0.0-20240109211357-6efa9f6dc438

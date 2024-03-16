@@ -149,7 +149,7 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 }
 
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
-	if !cfg.DisableActivationMode {
+	if !cfg.DisableActivationMode && ui.selection.NItems() != 0 {
 		if val == gdk.KEY_Control_L {
 			c := ui.appwin.CSSClasses()
 			c = append(c, "activation")

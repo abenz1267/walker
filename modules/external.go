@@ -45,7 +45,7 @@ func (e External) Entries(term string) []Entry {
 		return entries
 	}
 
-	if e.prefix != "" && len(term) < 2 {
+	if e.prefix != "" && len(term) == 1 {
 		return entries
 	}
 

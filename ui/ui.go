@@ -25,6 +25,15 @@ var style string
 
 var labels = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
 
+var (
+	cfg      *config.Config
+	ui       *UI
+	entries  map[string]modules.Entry
+	procs    map[string][]modules.Workable
+	hstry    history.History
+	appstate *state.AppState
+)
+
 type UI struct {
 	app            *gtk.Application
 	builder        *gtk.Builder
@@ -58,7 +67,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 		entries = make(map[string]modules.Entry)
 
-		createUI(app)
+		setupUI(app)
 
 		setupInteractions()
 
@@ -83,7 +92,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 	}
 }
 
-func createUI(app *gtk.Application) {
+func setupUI(app *gtk.Application) {
 	if !gtk4layershell.IsSupported() {
 		log.Fatalln("gtk-layer-shell not supported")
 	}
@@ -268,6 +277,8 @@ func createUI(app *gtk.Application) {
 				}
 
 				top := gtk.NewLabel(val.Label)
+				top.SetMaxWidthChars(0)
+				top.SetWrap(true)
 				top.SetHAlign(gtk.AlignStart)
 				top.SetCSSClasses([]string{"label"})
 
@@ -275,6 +286,8 @@ func createUI(app *gtk.Application) {
 
 				if val.Sub != "" {
 					bottom := gtk.NewLabel(val.Sub)
+					bottom.SetMaxWidthChars(0)
+					bottom.SetWrap(true)
 					bottom.SetHAlign(gtk.AlignStart)
 					bottom.SetCSSClasses([]string{"sub"})
 

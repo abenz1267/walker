@@ -88,7 +88,7 @@ func Get() *Config {
 			ImageHeight: 100,
 		},
 		Search: Search{
-			Delay:     150,
+			Delay:     0,
 			HideIcons: false,
 		},
 		Align: Align{
@@ -103,7 +103,7 @@ func Get() *Config {
 			},
 		},
 		Modules: []Module{
-			{Name: "runner", Prefix: "!"},
+			{Name: "runner", Prefix: ""},
 			{Name: "websearch", Prefix: "?"},
 			{Name: "applications", Prefix: ""},
 		},

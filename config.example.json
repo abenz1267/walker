@@ -36,7 +36,7 @@
   "modules": [
     {
       "name": "runner",
-      "prefix": "!"
+      "prefix": ""
     },
     {
       "name": "applications",

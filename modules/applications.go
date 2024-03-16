@@ -7,37 +7,16 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
-	"time"
 
+	"github.com/abenz1267/walker/config"
 	"github.com/adrg/xdg"
 )
 
 const ApplicationsName = "applications"
 
-type Entry struct {
-	Label           string    `json:"label,omitempty"`
-	Sub             string    `json:"sub,omitempty"`
-	Exec            string    `json:"exec,omitempty"`
-	Terminal        bool      `json:"terminal,omitempty"`
-	Icon            string    `json:"icon,omitempty"`
-	IconIsImage     bool      `json:"icon_is_image,omitempty"`
-	HideText        bool      `json:"hide_text,omitempty"`
-	Searchable      string    `json:"searchable,omitempty"`
-	Categories      []string  `json:"categories,omitempty"`
-	Notifyable      bool      `json:"notifyable,omitempty"`
-	Class           string    `json:"class,omitempty"`
-	History         bool      `json:"history,omitempty"`
-	Identifier      string    `json:"-"`
-	Used            int       `json:"-"`
-	DaysSinceUsed   int       `json:"-"`
-	LastUsed        time.Time `json:"-"`
-	ScoreFuzzy      int       `json:"-"`
-	ScoreFuzzyFinal float64   `json:"-"`
-}
-
 type Applications struct {
-	Apps []Application `json:"apps,omitempty"`
-	Prfx string        `json:"prfx,omitempty"`
+	apps   []Application
+	prefix string
 }
 
 type Application struct {
@@ -45,38 +24,31 @@ type Application struct {
 	Actions []Entry `json:"actions,omitempty"`
 }
 
-func GetApplications() *Applications {
-	entries := parse()
-
-	for k, v := range entries {
-		entries[k].Generic.Searchable = fmt.Sprintf("%s %s", v.Generic.Sub, v.Generic.Label)
-
-		for n, a := range v.Actions {
-			entries[k].Actions[n].Searchable = fmt.Sprintf("%s %s", a.Sub, a.Label)
-		}
+func (a Applications) Setup(cfg *config.Config) Workable {
+	module := find(cfg.Modules, a.Name())
+	if module == nil {
+		return nil
 	}
 
-	return &Applications{
-		Apps: entries,
-	}
+	a.prefix = module.Prefix
+
+	a.apps = parse()
+
+	return a
 }
 
 func (a Applications) Name() string {
 	return ApplicationsName
 }
 
-func (a *Applications) SetPrefix(val string) {
-	a.Prfx = val
-}
-
 func (a Applications) Prefix() string {
-	return a.Prfx
+	return a.prefix
 }
 
 func (a Applications) Entries(_ string) []Entry {
 	entries := []Entry{}
 
-	for _, v := range a.Apps {
+	for _, v := range a.apps {
 		if len(v.Actions) > 0 {
 			entries = append(entries, v.Actions...)
 
@@ -118,8 +90,9 @@ func parse() []Application {
 
 				app := Application{
 					Generic: Entry{
-						Class:   ApplicationsName,
-						History: true,
+						Class:    ApplicationsName,
+						History:  true,
+						Matching: Fuzzy,
 					},
 					Actions: []Entry{},
 				}
@@ -131,12 +104,14 @@ func parse() []Application {
 
 					if strings.HasPrefix(line, "[Desktop Action") {
 						app.Actions = append(app.Actions, Entry{
-							Sub:        app.Generic.Label,
-							Icon:       app.Generic.Icon,
-							Terminal:   app.Generic.Terminal,
-							Class:      ApplicationsName,
-							Categories: app.Generic.Categories,
-							History:    app.Generic.History,
+							Sub:               app.Generic.Label,
+							Icon:              app.Generic.Icon,
+							Terminal:          app.Generic.Terminal,
+							Class:             ApplicationsName,
+							Matching:          app.Generic.Matching,
+							Categories:        app.Generic.Categories,
+							History:           app.Generic.History,
+							HistoryIdentifier: app.Generic.Label,
 						})
 
 						isAction = true
@@ -155,6 +130,7 @@ func parse() []Application {
 					if !isAction {
 						if strings.HasPrefix(line, "Name=") {
 							app.Generic.Label = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
+							app.Generic.HistoryIdentifier = app.Generic.Label
 							continue
 						}
 
@@ -206,6 +182,7 @@ func parse() []Application {
 
 						if strings.HasPrefix(line, "Name=") {
 							app.Actions[len(app.Actions)-1].Label = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
+							app.Actions[len(app.Actions)-1].HistoryIdentifier = fmt.Sprintf("%s:%s", app.Actions[len(app.Actions)-1].HistoryIdentifier, app.Actions[len(app.Actions)-1].Label)
 							continue
 						}
 					}

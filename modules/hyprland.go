@@ -7,22 +7,37 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+
+	"github.com/abenz1267/walker/config"
 )
 
 type Hyprland struct {
-	Prfx string
+	prefix string
+}
+
+func (h Hyprland) Setup(cfg *config.Config) Workable {
+	module := find(cfg.Modules, h.Name())
+	if module == nil {
+		return nil
+	}
+
+	pth, _ := exec.LookPath("hyprctl")
+	if pth == "" {
+		log.Println("Hyprland not found. Disabling module.")
+		return nil
+	}
+
+	h.prefix = module.Prefix
+
+	return h
 }
 
 func (Hyprland) Name() string {
-	return "hyprlandwindows"
+	return "hyprland"
 }
 
 func (h Hyprland) Prefix() string {
-	return h.Prfx
-}
-
-func (h *Hyprland) SetPrefix(val string) {
-	h.Prfx = val
+	return h.prefix
 }
 
 type window struct {
@@ -73,13 +88,15 @@ func (Hyprland) Entries(term string) []Entry {
 		}
 
 		n := Entry{
-			Label:      v.title,
-			Sub:        "Hyprland",
-			Exec:       fmt.Sprintf("hyprctl dispatch focuswindow pid:%s", v.pid),
-			Categories: []string{"hyprland", "windows"},
-			Class:      "hyprland",
-			Notifyable: false,
-			History:    false,
+			Label:             v.title,
+			Sub:               "Hyprland",
+			Exec:              fmt.Sprintf("hyprctl dispatch focuswindow pid:%s", v.pid),
+			Categories:        []string{"hyprland", "windows"},
+			Class:             "hyprland",
+			Notifyable:        false,
+			History:           false,
+			Matching:          Fuzzy,
+			MinScoreToInclude: 50,
 		}
 
 		entries = append(entries, n)

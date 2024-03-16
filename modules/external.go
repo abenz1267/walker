@@ -6,47 +6,57 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+
+	"github.com/abenz1267/walker/config"
 )
 
 type External struct {
-	Prfx    string
-	Nme     string
-	Src     string
-	Cmd     string
-	History bool
+	prefix     string
+	ModuleName string
+	src        string
+	cmd        string
+}
+
+func (e External) Setup(cfg *config.Config) Workable {
+	module := find(cfg.External, e.Name())
+	if module == nil {
+		return nil
+	}
+
+	e.prefix = module.Prefix
+	e.src = module.Src
+	e.cmd = module.Cmd
+
+	return e
 }
 
 func (e External) Name() string {
-	return e.Nme
+	return e.ModuleName
 }
 
 func (e External) Prefix() string {
-	return e.Prfx
-}
-
-func (e *External) SetPrefix(val string) {
-	e.Prfx = val
+	return e.prefix
 }
 
 func (e External) Entries(term string) []Entry {
 	entries := []Entry{}
 
-	if e.Cmd == "" {
+	if e.cmd == "" {
 		return entries
 	}
 
-	if e.Prfx != "" && len(term) < 2 {
+	if e.prefix != "" && len(term) < 2 {
 		return entries
 	}
 
-	if e.Prfx != "" {
-		term = strings.TrimPrefix(term, e.Prfx)
+	if e.prefix != "" {
+		term = strings.TrimPrefix(term, e.prefix)
 	}
 
-	if e.Src != "" {
-		e.Src = strings.ReplaceAll(e.Src, "%TERM%", term)
+	if e.src != "" {
+		e.src = strings.ReplaceAll(e.src, "%TERM%", term)
 
-		fields := strings.Fields(e.Src)
+		fields := strings.Fields(e.src)
 
 		cmd := exec.Command(fields[0], fields[1:]...)
 
@@ -63,12 +73,10 @@ func (e External) Entries(term string) []Entry {
 				txt := scanner.Text()
 
 				e := Entry{
-					Label:      txt,
-					Sub:        e.Nme,
-					Class:      e.Nme,
-					Exec:       strings.ReplaceAll(e.Cmd, "%RESULT%", txt),
-					Searchable: txt,
-					History:    e.History,
+					Label: txt,
+					Sub:   e.ModuleName,
+					Class: e.ModuleName,
+					Exec:  strings.ReplaceAll(e.cmd, "%RESULT%", txt),
 				}
 
 				entries = append(entries, e)
@@ -78,7 +86,7 @@ func (e External) Entries(term string) []Entry {
 		return entries
 	}
 
-	fields := strings.Fields(e.Cmd)
+	fields := strings.Fields(e.cmd)
 	fields = append(fields, term)
 
 	cmd := exec.Command(fields[0], fields[1:]...)
@@ -95,8 +103,8 @@ func (e External) Entries(term string) []Entry {
 	}
 
 	for _, v := range entries {
-		v.Class = e.Nme
-		v.Sub = e.Nme
+		v.Class = e.ModuleName
+		v.Sub = e.ModuleName
 	}
 
 	return entries

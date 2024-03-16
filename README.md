@@ -99,7 +99,7 @@ If you want to extend walker with your own modules, you can do that in the confi
 
 ```json
 {
-  "modules": [
+  "external": [
     {
       "prefix": "!",
       "name": "mymodule",
@@ -113,20 +113,26 @@ Your plugin simply needs to return json with the following format:
 
 ```go
 type Entry struct {
-	Label           string    `json:"label,omitempty"`
-	Sub             string    `json:"sub,omitempty"`
-	Exec            string    `json:"exec,omitempty"`
-	Terminal        bool      `json:"terminal,omitempty"`
-	Icon            string    `json:"icon,omitempty"`
-	IconIsImage     bool      `json:"icon_is_image,omitempty"`
-	HideText        bool      `json:"hide_text,omitempty"`
-	Searchable      string    `json:"searchable,omitempty"`
-	Categories      []string  `json:"categories,omitempty"`
-	Notifyable      bool      `json:"notifyable,omitempty"`
-	Class           string    `json:"class,omitempty"`
-	History         bool      `json:"history,omitempty"`
+	Label             string       `json:"label,omitempty"`
+	Sub               string       `json:"sub,omitempty"`
+	Exec              string       `json:"exec,omitempty"`
+	Terminal          bool         `json:"terminal,omitempty"`
+	Icon              string       `json:"icon,omitempty"`
+	IconIsImage       bool         `json:"icon_is_image,omitempty"`
+	HideText          bool         `json:"hide_text,omitempty"`
+	Categories        []string     `json:"categories,omitempty"`
+	Notifyable        bool         `json:"notifyable,omitempty"`
+	Class             string       `json:"class,omitempty"`
+	History           bool         `json:"history,omitempty"`
+	HistoryIdentifier string       `json:"history_identifier,omitempty"`
+	Matching          MatchingType `json:"matching,omitempty"`
+	ScoreFinal        float64      `json:"score_final,omitempty"`
+	MinScoreToInclude float64      `json:"min_score_to_include,omitempty"`
+	ScoreFuzzy        int          `json:"score_fuzzy,omitempty"`
 }
 ```
+
+F.e.:
 
 ```json
 [
@@ -162,6 +168,8 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 
 ## Keybinds
 
+AM = Activation Mode
+
 | Key                                                                     | Description                        |
 | ----------------------------------------------------------------------- | ---------------------------------- |
 | `Enter`                                                                 | activate selection                 |
@@ -169,9 +177,10 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 | `Ctrl+j` (if ActivationMode is disabled), `Down`, `Tab`                 | next entry                         |
 | `Ctrl+k` (if ActivationMode is disabled), `Up`, `LEFT_TAB` (shift+tab?) | previous entry                     |
 | `Escape`                                                                | close                              |
-| Hold `Ctrl`                                                             | start activation mode              |
-| Hold `Ctrl+<label>`                                                     | activate item                      |
-| Hold `Ctrl+Shift+<label>`                                               | activate item (don't close)        |
+| `Ctrl`                                                                  | start AM                           |
+| in AM: `<label>`                                                        | activate item                      |
+| in AM: Hold `Ctrl+<label>`                                              | activate item (don't close)        |
+| in AM: `Escape`                                                         | stop AM                            |
 
 ### Activation Mode
 

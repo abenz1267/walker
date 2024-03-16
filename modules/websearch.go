@@ -3,18 +3,27 @@ package modules
 import (
 	"net/url"
 	"strings"
+
+	"github.com/abenz1267/walker/config"
 )
 
 type Websearch struct {
-	Prfx string
+	prefix string
 }
 
-func (w *Websearch) SetPrefix(val string) {
-	w.Prfx = val
+func (w Websearch) Setup(cfg *config.Config) Workable {
+	module := find(cfg.Modules, w.Name())
+	if module == nil {
+		return nil
+	}
+
+	w.prefix = module.Prefix
+
+	return w
 }
 
 func (w Websearch) Prefix() string {
-	return w.Prfx
+	return w.prefix
 }
 
 func (Websearch) Name() string {
@@ -28,18 +37,18 @@ func (w Websearch) Entries(term string) []Entry {
 		return entries
 	}
 
-	if w.Prfx != "" && len(term) < 2 {
+	if w.prefix != "" && len(term) < 2 {
 		return entries
 	}
 
-	term = strings.TrimPrefix(term, w.Prfx)
+	term = strings.TrimPrefix(term, w.prefix)
 
 	n := Entry{
-		Label:      "Search with Google",
-		Sub:        "Websearch",
-		Exec:       "xdg-open https://www.google.com/search?q=" + url.QueryEscape(term),
-		Searchable: term,
-		Class:      "websearch",
+		Label:    "Search with Google",
+		Sub:      "Websearch",
+		Exec:     "xdg-open https://www.google.com/search?q=" + url.QueryEscape(term),
+		Class:    "websearch",
+		Matching: AlwaysBottom,
 	}
 
 	entries = append(entries, n)

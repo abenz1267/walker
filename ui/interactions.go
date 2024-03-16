@@ -1,4 +1,4 @@
-package main
+package ui
 
 import (
 	"encoding/json"
@@ -12,6 +12,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/abenz1267/walker/history"
 	"github.com/abenz1267/walker/modules"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
@@ -19,76 +20,41 @@ import (
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
-type Module interface {
-	Entries(term string) []modules.Entry
-	Prefix() string
-	SetPrefix(val string)
-	Name() string
-	// IsAvailable() bool
-}
-
 var keys map[uint]uint
 
 var activationEnabled bool
 
 func setupInteractions() {
-	keys = make(map[uint]uint)
-	keys[gdk.KEY_j] = 0
-	keys[gdk.KEY_k] = 1
-	keys[gdk.KEY_l] = 2
-	keys[gdk.KEY_semicolon] = 3
-	keys[gdk.KEY_a] = 4
-	keys[gdk.KEY_s] = 5
-	keys[gdk.KEY_d] = 6
-	keys[gdk.KEY_f] = 7
-	keys[gdk.KEY_J] = 0
-	keys[gdk.KEY_K] = 1
-	keys[gdk.KEY_L] = 2
-	keys[gdk.KEY_colon] = 3
-	keys[gdk.KEY_A] = 4
-	keys[gdk.KEY_S] = 5
-	keys[gdk.KEY_D] = 6
-	keys[gdk.KEY_F] = 7
+	createActivationKeys()
 
-	internal := make(map[string]Module)
-	internal["applications"] = modules.GetApplications()
-	internal["runner"] = &modules.Runner{ShellConfig: config.ShellConfig}
-	internal["websearch"] = &modules.Websearch{}
-
-	hyprctl, _ := exec.LookPath("hyprctl")
-
-	if hyprctl != "" {
-		internal["hyprland"] = &modules.Hyprland{}
-	} else {
-		fmt.Println("hyprland not found. disabling hyprland module.")
+	internals := []modules.Workable{
+		modules.Applications{},
+		modules.Runner{ShellConfig: cfg.ShellConfig},
+		modules.Websearch{},
+		modules.Hyprland{},
 	}
 
-	enabled := []Module{}
-
-	for _, v := range config.Modules {
-		if val, ok := internal[v.Name]; ok {
-			val.SetPrefix(v.Prefix)
-			enabled = append(enabled, val)
-			continue
+	for _, v := range cfg.External {
+		e := modules.External{
+			ModuleName: v.Name,
 		}
 
-		enabled = append(enabled, &modules.External{
-			Prfx:    v.Prefix,
-			Nme:     v.Name,
-			Src:     v.Src,
-			Cmd:     v.Cmd,
-			History: v.History,
-		})
+		internals = append(internals, e)
 	}
 
-	for _, v := range enabled {
-		ui.prefixClasses[v.Prefix()] = append(ui.prefixClasses[v.Prefix()], v.Name())
+	procs = make(map[string][]modules.Workable)
+
+	for _, v := range internals {
+		w := v.Setup(cfg)
+		if w != nil {
+			procs[w.Prefix()] = append(procs[w.Prefix()], w)
+		}
 	}
 
-	procs = make(map[string][]Module)
-
-	for _, v := range enabled {
-		procs[v.Prefix()] = append(procs[v.Prefix()], v)
+	for _, v := range procs {
+		for _, vv := range v {
+			ui.prefixClasses[vv.Prefix()] = append(ui.prefixClasses[vv.Prefix()], vv.Name())
+		}
 	}
 
 	keycontroller := gtk.NewEventControllerKey()
@@ -98,15 +64,14 @@ func setupInteractions() {
 	ui.search.Connect("search-changed", process)
 	ui.search.Connect("activate", func() { activateItem(false) })
 
-	if !config.DisableActivationMode {
+	if !cfg.DisableActivationMode {
 		listkc := gtk.NewEventControllerKey()
-		listkc.ConnectKeyReleased(handleListKeysReleased)
 		listkc.ConnectKeyPressed(handleListKeysPressed)
 
 		ui.list.AddController(listkc)
 	}
 
-	if config.ShowInitialEntries {
+	if cfg.ShowInitialEntries {
 		setInitials()
 	}
 }
@@ -150,9 +115,10 @@ func selectActivationMode(val uint, keepOpen bool) {
 	activateItem(false)
 }
 
-func handleListKeysReleased(val uint, code uint, modifier gdk.ModifierType) {
-	if !config.DisableActivationMode {
-		if val == gdk.KEY_Control_L {
+func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
+	switch val {
+	case gdk.KEY_Escape:
+		if !cfg.DisableActivationMode {
 			activationEnabled = false
 
 			c := ui.appwin.CSSClasses()
@@ -167,20 +133,11 @@ func handleListKeysReleased(val uint, code uint, modifier gdk.ModifierType) {
 
 			ui.search.GrabFocus()
 		}
-	}
-}
-
-func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
-	switch val {
-	case gdk.KEY_J, gdk.KEY_K, gdk.KEY_L, gdk.KEY_colon, gdk.KEY_A, gdk.KEY_S, gdk.KEY_D, gdk.KEY_F:
-		if !config.DisableActivationMode {
-			if modifier.Has(gdk.ShiftMask) && modifier.Has(gdk.ControlMask) {
-				selectActivationMode(val, true)
-			}
-		}
 	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_semicolon, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
-		if !config.DisableActivationMode {
+		if !cfg.DisableActivationMode {
 			if modifier == gdk.ControlMask {
+				selectActivationMode(val, true)
+			} else {
 				selectActivationMode(val, false)
 			}
 		}
@@ -192,7 +149,7 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 }
 
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
-	if !config.DisableActivationMode {
+	if !cfg.DisableActivationMode {
 		if val == gdk.KEY_Control_L {
 			c := ui.appwin.CSSClasses()
 			c = append(c, "activation")
@@ -220,11 +177,11 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	case gdk.KEY_ISO_Left_Tab:
 		selectPrev()
 	case gdk.KEY_j:
-		if config.DisableActivationMode {
+		if cfg.DisableActivationMode {
 			selectNext()
 		}
 	case gdk.KEY_k:
-		if config.DisableActivationMode {
+		if cfg.DisableActivationMode {
 			selectPrev()
 		}
 	default:
@@ -249,9 +206,9 @@ func activateItem(keepOpen bool) {
 		return
 	}
 
-	if config.Terminal != "" {
+	if cfg.Terminal != "" {
 		if entry.Terminal {
-			f = append([]string{config.Terminal, "-e"}, f...)
+			f = append([]string{cfg.Terminal, "-e"}, f...)
 		}
 	} else {
 		log.Println("terminal is not set")
@@ -265,7 +222,9 @@ func activateItem(keepOpen bool) {
 	}
 
 	if entry.History {
-		saveToHistory(entry.Searchable)
+		if entry.HistoryIdentifier != "" {
+			saveToHistory(entry.HistoryIdentifier)
+		}
 	}
 
 	if entry.Notifyable {
@@ -329,7 +288,7 @@ func process() {
 	if text == "" {
 		ui.items.Splice(0, ui.items.NItems(), []string{})
 
-		if config.ShowInitialEntries {
+		if cfg.ShowInitialEntries {
 			setInitials()
 		}
 
@@ -352,6 +311,7 @@ func process() {
 
 	if hasPrefix {
 		ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
+		text = text[1:]
 	}
 
 	entrySlice := []modules.Entry{}
@@ -361,51 +321,30 @@ func process() {
 
 		for _, entry := range e {
 			str := randomString(5)
-
-			if val, ok := history[entry.Searchable]; ok {
-				entry.Used = val.Used
-				entry.DaysSinceUsed = val.daysSinceUsed
-				entry.LastUsed = val.LastUsed
-			}
-
 			entry.Identifier = str
 
-			entries[str] = entry
-			entrySlice = append(entrySlice, entry)
+			if entry.ScoreFinal == 0 {
+				switch entry.Matching {
+				case modules.Fuzzy:
+					entry.ScoreFinal = fuzzyScore(entry, text)
+				case modules.AlwaysTop:
+					entry.ScoreFinal = 1000
+				case modules.AlwaysBottom:
+					entry.ScoreFinal = 1
+				default:
+					entry.ScoreFinal = 0
+				}
+			}
+
+			if entry.ScoreFinal != 0 && entry.ScoreFinal >= entry.MinScoreToInclude {
+				entries[str] = entry
+				entrySlice = append(entrySlice, entry)
+			}
 		}
 	}
 
 	if len(entries) == 0 {
 		return
-	}
-
-	if hasPrefix {
-		text = text[1:]
-	}
-
-	tm := 1.0 / float64(len(text))
-
-	for k, v := range entrySlice {
-		v.Categories = append(v.Categories, v.Label, v.Sub)
-
-		for _, t := range v.Categories {
-			if t == "" {
-				continue
-			}
-
-			score := calculateFuzzyScore(text, t)
-			if score > entrySlice[k].ScoreFuzzy {
-				entrySlice[k].ScoreFuzzy = score
-			}
-
-			if score == 100 {
-				break
-			}
-		}
-
-		usageScore := usageModifier(v)
-
-		entrySlice[k].ScoreFuzzyFinal = float64(usageScore)*tm + float64(entrySlice[k].ScoreFuzzy)/tm
 	}
 
 	sortEntries(entrySlice)
@@ -432,18 +371,6 @@ func process() {
 	}
 }
 
-func calculateFuzzyScore(text, target string) int {
-	final := 100
-	score := fuzzy.RankMatchFold(text, target)
-
-	if score == -1 {
-		return 0
-	} else {
-		score = score
-		return final - score
-	}
-}
-
 func setInitials() {
 	ui.list.SetVisible(true)
 
@@ -453,22 +380,23 @@ func setInitials() {
 
 	for _, v := range procs {
 		for _, proc := range v {
+			if proc.Name() != "applications" {
+				continue
+			}
+
 			e := proc.Entries("")
 
 			for _, entry := range e {
 				str := randomString(5)
 
-				if val, ok := history[entry.Searchable]; ok {
+				if val, ok := hstry[entry.HistoryIdentifier]; ok {
 					entry.Used = val.Used
-					entry.DaysSinceUsed = val.daysSinceUsed
+					entry.DaysSinceUsed = val.DaysSinceUsed
 					entry.LastUsed = val.LastUsed
 				}
 
 				entry.Identifier = str
-
-				usageScore := usageModifier(entry)
-
-				entry.ScoreFuzzyFinal = float64(usageScore)
+				entry.ScoreFinal = float64(usageModifier(entry))
 
 				entries[str] = entry
 				entrySlice = append(entrySlice, entry)
@@ -505,7 +433,7 @@ func usageModifier(item modules.Entry) int {
 
 func sortEntries(entries []modules.Entry) {
 	slices.SortFunc(entries, func(a, b modules.Entry) int {
-		if a.ScoreFuzzyFinal == b.ScoreFuzzyFinal {
+		if a.ScoreFinal == b.ScoreFinal {
 			if !a.LastUsed.IsZero() && !b.LastUsed.IsZero() {
 				return b.LastUsed.Compare(a.LastUsed)
 			}
@@ -513,11 +441,11 @@ func sortEntries(entries []modules.Entry) {
 			return strings.Compare(a.Label, b.Label)
 		}
 
-		if a.ScoreFuzzyFinal > b.ScoreFuzzyFinal {
+		if a.ScoreFinal > b.ScoreFinal {
 			return -1
 		}
 
-		if a.ScoreFuzzyFinal < b.ScoreFuzzyFinal {
+		if a.ScoreFinal < b.ScoreFinal {
 			return 1
 		}
 
@@ -525,7 +453,7 @@ func sortEntries(entries []modules.Entry) {
 	})
 }
 
-func saveToHistory(searchterm string) {
+func saveToHistory(entry string) {
 	cacheDir, err := os.UserCacheDir()
 	if err != nil {
 		log.Println(err)
@@ -534,9 +462,9 @@ func saveToHistory(searchterm string) {
 
 	cacheDir = filepath.Join(cacheDir, "walker")
 
-	h, ok := history[searchterm]
+	h, ok := hstry[entry]
 	if !ok {
-		h = HistoryEntry{
+		h = history.Entry{
 			LastUsed: time.Now(),
 			Used:     1,
 		}
@@ -550,9 +478,9 @@ func saveToHistory(searchterm string) {
 		h.LastUsed = time.Now()
 	}
 
-	history[searchterm] = h
+	hstry[entry] = h
 
-	b, err := json.Marshal(history)
+	b, err := json.Marshal(hstry)
 	if err != nil {
 		log.Println(err)
 		return
@@ -571,12 +499,71 @@ func saveToHistory(searchterm string) {
 }
 
 func quit() {
-	if isService {
-		isRunning = false
-		measured = false
+	if appstate.IsRunning {
+		appstate.IsRunning = false
+		appstate.IsMeasured = false
 		ui.app.Hold()
 		ui.appwin.Close()
 	} else {
 		ui.appwin.Close()
 	}
+}
+
+func createActivationKeys() {
+	keys = make(map[uint]uint)
+	keys[gdk.KEY_j] = 0
+	keys[gdk.KEY_k] = 1
+	keys[gdk.KEY_l] = 2
+	keys[gdk.KEY_semicolon] = 3
+	keys[gdk.KEY_a] = 4
+	keys[gdk.KEY_s] = 5
+	keys[gdk.KEY_d] = 6
+	keys[gdk.KEY_f] = 7
+}
+
+func calculateFuzzyScore(text, target string) int {
+	final := 100
+	score := fuzzy.RankMatchFold(text, target)
+
+	if score == -1 {
+		return 0
+	} else {
+		score = score
+		return final - score
+	}
+}
+
+func fuzzyScore(entry modules.Entry, text string) float64 {
+	tm := 1.0 / float64(len(text))
+
+	if val, ok := hstry[entry.HistoryIdentifier]; ok {
+		entry.Used = val.Used
+		entry.DaysSinceUsed = val.DaysSinceUsed
+		entry.LastUsed = val.LastUsed
+	}
+
+	entry.Categories = append(entry.Categories, entry.Label, entry.Sub)
+
+	for _, t := range entry.Categories {
+		if t == "" {
+			continue
+		}
+
+		score := calculateFuzzyScore(text, t)
+		if score > entry.ScoreFuzzy {
+			entry.ScoreFuzzy = score
+		}
+
+		if score == 100 {
+			return 100
+		}
+	}
+
+	if entry.ScoreFuzzy == 0 {
+		return 0
+	}
+
+	usageScore := usageModifier(entry)
+
+	return float64(usageScore)*tm + float64(entry.ScoreFuzzy)/tm
 }

@@ -2,32 +2,40 @@ package modules
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"strings"
+
+	"github.com/abenz1267/walker/config"
 )
 
 type Runner struct {
-	Prfx        string
 	ShellConfig string
-	Aliases     map[string]string
+	prefix      string
+	aliases     map[string]string
 }
 
-func (r *Runner) SetPrefix(val string) {
-	r.Prfx = val
+func (r Runner) Setup(cfg *config.Config) Workable {
+	module := find(cfg.Modules, r.Name())
+	if module == nil {
+		return nil
+	}
+
+	r.prefix = module.Prefix
+
+	return r
 }
 
 func (r Runner) Prefix() string {
-	return r.Prfx
+	return r.prefix
 }
 
 func (Runner) Name() string {
 	return "runner"
 }
 
-func (r *Runner) Entries(term string) []Entry {
+func (r Runner) Entries(term string) []Entry {
 	entries := []Entry{}
 
 	if term == "" {
@@ -36,17 +44,17 @@ func (r *Runner) Entries(term string) []Entry {
 
 	r.parseAliases()
 
-	if r.Prfx != "" && len(term) < 2 {
+	if r.prefix != "" && len(term) < 2 {
 		return entries
 	}
 
-	if r.Prfx != "" {
-		term = strings.TrimPrefix(term, r.Prfx)
+	if r.prefix != "" {
+		term = strings.TrimPrefix(term, r.prefix)
 	}
 
 	fields := strings.Fields(term)
 
-	alias, ok := r.Aliases[fields[0]]
+	alias, ok := r.aliases[fields[0]]
 	if ok {
 		term = strings.Replace(term, fields[0], alias, 1)
 		fields = strings.Fields(term)
@@ -54,16 +62,16 @@ func (r *Runner) Entries(term string) []Entry {
 
 	str, err := exec.LookPath(fields[0])
 	if err != nil {
-		str = fmt.Sprintf("%s not found in $PATH", fields[0])
+		return entries
 	}
 
 	n := Entry{
 		Label:      str,
 		Sub:        "Runner",
 		Exec:       term,
-		Searchable: term,
 		Notifyable: true,
 		Class:      "runner",
+		Matching:   AlwaysTop,
 	}
 
 	entries = append(entries, n)
@@ -76,7 +84,7 @@ func (r *Runner) parseAliases() {
 		return
 	}
 
-	r.Aliases = make(map[string]string)
+	r.aliases = make(map[string]string)
 
 	file, err := os.Open(r.ShellConfig)
 	if err != nil {
@@ -92,7 +100,7 @@ func (r *Runner) parseAliases() {
 		if strings.HasPrefix(text, "alias") {
 			splits := strings.Split(text, "=")
 			aliasFields := strings.Fields(splits[0])
-			r.Aliases[aliasFields[1]] = strings.TrimSuffix(strings.TrimPrefix(splits[1], "\""), "\"")
+			r.aliases[aliasFields[1]] = strings.TrimSuffix(strings.TrimPrefix(splits[1], "\""), "\"")
 		}
 	}
 }

@@ -35,18 +35,17 @@ var (
 )
 
 type UI struct {
-	app            *gtk.Application
-	builder        *gtk.Builder
-	scroll         *gtk.ScrolledWindow
-	box            *gtk.Box
-	appwin         *gtk.ApplicationWindow
-	search         *gtk.SearchEntry
-	list           *gtk.ListView
-	items          *gtk.StringList
-	selection      *gtk.SingleSelection
-	factory        *gtk.SignalListItemFactory
-	prefixClasses  map[string][]string
-	ListAlwaysShow bool
+	app           *gtk.Application
+	builder       *gtk.Builder
+	scroll        *gtk.ScrolledWindow
+	box           *gtk.Box
+	appwin        *gtk.ApplicationWindow
+	search        *gtk.SearchEntry
+	list          *gtk.ListView
+	items         *gtk.StringList
+	selection     *gtk.SingleSelection
+	factory       *gtk.SignalListItemFactory
+	prefixClasses map[string][]string
 }
 
 func Activate(state *state.AppState) func(app *gtk.Application) {
@@ -117,22 +116,20 @@ func setupUI(app *gtk.Application) {
 
 	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
 
-	// initializing with non-empty list improves performance.
 	items := gtk.NewStringList([]string{""})
 
 	ui = &UI{
-		app:            app,
-		builder:        builder,
-		scroll:         builder.GetObject("scroll").Cast().(*gtk.ScrolledWindow),
-		box:            builder.GetObject("box").Cast().(*gtk.Box),
-		appwin:         builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
-		search:         builder.GetObject("search").Cast().(*gtk.SearchEntry),
-		list:           builder.GetObject("list").Cast().(*gtk.ListView),
-		items:          items,
-		selection:      gtk.NewSingleSelection(items),
-		factory:        gtk.NewSignalListItemFactory(),
-		prefixClasses:  make(map[string][]string),
-		ListAlwaysShow: cfg.List.AlwaysShow,
+		app:           app,
+		builder:       builder,
+		scroll:        builder.GetObject("scroll").Cast().(*gtk.ScrolledWindow),
+		box:           builder.GetObject("box").Cast().(*gtk.Box),
+		appwin:        builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
+		search:        builder.GetObject("search").Cast().(*gtk.SearchEntry),
+		list:          builder.GetObject("list").Cast().(*gtk.ListView),
+		items:         items,
+		selection:     gtk.NewSingleSelection(items),
+		factory:       gtk.NewSignalListItemFactory(),
+		prefixClasses: make(map[string][]string),
 	}
 
 	fc := gtk.NewEventControllerFocus()
@@ -144,10 +141,7 @@ func setupUI(app *gtk.Application) {
 	})
 
 	ui.search.AddController(fc)
-
-	if cfg.Search.Delay != 150 {
-		ui.search.SetObjectProperty("search-delay", cfg.Search.Delay)
-	}
+	ui.search.SetObjectProperty("search-delay", cfg.Search.Delay)
 
 	if cfg.Search.HideIcons {
 		ui.search.FirstChild().(*gtk.Image).Hide()
@@ -167,8 +161,9 @@ func setupUI(app *gtk.Application) {
 	if cfg.List.Height != 0 {
 		ui.scroll.SetMaxContentHeight(cfg.List.Height)
 
-		if cfg.List.Style == "fixed" {
-			ui.list.SetSizeRequest(-1, cfg.List.Height)
+		if cfg.List.FixedHeight {
+			ui.list.SetSizeRequest(cfg.Align.Width, cfg.List.Height)
+			ui.scroll.SetSizeRequest(cfg.Align.Width, cfg.List.Height)
 		}
 	}
 
@@ -310,7 +305,34 @@ func setupUI(app *gtk.Application) {
 	ui.list.SetModel(ui.selection)
 	ui.list.SetFactory(&ui.factory.ListItemFactory)
 
-	if !cfg.List.AlwaysShow {
-		ui.list.SetVisible(false)
+	ui.selection.ConnectItemsChanged(func(p, r, a uint) {
+		handleListVisibility()
+	})
+}
+
+func handleListVisibility() {
+	ui.list.SetVisible(false)
+	ui.scroll.SetVisible(false)
+
+	if cfg.List.AlwaysShow {
+		ui.list.SetVisible(true)
+		ui.scroll.SetVisible(true)
+		return
+	}
+
+	if ui.items.NItems() != 0 {
+		ui.list.SetVisible(true)
+		ui.scroll.SetVisible(true)
+		return
+	}
+
+	if ui.items.NItems() == 0 {
+		if cfg.List.AlwaysShow {
+			ui.list.SetVisible(true)
+			ui.scroll.SetVisible(true)
+		} else {
+			ui.list.SetVisible(false)
+			ui.scroll.SetVisible(false)
+		}
 	}
 }

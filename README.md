@@ -67,7 +67,6 @@ See `config.example.json` and `style.example.css`.
   },
   "list": {
     "height": 300,
-    "style": "fixed", // dynamic, fixed
     "always_show": true
   },
   "orientation": "vertical", // vertical, horizontal

@@ -60,9 +60,9 @@ type Margins struct {
 }
 
 type List struct {
-	Height     int    `json:"height,omitempty"`
-	Style      string `json:"style,omitempty"`
-	AlwaysShow bool   `json:"always_show,omitempty"`
+	Height      int  `json:"height,omitempty"`
+	AlwaysShow  bool `json:"always_show,omitempty"`
+	FixedHeight bool `json:"fixed_height,omitempty"`
 }
 
 func Get() *Config {
@@ -108,9 +108,9 @@ func Get() *Config {
 			{Name: "applications", Prefix: ""},
 		},
 		List: List{
-			Height:     300,
-			Style:      "dynamic",
-			AlwaysShow: false,
+			Height:      300,
+			AlwaysShow:  false,
+			FixedHeight: false,
 		},
 	}
 

@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -10,19 +11,22 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/abenz1267/walker/history"
 	"github.com/abenz1267/walker/modules"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
-var keys map[uint]uint
-
-var activationEnabled bool
+var (
+	keys              map[uint]uint
+	activationEnabled bool
+)
 
 func setupInteractions() {
 	createActivationKeys()
@@ -69,10 +73,6 @@ func setupInteractions() {
 		listkc.ConnectKeyPressed(handleListKeysPressed)
 
 		ui.list.AddController(listkc)
-	}
-
-	if cfg.ShowInitialEntries {
-		setInitials()
 	}
 }
 
@@ -267,33 +267,54 @@ func randomString(length int) string {
 	return string(b)
 }
 
+var cancel context.CancelFunc
+
+var handlerPool = sync.Pool{
+	New: func() any {
+		return new(Handler)
+	},
+}
+
 func process() {
-	clear(entries)
-
-	if ui.search.Text() == "" {
-		if !ui.ListAlwaysShow {
-			setInitials()
-		}
-
-		return
+	if cancel != nil {
+		cancel()
 	}
-
-	if !ui.ListAlwaysShow {
-		ui.list.SetVisible(false)
-	}
-
-	ui.appwin.SetCSSClasses([]string{})
 
 	text := strings.TrimSpace(ui.search.Text())
-	if text == "" {
-		ui.items.Splice(0, ui.items.NItems(), []string{})
-
-		if cfg.ShowInitialEntries {
-			setInitials()
-		}
-
+	if text == "" && cfg.ShowInitialEntries {
+		setInitials()
 		return
 	}
+
+	if text == "" {
+		return
+	}
+
+	var ctx context.Context
+	ctx, cancel = context.WithCancel(context.Background())
+
+	go processAync(ctx)
+}
+
+func processAync(ctx context.Context) {
+	handler := handlerPool.Get().(*Handler)
+	defer handlerPool.Put(handler)
+
+	handler.ctx = ctx
+	handler.entries = []modules.Entry{}
+	handler.receiver = make(chan []modules.Entry)
+	defer close(handler.receiver)
+
+	go handler.handle()
+
+	text := strings.TrimSpace(ui.search.Text())
+
+	clear(entries)
+
+	glib.IdleAdd(func() {
+		ui.items.Splice(0, ui.items.NItems(), []string{})
+		ui.appwin.SetCSSClasses([]string{})
+	})
 
 	prefix := text
 
@@ -310,72 +331,55 @@ func process() {
 	}
 
 	if hasPrefix {
-		ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
+		glib.IdleAdd(func() {
+			ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
+		})
+
 		text = text[1:]
 	}
 
-	entrySlice := []modules.Entry{}
+	var wg sync.WaitGroup
+	wg.Add(len(p))
 
 	for _, proc := range p {
-		e := proc.Entries(text)
+		go func(wg *sync.WaitGroup, text string, w modules.Workable) {
+			defer wg.Done()
 
-		for _, entry := range e {
-			str := randomString(5)
-			entry.Identifier = str
+			e := w.Entries(text)
 
-			if entry.ScoreFinal == 0 {
-				switch entry.Matching {
-				case modules.Fuzzy:
-					entry.ScoreFinal = fuzzyScore(entry, text)
-				case modules.AlwaysTop:
-					entry.ScoreFinal = 1000
-				case modules.AlwaysBottom:
-					entry.ScoreFinal = 1
-				default:
-					entry.ScoreFinal = 0
+			toPush := []modules.Entry{}
+
+			for k := range e {
+				str := randomString(5)
+				e[k].Identifier = str
+
+				if e[k].ScoreFinal == 0 {
+					switch e[k].Matching {
+					case modules.Fuzzy:
+						e[k].ScoreFinal = fuzzyScore(e[k], text)
+					case modules.AlwaysTop:
+						e[k].ScoreFinal = 1000
+					case modules.AlwaysBottom:
+						e[k].ScoreFinal = 1
+					default:
+						e[k].ScoreFinal = 0
+					}
+				}
+
+				if e[k].ScoreFinal != 0 && e[k].ScoreFinal >= e[k].MinScoreToInclude {
+					toPush = append(toPush, e[k])
+					entries[str] = e[k]
 				}
 			}
 
-			if entry.ScoreFinal != 0 && entry.ScoreFinal >= entry.MinScoreToInclude {
-				entries[str] = entry
-				entrySlice = append(entrySlice, entry)
-			}
-		}
+			handler.receiver <- toPush
+		}(&wg, text, proc)
 	}
 
-	if len(entries) == 0 {
-		return
-	}
-
-	sortEntries(entrySlice)
-
-	list := []string{}
-
-	for _, v := range entrySlice {
-		list = append(list, v.Identifier)
-	}
-
-	current := ui.items.NItems()
-
-	if current == 0 {
-		for _, str := range list {
-			ui.items.Append(str)
-		}
-	} else {
-		ui.items.Splice(0, current, list)
-	}
-
-	if ui.selection.NItems() > 0 {
-		ui.selection.SetSelected(0)
-		ui.list.SetVisible(true)
-	}
+	wg.Wait()
 }
 
 func setInitials() {
-	ui.list.SetVisible(true)
-
-	ui.items.Splice(0, ui.items.NItems(), []string{})
-
 	entrySlice := []modules.Entry{}
 
 	for _, v := range procs {
@@ -410,9 +414,13 @@ func setInitials() {
 
 	sortEntries(entrySlice)
 
+	toAdd := []string{}
+
 	for _, v := range entrySlice {
-		ui.items.Append(v.Identifier)
+		toAdd = append(toAdd, v.Identifier)
 	}
+
+	ui.items.Splice(0, ui.items.NItems(), toAdd)
 
 	ui.selection.SetSelected(0)
 }
@@ -429,28 +437,6 @@ func usageModifier(item modules.Entry) int {
 	}
 
 	return 0
-}
-
-func sortEntries(entries []modules.Entry) {
-	slices.SortFunc(entries, func(a, b modules.Entry) int {
-		if a.ScoreFinal == b.ScoreFinal {
-			if !a.LastUsed.IsZero() && !b.LastUsed.IsZero() {
-				return b.LastUsed.Compare(a.LastUsed)
-			}
-
-			return strings.Compare(a.Label, b.Label)
-		}
-
-		if a.ScoreFinal > b.ScoreFinal {
-			return -1
-		}
-
-		if a.ScoreFinal < b.ScoreFinal {
-			return 1
-		}
-
-		return 0
-	})
 }
 
 func saveToHistory(entry string) {

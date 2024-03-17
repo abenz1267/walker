@@ -115,24 +115,27 @@ func selectActivationMode(val uint, keepOpen bool) {
 	activateItem(false)
 }
 
+func disabledAM() {
+	if !cfg.DisableActivationMode && activationEnabled {
+		activationEnabled = false
+
+		c := ui.appwin.CSSClasses()
+
+		for k, v := range c {
+			if v == "activation" {
+				c = slices.Delete(c, k, k+1)
+			}
+		}
+
+		ui.appwin.SetCSSClasses(c)
+		ui.search.GrabFocus()
+	}
+}
+
 func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	switch val {
 	case gdk.KEY_Escape:
-		if !cfg.DisableActivationMode {
-			activationEnabled = false
-
-			c := ui.appwin.CSSClasses()
-
-			for k, v := range c {
-				if v == "activation" {
-					c = slices.Delete(c, k, k+1)
-				}
-			}
-
-			ui.appwin.SetCSSClasses(c)
-
-			ui.search.GrabFocus()
-		}
+		disabledAM()
 	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_semicolon, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
 		if !cfg.DisableActivationMode {
 			if modifier == gdk.ControlMask {
@@ -488,6 +491,21 @@ func saveToHistory(entry string) {
 
 func quit() {
 	if appstate.IsService {
+		if !cfg.DisableActivationMode && activationEnabled {
+			activationEnabled = false
+
+			c := ui.appwin.CSSClasses()
+
+			for k, v := range c {
+				if v == "activation" {
+					c = slices.Delete(c, k, k+1)
+				}
+			}
+
+			ui.appwin.SetCSSClasses(c)
+			ui.search.GrabFocus()
+		}
+
 		appstate.IsRunning = false
 		appstate.IsMeasured = false
 		ui.appwin.SetVisible(false)

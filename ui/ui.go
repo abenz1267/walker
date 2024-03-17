@@ -125,7 +125,12 @@ func setupUI(app *gtk.Application) {
 
 	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
 
-	items := gtk.NewStringList([]string{""})
+	var items *gtk.StringList
+	if cfg.ShowInitialEntries {
+		items = gtk.NewStringList([]string{""})
+	} else {
+		items = gtk.NewStringList([]string{})
+	}
 
 	ui = &UI{
 		app:           app,
@@ -313,6 +318,8 @@ func setupUI(app *gtk.Application) {
 
 	ui.list.SetModel(ui.selection)
 	ui.list.SetFactory(&ui.factory.ListItemFactory)
+
+	handleListVisibility()
 
 	ui.selection.ConnectItemsChanged(func(p, r, a uint) {
 		handleListVisibility()

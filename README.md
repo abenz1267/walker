@@ -9,9 +9,10 @@
 - Icons
 - notifications on failure configurable
 - extend with... anything?
-- start as service for faster startup
-- run result via label
+- start as service for faster startup (see benchmarks below)
+- activation-mode: run entries via labels
 - display images
+- non-blocking async handling of results
 
 ## Builtin Modules
 

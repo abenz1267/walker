@@ -225,6 +225,8 @@ func setupUI(app *gtk.Application) {
 	})
 
 	ui.factory.ConnectBind(func(item *gtk.ListItem) {
+		entries.mut.Lock()
+		defer entries.mut.Unlock()
 		key := item.Item().Cast().(*gtk.StringObject).String()
 
 		if item.Selected() {

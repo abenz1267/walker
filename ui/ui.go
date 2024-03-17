@@ -58,25 +58,36 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 	appstate = state
 
 	return func(app *gtk.Application) {
+		appstate.Started = time.Now()
+
 		if appstate.IsRunning {
 			return
 		}
 
-		if appstate.IsService {
-			appstate.Started = time.Now()
-			appstate.IsRunning = true
+		appstate.IsRunning = true
+
+		if appstate.HasUI {
+			ui.search.SetText("")
+			ui.appwin.SetVisible(true)
+
+			if !appstate.IsMeasured {
+				fmt.Printf("startup time: %s\n", time.Since(appstate.Started))
+				appstate.IsMeasured = true
+			}
+
+			return
 		}
 
-		cfg = config.Get()
-		hstry = history.Get()
-
-		entries = EntryMap{
-			mut:   sync.Mutex{},
-			items: make(map[string]modules.Entry),
+		if cfg == nil {
+			cfg = config.Get()
+			hstry = history.Get()
+			entries = EntryMap{
+				mut:   sync.Mutex{},
+				items: make(map[string]modules.Entry),
+			}
 		}
 
 		setupUI(app)
-
 		setupInteractions()
 
 		ui.appwin.SetApplication(app)
@@ -97,6 +108,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		}
 
 		ui.appwin.Show()
+		appstate.HasUI = true
 	}
 }
 
@@ -126,6 +138,7 @@ func setupUI(app *gtk.Application) {
 	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
 
 	var items *gtk.StringList
+
 	if cfg.ShowInitialEntries {
 		items = gtk.NewStringList([]string{""})
 	} else {

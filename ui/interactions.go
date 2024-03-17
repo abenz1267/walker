@@ -276,6 +276,10 @@ var handlerPool = sync.Pool{
 }
 
 func process() {
+	if !appstate.IsRunning {
+		return
+	}
+
 	if cancel != nil {
 		cancel()
 	}
@@ -299,7 +303,6 @@ func process() {
 }
 
 func processAync(ctx context.Context) {
-	// now := time.Now()
 	handler := handlerPool.Get().(*Handler)
 	defer handlerPool.Put(handler)
 
@@ -339,7 +342,7 @@ func processAync(ctx context.Context) {
 	}
 
 	for _, proc := range p {
-		go func(text string, w modules.Workable) {
+		go func(ctx context.Context, text string, w modules.Workable) {
 			e := w.Entries(text)
 
 			toPush := []modules.Entry{}
@@ -370,7 +373,7 @@ func processAync(ctx context.Context) {
 			}
 
 			handler.receiver <- toPush
-		}(text, proc)
+		}(ctx, text, proc)
 	}
 }
 
@@ -482,11 +485,11 @@ func saveToHistory(entry string) {
 }
 
 func quit() {
-	if appstate.IsRunning {
+	if appstate.IsService {
 		appstate.IsRunning = false
 		appstate.IsMeasured = false
+		ui.appwin.SetVisible(false)
 		ui.app.Hold()
-		ui.appwin.Close()
 	} else {
 		ui.appwin.Close()
 	}

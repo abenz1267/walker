@@ -7,6 +7,7 @@ type AppState struct {
 	IsMeasured bool
 	IsService  bool
 	IsRunning  bool
+	HasUI      bool
 }
 
 func Get() *AppState {
@@ -15,5 +16,6 @@ func Get() *AppState {
 		IsService:  false,
 		IsRunning:  false,
 		IsMeasured: false,
+		HasUI:      false,
 	}
 }

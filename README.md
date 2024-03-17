@@ -191,10 +191,10 @@ System: Arch Linux, Hyprland, Amd 7950x, 32gb DDR5-6000, SSD
 
 Measured time is until the focus is in the search-bar and you can type.
 
-| Mode         | Startup time    |
-| ------------ | --------------- |
-| normal       | 13.5ms - 15.7ms |
-| with service | 835µs - 2.12ms  |
+| Mode         | Startup time                                           |
+| ------------ | ------------------------------------------------------ |
+| normal       | 13.5ms - 15.7ms                                        |
+| with service | 250µs - 350µs / (2.3ms when input needs to be cleared) |
 
 ## Watchout for...
 

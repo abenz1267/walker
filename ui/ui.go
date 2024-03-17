@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"sync"
 	"time"
 
 	"github.com/abenz1267/walker/config"
@@ -28,11 +29,16 @@ var labels = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
 var (
 	cfg      *config.Config
 	ui       *UI
-	entries  map[string]modules.Entry
+	entries  EntryMap
 	procs    map[string][]modules.Workable
 	hstry    history.History
 	appstate *state.AppState
 )
+
+type EntryMap struct {
+	mut   sync.Mutex
+	items map[string]modules.Entry
+}
 
 type UI struct {
 	app           *gtk.Application
@@ -64,7 +70,10 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		cfg = config.Get()
 		hstry = history.Get()
 
-		entries = make(map[string]modules.Entry)
+		entries = EntryMap{
+			mut:   sync.Mutex{},
+			items: make(map[string]modules.Entry),
+		}
 
 		setupUI(app)
 
@@ -210,13 +219,13 @@ func setupUI(app *gtk.Application) {
 
 				if !activationEnabled {
 					box.GrabFocus()
-					ui.appwin.SetCSSClasses([]string{entries[key].Class})
+					ui.appwin.SetCSSClasses([]string{entries.items[key].Class})
 					ui.search.GrabFocus()
 				}
 			}
 		}
 
-		if val, ok := entries[key]; ok {
+		if val, ok := entries.items[key]; ok {
 			child := item.Child()
 
 			if child != nil {

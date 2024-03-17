@@ -26,26 +26,23 @@ func (h *Handler) handle() {
 			h.entries = append(h.entries, entries...)
 
 			sortEntries(h.entries)
-			h.display()
+
+			list := []string{}
+
+			for _, v := range h.entries {
+				list = append(list, v.Identifier)
+			}
+
+			if len(list) > 0 {
+				glib.IdleAdd(func() {
+					ui.items.Splice(0, ui.items.NItems(), list)
+					ui.selection.SetSelected(0)
+				})
+			}
 		case <-h.ctx.Done():
 			return
 		default:
 		}
-	}
-}
-
-func (h *Handler) display() {
-	list := []string{}
-
-	for _, v := range h.entries {
-		list = append(list, v.Identifier)
-	}
-
-	if len(list) > 0 {
-		glib.IdleAdd(func() {
-			ui.items.Splice(0, ui.items.NItems(), list)
-			ui.selection.SetSelected(0)
-		})
 	}
 }
 

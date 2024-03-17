@@ -199,7 +199,7 @@ func activateItem(keepOpen bool) {
 	obj := ui.items.Item(ui.selection.Selected())
 	str := obj.Cast().(*gtk.StringObject).String()
 
-	entry := entries[str]
+	entry := entries.items[str]
 	f := strings.Fields(entry.Exec)
 
 	if len(f) == 0 {
@@ -280,6 +280,8 @@ func process() {
 		cancel()
 	}
 
+	clear(entries.items)
+
 	text := strings.TrimSpace(ui.search.Text())
 	if text == "" && cfg.ShowInitialEntries {
 		setInitials()
@@ -297,19 +299,17 @@ func process() {
 }
 
 func processAync(ctx context.Context) {
+	// now := time.Now()
 	handler := handlerPool.Get().(*Handler)
 	defer handlerPool.Put(handler)
 
 	handler.ctx = ctx
 	handler.entries = []modules.Entry{}
 	handler.receiver = make(chan []modules.Entry)
-	defer close(handler.receiver)
 
 	go handler.handle()
 
 	text := strings.TrimSpace(ui.search.Text())
-
-	clear(entries)
 
 	glib.IdleAdd(func() {
 		ui.items.Splice(0, ui.items.NItems(), []string{})
@@ -319,7 +319,7 @@ func processAync(ctx context.Context) {
 	prefix := text
 
 	if len(prefix) > 1 {
-		prefix = text[0:1]
+		prefix = prefix[0:1]
 	}
 
 	hasPrefix := true
@@ -335,16 +335,11 @@ func processAync(ctx context.Context) {
 			ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
 		})
 
-		text = text[1:]
+		text = strings.TrimPrefix(text, prefix)
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(len(p))
-
 	for _, proc := range p {
-		go func(wg *sync.WaitGroup, text string, w modules.Workable) {
-			defer wg.Done()
-
+		go func(text string, w modules.Workable) {
 			e := w.Entries(text)
 
 			toPush := []modules.Entry{}
@@ -368,15 +363,15 @@ func processAync(ctx context.Context) {
 
 				if e[k].ScoreFinal != 0 && e[k].ScoreFinal >= e[k].MinScoreToInclude {
 					toPush = append(toPush, e[k])
-					entries[str] = e[k]
+					entries.mut.Lock()
+					entries.items[str] = e[k]
+					entries.mut.Unlock()
 				}
 			}
 
 			handler.receiver <- toPush
-		}(&wg, text, proc)
+		}(text, proc)
 	}
-
-	wg.Wait()
 }
 
 func setInitials() {
@@ -402,13 +397,15 @@ func setInitials() {
 				entry.Identifier = str
 				entry.ScoreFinal = float64(usageModifier(entry))
 
-				entries[str] = entry
+				entries.mut.Lock()
+				entries.items[str] = entry
+				entries.mut.Unlock()
 				entrySlice = append(entrySlice, entry)
 			}
 		}
 	}
 
-	if len(entries) == 0 {
+	if len(entrySlice) == 0 {
 		return
 	}
 

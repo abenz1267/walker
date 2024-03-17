@@ -27,11 +27,12 @@ type Config struct {
 }
 
 type Module struct {
-	Prefix  string `json:"prefix,omitempty"`
-	Name    string `json:"name,omitempty"`
-	Src     string `json:"src,omitempty"`
-	Cmd     string `json:"cmd,omitempty"`
-	History bool   `json:"history,omitempty"`
+	Prefix    string `json:"prefix,omitempty"`
+	Name      string `json:"name,omitempty"`
+	Src       string `json:"src,omitempty"`
+	Cmd       string `json:"cmd,omitempty"`
+	Transform bool   `json:"transform,omitempty"`
+	History   bool   `json:"history,omitempty"`
 }
 
 type Search struct {

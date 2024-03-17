@@ -102,7 +102,7 @@ If you want to extend walker with your own modules, you can do that in the confi
     {
       "prefix": "!",
       "name": "mymodule",
-      "cmd": "node /path/to/myscript.js"
+      "src": "node /path/to/myscript.js"
     }
   ]
 }
@@ -150,8 +150,9 @@ You can also do:
 {
   "name": "filesystem",
   "prefix": "/",
-  "src": "fd --base-directory /home/andrej/%TERM%",
-  "cmd": "xdg-open file://%RESULT%"
+  "src": "fd --base-directory /home/andrej/ %TERM%",
+  "cmd": "xdg-open file://%RESULT%",
+  "transform": true
 }
 ```
 

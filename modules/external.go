@@ -15,6 +15,7 @@ type External struct {
 	ModuleName string
 	src        string
 	cmd        string
+	transform  bool
 }
 
 func (e External) Setup(cfg *config.Config) Workable {
@@ -26,6 +27,7 @@ func (e External) Setup(cfg *config.Config) Workable {
 	e.prefix = module.Prefix
 	e.src = module.Src
 	e.cmd = module.Cmd
+	e.transform = module.Transform
 
 	return e
 }
@@ -41,7 +43,7 @@ func (e External) Prefix() string {
 func (e External) Entries(term string) []Entry {
 	entries := []Entry{}
 
-	if e.cmd == "" {
+	if e.src == "" {
 		return entries
 	}
 
@@ -53,9 +55,9 @@ func (e External) Entries(term string) []Entry {
 		term = strings.TrimPrefix(term, e.prefix)
 	}
 
-	if e.src != "" {
-		e.src = strings.ReplaceAll(e.src, "%TERM%", term)
+	e.src = strings.ReplaceAll(e.src, "%TERM%", term)
 
+	if e.transform {
 		fields := strings.Fields(e.src)
 
 		cmd := exec.Command(fields[0], fields[1:]...)
@@ -86,7 +88,7 @@ func (e External) Entries(term string) []Entry {
 		return entries
 	}
 
-	fields := strings.Fields(e.cmd)
+	fields := strings.Fields(e.src)
 	fields = append(fields, term)
 
 	cmd := exec.Command(fields[0], fields[1:]...)
@@ -102,9 +104,10 @@ func (e External) Entries(term string) []Entry {
 		return entries
 	}
 
-	for _, v := range entries {
-		v.Class = e.ModuleName
-		v.Sub = e.ModuleName
+	for k, v := range entries {
+		entries[k].Class = e.ModuleName
+		entries[k].Sub = e.ModuleName
+		entries[k].Exec = strings.ReplaceAll(e.cmd, "%RESULT%", v.Label)
 	}
 
 	return entries

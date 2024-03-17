@@ -284,7 +284,9 @@ func process() {
 		cancel()
 	}
 
+	entries.mut.Lock()
 	clear(entries.items)
+	entries.mut.Unlock()
 
 	text := strings.TrimSpace(ui.search.Text())
 	if text == "" && cfg.ShowInitialEntries {

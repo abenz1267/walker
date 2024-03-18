@@ -2,7 +2,7 @@
 
 ![Screenshot](https://github.com/abenz1267/walker/blob/master/screenshot.png?raw=true)
 
-(example styling, not default)
+(default style)
 
 ## Features
 
@@ -38,60 +38,9 @@ yay -S walker
 
 ## Config & Style
 
-Config in `.config/walker/`.
+Default config will be put into `$HOME/.config/walker/`.
 
-See `config.example.json` and `style.example.css`.
-
-```json
-{
-  "terminal": "foot",
-  "placeholder": "Search...",
-  "shell_config": "/home/andrej/.zshrc", // for parsing shell aliases
-  "notify_on_fail": true,
-  "show_initial_entries": true, // always shows entries for emtpy search
-  "disable_activation_mode": false,
-  "fullscreen": true,
-  "search": {
-    "delay": 150, // in ms
-    "hide_icons": true
-  },
-  "align": {
-    "width": 400,
-    "horizontal": "center", // fill, start, end, center
-    "vertical": "start", // fill, start, end, center
-    "margins": {
-      "top": 300,
-      "bottom": 0,
-      "end": 0,
-      "start": 0
-    }
-  },
-  "list": {
-    "height": 300,
-    "always_show": true
-  },
-  "orientation": "vertical", // vertical, horizontal
-  "icons": {
-    "hide": false,
-    "size": 38,
-    "image_height": 200
-  },
-  "modules": [
-    {
-      "name": "runner",
-      "prefix": "!"
-    },
-    {
-      "name": "applications",
-      "prefix": ""
-    },
-    {
-      "name": "websearch",
-      "prefix": "?"
-    }
-  ]
-}
-```
+See `config/config.default.json` and `ui/style.default.css`.
 
 ## Providing your own modules
 

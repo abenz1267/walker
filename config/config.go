@@ -1,6 +1,7 @@
 package config
 
 import (
+	_ "embed"
 	"encoding/json"
 	"io"
 	"log"
@@ -8,6 +9,9 @@ import (
 	"os/exec"
 	"path/filepath"
 )
+
+//go:embed config.default.json
+var config []byte
 
 type Config struct {
 	Placeholder           string   `json:"placeholder,omitempty"`
@@ -61,6 +65,7 @@ type Margins struct {
 }
 
 type List struct {
+	MarginTop   int  `json:"margin_top,omitempty"`
 	Height      int  `json:"height,omitempty"`
 	AlwaysShow  bool `json:"always_show,omitempty"`
 	FixedHeight bool `json:"fixed_height,omitempty"`
@@ -75,45 +80,7 @@ func Get() *Config {
 	cfgDir = filepath.Join(cfgDir, "walker")
 	cfgName := filepath.Join(cfgDir, "config.json")
 
-	cfg := &Config{
-		Terminal:              "",
-		Fullscreen:            true,
-		ShowInitialEntries:    false,
-		ShellConfig:           "",
-		Placeholder:           "Search...",
-		DisableActivationMode: false,
-		NotifyOnFail:          true,
-		Icons: Icons{
-			Hide:        false,
-			Size:        32,
-			ImageHeight: 100,
-		},
-		Search: Search{
-			Delay:     0,
-			HideIcons: false,
-		},
-		Align: Align{
-			Horizontal: "center",
-			Vertical:   "start",
-			Width:      400,
-			Margins: Margins{
-				Top:    50,
-				Bottom: 0,
-				End:    0,
-				Start:  0,
-			},
-		},
-		Modules: []Module{
-			{Name: "runner", Prefix: ""},
-			{Name: "websearch", Prefix: "?"},
-			{Name: "applications", Prefix: ""},
-		},
-		List: List{
-			Height:      300,
-			AlwaysShow:  false,
-			FixedHeight: false,
-		},
-	}
+	cfg := &Config{}
 
 	if _, err := os.Stat(cfgName); err == nil {
 		file, err := os.Open(cfgName)
@@ -127,6 +94,16 @@ func Get() *Config {
 		}
 
 		err = json.Unmarshal(b, &cfg)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	} else {
+		err = json.Unmarshal(config, &cfg)
+		if err != nil {
+			log.Fatalln(err)
+		}
+
+		err := os.WriteFile(cfgName, config, 0o600)
 		if err != nil {
 			log.Fatalln(err)
 		}

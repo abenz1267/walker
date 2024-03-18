@@ -21,8 +21,8 @@ import (
 //go:embed layout.xml
 var layout string
 
-//go:embed defaultstyle.css
-var style string
+//go:embed themes/style.default.css
+var style []byte
 
 var labels = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
 
@@ -82,7 +82,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		ui.appwin.SetApplication(app)
 
 		gtk4layershell.InitForWindow(&ui.appwin.Window)
-		gtk4layershell.SetKeyboardMode(&ui.appwin.Window, gtk4layershell.LayerShellKeyboardModeExclusive)
+		gtk4layershell.SetKeyboardMode(&ui.appwin.Window, gtk4layershell.LayerShellKeyboardModeOnDemand)
 
 		if !cfg.Fullscreen {
 			gtk4layershell.SetLayer(&ui.appwin.Window, gtk4layershell.LayerShellLayerTop)
@@ -121,7 +121,12 @@ func setupUI(app *gtk.Application) {
 	if _, err := os.Stat(cssFile); err == nil {
 		cssProvider.LoadFromPath(cssFile)
 	} else {
-		cssProvider.LoadFromData(style)
+		cssProvider.LoadFromData(string(style))
+
+		err := os.WriteFile(cssFile, style, 0o600)
+		if err != nil {
+			log.Fatalln(err)
+		}
 	}
 
 	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
@@ -143,6 +148,10 @@ func setupUI(app *gtk.Application) {
 	}
 
 	factory := gtk.NewSignalListItemFactory()
+
+	if cfg.List.MarginTop != 0 {
+		ui.list.SetMarginTop(cfg.List.MarginTop)
+	}
 
 	fc := gtk.NewEventControllerFocus()
 	fc.Connect("enter", func() {

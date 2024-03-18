@@ -1,22 +1,20 @@
 {
-  "terminal": "foot",
   "placeholder": "Search...",
-  "shell_config": "/home/andrej/.zshrc",
   "keep_open": false,
   "notify_on_fail": true,
   "show_initial_entries": true,
-  "fullscreen": true,
+  "fullscreen": false,
   "disable_activation_mode": false,
   "search": {
-    "delay": 150, // in ms
-    "hide_icons": true
+    "delay": 0,
+    "hide_icons": false
   },
   "align": {
     "width": 400,
     "horizontal": "center",
     "vertical": "start",
     "margins": {
-      "top": 300,
+      "top": 20,
       "bottom": 0,
       "end": 0,
       "start": 0
@@ -24,12 +22,13 @@
   },
   "list": {
     "height": 300,
+    "margin_top": 10,
     "always_show": true
   },
   "orientation": "vertical",
   "icons": {
     "hide": false,
-    "size": 38,
+    "size": 28,
     "image_height": 200
   },
   "modules": [

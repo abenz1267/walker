@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"math/rand"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -257,16 +256,6 @@ func activateItem(keepOpen bool) {
 
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
-var seededRand *rand.Rand = rand.New(rand.NewSource(time.Now().UnixNano()))
-
-func randomString(length int) string {
-	b := make([]byte, length)
-	for i := range b {
-		b[i] = charset[seededRand.Intn(len(charset))]
-	}
-	return string(b)
-}
-
 var cancel context.CancelFunc
 
 func process() {
@@ -346,9 +335,6 @@ func processAync(ctx context.Context) {
 			toPush := []modules.Entry{}
 
 			for k := range e {
-				str := randomString(5)
-				e[k].Identifier = str
-
 				if e[k].ScoreFinal == 0 {
 					switch e[k].Matching {
 					case modules.Fuzzy:
@@ -384,15 +370,12 @@ func setInitials() {
 			e := proc.Entries("")
 
 			for _, entry := range e {
-				str := randomString(5)
-
 				if val, ok := hstry[entry.HistoryIdentifier]; ok {
 					entry.Used = val.Used
 					entry.DaysSinceUsed = val.DaysSinceUsed
 					entry.LastUsed = val.LastUsed
 				}
 
-				entry.Identifier = str
 				entry.ScoreFinal = float64(usageModifier(entry))
 
 				entrySlice = append(entrySlice, entry)

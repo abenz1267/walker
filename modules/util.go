@@ -44,7 +44,6 @@ type Entry struct {
 	ScoreFinal        float64      `json:"score_final,omitempty"`
 	MinScoreToInclude float64      `json:"min_score_to_include,omitempty"`
 	ScoreFuzzy        int          `json:"score_fuzzy,omitempty"`
-	Identifier        string       `json:"-"`
 	Used              int          `json:"-"`
 	DaysSinceUsed     int          `json:"-"`
 	LastUsed          time.Time    `json:"-"`

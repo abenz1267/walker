@@ -199,10 +199,7 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 }
 
 func activateItem(keepOpen bool) {
-	obj := ui.items.Item(ui.selection.Selected())
-	str := obj.Cast().(*gtk.StringObject).String()
-
-	entry := entries.items[str]
+	entry := ui.items.Item(int(ui.selection.Selected()))
 	f := strings.Fields(entry.Exec)
 
 	if len(f) == 0 {
@@ -287,10 +284,6 @@ func process() {
 		cancel()
 	}
 
-	entries.mut.Lock()
-	clear(entries.items)
-	entries.mut.Unlock()
-
 	text := strings.TrimSpace(ui.search.Text())
 	if text == "" && cfg.ShowInitialEntries {
 		setInitials()
@@ -320,7 +313,7 @@ func processAync(ctx context.Context) {
 	text := strings.TrimSpace(ui.search.Text())
 
 	glib.IdleAdd(func() {
-		ui.items.Splice(0, ui.items.NItems(), []string{})
+		ui.items.Splice(0, ui.items.NItems())
 		ui.appwin.SetCSSClasses([]string{})
 	})
 
@@ -371,9 +364,6 @@ func processAync(ctx context.Context) {
 
 				if e[k].ScoreFinal != 0 && e[k].ScoreFinal >= e[k].MinScoreToInclude {
 					toPush = append(toPush, e[k])
-					entries.mut.Lock()
-					entries.items[str] = e[k]
-					entries.mut.Unlock()
 				}
 			}
 
@@ -405,9 +395,6 @@ func setInitials() {
 				entry.Identifier = str
 				entry.ScoreFinal = float64(usageModifier(entry))
 
-				entries.mut.Lock()
-				entries.items[str] = entry
-				entries.mut.Unlock()
 				entrySlice = append(entrySlice, entry)
 			}
 		}
@@ -419,13 +406,7 @@ func setInitials() {
 
 	sortEntries(entrySlice)
 
-	toAdd := []string{}
-
-	for _, v := range entrySlice {
-		toAdd = append(toAdd, v.Identifier)
-	}
-
-	ui.items.Splice(0, ui.items.NItems(), toAdd)
+	ui.items.Splice(0, ui.items.NItems(), entrySlice...)
 
 	ui.selection.SetSelected(0)
 }

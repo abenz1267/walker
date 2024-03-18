@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"sync"
 	"time"
 
 	"github.com/abenz1267/walker/config"
@@ -14,6 +13,7 @@ import (
 	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/state"
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
+	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -29,16 +29,10 @@ var labels = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
 var (
 	cfg      *config.Config
 	ui       *UI
-	entries  EntryMap
 	procs    map[string][]modules.Workable
 	hstry    history.History
 	appstate *state.AppState
 )
-
-type EntryMap struct {
-	mut   sync.Mutex
-	items map[string]modules.Entry
-}
 
 type UI struct {
 	app           *gtk.Application
@@ -48,9 +42,8 @@ type UI struct {
 	appwin        *gtk.ApplicationWindow
 	search        *gtk.SearchEntry
 	list          *gtk.ListView
-	items         *gtk.StringList
+	items         *gioutil.ListModel[modules.Entry]
 	selection     *gtk.SingleSelection
-	factory       *gtk.SignalListItemFactory
 	prefixClasses map[string][]string
 }
 
@@ -81,10 +74,6 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		if cfg == nil {
 			cfg = config.Get()
 			hstry = history.Get()
-			entries = EntryMap{
-				mut:   sync.Mutex{},
-				items: make(map[string]modules.Entry),
-			}
 		}
 
 		setupUI(app)
@@ -137,13 +126,8 @@ func setupUI(app *gtk.Application) {
 
 	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
 
-	var items *gtk.StringList
-
-	if cfg.ShowInitialEntries {
-		items = gtk.NewStringList([]string{""})
-	} else {
-		items = gtk.NewStringList([]string{})
-	}
+	items := gioutil.NewListModel[modules.Entry]()
+	gtk.NewSingleSelection(items.ListModel)
 
 	ui = &UI{
 		app:           app,
@@ -154,10 +138,11 @@ func setupUI(app *gtk.Application) {
 		search:        builder.GetObject("search").Cast().(*gtk.SearchEntry),
 		list:          builder.GetObject("list").Cast().(*gtk.ListView),
 		items:         items,
-		selection:     gtk.NewSingleSelection(items),
-		factory:       gtk.NewSignalListItemFactory(),
+		selection:     gtk.NewSingleSelection(items.ListModel),
 		prefixClasses: make(map[string][]string),
 	}
+
+	factory := gtk.NewSignalListItemFactory()
 
 	fc := gtk.NewEventControllerFocus()
 	fc.Connect("enter", func() {
@@ -218,16 +203,14 @@ func setupUI(app *gtk.Application) {
 
 	ui.selection.SetAutoselect(true)
 
-	ui.factory.ConnectSetup(func(item *gtk.ListItem) {
+	factory.ConnectSetup(func(item *gtk.ListItem) {
 		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
 		box.SetFocusable(true)
 		item.SetChild(box)
 	})
 
-	ui.factory.ConnectBind(func(item *gtk.ListItem) {
-		entries.mut.Lock()
-		defer entries.mut.Unlock()
-		key := item.Item().Cast().(*gtk.StringObject).String()
+	factory.ConnectBind(func(item *gtk.ListItem) {
+		val := ui.items.Item(int(item.Position()))
 
 		if item.Selected() {
 			child := item.Child()
@@ -239,100 +222,98 @@ func setupUI(app *gtk.Application) {
 
 				if !activationEnabled {
 					box.GrabFocus()
-					ui.appwin.SetCSSClasses([]string{entries.items[key].Class})
+					ui.appwin.SetCSSClasses([]string{val.Class})
 					ui.search.GrabFocus()
 				}
 			}
 		}
 
-		if val, ok := entries.items[key]; ok {
-			child := item.Child()
+		child := item.Child()
 
-			if child != nil {
-				box, ok := child.(*gtk.Box)
-				if !ok {
-					log.Fatalln("child is not a box")
-				}
+		if child != nil {
+			box, ok := child.(*gtk.Box)
+			if !ok {
+				log.Fatalln("child is not a box")
+			}
 
-				if box.FirstChild() != nil {
-					return
-				}
+			if box.FirstChild() != nil {
+				return
+			}
 
-				box.SetCSSClasses([]string{"item", val.Class})
+			box.SetCSSClasses([]string{"item", val.Class})
 
-				motion := gtk.NewEventControllerMotion()
-				motion.ConnectEnter(func(_, _ float64) {
-					ui.selection.SetSelected(item.Position())
-				})
+			motion := gtk.NewEventControllerMotion()
+			motion.ConnectEnter(func(_, _ float64) {
+				ui.selection.SetSelected(item.Position())
+			})
 
-				click := gtk.NewGestureClick()
-				click.ConnectPressed(func(m int, _, _ float64) {
-					activateItem(false)
-				})
+			click := gtk.NewGestureClick()
+			click.ConnectPressed(func(m int, _, _ float64) {
+				activateItem(false)
+			})
 
-				box.AddController(click)
-				box.AddController(motion)
+			box.AddController(click)
+			box.AddController(motion)
 
-				wrapper := gtk.NewBox(gtk.OrientationVertical, 0)
-				wrapper.SetCSSClasses([]string{"textwrapper"})
-				wrapper.SetHExpand(true)
+			wrapper := gtk.NewBox(gtk.OrientationVertical, 0)
+			wrapper.SetCSSClasses([]string{"textwrapper"})
+			wrapper.SetHExpand(true)
 
-				if cfg.Icons.Hide || val.Icon != "" {
-					if val.IconIsImage {
-						image := gtk.NewPictureForFilename(val.Icon)
-						image.SetMarginEnd(10)
-						image.SetSizeRequest(0, 200)
-						image.SetCanShrink(true)
-						if val.HideText {
-							image.SetHExpand(true)
-						}
-						box.Append(image)
-					} else {
-						icon := gtk.NewImageFromIconName(val.Icon)
-						icon.SetIconSize(gtk.IconSizeLarge)
-						icon.SetPixelSize(cfg.Icons.Size)
-						icon.SetCSSClasses([]string{"icon"})
-						box.Append(icon)
+			if cfg.Icons.Hide || val.Icon != "" {
+				if val.IconIsImage {
+					image := gtk.NewPictureForFilename(val.Icon)
+					image.SetMarginEnd(10)
+					image.SetSizeRequest(0, 200)
+					image.SetCanShrink(true)
+					if val.HideText {
+						image.SetHExpand(true)
 					}
-				}
-
-				if !val.HideText {
-					box.Append(wrapper)
-				}
-
-				top := gtk.NewLabel(val.Label)
-				top.SetMaxWidthChars(0)
-				top.SetWrap(true)
-				top.SetHAlign(gtk.AlignStart)
-				top.SetCSSClasses([]string{"label"})
-
-				wrapper.Append(top)
-
-				if val.Sub != "" {
-					bottom := gtk.NewLabel(val.Sub)
-					bottom.SetMaxWidthChars(0)
-					bottom.SetWrap(true)
-					bottom.SetHAlign(gtk.AlignStart)
-					bottom.SetCSSClasses([]string{"sub"})
-
-					wrapper.Append(bottom)
+					box.Append(image)
 				} else {
-					wrapper.SetVAlign(gtk.AlignCenter)
+					icon := gtk.NewImageFromIconName(val.Icon)
+					icon.SetIconSize(gtk.IconSizeLarge)
+					icon.SetPixelSize(cfg.Icons.Size)
+					icon.SetCSSClasses([]string{"icon"})
+					box.Append(icon)
 				}
+			}
 
-				if !cfg.DisableActivationMode {
-					if item.Position()+1 <= uint(len(labels)) {
-						l := gtk.NewLabel(labels[item.Position()])
-						l.SetCSSClasses([]string{"activationlabel"})
-						box.Append(l)
-					}
+			if !val.HideText {
+				box.Append(wrapper)
+			}
+
+			top := gtk.NewLabel(val.Label)
+			top.SetMaxWidthChars(0)
+			top.SetWrap(true)
+			top.SetHAlign(gtk.AlignStart)
+			top.SetCSSClasses([]string{"label"})
+
+			wrapper.Append(top)
+
+			if val.Sub != "" {
+				bottom := gtk.NewLabel(val.Sub)
+				bottom.SetMaxWidthChars(0)
+				bottom.SetWrap(true)
+				bottom.SetHAlign(gtk.AlignStart)
+				bottom.SetCSSClasses([]string{"sub"})
+
+				wrapper.Append(bottom)
+			} else {
+				wrapper.SetVAlign(gtk.AlignCenter)
+			}
+
+			if !cfg.DisableActivationMode {
+				if item.Position()+1 <= uint(len(labels)) {
+					l := gtk.NewLabel(labels[item.Position()])
+					l.SetCSSClasses([]string{"activationlabel"})
+					box.Append(l)
 				}
 			}
 		}
 	})
 
 	ui.list.SetModel(ui.selection)
-	ui.list.SetFactory(&ui.factory.ListItemFactory)
+	ui.list.SetFactory(&factory.ListItemFactory)
 
 	handleListVisibility()
 

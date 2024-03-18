@@ -27,15 +27,9 @@ func (h *Handler) handle() {
 
 			sortEntries(h.entries)
 
-			list := []string{}
-
-			for _, v := range h.entries {
-				list = append(list, v.Identifier)
-			}
-
-			if len(list) > 0 {
+			if len(h.entries) > 0 {
 				glib.IdleAdd(func() {
-					ui.items.Splice(0, ui.items.NItems(), list)
+					ui.items.Splice(0, ui.items.NItems(), h.entries...)
 					ui.selection.SetSelected(0)
 				})
 			}

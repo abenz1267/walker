@@ -269,12 +269,6 @@ func randomString(length int) string {
 
 var cancel context.CancelFunc
 
-var handlerPool = sync.Pool{
-	New: func() any {
-		return new(Handler)
-	},
-}
-
 func process() {
 	if !appstate.IsRunning {
 		return
@@ -298,6 +292,12 @@ func process() {
 	ctx, cancel = context.WithCancel(context.Background())
 
 	go processAync(ctx)
+}
+
+var handlerPool = sync.Pool{
+	New: func() any {
+		return new(Handler)
+	},
 }
 
 func processAync(ctx context.Context) {

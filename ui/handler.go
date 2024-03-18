@@ -33,6 +33,8 @@ func (h *Handler) handle() {
 					ui.selection.SetSelected(0)
 				})
 			}
+
+			return
 		case <-h.ctx.Done():
 			return
 		default:

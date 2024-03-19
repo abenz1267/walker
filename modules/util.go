@@ -32,8 +32,10 @@ type Entry struct {
 	Sub               string       `json:"sub,omitempty"`
 	Exec              string       `json:"exec,omitempty"`
 	Terminal          bool         `json:"terminal,omitempty"`
+	Piped             Piped        `json:"piped,omitempty"`
 	Icon              string       `json:"icon,omitempty"`
 	IconIsImage       bool         `json:"icon_is_image,omitempty"`
+	Image             string       `json:"image,omitempty"`
 	HideText          bool         `json:"hide_text,omitempty"`
 	Categories        []string     `json:"categories,omitempty"`
 	Notifyable        bool         `json:"notifyable,omitempty"`
@@ -47,6 +49,11 @@ type Entry struct {
 	Used              int          `json:"-"`
 	DaysSinceUsed     int          `json:"-"`
 	LastUsed          time.Time    `json:"-"`
+}
+
+type Piped struct {
+	Content string `json:"content,omitempty"`
+	Type    string `json:"type,omitempty"`
 }
 
 func readCache(name string, data any) bool {
@@ -83,34 +90,7 @@ func readCache(name string, data any) bool {
 	return false
 }
 
-func writeCache(name string, data any) {
-	cacheDir, err := os.UserCacheDir()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	cacheDir = filepath.Join(cacheDir, "walker")
-
-	b, err := json.Marshal(data)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	err = os.MkdirAll(cacheDir, 0755)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	err = os.WriteFile(filepath.Join(cacheDir, fmt.Sprintf("%s.json", name)), b, 0644)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
-func find(modules []config.Module, name string) *config.Module {
+func Find(modules []config.Module, name string) *config.Module {
 	for _, v := range modules {
 		if v.Name == name {
 			return &v

@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/util"
 	"github.com/adrg/xdg"
 )
 
@@ -25,7 +26,7 @@ type Application struct {
 }
 
 func (a Applications) Setup(cfg *config.Config) Workable {
-	module := find(cfg.Modules, a.Name())
+	module := Find(cfg.Modules, a.Name())
 	if module == nil {
 		return nil
 	}
@@ -195,7 +196,7 @@ func parse() []Application {
 		})
 	}
 
-	writeCache(ApplicationsName, apps)
+	util.ToJson(apps, filepath.Join(util.CacheDir(), fmt.Sprintf("%s.json", ApplicationsName)))
 
 	return apps
 }

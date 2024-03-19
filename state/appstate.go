@@ -1,6 +1,12 @@
 package state
 
-import "time"
+import (
+	"time"
+
+	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/modules"
+	"github.com/abenz1267/walker/modules/clipboard"
+)
 
 type AppState struct {
 	Started    time.Time
@@ -8,6 +14,7 @@ type AppState struct {
 	IsService  bool
 	IsRunning  bool
 	HasUI      bool
+	Clipboard  modules.Workable
 }
 
 func Get() *AppState {
@@ -18,4 +25,8 @@ func Get() *AppState {
 		IsMeasured: false,
 		HasUI:      false,
 	}
+}
+
+func (app *AppState) StartServiceableModules(cfg *config.Config) {
+	app.Clipboard = clipboard.Clipboard{}.Setup(cfg)
 }

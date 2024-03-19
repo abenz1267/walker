@@ -12,6 +12,7 @@ import (
 	"github.com/abenz1267/walker/history"
 	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/state"
+	"github.com/abenz1267/walker/util"
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
@@ -71,13 +72,11 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			return
 		}
 
-		if cfg == nil {
-			cfg = config.Get()
-			hstry = history.Get()
-		}
+		cfg = config.Get()
+		hstry = history.Get()
 
 		setupUI(app)
-		setupInteractions()
+		setupInteractions(appstate)
 
 		ui.appwin.SetApplication(app)
 
@@ -108,29 +107,6 @@ func setupUI(app *gtk.Application) {
 
 	builder := gtk.NewBuilderFromString(layout, len(layout))
 
-	cfgDir, err := os.UserConfigDir()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	cfgDir = filepath.Join(cfgDir, "walker")
-
-	cssFile := filepath.Join(cfgDir, "style.css")
-
-	cssProvider := gtk.NewCSSProvider()
-	if _, err := os.Stat(cssFile); err == nil {
-		cssProvider.LoadFromPath(cssFile)
-	} else {
-		cssProvider.LoadFromData(string(style))
-
-		err := os.WriteFile(cssFile, style, 0o600)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	}
-
-	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
-
 	items := gioutil.NewListModel[modules.Entry]()
 	gtk.NewSingleSelection(items.ListModel)
 
@@ -147,12 +123,6 @@ func setupUI(app *gtk.Application) {
 		prefixClasses: make(map[string][]string),
 	}
 
-	factory := gtk.NewSignalListItemFactory()
-
-	if cfg.List.MarginTop != 0 {
-		ui.list.SetMarginTop(cfg.List.MarginTop)
-	}
-
 	fc := gtk.NewEventControllerFocus()
 	fc.Connect("enter", func() {
 		if !appstate.IsMeasured {
@@ -162,7 +132,42 @@ func setupUI(app *gtk.Application) {
 	})
 
 	ui.search.AddController(fc)
+	ui.selection.SetAutoselect(true)
+
+	factory := setupFactory()
+
+	ui.list.SetModel(ui.selection)
+	ui.list.SetFactory(&factory.ListItemFactory)
+
+	setupUserStyle()
+	handleListVisibility()
+
+	ui.selection.ConnectItemsChanged(func(p, r, a uint) {
+		handleListVisibility()
+	})
+}
+
+func setupUserStyle() {
+	cssFile := filepath.Join(util.ConfigDir(), "style.css")
+
+	cssProvider := gtk.NewCSSProvider()
+	if _, err := os.Stat(cssFile); err == nil {
+		cssProvider.LoadFromPath(cssFile)
+	} else {
+		cssProvider.LoadFromData(string(style))
+
+		err := os.WriteFile(cssFile, style, 0o600)
+		if err != nil {
+			log.Fatalln(err)
+		}
+	}
+
+	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
 	ui.search.SetObjectProperty("search-delay", cfg.Search.Delay)
+
+	if cfg.List.MarginTop != 0 {
+		ui.list.SetMarginTop(cfg.List.MarginTop)
+	}
 
 	if cfg.Search.HideIcons {
 		ui.search.FirstChild().(*gtk.Image).Hide()
@@ -209,9 +214,10 @@ func setupUI(app *gtk.Application) {
 	ui.box.SetMarginTop(cfg.Align.Margins.Top)
 	ui.box.SetMarginStart(cfg.Align.Margins.Start)
 	ui.box.SetMarginEnd(cfg.Align.Margins.End)
+}
 
-	ui.selection.SetAutoselect(true)
-
+func setupFactory() *gtk.SignalListItemFactory {
+	factory := gtk.NewSignalListItemFactory()
 	factory.ConnectSetup(func(item *gtk.ListItem) {
 		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
 		box.SetFocusable(true)
@@ -268,6 +274,13 @@ func setupUI(app *gtk.Application) {
 			wrapper.SetCSSClasses([]string{"textwrapper"})
 			wrapper.SetHExpand(true)
 
+			if val.Image != "" {
+				image := gtk.NewImageFromFile(val.Image)
+				image.SetHExpand(true)
+				image.SetSizeRequest(-1, cfg.Clipboard.ImageHeight)
+				box.Append(image)
+			}
+
 			if cfg.Icons.Hide || val.Icon != "" {
 				if val.IconIsImage {
 					image := gtk.NewPictureForFilename(val.Icon)
@@ -321,14 +334,7 @@ func setupUI(app *gtk.Application) {
 		}
 	})
 
-	ui.list.SetModel(ui.selection)
-	ui.list.SetFactory(&factory.ListItemFactory)
-
-	handleListVisibility()
-
-	ui.selection.ConnectItemsChanged(func(p, r, a uint) {
-		handleListVisibility()
-	})
+	return factory
 }
 
 func handleListVisibility() {

@@ -3,31 +3,38 @@ package config
 import (
 	_ "embed"
 	"encoding/json"
-	"io"
 	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
+
+	"github.com/abenz1267/walker/util"
 )
 
 //go:embed config.default.json
 var config []byte
 
 type Config struct {
-	Placeholder           string   `json:"placeholder,omitempty"`
-	NotifyOnFail          bool     `json:"notify_on_fail,omitempty"`
-	ShowInitialEntries    bool     `json:"show_initial_entries,omitempty"`
-	ShellConfig           string   `json:"shell_config,omitempty"`
-	Terminal              string   `json:"terminal,omitempty"`
-	Orientation           string   `json:"orientation,omitempty"`
-	Fullscreen            bool     `json:"fullscreen,omitempty"`
-	Modules               []Module `json:"modules,omitempty"`
-	External              []Module `json:"external,omitempty"`
-	Icons                 Icons    `json:"icons,omitempty"`
-	Align                 Align    `json:"align,omitempty"`
-	List                  List     `json:"list,omitempty"`
-	Search                Search   `json:"search,omitempty"`
-	DisableActivationMode bool     `json:"disable_activation_mode,omitempty"`
+	Placeholder           string    `json:"placeholder,omitempty"`
+	NotifyOnFail          bool      `json:"notify_on_fail,omitempty"`
+	ShowInitialEntries    bool      `json:"show_initial_entries,omitempty"`
+	ShellConfig           string    `json:"shell_config,omitempty"`
+	Terminal              string    `json:"terminal,omitempty"`
+	Orientation           string    `json:"orientation,omitempty"`
+	Fullscreen            bool      `json:"fullscreen,omitempty"`
+	Modules               []Module  `json:"modules,omitempty"`
+	External              []Module  `json:"external,omitempty"`
+	Icons                 Icons     `json:"icons,omitempty"`
+	Align                 Align     `json:"align,omitempty"`
+	List                  List      `json:"list,omitempty"`
+	Search                Search    `json:"search,omitempty"`
+	DisableActivationMode bool      `json:"disable_activation_mode,omitempty"`
+	Clipboard             Clipboard `json:"clipboard,omitempty"`
+}
+
+type Clipboard struct {
+	ImageHeight int `json:"image_height,omitempty"`
+	MaxEntries  int `json:"max_entries,omitempty"`
 }
 
 type Module struct {
@@ -72,41 +79,18 @@ type List struct {
 }
 
 func Get() *Config {
-	cfgDir, err := os.UserConfigDir()
-	if err != nil {
-		log.Fatalln(err)
-	}
-
-	cfgDir = filepath.Join(cfgDir, "walker")
-	cfgName := filepath.Join(cfgDir, "config.json")
+	file := filepath.Join(util.ConfigDir(), "config.json")
 
 	cfg := &Config{}
+	ok := util.FromJson(file, cfg)
 
-	if _, err := os.Stat(cfgName); err == nil {
-		file, err := os.Open(cfgName)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		b, err := io.ReadAll(file)
+	if !ok {
+		err := json.Unmarshal(config, &cfg)
 		if err != nil {
 			log.Fatalln(err)
 		}
 
-		err = json.Unmarshal(b, &cfg)
-		if err != nil {
-			log.Fatalln(err)
-		}
-	} else {
-		err = json.Unmarshal(config, &cfg)
-		if err != nil {
-			log.Fatalln(err)
-		}
-
-		err := os.WriteFile(cfgName, config, 0o600)
-		if err != nil {
-			log.Fatalln(err)
-		}
+		util.ToJson(&cfg, file)
 	}
 
 	go setTerminal(cfg)

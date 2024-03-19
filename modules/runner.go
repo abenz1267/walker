@@ -17,7 +17,7 @@ type Runner struct {
 }
 
 func (r Runner) Setup(cfg *config.Config) Workable {
-	module := find(cfg.Modules, r.Name())
+	module := Find(cfg.Modules, r.Name())
 	if module == nil {
 		return nil
 	}

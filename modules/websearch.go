@@ -12,7 +12,7 @@ type Websearch struct {
 }
 
 func (w Websearch) Setup(cfg *config.Config) Workable {
-	module := find(cfg.Modules, w.Name())
+	module := Find(cfg.Modules, w.Name())
 	if module == nil {
 		return nil
 	}

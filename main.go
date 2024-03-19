@@ -7,8 +7,10 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/abenz1267/walker/config"
 	"github.com/abenz1267/walker/state"
 	"github.com/abenz1267/walker/ui"
+	"github.com/abenz1267/walker/util"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
@@ -34,6 +36,7 @@ func main() {
 				return
 			case "--gapplication-service":
 				state.IsService = true
+				state.StartServiceableModules(config.Get())
 			case "--help", "-h", "--help-all":
 				withArgs = true
 			default:
@@ -44,7 +47,8 @@ func main() {
 	}
 
 	if !state.IsService && !withArgs {
-		tmp := os.TempDir()
+		tmp := util.TmpDir()
+
 		if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
 			log.Println("lockfile exists. exiting.")
 			return

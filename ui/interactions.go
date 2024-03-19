@@ -1,20 +1,18 @@
 package ui
 
 import (
+	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
-	"time"
 
-	"github.com/abenz1267/walker/history"
 	"github.com/abenz1267/walker/modules"
+	"github.com/abenz1267/walker/state"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
@@ -27,7 +25,7 @@ var (
 	activationEnabled bool
 )
 
-func setupInteractions() {
+func setupInteractions(appstate *state.AppState) {
 	createActivationKeys()
 
 	internals := []modules.Workable{
@@ -35,6 +33,7 @@ func setupInteractions() {
 		modules.Runner{ShellConfig: cfg.ShellConfig},
 		modules.Websearch{},
 		modules.Hyprland{},
+		appstate.Clipboard,
 	}
 
 	for _, v := range cfg.External {
@@ -48,6 +47,10 @@ func setupInteractions() {
 	procs = make(map[string][]modules.Workable)
 
 	for _, v := range internals {
+		if v == nil {
+			continue
+		}
+
 		w := v.Setup(cfg)
 		if w != nil {
 			procs[w.Prefix()] = append(procs[w.Prefix()], w)
@@ -216,13 +219,25 @@ func activateItem(keepOpen bool) {
 
 	cmd := exec.Command(f[0])
 
+	if entry.Piped.Content != "" {
+		if entry.Piped.Type == "file" {
+			b, err := os.ReadFile(entry.Piped.Content)
+			if err != nil {
+				log.Panic(err)
+			}
+
+			r := bytes.NewReader(b)
+			cmd.Stdin = r
+		}
+	}
+
 	if len(f) > 1 {
 		cmd = exec.Command(f[0], f[1:]...)
 	}
 
 	if entry.History {
 		if entry.HistoryIdentifier != "" {
-			saveToHistory(entry.HistoryIdentifier)
+			hstry.Save(entry.HistoryIdentifier)
 		}
 	}
 
@@ -408,51 +423,6 @@ func usageModifier(item modules.Entry) int {
 	return 0
 }
 
-func saveToHistory(entry string) {
-	cacheDir, err := os.UserCacheDir()
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	cacheDir = filepath.Join(cacheDir, "walker")
-
-	h, ok := hstry[entry]
-	if !ok {
-		h = history.Entry{
-			LastUsed: time.Now(),
-			Used:     1,
-		}
-	} else {
-		h.Used++
-
-		if h.Used > 10 {
-			h.Used = 10
-		}
-
-		h.LastUsed = time.Now()
-	}
-
-	hstry[entry] = h
-
-	b, err := json.Marshal(hstry)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	err = os.MkdirAll(cacheDir, 0755)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-
-	err = os.WriteFile(filepath.Join(cacheDir, "history.json"), b, 0644)
-	if err != nil {
-		log.Println(err)
-	}
-}
-
 func quit() {
 	if appstate.IsService {
 		if !cfg.DisableActivationMode && activationEnabled {
@@ -504,7 +474,12 @@ func calculateFuzzyScore(text, target string) int {
 }
 
 func fuzzyScore(entry modules.Entry, text string) float64 {
-	tm := 1.0 / float64(len(text))
+	len := len(text)
+	if len == 0 {
+		len = 1
+	}
+
+	tm := 1.0 / float64(len)
 
 	if val, ok := hstry[entry.HistoryIdentifier]; ok {
 		entry.Used = val.Used

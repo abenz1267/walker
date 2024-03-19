@@ -16,7 +16,7 @@ type Hyprland struct {
 }
 
 func (h Hyprland) Setup(cfg *config.Config) Workable {
-	module := find(cfg.Modules, h.Name())
+	module := Find(cfg.Modules, h.Name())
 	if module == nil {
 		return nil
 	}

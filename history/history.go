@@ -1,12 +1,10 @@
 package history
 
 import (
-	"encoding/json"
-	"io"
-	"log"
-	"os"
 	"path/filepath"
 	"time"
+
+	"github.com/abenz1267/walker/util"
 )
 
 type History map[string]Entry
@@ -17,42 +15,39 @@ type Entry struct {
 	DaysSinceUsed int
 }
 
-func Get() History {
-	history := make(History)
+func (s History) Save(entry string) {
+	h, ok := s[entry]
+	if !ok {
+		h = Entry{
+			LastUsed: time.Now(),
+			Used:     1,
+		}
+	} else {
+		h.Used++
 
-	cacheDir, err := os.UserCacheDir()
-	if err != nil {
-		log.Println(err)
-		log.Fatalf("failed to get cache dir: %s", err)
+		if h.Used > 10 {
+			h.Used = 10
+		}
+
+		h.LastUsed = time.Now()
 	}
 
-	cacheDir = filepath.Join(cacheDir, "walker")
+	s[entry] = h
 
-	path := filepath.Join(cacheDir, "history.json")
+	util.ToJson(s, filepath.Join(util.CacheDir(), "history.json"))
+}
 
-	if _, err := os.Stat(path); err == nil {
-		file, err := os.Open(path)
-		if err != nil {
-			log.Println(err)
-		}
-		defer file.Close()
+func Get() History {
+	file := filepath.Join(util.CacheDir(), "history.json")
 
-		b, err := io.ReadAll(file)
-		if err != nil {
-			log.Fatalln(err)
-		}
+	history := History{}
+	_ = util.FromJson(file, &history)
 
-		err = json.Unmarshal(b, &history)
-		if err != nil {
-			log.Fatalln(err)
-		}
+	for k, v := range history {
+		today := time.Now()
+		v.DaysSinceUsed = int(today.Sub(v.LastUsed).Hours() / 24)
 
-		for k, v := range history {
-			today := time.Now()
-			v.DaysSinceUsed = int(today.Sub(v.LastUsed).Hours() / 24)
-
-			history[k] = v
-		}
+		history[k] = v
 	}
 
 	return history

@@ -19,7 +19,7 @@ type External struct {
 }
 
 func (e External) Setup(cfg *config.Config) Workable {
-	module := find(cfg.External, e.Name())
+	module := Find(cfg.External, e.Name())
 	if module == nil {
 		return nil
 	}

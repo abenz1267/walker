@@ -9,6 +9,10 @@
     "delay": 0,
     "hide_icons": false
   },
+  "clipboard": {
+    "max_entries": 1,
+    "image_height": 300
+  },
   "align": {
     "width": 400,
     "horizontal": "center",

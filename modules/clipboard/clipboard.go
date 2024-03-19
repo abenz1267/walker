@@ -161,7 +161,7 @@ func getContent() (string, string) {
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Println(string(out))
-		log.Panic(err)
+		return "", ""
 	}
 
 	txt := strings.TrimSpace(string(out))

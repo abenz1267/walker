@@ -47,6 +47,10 @@
     {
       "name": "websearch",
       "prefix": "?"
+    },
+    {
+      "name": "switcher",
+      "prefix": "/"
     }
   ]
 }

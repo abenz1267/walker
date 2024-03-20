@@ -13,7 +13,6 @@
 - activation-mode: run entries via labels
 - display images
 - non-blocking async handling of results
-- when service: clipboard with fuzzy find and images (currently "wl-clipboard" only)
 
 ## Builtin Modules
 
@@ -21,6 +20,7 @@
 - desktop applications
 - websearch
 - hyprland windows
+- clipboard with fuzzy find and images (currently "wl-clipboard" only)
 
 ## Requirements
 

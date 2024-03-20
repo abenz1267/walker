@@ -246,6 +246,10 @@ func activateItem(keepOpen bool) {
 
 	f := strings.Fields(entry.Exec)
 
+	if len(entry.RawExec) > 0 {
+		f = entry.RawExec
+	}
+
 	if len(f) == 0 {
 		return
 	}

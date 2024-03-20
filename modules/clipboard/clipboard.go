@@ -50,7 +50,7 @@ func (c Clipboard) Entries(term string) []modules.Entry {
 		e := modules.Entry{
 			Label:      v.Content,
 			Sub:        "Text",
-			Exec:       fmt.Sprintf("wl-copy %s", v.Content),
+			RawExec:    []string{"wl-copy", v.Content},
 			Categories: []string{"clipboard"},
 			Class:      "clipboard",
 			Matching:   modules.Fuzzy,

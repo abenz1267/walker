@@ -392,6 +392,9 @@ func processAync(ctx context.Context) {
 	handler.receiver = make(chan []modules.Entry, len(p))
 	go handler.handle()
 
+	var wg sync.WaitGroup
+	wg.Add(len(p))
+
 	for _, proc := range p {
 		if proc.SwitcherExclusive() {
 			if singleProc == nil || singleProc.Name() != proc.Name() {
@@ -400,7 +403,9 @@ func processAync(ctx context.Context) {
 			}
 		}
 
-		go func(ctx context.Context, text string, w modules.Workable) {
+		go func(ctx context.Context, wg *sync.WaitGroup, text string, w modules.Workable) {
+			defer wg.Done()
+
 			e := w.Entries(text)
 
 			toPush := []modules.Entry{}
@@ -425,8 +430,11 @@ func processAync(ctx context.Context) {
 			}
 
 			handler.receiver <- toPush
-		}(ctx, text, proc)
+		}(ctx, &wg, text, proc)
 	}
+
+	wg.Wait()
+	cancel()
 }
 
 func setInitials() {

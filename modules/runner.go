@@ -29,6 +29,7 @@ func (r Runner) Setup(cfg *config.Config) Workable {
 
 	r.prefix = module.Prefix
 	r.switcherExclusive = module.SwitcherExclusive
+	r.parseAliases()
 
 	return r
 }
@@ -47,8 +48,6 @@ func (r Runner) Entries(term string) []Entry {
 	if term == "" {
 		return entries
 	}
-
-	r.parseAliases()
 
 	if r.prefix != "" && len(term) < 2 {
 		return entries

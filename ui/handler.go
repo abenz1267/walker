@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/abenz1267/walker/modules"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
@@ -13,6 +14,7 @@ type Handler struct {
 	receiver chan []modules.Entry
 	entries  []modules.Entry
 	ctx      context.Context
+	mut      sync.Mutex
 }
 
 func (h *Handler) handle() {
@@ -23,6 +25,7 @@ func (h *Handler) handle() {
 				continue
 			}
 
+			h.mut.Lock()
 			h.entries = append(h.entries, entries...)
 
 			sortEntries(h.entries)
@@ -34,7 +37,7 @@ func (h *Handler) handle() {
 				})
 			}
 
-			return
+			h.mut.Unlock()
 		case <-h.ctx.Done():
 			return
 		default:

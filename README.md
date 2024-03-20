@@ -21,6 +21,7 @@
 - websearch
 - hyprland windows
 - clipboard with fuzzy find and images (currently "wl-clipboard" only)
+- module switcher
 
 ## Requirements
 
@@ -42,6 +43,20 @@ yay -S walker
 Default config will be put into `$HOME/.config/walker/`.
 
 See `config/config.default.json` and `ui/style.default.css`.
+
+Definition for modules:
+
+```go
+type Module struct {
+	Prefix            string `json:"prefix,omitempty"`
+	Name              string `json:"name,omitempty"`
+	Src               string `json:"src,omitempty"`
+	Cmd               string `json:"cmd,omitempty"`
+	Transform         bool   `json:"transform,omitempty"`
+	History           bool   `json:"history,omitempty"`
+	SwitcherExclusive bool   `json:"switcher_exclusive,omitempty"`
+}
+```
 
 ## Providing your own modules
 

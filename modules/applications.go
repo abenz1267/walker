@@ -16,13 +16,18 @@ import (
 const ApplicationsName = "applications"
 
 type Applications struct {
-	apps   []Application
-	prefix string
+	apps              []Application
+	prefix            string
+	switcherExclusive bool
 }
 
 type Application struct {
 	Generic Entry   `json:"generic,omitempty"`
 	Actions []Entry `json:"actions,omitempty"`
+}
+
+func (a Applications) SwitcherExclusive() bool {
+	return a.switcherExclusive
 }
 
 func (a Applications) Setup(cfg *config.Config) Workable {
@@ -32,6 +37,7 @@ func (a Applications) Setup(cfg *config.Config) Workable {
 	}
 
 	a.prefix = module.Prefix
+	a.switcherExclusive = module.SwitcherExclusive
 
 	a.apps = parse()
 

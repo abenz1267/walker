@@ -11,9 +11,14 @@ import (
 )
 
 type Runner struct {
-	ShellConfig string
-	prefix      string
-	aliases     map[string]string
+	ShellConfig       string
+	prefix            string
+	aliases           map[string]string
+	switcherExclusive bool
+}
+
+func (r Runner) SwitcherExclusive() bool {
+	return r.switcherExclusive
 }
 
 func (r Runner) Setup(cfg *config.Config) Workable {
@@ -23,6 +28,7 @@ func (r Runner) Setup(cfg *config.Config) Workable {
 	}
 
 	r.prefix = module.Prefix
+	r.switcherExclusive = module.SwitcherExclusive
 
 	return r
 }

@@ -8,7 +8,12 @@ import (
 )
 
 type Websearch struct {
-	prefix string
+	prefix            string
+	switcherExclusive bool
+}
+
+func (w Websearch) SwitcherExclusive() bool {
+	return w.switcherExclusive
 }
 
 func (w Websearch) Setup(cfg *config.Config) Workable {
@@ -18,6 +23,7 @@ func (w Websearch) Setup(cfg *config.Config) Workable {
 	}
 
 	w.prefix = module.Prefix
+	w.switcherExclusive = module.SwitcherExclusive
 
 	return w
 }

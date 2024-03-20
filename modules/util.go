@@ -16,6 +16,7 @@ type Workable interface {
 	Entries(term string) []Entry
 	Prefix() string
 	Name() string
+	SwitcherExclusive() bool
 	Setup(cfg *config.Config) Workable
 }
 

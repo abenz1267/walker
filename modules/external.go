@@ -11,11 +11,16 @@ import (
 )
 
 type External struct {
-	prefix     string
-	ModuleName string
-	src        string
-	cmd        string
-	transform  bool
+	prefix            string
+	ModuleName        string
+	src               string
+	cmd               string
+	transform         bool
+	switcherExclusive bool
+}
+
+func (e External) SwitcherExclusive() bool {
+	return e.switcherExclusive
 }
 
 func (e External) Setup(cfg *config.Config) Workable {
@@ -25,6 +30,7 @@ func (e External) Setup(cfg *config.Config) Workable {
 	}
 
 	e.prefix = module.Prefix
+	e.switcherExclusive = module.SwitcherExclusive
 	e.src = module.Src
 	e.cmd = module.Cmd
 	e.transform = module.Transform

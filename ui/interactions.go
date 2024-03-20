@@ -51,10 +51,22 @@ func setupInteractions(appstate *state.AppState) {
 			continue
 		}
 
+		if v.Name() == "switcher" {
+			continue
+		}
+
 		w := v.Setup(cfg)
 		if w != nil {
 			procs[w.Prefix()] = append(procs[w.Prefix()], w)
 		}
+	}
+
+	// setup switcher individually
+	switcher := modules.Switcher{Procs: procs}
+
+	s := switcher.Setup(cfg)
+	if s != nil {
+		procs[s.Prefix()] = append(procs[s.Prefix()], s)
 	}
 
 	for _, v := range procs {
@@ -172,7 +184,11 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			activateItem(true)
 		}
 	case gdk.KEY_Escape:
-		quit()
+		if singleProc != nil {
+			disableSingleProc()
+		} else {
+			quit()
+		}
 	case gdk.KEY_Down:
 		selectNext()
 	case gdk.KEY_Up:
@@ -200,8 +216,34 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	return true
 }
 
+func disableSingleProc() {
+	singleProc = nil
+	ui.search.SetObjectProperty("placeholder-text", cfg.Placeholder)
+
+	if ui.search.Text() == "" {
+		process()
+	} else {
+		ui.search.SetText("")
+	}
+}
+
 func activateItem(keepOpen bool) {
 	entry := ui.items.Item(int(ui.selection.Selected()))
+
+	if entry.Sub == "switcher" {
+		for _, v := range procs {
+			for _, w := range v {
+				if w.Name() == entry.Label {
+					singleProc = w
+					ui.items.Splice(0, ui.items.NItems())
+					ui.search.SetObjectProperty("placeholder-text", w.Name())
+					ui.search.SetText("")
+					return
+				}
+			}
+		}
+	}
+
 	f := strings.Fields(entry.Exec)
 
 	if len(f) == 0 {
@@ -283,12 +325,8 @@ func process() {
 	}
 
 	text := strings.TrimSpace(ui.search.Text())
-	if text == "" && cfg.ShowInitialEntries {
+	if text == "" && cfg.ShowInitialEntries && singleProc == nil {
 		setInitials()
-		return
-	}
-
-	if text == "" {
 		return
 	}
 
@@ -324,26 +362,44 @@ func processAync(ctx context.Context) {
 		prefix = prefix[0:1]
 	}
 
-	hasPrefix := true
+	p := []modules.Workable{}
 
-	p, ok := procs[prefix]
-	if !ok {
-		p = procs[""]
-		hasPrefix = false
-	}
+	if singleProc == nil {
+		hasPrefix := true
 
-	if hasPrefix {
+		var ok bool
+		p, ok = procs[prefix]
+		if !ok {
+			p = procs[""]
+			hasPrefix = false
+		}
+
+		if hasPrefix {
+			glib.IdleAdd(func() {
+				ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
+			})
+
+			text = strings.TrimPrefix(text, prefix)
+		}
+	} else {
+		p = []modules.Workable{singleProc}
+
 		glib.IdleAdd(func() {
-			ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
+			ui.appwin.SetCSSClasses(ui.prefixClasses[singleProc.Prefix()])
 		})
-
-		text = strings.TrimPrefix(text, prefix)
 	}
 
 	handler.receiver = make(chan []modules.Entry, len(p))
 	go handler.handle()
 
 	for _, proc := range p {
+		if proc.SwitcherExclusive() {
+			if singleProc == nil || singleProc.Name() != proc.Name() {
+				handler.receiver <- []modules.Entry{}
+				continue
+			}
+		}
+
 		go func(ctx context.Context, text string, w modules.Workable) {
 			e := w.Entries(text)
 
@@ -474,12 +530,11 @@ func calculateFuzzyScore(text, target string) int {
 }
 
 func fuzzyScore(entry modules.Entry, text string) float64 {
-	len := len(text)
-	if len == 0 {
-		len = 1
-	}
+	textLength := len(text)
 
-	tm := 1.0 / float64(len)
+	if textLength == 0 {
+		return 1
+	}
 
 	if val, ok := hstry[entry.HistoryIdentifier]; ok {
 		entry.Used = val.Used
@@ -509,6 +564,12 @@ func fuzzyScore(entry modules.Entry, text string) float64 {
 	}
 
 	usageScore := usageModifier(entry)
+
+	if textLength == 0 {
+		textLength = 1
+	}
+
+	tm := 1.0 / float64(textLength)
 
 	return float64(usageScore)*tm + float64(entry.ScoreFuzzy)/tm
 }

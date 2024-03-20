@@ -12,7 +12,12 @@ import (
 )
 
 type Hyprland struct {
-	prefix string
+	prefix            string
+	switcherExclusive bool
+}
+
+func (h Hyprland) SwitcherExclusive() bool {
+	return h.switcherExclusive
 }
 
 func (h Hyprland) Setup(cfg *config.Config) Workable {
@@ -28,6 +33,7 @@ func (h Hyprland) Setup(cfg *config.Config) Workable {
 	}
 
 	h.prefix = module.Prefix
+	h.switcherExclusive = module.SwitcherExclusive
 
 	return h
 }
@@ -96,7 +102,7 @@ func (Hyprland) Entries(term string) []Entry {
 			Notifyable:        false,
 			History:           false,
 			Matching:          Fuzzy,
-			MinScoreToInclude: 50,
+			MinScoreToInclude: 20,
 		}
 
 		entries = append(entries, n)

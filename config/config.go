@@ -38,12 +38,13 @@ type Clipboard struct {
 }
 
 type Module struct {
-	Prefix    string `json:"prefix,omitempty"`
-	Name      string `json:"name,omitempty"`
-	Src       string `json:"src,omitempty"`
-	Cmd       string `json:"cmd,omitempty"`
-	Transform bool   `json:"transform,omitempty"`
-	History   bool   `json:"history,omitempty"`
+	Prefix            string `json:"prefix,omitempty"`
+	Name              string `json:"name,omitempty"`
+	Src               string `json:"src,omitempty"`
+	Cmd               string `json:"cmd,omitempty"`
+	Transform         bool   `json:"transform,omitempty"`
+	History           bool   `json:"history,omitempty"`
+	SwitcherExclusive bool   `json:"switcher_exclusive,omitempty"`
 }
 
 type Search struct {

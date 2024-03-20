@@ -20,11 +20,16 @@ import (
 const ClipboardName = "clipboard"
 
 type Clipboard struct {
-	prefix   string
-	entries  []Entry
-	file     string
-	imgTypes map[string]string
-	max      int
+	prefix            string
+	entries           []Entry
+	file              string
+	imgTypes          map[string]string
+	max               int
+	switcherExclusive bool
+}
+
+func (c Clipboard) SwitcherExclusive() bool {
+	return c.switcherExclusive
 }
 
 type Entry struct {
@@ -96,6 +101,7 @@ func (c Clipboard) Setup(cfg *config.Config) modules.Workable {
 	}
 
 	c.prefix = module.Prefix
+	c.switcherExclusive = module.SwitcherExclusive
 	c.file = filepath.Join(util.CacheDir(), "clipboard.json")
 	c.max = cfg.Clipboard.MaxEntries
 

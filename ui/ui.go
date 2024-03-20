@@ -27,12 +27,15 @@ var style []byte
 
 var labels = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
 
+type ProcMap map[string][]modules.Workable
+
 var (
-	cfg      *config.Config
-	ui       *UI
-	procs    map[string][]modules.Workable
-	hstry    history.History
-	appstate *state.AppState
+	cfg        *config.Config
+	ui         *UI
+	procs      ProcMap
+	singleProc modules.Workable
+	hstry      history.History
+	appstate   *state.AppState
 )
 
 type UI struct {
@@ -61,7 +64,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		appstate.IsRunning = true
 
 		if appstate.HasUI {
-			ui.search.SetText("")
+			disableSingleProc()
 			ui.appwin.SetVisible(true)
 
 			if !appstate.IsMeasured {

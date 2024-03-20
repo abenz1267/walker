@@ -310,9 +310,6 @@ func processAync(ctx context.Context) {
 
 	handler.ctx = ctx
 	handler.entries = []modules.Entry{}
-	handler.receiver = make(chan []modules.Entry)
-
-	go handler.handle()
 
 	text := strings.TrimSpace(ui.search.Text())
 
@@ -343,13 +340,11 @@ func processAync(ctx context.Context) {
 		text = strings.TrimPrefix(text, prefix)
 	}
 
-	var wg sync.WaitGroup
-	wg.Add(len(p))
+	handler.receiver = make(chan []modules.Entry, len(p))
+	go handler.handle()
 
 	for _, proc := range p {
-		go func(ctx context.Context, wg *sync.WaitGroup, text string, w modules.Workable) {
-			defer wg.Done()
-
+		go func(ctx context.Context, text string, w modules.Workable) {
 			e := w.Entries(text)
 
 			toPush := []modules.Entry{}
@@ -374,11 +369,8 @@ func processAync(ctx context.Context) {
 			}
 
 			handler.receiver <- toPush
-		}(ctx, &wg, text, proc)
+		}(ctx, text, proc)
 	}
-
-	wg.Wait()
-	cancel()
 }
 
 func setInitials() {

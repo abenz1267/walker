@@ -42,7 +42,7 @@ yay -S walker
 
 Default config will be put into `$HOME/.config/walker/`.
 
-See `config/config.default.json` and `ui/style.default.css`.
+See `config/config.default.json` and `ui/style.default.css`. Styling is done via GTK CSS.
 
 Definition for modules:
 

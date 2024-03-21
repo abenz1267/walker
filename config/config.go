@@ -18,6 +18,7 @@ type Config struct {
 	Placeholder           string    `json:"placeholder,omitempty"`
 	NotifyOnFail          bool      `json:"notify_on_fail,omitempty"`
 	ShowInitialEntries    bool      `json:"show_initial_entries,omitempty"`
+	ForceKeyboardFocus    bool      `json:"force_keyboard_focus,omitempty"`
 	ShellConfig           string    `json:"shell_config,omitempty"`
 	Terminal              string    `json:"terminal,omitempty"`
 	Orientation           string    `json:"orientation,omitempty"`

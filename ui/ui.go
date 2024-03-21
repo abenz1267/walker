@@ -84,7 +84,12 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		ui.appwin.SetApplication(app)
 
 		gtk4layershell.InitForWindow(&ui.appwin.Window)
-		gtk4layershell.SetKeyboardMode(&ui.appwin.Window, gtk4layershell.LayerShellKeyboardModeOnDemand)
+
+		if cfg.ForceKeyboardFocus {
+			gtk4layershell.SetKeyboardMode(&ui.appwin.Window, gtk4layershell.LayerShellKeyboardModeExclusive)
+		} else {
+			gtk4layershell.SetKeyboardMode(&ui.appwin.Window, gtk4layershell.LayerShellKeyboardModeOnDemand)
+		}
 
 		if !cfg.Fullscreen {
 			gtk4layershell.SetLayer(&ui.appwin.Window, gtk4layershell.LayerShellLayerTop)

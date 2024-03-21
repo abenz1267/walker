@@ -92,26 +92,6 @@ func (r Runner) Entries(term string) []Entry {
 			label = val
 		}
 
-		rank := fuzzy.RankMatchFold(matchable, v)
-
-		if rank == 0 {
-			return []Entry{
-				{
-					Label:      label,
-					Searchable: v,
-					Sub:        "Runner",
-					Exec:       fmt.Sprintf("%s %s", label, strings.Join(fields[1:], " ")),
-					Notifyable: true,
-					Class:      "runner",
-					Matching:   Fuzzy,
-				},
-			}
-		}
-
-		if rank > 5 || rank < 0 {
-			continue
-		}
-
 		n := Entry{
 			Label:      label,
 			Searchable: v,
@@ -120,6 +100,16 @@ func (r Runner) Entries(term string) []Entry {
 			Notifyable: true,
 			Class:      "runner",
 			Matching:   AlwaysTop,
+		}
+
+		rank := fuzzy.RankMatchFold(matchable, v)
+
+		if rank == 0 {
+			return []Entry{n}
+		}
+
+		if rank > 5 || rank < 0 {
+			continue
 		}
 
 		entries = append(entries, n)

@@ -47,8 +47,9 @@ func (h Hyprland) Prefix() string {
 }
 
 type window struct {
-	title string
-	pid   string
+	title     string
+	pid       string
+	workspace string
 }
 
 func (Hyprland) Entries(term string) []Entry {
@@ -82,6 +83,12 @@ func (Hyprland) Entries(term string) []Entry {
 			windows[len(windows)-1].title = text
 		}
 
+		if strings.HasPrefix(text, "workspace:") {
+			text = strings.TrimSpace(strings.TrimPrefix(text, "workspace:"))
+			fields := strings.Fields(text)
+			windows[len(windows)-1].workspace = fields[0]
+		}
+
 		if strings.HasPrefix(text, "pid") {
 			text = strings.TrimSpace(strings.TrimPrefix(text, "pid:"))
 			windows[len(windows)-1].pid = text
@@ -95,9 +102,9 @@ func (Hyprland) Entries(term string) []Entry {
 
 		n := Entry{
 			Label:      v.title,
-			Sub:        "Hyprland",
+			Sub:        fmt.Sprintf("Hyprland (Workspace %s)", v.workspace),
 			Exec:       fmt.Sprintf("hyprctl dispatch focuswindow pid:%s", v.pid),
-			Categories: []string{"hyprland", "windows"},
+			Categories: []string{"hyprland", "windows", fmt.Sprintf("workspace %s", v.workspace), fmt.Sprintf("ws %s", v.workspace)},
 			Class:      "hyprland",
 			Notifyable: false,
 			History:    false,

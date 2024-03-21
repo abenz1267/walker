@@ -228,6 +228,10 @@ func disableSingleProc() {
 }
 
 func activateItem(keepOpen bool) {
+	if ui.list.Model().NItems() == 0 {
+		return
+	}
+
 	entry := ui.items.Item(int(ui.selection.Selected()))
 
 	if entry.Sub == "switcher" {

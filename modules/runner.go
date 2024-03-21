@@ -39,9 +39,10 @@ func (r Runner) Setup(cfg *config.Config) Workable {
 	if len(cfg.Runner.Includes) > 0 {
 		r.bins = cfg.Runner.Includes
 	} else {
-		r.parseAliases()
 		r.getBins()
 	}
+
+	r.parseAliases()
 
 	filtered := []string{}
 

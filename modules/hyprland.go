@@ -94,15 +94,14 @@ func (Hyprland) Entries(term string) []Entry {
 		}
 
 		n := Entry{
-			Label:             v.title,
-			Sub:               "Hyprland",
-			Exec:              fmt.Sprintf("hyprctl dispatch focuswindow pid:%s", v.pid),
-			Categories:        []string{"hyprland", "windows"},
-			Class:             "hyprland",
-			Notifyable:        false,
-			History:           false,
-			Matching:          Fuzzy,
-			MinScoreToInclude: 20,
+			Label:      v.title,
+			Sub:        "Hyprland",
+			Exec:       fmt.Sprintf("hyprctl dispatch focuswindow pid:%s", v.pid),
+			Categories: []string{"hyprland", "windows"},
+			Class:      "hyprland",
+			Notifyable: false,
+			History:    false,
+			Matching:   Fuzzy,
 		}
 
 		entries = append(entries, n)

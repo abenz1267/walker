@@ -81,19 +81,25 @@ type Entry struct {
 	Label             string       `json:"label,omitempty"`
 	Sub               string       `json:"sub,omitempty"`
 	Exec              string       `json:"exec,omitempty"`
+	RawExec           []string     `json:"raw_exec,omitempty"`
 	Terminal          bool         `json:"terminal,omitempty"`
+	Piped             Piped        `json:"piped,omitempty"`
 	Icon              string       `json:"icon,omitempty"`
 	IconIsImage       bool         `json:"icon_is_image,omitempty"`
+	Image             string       `json:"image,omitempty"`
 	HideText          bool         `json:"hide_text,omitempty"`
 	Categories        []string     `json:"categories,omitempty"`
 	Notifyable        bool         `json:"notifyable,omitempty"`
+	Searchable        string       `json:"searchable,omitempty"`
 	Class             string       `json:"class,omitempty"`
 	History           bool         `json:"history,omitempty"`
 	HistoryIdentifier string       `json:"history_identifier,omitempty"`
 	Matching          MatchingType `json:"matching,omitempty"`
 	ScoreFinal        float64      `json:"score_final,omitempty"`
-	MinScoreToInclude float64      `json:"min_score_to_include,omitempty"`
 	ScoreFuzzy        int          `json:"score_fuzzy,omitempty"`
+	Used              int          `json:"-"`
+	DaysSinceUsed     int          `json:"-"`
+	LastUsed          time.Time    `json:"-"`
 }
 ```
 

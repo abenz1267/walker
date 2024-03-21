@@ -47,6 +47,22 @@ func (h *Handler) handle() {
 
 func sortEntries(entries []modules.Entry) {
 	slices.SortFunc(entries, func(a, b modules.Entry) int {
+		if a.Matching == modules.AlwaysTop && b.Matching != modules.AlwaysTop {
+			return -1
+		}
+
+		if b.Matching == modules.AlwaysTop && a.Matching != modules.AlwaysTop {
+			return 1
+		}
+
+		if a.Matching == modules.AlwaysBottom && b.Matching != modules.AlwaysBottom {
+			return 1
+		}
+
+		if b.Matching == modules.AlwaysBottom && a.Matching != modules.AlwaysBottom {
+			return -1
+		}
+
 		if a.ScoreFinal == b.ScoreFinal {
 			if !a.LastUsed.IsZero() && !b.LastUsed.IsZero() {
 				return b.LastUsed.Compare(a.LastUsed)

@@ -9,8 +9,11 @@
     "delay": 0,
     "hide_icons": false
   },
+  "runner": {
+    "excludes": ["rm"]
+  },
   "clipboard": {
-    "max_entries": 1,
+    "max_entries": 10,
     "image_height": 300
   },
   "align": {

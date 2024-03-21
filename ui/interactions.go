@@ -337,7 +337,7 @@ func process() {
 	var ctx context.Context
 	ctx, cancel = context.WithCancel(context.Background())
 
-	go processAync(ctx)
+	go processAsync(ctx)
 }
 
 var handlerPool = sync.Pool{
@@ -346,9 +346,12 @@ var handlerPool = sync.Pool{
 	},
 }
 
-func processAync(ctx context.Context) {
+func processAsync(ctx context.Context) {
 	handler := handlerPool.Get().(*Handler)
-	defer handlerPool.Put(handler)
+	defer func() {
+		handlerPool.Put(handler)
+		cancel()
+	}()
 
 	handler.ctx = ctx
 	handler.entries = []modules.Entry{}
@@ -420,15 +423,19 @@ func processAync(ctx context.Context) {
 					case modules.Fuzzy:
 						e[k].ScoreFinal = fuzzyScore(e[k], text)
 					case modules.AlwaysTop:
-						e[k].ScoreFinal = 1000
+						if e[k].ScoreFinal == 0 {
+							e[k].ScoreFinal = 1000
+						}
 					case modules.AlwaysBottom:
-						e[k].ScoreFinal = 1
+						if e[k].ScoreFinal == 0 {
+							e[k].ScoreFinal = 1
+						}
 					default:
 						e[k].ScoreFinal = 0
 					}
 				}
 
-				if e[k].ScoreFinal != 0 && e[k].ScoreFinal >= e[k].MinScoreToInclude {
+				if e[k].ScoreFinal != 0 {
 					toPush = append(toPush, e[k])
 				}
 			}
@@ -438,7 +445,6 @@ func processAync(ctx context.Context) {
 	}
 
 	wg.Wait()
-	cancel()
 }
 
 func setInitials() {
@@ -533,10 +539,17 @@ func calculateFuzzyScore(text, target string) int {
 	final := 100
 	score := fuzzy.RankMatchFold(text, target)
 
+	if score == 0 {
+		if len(target) != len(text) {
+			return 95
+		}
+
+		return 100
+	}
+
 	if score == -1 {
 		return 0
 	} else {
-		score = score
 		return final - score
 	}
 }
@@ -554,7 +567,9 @@ func fuzzyScore(entry modules.Entry, text string) float64 {
 		entry.LastUsed = val.LastUsed
 	}
 
-	entry.Categories = append(entry.Categories, entry.Label, entry.Sub)
+	entry.Categories = append(entry.Categories, entry.Label, entry.Sub, entry.Searchable)
+
+	tm := 1.0 / float64(textLength)
 
 	for _, t := range entry.Categories {
 		if t == "" {
@@ -567,7 +582,7 @@ func fuzzyScore(entry modules.Entry, text string) float64 {
 		}
 
 		if score == 100 {
-			return 100
+			return 100 / tm
 		}
 	}
 
@@ -580,8 +595,6 @@ func fuzzyScore(entry modules.Entry, text string) float64 {
 	if textLength == 0 {
 		textLength = 1
 	}
-
-	tm := 1.0 / float64(textLength)
 
 	return float64(usageScore)*tm + float64(entry.ScoreFuzzy)/tm
 }

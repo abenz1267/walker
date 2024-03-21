@@ -30,11 +30,17 @@ type Config struct {
 	Search                Search    `json:"search,omitempty"`
 	DisableActivationMode bool      `json:"disable_activation_mode,omitempty"`
 	Clipboard             Clipboard `json:"clipboard,omitempty"`
+	Runner                Runner    `json:"runner,omitempty"`
 }
 
 type Clipboard struct {
 	ImageHeight int `json:"image_height,omitempty"`
 	MaxEntries  int `json:"max_entries,omitempty"`
+}
+
+type Runner struct {
+	Excludes []string
+	Includes []string
 }
 
 type Module struct {

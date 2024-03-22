@@ -112,7 +112,6 @@ func (Hyprland) Entries(term string) []Entry {
 			Exec:       fmt.Sprintf("hyprctl dispatch focuswindow pid:%s", v.pid),
 			Categories: []string{"hyprland", "windows", fmt.Sprintf("workspace %s", v.workspace), fmt.Sprintf("ws %s", v.workspace), v.initialTitle},
 			Class:      "hyprland",
-			Notifyable: false,
 			History:    false,
 			Matching:   Fuzzy,
 		}

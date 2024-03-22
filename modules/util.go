@@ -40,7 +40,6 @@ type Entry struct {
 	Image             string       `json:"image,omitempty"`
 	HideText          bool         `json:"hide_text,omitempty"`
 	Categories        []string     `json:"categories,omitempty"`
-	Notifyable        bool         `json:"notifyable,omitempty"`
 	Searchable        string       `json:"searchable,omitempty"`
 	Class             string       `json:"class,omitempty"`
 	History           bool         `json:"history,omitempty"`

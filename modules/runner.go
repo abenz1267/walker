@@ -97,7 +97,6 @@ func (r Runner) Entries(term string) []Entry {
 			Searchable: v,
 			Sub:        "Runner",
 			Exec:       fmt.Sprintf("%s %s", label, strings.Join(fields[1:], " ")),
-			Notifyable: true,
 			Class:      "runner",
 			Matching:   AlwaysTop,
 		}

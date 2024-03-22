@@ -3,18 +3,17 @@ package ui
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
 	"slices"
 	"strings"
 	"sync"
+	"syscall"
 
 	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/state"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
-	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/lithammer/fuzzysearch/fuzzy"
@@ -268,6 +267,10 @@ func activateItem(keepOpen bool) {
 	}
 
 	cmd := exec.Command(f[0])
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setsid:     true,
+		Foreground: false,
+	}
 
 	if entry.Piped.Content != "" {
 		if entry.Piped.Type == "file" {
@@ -291,24 +294,15 @@ func activateItem(keepOpen bool) {
 		}
 	}
 
-	if entry.Notifyable {
-		if !keepOpen {
-			ui.appwin.SetVisible(false)
-		}
-
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			n := gio.NewNotification("Error running command...")
-			n.SetBody(fmt.Sprintf("%s\n %s", cmd.String(), out))
-			ui.app.SendNotification("Error", n)
-		}
-	} else {
-		err := cmd.Start()
-		if err != nil {
-			log.Println(err)
-		}
+	err := cmd.Start()
+	if err != nil {
+		log.Println(err)
 	}
 
+	closeAfterAcitvation(keepOpen)
+}
+
+func closeAfterAcitvation(keepOpen bool) {
 	if !keepOpen {
 		quit()
 		return

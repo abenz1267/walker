@@ -7,7 +7,6 @@
 ## Features
 
 - Icons
-- notifications on failure configurable
 - extend with... anything?
 - start as service for faster startup (see benchmarks below)
 - activation-mode: run entries via labels
@@ -89,7 +88,6 @@ type Entry struct {
 	Image             string       `json:"image,omitempty"`
 	HideText          bool         `json:"hide_text,omitempty"`
 	Categories        []string     `json:"categories,omitempty"`
-	Notifyable        bool         `json:"notifyable,omitempty"`
 	Searchable        string       `json:"searchable,omitempty"`
 	Class             string       `json:"class,omitempty"`
 	History           bool         `json:"history,omitempty"`
@@ -110,8 +108,7 @@ F.e.:
   {
     "label": "First Item",
     "exec": "remindme in 1s test",
-    "searchable": "first item",
-    "notifyable": true
+    "searchable": "first item"
   }
 ]
 ```

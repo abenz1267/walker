@@ -11,7 +11,8 @@
   border-radius: 2px;
 }
 
-#search {
+#search,
+#typeahead {
   border-radius: 0;
   outline: none;
   outline-width: 0px;
@@ -24,6 +25,11 @@
   padding-top: 0px;
   padding-bottom: 0px;
   border-radius: 2px;
+}
+
+#typeahead {
+  background: none;
+  opacity: 0.5;
 }
 
 #search placeholder {

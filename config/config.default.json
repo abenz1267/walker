@@ -2,6 +2,7 @@
   "placeholder": "Search...",
   "keep_open": false,
   "notify_on_fail": true,
+  "enable_typeahead": false,
   "show_initial_entries": true,
   "fullscreen": false,
   "disable_activation_mode": false,

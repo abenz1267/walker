@@ -193,7 +193,12 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	case gdk.KEY_Up:
 		selectPrev()
 	case gdk.KEY_Tab:
-		selectNext()
+		if ui.typeahead.Text() != "" {
+			ui.search.SetText(ui.typeahead.Text())
+			ui.search.SetPosition(-1)
+		} else {
+			selectNext()
+		}
 	case gdk.KEY_ISO_Left_Tab:
 		selectPrev()
 	case gdk.KEY_j:
@@ -297,10 +302,14 @@ func activateItem(keepOpen bool) {
 		log.Println(err)
 	}
 
-	closeAfterAcitvation(keepOpen)
+	closeAfterActivation(keepOpen)
 }
 
-func closeAfterAcitvation(keepOpen bool) {
+func closeAfterActivation(keepOpen bool) {
+	if cfg.EnableTypeahead {
+		tah = append(tah, ui.search.Text())
+	}
+
 	if !keepOpen {
 		quit()
 		return
@@ -315,7 +324,21 @@ const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 var cancel context.CancelFunc
 
+var tah []string
+
 func process() {
+	if cfg.EnableTypeahead {
+		ui.typeahead.SetText("")
+
+		if strings.TrimSpace(ui.search.Text()) != "" {
+			for _, v := range tah {
+				if strings.HasPrefix(v, ui.search.Text()) {
+					ui.typeahead.SetText(v)
+				}
+			}
+		}
+	}
+
 	if !appstate.IsRunning {
 		return
 	}

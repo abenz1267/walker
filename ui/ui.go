@@ -44,6 +44,7 @@ type UI struct {
 	scroll        *gtk.ScrolledWindow
 	box           *gtk.Box
 	appwin        *gtk.ApplicationWindow
+	typeahead     *gtk.SearchEntry
 	search        *gtk.SearchEntry
 	list          *gtk.ListView
 	items         *gioutil.ListModel[modules.Entry]
@@ -121,6 +122,7 @@ func setupUI(app *gtk.Application) {
 	ui = &UI{
 		app:           app,
 		builder:       builder,
+		typeahead:     builder.GetObject("typeahead").Cast().(*gtk.SearchEntry),
 		scroll:        builder.GetObject("scroll").Cast().(*gtk.ScrolledWindow),
 		box:           builder.GetObject("box").Cast().(*gtk.Box),
 		appwin:        builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
@@ -180,6 +182,8 @@ func setupUserStyle() {
 	if cfg.Search.HideIcons {
 		ui.search.FirstChild().(*gtk.Image).Hide()
 		ui.search.LastChild().(*gtk.Image).Hide()
+		ui.typeahead.FirstChild().(*gtk.Image).Hide()
+		ui.typeahead.LastChild().(*gtk.Image).Hide()
 	}
 
 	alignments := make(map[string]gtk.Align)

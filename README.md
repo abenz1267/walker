@@ -12,6 +12,7 @@
 - activation-mode: run entries via labels
 - display images
 - non-blocking async handling of results
+- typeahead (currently not persisted)
 
 ## Builtin Modules
 
@@ -56,6 +57,10 @@ type Module struct {
 	SwitcherExclusive bool   `json:"switcher_exclusive,omitempty"`
 }
 ```
+
+## Styling with typeahead enabled
+
+If you have typeahead enabled, make sure that your `#search` has no background, so the typeahead is readable.
 
 ## Providing your own modules
 

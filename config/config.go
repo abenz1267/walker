@@ -16,7 +16,6 @@ var config []byte
 
 type Config struct {
 	Placeholder           string    `json:"placeholder,omitempty"`
-	NotifyOnFail          bool      `json:"notify_on_fail,omitempty"`
 	EnableTypeahead       bool      `json:"enable_typeahead,omitempty"`
 	IgnoreMouse           bool      `json:"ignore_mouse,omitempty"`
 	ShowInitialEntries    bool      `json:"show_initial_entries,omitempty"`
@@ -104,6 +103,11 @@ func Get() *Config {
 	}
 
 	go setTerminal(cfg)
+
+	if len(cfg.Modules) == 0 {
+		log.Println("no modules configured")
+		os.Exit(1)
+	}
 
 	return cfg
 }

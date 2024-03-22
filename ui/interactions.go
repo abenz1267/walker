@@ -219,9 +219,7 @@ func disableSingleProc() {
 	singleProc = nil
 	ui.search.SetObjectProperty("placeholder-text", cfg.Placeholder)
 
-	if ui.search.Text() == "" {
-		process()
-	} else {
+	if ui.search.Text() != "" {
 		ui.search.SetText("")
 	}
 }

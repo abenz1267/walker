@@ -5,7 +5,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/signal"
 	"path/filepath"
+	"syscall"
 
 	"github.com/abenz1267/walker/config"
 	"github.com/abenz1267/walker/state"
@@ -69,6 +71,23 @@ func main() {
 	if state.IsService {
 		app.Hold()
 	}
+
+	signal_chan := make(chan os.Signal, 1)
+	signal.Notify(signal_chan,
+		syscall.SIGHUP,
+		syscall.SIGINT,
+		syscall.SIGKILL,
+		syscall.SIGTERM,
+		syscall.SIGQUIT)
+
+	go func() {
+		for {
+			<-signal_chan
+
+			os.Remove(filepath.Join(util.TmpDir(), "walker.lock"))
+			os.Exit(0)
+		}
+	}()
 
 	if code := app.Run(os.Args); code > 0 {
 		os.Exit(code)

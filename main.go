@@ -13,6 +13,8 @@ import (
 	"github.com/abenz1267/walker/state"
 	"github.com/abenz1267/walker/ui"
 	"github.com/abenz1267/walker/util"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
@@ -33,6 +35,7 @@ func main() {
 
 		if len(os.Args) > 0 {
 			switch args[0] {
+			case "-m", "--modules":
 			case "--version":
 				fmt.Println(version)
 				return
@@ -63,10 +66,24 @@ func main() {
 		defer os.Remove(filepath.Join(tmp, "walker.lock"))
 	}
 
-	app := gtk.NewApplication("dev.benz.walker", 0)
-	app.Connect("activate", ui.Activate(state))
+	app := gtk.NewApplication("dev.benz.walker", gio.ApplicationHandlesCommandLine)
+	app.ConnectCommandLine(func(cmd *gio.ApplicationCommandLine) int {
+		options := cmd.OptionsDict()
 
-	app.Flags()
+		fmt.Println(options.Contains("modules"))
+
+		var children []*glib.Variant
+		variant := glib.NewVariantArray(glib.NewVariantString("s").Type(), children)
+		modules := options.LookupValue("modules", variant.Type())
+
+		fmt.Println(modules)
+
+		return -1
+	})
+
+	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
+
+	app.Connect("activate", ui.Activate(state))
 
 	if state.IsService {
 		app.Hold()

@@ -143,11 +143,7 @@ func (r *Runner) getBins() {
 
 	for _, p := range paths {
 		filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
-			if d == nil {
-				return nil
-			}
-
-			if d.IsDir() {
+			if d != nil && d.IsDir() {
 				return nil
 			}
 

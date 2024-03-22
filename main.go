@@ -3,10 +3,10 @@ package main
 import (
 	_ "embed"
 	"fmt"
-	"log"
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/abenz1267/walker/config"
@@ -28,7 +28,7 @@ func main() {
 		return
 	}
 
-	withArgs := false
+	// withArgs := false
 
 	if len(os.Args) > 1 {
 		args := os.Args[1:]
@@ -43,7 +43,7 @@ func main() {
 				state.IsService = true
 				state.StartServiceableModules(config.Get())
 			case "--help", "-h", "--help-all":
-				withArgs = true
+				// withArgs = true
 			default:
 				fmt.Printf("Unsupported option '%s'\n", args[0])
 				return
@@ -51,39 +51,35 @@ func main() {
 		}
 	}
 
-	if !state.IsService && !withArgs {
-		tmp := util.TmpDir()
-
-		if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
-			log.Println("lockfile exists. exiting. Remove '/tmp/walker.lock' and try again.")
-			return
-		}
-
-		err := os.WriteFile(filepath.Join(tmp, "walker.lock"), []byte{}, 0o600)
-		if err != nil {
-			log.Panicln(err)
-		}
-		defer os.Remove(filepath.Join(tmp, "walker.lock"))
-	}
+	// if !state.IsService && !withArgs {
+	// 	tmp := util.TmpDir()
+	//
+	// 	if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
+	// 		log.Println("lockfile exists. exiting.")
+	// 		return
+	// 	}
+	//
+	// 	err := os.WriteFile(filepath.Join(tmp, "walker.lock"), []byte{}, 0o600)
+	// 	if err != nil {
+	// 		log.Fatalln(err)
+	// 	}
+	// 	defer os.Remove(filepath.Join(tmp, "walker.lock"))
+	// }
 
 	app := gtk.NewApplication("dev.benz.walker", gio.ApplicationHandlesCommandLine)
-	app.ConnectCommandLine(func(cmd *gio.ApplicationCommandLine) int {
-		options := cmd.OptionsDict()
-
-		fmt.Println(options.Contains("modules"))
-
-		var children []*glib.Variant
-		variant := glib.NewVariantArray(glib.NewVariantString("s").Type(), children)
-		modules := options.LookupValue("modules", variant.Type())
-
-		fmt.Println(modules)
-
-		return -1
-	})
-
 	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
 
 	app.Connect("activate", ui.Activate(state))
+	app.ConnectCommandLine(func(cmd *gio.ApplicationCommandLine) int {
+		options := cmd.OptionsDict()
+
+		val := options.LookupValue("modules", glib.NewVariantString("s").Type())
+		_ = strings.Split(val.String(), ",")
+
+		app.Activate()
+
+		return 1
+	})
 
 	if state.IsService {
 		app.Hold()

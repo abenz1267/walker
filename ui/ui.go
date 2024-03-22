@@ -265,18 +265,20 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 			box.SetCSSClasses([]string{"item", val.Class})
 
-			motion := gtk.NewEventControllerMotion()
-			motion.ConnectEnter(func(_, _ float64) {
-				ui.selection.SetSelected(item.Position())
-			})
+			if !cfg.IgnoreMouse {
+				motion := gtk.NewEventControllerMotion()
+				motion.ConnectEnter(func(_, _ float64) {
+					ui.selection.SetSelected(item.Position())
+				})
 
-			click := gtk.NewGestureClick()
-			click.ConnectPressed(func(m int, _, _ float64) {
-				activateItem(false)
-			})
+				click := gtk.NewGestureClick()
+				click.ConnectPressed(func(m int, _, _ float64) {
+					activateItem(false)
+				})
 
-			box.AddController(click)
-			box.AddController(motion)
+				box.AddController(click)
+				box.AddController(motion)
+			}
 
 			wrapper := gtk.NewBox(gtk.OrientationVertical, 0)
 			wrapper.SetCSSClasses([]string{"textwrapper"})

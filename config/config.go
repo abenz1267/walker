@@ -17,6 +17,7 @@ var config []byte
 type Config struct {
 	Placeholder           string    `json:"placeholder,omitempty"`
 	NotifyOnFail          bool      `json:"notify_on_fail,omitempty"`
+	IgnoreMouse           bool      `json:"ignore_mouse,omitempty"`
 	ShowInitialEntries    bool      `json:"show_initial_entries,omitempty"`
 	ForceKeyboardFocus    bool      `json:"force_keyboard_focus,omitempty"`
 	ShellConfig           string    `json:"shell_config,omitempty"`

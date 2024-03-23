@@ -492,7 +492,11 @@ func processAsync(ctx context.Context) {
 				toMatch := text
 
 				if e[k].MatchFields > 0 {
-					toMatch = strings.Join(strings.Fields(text)[:1], " ")
+					textFields := strings.Fields(text)
+
+					if len(textFields) > 0 {
+						toMatch = strings.Join(textFields[:1], " ")
+					}
 				}
 
 				if e[k].RecalculateScore {

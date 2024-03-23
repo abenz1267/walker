@@ -30,8 +30,6 @@ func (s SSH) Entries(term string) []Entry {
 		s.entries[k].Exec = cmd
 	}
 
-	fmt.Println(s.entries)
-
 	return s.entries
 }
 

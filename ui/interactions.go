@@ -488,6 +488,11 @@ func processAsync(ctx context.Context) {
 			toPush := []modules.Entry{}
 
 			for k := range e {
+				if e[k].RecalculateScore {
+					e[k].ScoreFinal = 0
+					e[k].ScoreFuzzy = 0
+				}
+
 				if e[k].ScoreFinal == 0 {
 					switch e[k].Matching {
 					case modules.Fuzzy:

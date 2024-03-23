@@ -57,11 +57,6 @@ func (a Applications) Entries(_ string) []Entry {
 		a.entries = parse()
 	}
 
-	for k := range a.entries {
-		a.entries[k].ScoreFinal = 0
-		a.entries[k].ScoreFuzzy = 0
-	}
-
 	return a.entries
 }
 
@@ -95,9 +90,10 @@ func parse() []Entry {
 
 				app := Application{
 					Generic: Entry{
-						Class:    ApplicationsName,
-						History:  true,
-						Matching: Fuzzy,
+						Class:            ApplicationsName,
+						History:          true,
+						Matching:         Fuzzy,
+						RecalculateScore: true,
 					},
 					Actions: []Entry{},
 				}
@@ -117,6 +113,7 @@ func parse() []Entry {
 							Categories:        app.Generic.Categories,
 							History:           app.Generic.History,
 							HistoryIdentifier: app.Generic.Label,
+							RecalculateScore:  true,
 						})
 
 						isAction = true

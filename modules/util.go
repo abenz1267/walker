@@ -45,6 +45,7 @@ type Entry struct {
 	History           bool         `json:"history,omitempty"`
 	HistoryIdentifier string       `json:"history_identifier,omitempty"`
 	Matching          MatchingType `json:"matching,omitempty"`
+	RecalculateScore  bool         `json:"recalculate_score,omitempty"`
 	ScoreFinal        float64      `json:"score_final,omitempty"`
 	ScoreFuzzy        int          `json:"score_fuzzy,omitempty"`
 	Used              int          `json:"-"`

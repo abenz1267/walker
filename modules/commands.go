@@ -9,11 +9,6 @@ type Commands struct {
 }
 
 func (c Commands) Entries(term string) []Entry {
-	for k := range c.entries {
-		c.entries[k].ScoreFinal = 0
-		c.entries[k].ScoreFuzzy = 0
-	}
-
 	return c.entries
 }
 
@@ -65,9 +60,10 @@ func (cc Commands) Setup(cfg *config.Config) Workable {
 
 	for _, v := range entries {
 		c.entries = append(c.entries, Entry{
-			Label: v.label,
-			Sub:   "Walker",
-			Exec:  v.exec,
+			Label:            v.label,
+			Sub:              "Walker",
+			Exec:             v.exec,
+			RecalculateScore: true,
 		})
 	}
 

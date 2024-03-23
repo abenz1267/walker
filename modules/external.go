@@ -17,6 +17,7 @@ type External struct {
 	cmd               string
 	transform         bool
 	switcherExclusive bool
+	recalculateScore  bool
 }
 
 func (e External) SwitcherExclusive() bool {

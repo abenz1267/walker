@@ -50,6 +50,11 @@
       "prefix": ""
     },
     {
+      "name": "commands",
+      "prefix": "",
+      "switcher_exclusive": true
+    },
+    {
       "name": "websearch",
       "prefix": "?"
     },

@@ -1,0 +1,75 @@
+package modules
+
+import "github.com/abenz1267/walker/config"
+
+type Commands struct {
+	prefix            string
+	switcherExclusive bool
+	entries           []Entry
+}
+
+func (c Commands) Entries(term string) []Entry {
+	for k := range c.entries {
+		c.entries[k].ScoreFinal = 0
+		c.entries[k].ScoreFuzzy = 0
+	}
+
+	return c.entries
+}
+
+func (c Commands) Prefix() string {
+	return c.prefix
+}
+
+func (c Commands) Name() string {
+	return "commands"
+}
+
+func (c Commands) SwitcherExclusive() bool {
+	return c.switcherExclusive
+}
+
+func (cc Commands) Setup(cfg *config.Config) Workable {
+	module := Find(cfg.Modules, cc.Name())
+	if module == nil {
+		return nil
+	}
+
+	c := &Commands{
+		prefix:            module.Prefix,
+		switcherExclusive: module.SwitcherExclusive,
+		entries:           []Entry{},
+	}
+
+	entries := []struct {
+		label string
+		exec  string
+	}{
+		{
+			label: "Reload Config",
+			exec:  "reloadconfig",
+		},
+		{
+			label: "Reset History",
+			exec:  "resethistory",
+		},
+		{
+			label: "Clear Clipboard",
+			exec:  "clearclipboard",
+		},
+		{
+			label: "Clear Applications Cache",
+			exec:  "clearapplicationscache",
+		},
+	}
+
+	for _, v := range entries {
+		c.entries = append(c.entries, Entry{
+			Label: v.label,
+			Sub:   "Walker",
+			Exec:  v.exec,
+		})
+	}
+
+	return c
+}

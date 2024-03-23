@@ -65,7 +65,12 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		appstate.IsRunning = true
 
 		if appstate.HasUI {
+			if ui.search.Text() != "" {
+				ui.search.SetText("")
+			}
+
 			disableSingleProc()
+
 			ui.appwin.SetVisible(true)
 
 			if !appstate.IsMeasured {

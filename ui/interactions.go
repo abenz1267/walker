@@ -6,13 +6,17 @@ import (
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
 	"syscall"
 
+	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/history"
 	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/state"
+	"github.com/abenz1267/walker/util"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -24,15 +28,34 @@ var (
 	activationEnabled bool
 	amKey             uint
 	amModifier        gdk.ModifierType
+	commands          map[string]func()
 )
 
-func setupInteractions(appstate *state.AppState) {
-	createActivationKeys()
+func setupCommands() {
+	commands = make(map[string]func())
+	commands["reloadconfig"] = func() {
+		cfg = config.Get()
+		setupUserStyle()
+		setupModules()
+	}
+	commands["resethistory"] = func() {
+		os.Remove(filepath.Join(util.CacheDir(), "history.json"))
+		hstry = history.Get()
+	}
+	commands["clearapplicationscache"] = func() {
+		os.Remove(filepath.Join(util.CacheDir(), "applications.json"))
+	}
+	commands["clearclipboard"] = func() {
+		os.Remove(filepath.Join(util.CacheDir(), "clipboard.json"))
+	}
+}
 
+func setupModules() {
 	internals := []modules.Workable{
 		modules.Applications{},
 		modules.Runner{ShellConfig: cfg.ShellConfig},
 		modules.Websearch{},
+		modules.Commands{},
 		modules.Hyprland{},
 		appstate.Clipboard,
 	}
@@ -44,6 +67,8 @@ func setupInteractions(appstate *state.AppState) {
 
 		internals = append(internals, e)
 	}
+
+	clear(procs)
 
 	procs = make(map[string][]modules.Workable)
 
@@ -70,11 +95,20 @@ func setupInteractions(appstate *state.AppState) {
 		procs[s.Prefix()] = append(procs[s.Prefix()], s)
 	}
 
+	clear(ui.prefixClasses)
+
 	for _, v := range procs {
 		for _, vv := range v {
 			ui.prefixClasses[vv.Prefix()] = append(ui.prefixClasses[vv.Prefix()], vv.Name())
 		}
 	}
+}
+
+func setupInteractions(appstate *state.AppState) {
+	setupCommands()
+	createActivationKeys()
+
+	setupModules()
 
 	keycontroller := gtk.NewEventControllerKey()
 	keycontroller.ConnectKeyPressed(handleSearchKeysPressed)
@@ -235,11 +269,10 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 }
 
 func disableSingleProc() {
-	singleProc = nil
-	ui.search.SetObjectProperty("placeholder-text", cfg.Placeholder)
-
-	if ui.search.Text() != "" {
-		ui.search.SetText("")
+	if singleProc != nil {
+		singleProc = nil
+		ui.search.SetObjectProperty("placeholder-text", cfg.Placeholder)
+		process()
 	}
 }
 
@@ -249,6 +282,12 @@ func activateItem(keepOpen bool) {
 	}
 
 	entry := ui.items.Item(int(ui.selection.Selected()))
+
+	if entry.Sub == "Walker" {
+		commands[entry.Exec]()
+		closeAfterActivation(keepOpen)
+		return
+	}
 
 	if entry.Sub == "switcher" {
 		for _, v := range procs {
@@ -424,9 +463,11 @@ func processAsync(ctx context.Context) {
 	} else {
 		p = []modules.Workable{singleProc}
 
-		glib.IdleAdd(func() {
-			ui.appwin.SetCSSClasses(ui.prefixClasses[singleProc.Prefix()])
-		})
+		if singleProc != nil {
+			glib.IdleAdd(func() {
+				ui.appwin.SetCSSClasses(ui.prefixClasses[singleProc.Prefix()])
+			})
+		}
 	}
 
 	handler.receiver = make(chan []modules.Entry, len(p))

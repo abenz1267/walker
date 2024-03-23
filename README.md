@@ -174,3 +174,9 @@ Measured time is until the focus is in the search-bar and you can type.
 ## Watchout for...
 
 - Desktop entries will be parsed and cached in `.cache/walker`... currently no mechanism to refresh cache, so delete manually if needed
+
+## FAQ
+
+### "lockfile exists" - i can't run Walker.
+
+This happens if Walker get's closed unexpectedly, f.e. via SIGKILL. Remove `/tmp/walker.lock` manually and try again.

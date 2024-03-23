@@ -52,7 +52,7 @@ func main() {
 		tmp := util.TmpDir()
 
 		if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
-			log.Println("lockfile exists. exiting.")
+			log.Println("lockfile exists. exiting. Remove '/tmp/walker.lock' and try again.")
 			return
 		}
 
@@ -76,7 +76,6 @@ func main() {
 	signal.Notify(signal_chan,
 		syscall.SIGHUP,
 		syscall.SIGINT,
-		syscall.SIGKILL,
 		syscall.SIGTERM,
 		syscall.SIGQUIT)
 

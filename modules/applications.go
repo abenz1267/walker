@@ -16,7 +16,7 @@ import (
 const ApplicationsName = "applications"
 
 type Applications struct {
-	apps              []Application
+	entries           []Entry
 	prefix            string
 	switcherExclusive bool
 }
@@ -39,7 +39,7 @@ func (a Applications) Setup(cfg *config.Config) Workable {
 	a.prefix = module.Prefix
 	a.switcherExclusive = module.SwitcherExclusive
 
-	a.apps = parse()
+	a.entries = parse()
 
 	return a
 }
@@ -53,27 +53,25 @@ func (a Applications) Prefix() string {
 }
 
 func (a Applications) Entries(_ string) []Entry {
-	entries := []Entry{}
-
-	for _, v := range a.apps {
-		if len(v.Actions) > 0 {
-			entries = append(entries, v.Actions...)
-
-			continue
-		}
-
-		entries = append(entries, v.Generic)
+	if _, err := os.Stat(filepath.Join(util.CacheDir(), "applications.json")); err != nil {
+		a.entries = parse()
 	}
 
-	return entries
+	for k := range a.entries {
+		a.entries[k].ScoreFinal = 0
+		a.entries[k].ScoreFuzzy = 0
+	}
+
+	return a.entries
 }
 
-func parse() []Application {
+func parse() []Entry {
 	apps := []Application{}
+	entries := []Entry{}
 
-	ok := readCache(ApplicationsName, &apps)
+	ok := readCache(ApplicationsName, &entries)
 	if ok {
-		return apps
+		return entries
 	}
 
 	dirs := xdg.ApplicationDirs
@@ -202,7 +200,17 @@ func parse() []Application {
 		})
 	}
 
-	util.ToJson(apps, filepath.Join(util.CacheDir(), fmt.Sprintf("%s.json", ApplicationsName)))
+	for _, v := range apps {
+		if len(v.Actions) > 0 {
+			entries = append(entries, v.Actions...)
 
-	return apps
+			continue
+		}
+
+		entries = append(entries, v.Generic)
+	}
+
+	util.ToJson(entries, filepath.Join(util.CacheDir(), fmt.Sprintf("%s.json", ApplicationsName)))
+
+	return entries
 }

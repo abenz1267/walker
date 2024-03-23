@@ -12,7 +12,7 @@ type History map[string]Entry
 type Entry struct {
 	LastUsed      time.Time `json:"last_used,omitempty"`
 	Used          int       `json:"used,omitempty"`
-	DaysSinceUsed int
+	DaysSinceUsed int       `json:"-"`
 }
 
 func (s History) Save(entry string) {
@@ -34,7 +34,7 @@ func (s History) Save(entry string) {
 
 	s[entry] = h
 
-	util.ToJson(s, filepath.Join(util.CacheDir(), "history.json"))
+	util.ToJson(&s, filepath.Join(util.CacheDir(), "history.json"))
 }
 
 func Get() History {

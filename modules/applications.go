@@ -207,7 +207,7 @@ func parse() []Entry {
 		entries = append(entries, v.Generic)
 	}
 
-	util.ToJson(entries, filepath.Join(util.CacheDir(), fmt.Sprintf("%s.json", ApplicationsName)))
+	util.ToJson(&entries, filepath.Join(util.CacheDir(), fmt.Sprintf("%s.json", ApplicationsName)))
 
 	return entries
 }

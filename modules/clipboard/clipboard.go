@@ -44,7 +44,7 @@ func (c Clipboard) Entries(term string) []modules.Entry {
 
 	es := []Entry{}
 
-	util.FromJson(c.file, &es)
+	util.FromGob(c.file, &es)
 
 	for _, v := range es {
 		e := modules.Entry{
@@ -102,7 +102,7 @@ func (c Clipboard) Setup(cfg *config.Config) modules.Workable {
 
 	c.prefix = module.Prefix
 	c.switcherExclusive = module.SwitcherExclusive
-	c.file = filepath.Join(util.CacheDir(), "clipboard.json")
+	c.file = filepath.Join(util.CacheDir(), "clipboard.gob")
 	c.max = cfg.Clipboard.MaxEntries
 
 	c.imgTypes = make(map[string]string)
@@ -111,7 +111,7 @@ func (c Clipboard) Setup(cfg *config.Config) modules.Workable {
 	c.imgTypes["image/jpeg"] = "jpeg"
 
 	current := []Entry{}
-	util.FromJson(c.file, &current)
+	util.FromGob(c.file, &current)
 
 	c.entries = clean(current, c.file)
 
@@ -134,7 +134,7 @@ func clean(entries []Entry, file string) []Entry {
 		}
 	}
 
-	util.ToJson(cleaned, file)
+	util.ToGob(&cleaned, file)
 
 	return cleaned
 }
@@ -235,6 +235,6 @@ func (c *Clipboard) watch() {
 			c.entries = slices.Clone(c.entries[:c.max])
 		}
 
-		util.ToJson(c.entries, c.file)
+		util.ToGob(&c.entries, c.file)
 	}
 }

@@ -343,7 +343,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 				wrapper.SetVAlign(gtk.AlignCenter)
 			}
 
-			if !cfg.DisableActivationMode {
+			if !cfg.ActivationMode.Disabled {
 				if item.Position()+1 <= uint(len(labels)) {
 					l := gtk.NewLabel(labels[item.Position()])
 					l.SetCSSClasses([]string{"activationlabel"})

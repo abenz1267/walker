@@ -117,23 +117,19 @@ func setupInteractions(appstate *state.AppState) {
 	ui.search.Connect("search-changed", process)
 	ui.search.Connect("activate", func() { activateItem(false) })
 
-	if !cfg.DisableActivationMode {
+	if !cfg.ActivationMode.Disabled {
 		listkc := gtk.NewEventControllerKey()
 		listkc.ConnectKeyPressed(handleListKeysPressed)
 
 		ui.list.AddController(listkc)
 	}
 
-	switch cfg.AMKey {
-	case "control":
-		amKey = gdk.KEY_Control_L
-		amModifier = gdk.ControlMask
-	case "alt":
+	amKey = gdk.KEY_Control_L
+	amModifier = gdk.ControlMask
+
+	if cfg.ActivationMode.UseAlt {
 		amKey = gdk.KEY_Alt_L
 		amModifier = gdk.AltMask
-	default:
-		amKey = gdk.KEY_Control_L
-		amModifier = gdk.ControlMask
 	}
 }
 
@@ -177,7 +173,7 @@ func selectActivationMode(val uint, keepOpen bool) {
 }
 
 func disabledAM() {
-	if !cfg.DisableActivationMode && activationEnabled {
+	if !cfg.ActivationMode.Disabled && activationEnabled {
 		activationEnabled = false
 
 		c := ui.appwin.CSSClasses()
@@ -198,7 +194,7 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 	case gdk.KEY_Escape:
 		disabledAM()
 	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_semicolon, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
-		if !cfg.DisableActivationMode {
+		if !cfg.ActivationMode.Disabled {
 			if modifier == amModifier {
 				selectActivationMode(val, true)
 			} else {
@@ -213,7 +209,7 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 }
 
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
-	if !cfg.DisableActivationMode && ui.selection.NItems() != 0 {
+	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 {
 		if val == amKey {
 			c := ui.appwin.CSSClasses()
 			c = append(c, "activation")
@@ -250,15 +246,15 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	case gdk.KEY_ISO_Left_Tab:
 		selectPrev()
 	case gdk.KEY_j:
-		if cfg.DisableActivationMode {
+		if cfg.ActivationMode.Disabled {
 			selectNext()
 		}
 	case gdk.KEY_k:
-		if cfg.DisableActivationMode {
+		if cfg.ActivationMode.Disabled {
 			selectPrev()
 		}
 	default:
-		if modifier == gdk.ControlMask {
+		if modifier == amModifier {
 			return true
 		}
 
@@ -573,7 +569,7 @@ func usageModifier(item modules.Entry) int {
 
 func quit() {
 	if appstate.IsService {
-		if !cfg.DisableActivationMode && activationEnabled {
+		if !cfg.ActivationMode.Disabled && activationEnabled {
 			activationEnabled = false
 
 			c := ui.appwin.CSSClasses()

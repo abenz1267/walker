@@ -5,8 +5,10 @@
   "enable_typeahead": false,
   "show_initial_entries": true,
   "fullscreen": false,
-  "disable_activation_mode": false,
-  "am_key": "control",
+  "activation_mode": {
+    "disabled": false,
+    "use_alt": false
+  },
   "search": {
     "delay": 0,
     "hide_icons": false

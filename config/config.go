@@ -15,25 +15,29 @@ import (
 var config []byte
 
 type Config struct {
-	Placeholder           string    `json:"placeholder,omitempty"`
-	EnableTypeahead       bool      `json:"enable_typeahead,omitempty"`
-	IgnoreMouse           bool      `json:"ignore_mouse,omitempty"`
-	ShowInitialEntries    bool      `json:"show_initial_entries,omitempty"`
-	ForceKeyboardFocus    bool      `json:"force_keyboard_focus,omitempty"`
-	ShellConfig           string    `json:"shell_config,omitempty"`
-	Terminal              string    `json:"terminal,omitempty"`
-	Orientation           string    `json:"orientation,omitempty"`
-	Fullscreen            bool      `json:"fullscreen,omitempty"`
-	Modules               []Module  `json:"modules,omitempty"`
-	External              []Module  `json:"external,omitempty"`
-	Icons                 Icons     `json:"icons,omitempty"`
-	Align                 Align     `json:"align,omitempty"`
-	List                  List      `json:"list,omitempty"`
-	Search                Search    `json:"search,omitempty"`
-	DisableActivationMode bool      `json:"disable_activation_mode,omitempty"`
-	Clipboard             Clipboard `json:"clipboard,omitempty"`
-	Runner                Runner    `json:"runner,omitempty"`
-	AMKey                 string    `json:"am_key,omitempty"`
+	Placeholder        string         `json:"placeholder,omitempty"`
+	EnableTypeahead    bool           `json:"enable_typeahead,omitempty"`
+	IgnoreMouse        bool           `json:"ignore_mouse,omitempty"`
+	ShowInitialEntries bool           `json:"show_initial_entries,omitempty"`
+	ForceKeyboardFocus bool           `json:"force_keyboard_focus,omitempty"`
+	ShellConfig        string         `json:"shell_config,omitempty"`
+	Terminal           string         `json:"terminal,omitempty"`
+	Orientation        string         `json:"orientation,omitempty"`
+	Fullscreen         bool           `json:"fullscreen,omitempty"`
+	Modules            []Module       `json:"modules,omitempty"`
+	External           []Module       `json:"external,omitempty"`
+	Icons              Icons          `json:"icons,omitempty"`
+	Align              Align          `json:"align,omitempty"`
+	List               List           `json:"list,omitempty"`
+	Search             Search         `json:"search,omitempty"`
+	Clipboard          Clipboard      `json:"clipboard,omitempty"`
+	Runner             Runner         `json:"runner,omitempty"`
+	ActivationMode     ActivationMode `json:"activation_mode,omitempty"`
+}
+
+type ActivationMode struct {
+	UseAlt   bool `json:"use_alt,omitempty"`
+	Disabled bool `json:"disabled,omitempty"`
 }
 
 type Clipboard struct {

@@ -7,9 +7,9 @@ import (
 	"github.com/abenz1267/walker/util"
 )
 
-type History map[string]Entry
+type History map[string]HistoryEntry
 
-type Entry struct {
+type HistoryEntry struct {
 	LastUsed      time.Time `json:"last_used,omitempty"`
 	Used          int       `json:"used,omitempty"`
 	DaysSinceUsed int       `json:"-"`
@@ -18,7 +18,7 @@ type Entry struct {
 func (s History) Save(entry string) {
 	h, ok := s[entry]
 	if !ok {
-		h = Entry{
+		h = HistoryEntry{
 			LastUsed: time.Now(),
 			Used:     1,
 		}

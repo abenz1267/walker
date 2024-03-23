@@ -99,6 +99,7 @@ type Entry struct {
 	History           bool         `json:"history,omitempty"`
 	HistoryIdentifier string       `json:"history_identifier,omitempty"`
 	Matching          MatchingType `json:"matching,omitempty"`
+	RecalculateScore  bool         `json:"recalculate_score,omitempty"`
 	ScoreFinal        float64      `json:"score_final,omitempty"`
 	ScoreFuzzy        int          `json:"score_fuzzy,omitempty"`
 	Used              int          `json:"-"`
@@ -171,10 +172,6 @@ Measured time is until the focus is in the search-bar and you can type.
 | ------------ | ------------------------------------------------ |
 | normal       | 37ms                                             |
 | with service | < 500µs / (2.3ms when input needs to be cleared) |
-
-## Watchout for...
-
-- Desktop entries will be parsed and cached in `.cache/walker`... currently no mechanism to refresh cache, so delete manually if needed
 
 ## FAQ
 

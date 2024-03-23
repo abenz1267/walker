@@ -23,6 +23,7 @@
 - clipboard with fuzzy find and images (currently "wl-clipboard" only)
 - module switcher
 - commands (for Walker, f.e. clear cache)
+- ssh
 
 ## Requirements
 
@@ -58,6 +59,10 @@ type Module struct {
 	SwitcherExclusive bool   `json:"switcher_exclusive,omitempty"`
 }
 ```
+
+## Usage SSH Module
+
+In the searchbar type in: `<host> <username>`. Select the host you want. Enter.
 
 ## Styling with typeahead enabled
 

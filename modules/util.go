@@ -41,6 +41,7 @@ type Entry struct {
 	HideText          bool         `json:"hide_text,omitempty"`
 	Categories        []string     `json:"categories,omitempty"`
 	Searchable        string       `json:"searchable,omitempty"`
+	MatchFields       int          `json:"match_fields,omitempty"`
 	Class             string       `json:"class,omitempty"`
 	History           bool         `json:"history,omitempty"`
 	HistoryIdentifier string       `json:"history_identifier,omitempty"`

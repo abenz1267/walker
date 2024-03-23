@@ -57,6 +57,7 @@ func setupModules() {
 		modules.Websearch{},
 		modules.Commands{},
 		modules.Hyprland{},
+		modules.SSH{},
 		appstate.Clipboard,
 	}
 
@@ -488,6 +489,12 @@ func processAsync(ctx context.Context) {
 			toPush := []modules.Entry{}
 
 			for k := range e {
+				toMatch := text
+
+				if e[k].MatchFields > 0 {
+					toMatch = strings.Join(strings.Fields(text)[:1], " ")
+				}
+
 				if e[k].RecalculateScore {
 					e[k].ScoreFinal = 0
 					e[k].ScoreFuzzy = 0
@@ -496,7 +503,7 @@ func processAsync(ctx context.Context) {
 				if e[k].ScoreFinal == 0 {
 					switch e[k].Matching {
 					case modules.Fuzzy:
-						e[k].ScoreFinal = fuzzyScore(e[k], text)
+						e[k].ScoreFinal = fuzzyScore(e[k], toMatch)
 					case modules.AlwaysTop:
 						if e[k].ScoreFinal == 0 {
 							e[k].ScoreFinal = 1000

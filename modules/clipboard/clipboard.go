@@ -21,7 +21,7 @@ const ClipboardName = "clipboard"
 
 type Clipboard struct {
 	prefix            string
-	entries           []Entry
+	entries           []ClipboardItem
 	file              string
 	imgTypes          map[string]string
 	max               int
@@ -32,7 +32,7 @@ func (c Clipboard) SwitcherExclusive() bool {
 	return c.switcherExclusive
 }
 
-type Entry struct {
+type ClipboardItem struct {
 	Content string    `json:"content,omitempty"`
 	Time    time.Time `json:"time,omitempty"`
 	Hash    string    `json:"hash,omitempty"`
@@ -42,7 +42,7 @@ type Entry struct {
 func (c Clipboard) Entries(term string) []modules.Entry {
 	entries := []modules.Entry{}
 
-	es := []Entry{}
+	es := []ClipboardItem{}
 
 	util.FromGob(c.file, &es)
 
@@ -60,6 +60,7 @@ func (c Clipboard) Entries(term string) []modules.Entry {
 		if v.IsImg {
 			e.Label = "Image"
 			e.Image = v.Content
+			e.RawExec = []string{}
 			e.Exec = "wl-copy"
 			e.Piped = modules.Piped{
 				Content: v.Content,
@@ -110,7 +111,7 @@ func (c Clipboard) Setup(cfg *config.Config) modules.Workable {
 	c.imgTypes["image/jpg"] = "jpg"
 	c.imgTypes["image/jpeg"] = "jpeg"
 
-	current := []Entry{}
+	current := []ClipboardItem{}
 	util.FromGob(c.file, &current)
 
 	c.entries = clean(current, c.file)
@@ -120,8 +121,8 @@ func (c Clipboard) Setup(cfg *config.Config) modules.Workable {
 	return c
 }
 
-func clean(entries []Entry, file string) []Entry {
-	cleaned := []Entry{}
+func clean(entries []ClipboardItem, file string) []ClipboardItem {
+	cleaned := []ClipboardItem{}
 
 	for _, v := range entries {
 		if !v.IsImg {
@@ -166,7 +167,6 @@ func getContent() (string, string) {
 	cmd := exec.Command("wl-paste")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Println(string(out))
 		return "", ""
 	}
 
@@ -216,7 +216,7 @@ func (c *Clipboard) watch() {
 
 		mimetype := getType()
 
-		e := Entry{
+		e := ClipboardItem{
 			Content: content,
 			Time:    time.Now(),
 			Hash:    hash,
@@ -229,7 +229,7 @@ func (c *Clipboard) watch() {
 			e.IsImg = true
 		}
 
-		c.entries = append([]Entry{e}, c.entries...)
+		c.entries = append([]ClipboardItem{e}, c.entries...)
 
 		if len(c.entries) >= c.max {
 			c.entries = slices.Clone(c.entries[:c.max])

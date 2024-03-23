@@ -116,7 +116,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 func setupUI(app *gtk.Application) {
 	if !gtk4layershell.IsSupported() {
-		log.Fatalln("gtk-layer-shell not supported")
+		log.Panicln("gtk-layer-shell not supported")
 	}
 
 	builder := gtk.NewBuilderFromString(layout, len(layout))
@@ -173,7 +173,7 @@ func setupUserStyle() {
 
 		err := os.WriteFile(cssFile, style, 0o600)
 		if err != nil {
-			log.Fatalln(err)
+			log.Panicln(err)
 		}
 	}
 
@@ -249,7 +249,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 			if child != nil {
 				box, ok := child.(*gtk.Box)
 				if !ok {
-					log.Fatalln("child is not a box")
+					log.Panicln("child is not a box")
 				}
 
 				if !activationEnabled {
@@ -265,7 +265,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 		if child != nil {
 			box, ok := child.(*gtk.Box)
 			if !ok {
-				log.Fatalln("child is not a box")
+				log.Panicln("child is not a box")
 			}
 
 			if box.FirstChild() != nil {

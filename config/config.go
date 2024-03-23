@@ -101,7 +101,7 @@ func Get() *Config {
 	if !ok {
 		err := json.Unmarshal(config, &cfg)
 		if err != nil {
-			log.Fatalln(err)
+			log.Panicln(err)
 		}
 
 		util.ToJson(&cfg, file)

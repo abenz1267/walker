@@ -14,7 +14,7 @@ func ToGob[T any](val *T, dest string) {
 	var b bytes.Buffer
 	encoder := gob.NewEncoder(&b)
 	if err := encoder.Encode(val); err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 
 	writeFile(b.Bytes(), dest)
@@ -27,7 +27,7 @@ func FromGob[T any](src string, dest *T) bool {
 
 	file, err := os.Open(src)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 
 	b, err := io.ReadAll(file)
@@ -38,7 +38,7 @@ func FromGob[T any](src string, dest *T) bool {
 	decoder := gob.NewDecoder(bytes.NewReader(b))
 	err = decoder.Decode(dest)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 
 	return true
@@ -47,7 +47,7 @@ func FromGob[T any](src string, dest *T) bool {
 func ToJson[T any](src *T, dest string) {
 	b, err := json.Marshal(src)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 
 	writeFile(b, dest)
@@ -60,17 +60,17 @@ func FromJson[T any](src string, dest *T) bool {
 
 	file, err := os.Open(src)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 
 	b, err := io.ReadAll(file)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 
 	err = json.Unmarshal(b, dest)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 
 	return true
@@ -83,7 +83,7 @@ func TmpDir() string {
 func ConfigDir() string {
 	dir, err := os.UserConfigDir()
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 
 	return filepath.Join(dir, "walker")
@@ -92,7 +92,7 @@ func ConfigDir() string {
 func CacheDir() string {
 	dir, err := os.UserCacheDir()
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 
 	return filepath.Join(dir, "walker")
@@ -107,6 +107,6 @@ func writeFile(b []byte, dest string) {
 
 	err = os.WriteFile(dest, b, 0o600)
 	if err != nil {
-		log.Fatalln(err)
+		log.Panicln(err)
 	}
 }

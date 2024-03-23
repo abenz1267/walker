@@ -58,7 +58,7 @@ func main() {
 
 		err := os.WriteFile(filepath.Join(tmp, "walker.lock"), []byte{}, 0o600)
 		if err != nil {
-			log.Fatalln(err)
+			log.Panicln(err)
 		}
 		defer os.Remove(filepath.Join(tmp, "walker.lock"))
 	}

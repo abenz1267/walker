@@ -78,12 +78,12 @@ func readCache(name string, data any) bool {
 
 		b, err := io.ReadAll(file)
 		if err != nil {
-			log.Fatalln(err)
+			log.Panicln(err)
 		}
 
 		err = json.Unmarshal(b, &data)
 		if err != nil {
-			log.Fatalln(err)
+			log.Panicln(err)
 		}
 
 		return true

@@ -33,6 +33,7 @@ type Config struct {
 	DisableActivationMode bool      `json:"disable_activation_mode,omitempty"`
 	Clipboard             Clipboard `json:"clipboard,omitempty"`
 	Runner                Runner    `json:"runner,omitempty"`
+	AMKey                 string    `json:"am_key,omitempty"`
 }
 
 type Clipboard struct {

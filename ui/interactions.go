@@ -26,6 +26,8 @@ import (
 var (
 	keys              map[uint]uint
 	activationEnabled bool
+	amKey             uint
+	amModifier        gdk.ModifierType
 	commands          map[string]func()
 )
 
@@ -121,6 +123,18 @@ func setupInteractions(appstate *state.AppState) {
 
 		ui.list.AddController(listkc)
 	}
+
+	switch cfg.AMKey {
+	case "control":
+		amKey = gdk.KEY_Control_L
+		amModifier = gdk.ControlMask
+	case "alt":
+		amKey = gdk.KEY_Alt_L
+		amModifier = gdk.AltMask
+	default:
+		amKey = gdk.KEY_Control_L
+		amModifier = gdk.ControlMask
+	}
 }
 
 func selectNext() {
@@ -185,7 +199,7 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 		disabledAM()
 	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_semicolon, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
 		if !cfg.DisableActivationMode {
-			if modifier == gdk.ControlMask {
+			if modifier == amModifier {
 				selectActivationMode(val, true)
 			} else {
 				selectActivationMode(val, false)
@@ -200,7 +214,7 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	if !cfg.DisableActivationMode && ui.selection.NItems() != 0 {
-		if val == gdk.KEY_Control_L {
+		if val == amKey {
 			c := ui.appwin.CSSClasses()
 			c = append(c, "activation")
 			ui.appwin.SetCSSClasses(c)

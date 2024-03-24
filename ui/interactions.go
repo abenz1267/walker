@@ -46,7 +46,7 @@ func setupCommands() {
 		os.Remove(filepath.Join(util.CacheDir(), "applications.json"))
 	}
 	commands["clearclipboard"] = func() {
-		os.Remove(filepath.Join(util.CacheDir(), "clipboard.bson"))
+		os.Remove(filepath.Join(util.CacheDir(), "clipboard.gob"))
 	}
 }
 

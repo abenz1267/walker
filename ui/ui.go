@@ -250,6 +250,11 @@ func setupUserStyle() {
 func setupFactory() *gtk.SignalListItemFactory {
 	factory := gtk.NewSignalListItemFactory()
 	factory.ConnectSetup(func(item *gtk.ListItem) {
+		if cfg.IgnoreMouse {
+			item.SetSelectable(false)
+			item.SetActivatable(false)
+		}
+
 		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
 		box.SetFocusable(true)
 		item.SetChild(box)
@@ -327,6 +332,8 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 				box.AddController(click)
 				box.AddController(motion)
+			} else {
+				ui.appwin.Window.SetCursor(gdk.NewCursorFromName("none", nil))
 			}
 
 			wrapper := gtk.NewBox(gtk.OrientationVertical, 0)

@@ -1,6 +1,8 @@
 package modules
 
 import (
+	"context"
+
 	"github.com/abenz1267/walker/config"
 )
 
@@ -13,7 +15,7 @@ func (s Switcher) SwitcherExclusive() bool {
 	return false
 }
 
-func (s Switcher) Entries(term string) []Entry {
+func (s Switcher) Entries(ctx context.Context, term string) []Entry {
 	entries := []Entry{}
 
 	for _, v := range s.Procs {

@@ -1,6 +1,7 @@
 package clipboard
 
 import (
+	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -39,7 +40,7 @@ type ClipboardItem struct {
 	IsImg   bool      `json:"is_img,omitempty"`
 }
 
-func (c Clipboard) Entries(term string) []modules.Entry {
+func (c Clipboard) Entries(ctx context.Context, term string) []modules.Entry {
 	entries := []modules.Entry{}
 
 	es := []ClipboardItem{}

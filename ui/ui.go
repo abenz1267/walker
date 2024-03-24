@@ -16,6 +16,8 @@ import (
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
@@ -263,6 +265,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 		child := item.Child()
 
 		if child != nil {
+
 			box, ok := child.(*gtk.Box)
 			if !ok {
 				log.Panicln("child is not a box")
@@ -270,6 +273,25 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 			if box.FirstChild() != nil {
 				return
+			}
+
+			if val.DragDrop {
+				dd := gtk.NewDragSource()
+				dd.ConnectPrepare(func(_, _ float64) *gdk.ContentProvider {
+					file := gio.NewFileForPath(val.DragDropData)
+
+					b := glib.NewBytes([]byte(fmt.Sprintf("%s\n", file.URI())))
+
+					cp := gdk.NewContentProviderForBytes("text/uri-list", b)
+
+					return cp
+				})
+
+				dd.ConnectDragBegin(func(_ gdk.Dragger) {
+					closeAfterActivation(false)
+				})
+
+				box.AddController(dd)
 			}
 
 			box.SetCSSClasses([]string{"item", val.Class})
@@ -281,9 +303,15 @@ func setupFactory() *gtk.SignalListItemFactory {
 				})
 
 				click := gtk.NewGestureClick()
-				click.ConnectPressed(func(m int, _, _ float64) {
-					activateItem(false)
-				})
+				if val.DragDrop {
+					click.ConnectReleased(func(m int, _, _ float64) {
+						activateItem(false)
+					})
+				} else {
+					click.ConnectPressed(func(m int, _, _ float64) {
+						activateItem(false)
+					})
+				}
 
 				box.AddController(click)
 				box.AddController(motion)

@@ -3,6 +3,7 @@ package modules
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"log"
 	"os/exec"
@@ -53,7 +54,7 @@ type window struct {
 	initialTitle string
 }
 
-func (Hyprland) Entries(term string) []Entry {
+func (Hyprland) Entries(ctx context.Context, term string) []Entry {
 	cmd := exec.Command("hyprctl", "clients")
 
 	out, err := cmd.CombinedOutput()

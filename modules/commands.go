@@ -1,6 +1,10 @@
 package modules
 
-import "github.com/abenz1267/walker/config"
+import (
+	"context"
+
+	"github.com/abenz1267/walker/config"
+)
 
 type Commands struct {
 	prefix            string
@@ -8,7 +12,7 @@ type Commands struct {
 	entries           []Entry
 }
 
-func (c Commands) Entries(term string) []Entry {
+func (c Commands) Entries(ctx context.Context, term string) []Entry {
 	return c.entries
 }
 

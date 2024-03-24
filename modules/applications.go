@@ -2,6 +2,7 @@ package modules
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -52,7 +53,7 @@ func (a Applications) Prefix() string {
 	return a.prefix
 }
 
-func (a Applications) Entries(_ string) []Entry {
+func (a Applications) Entries(ctx context.Context, _ string) []Entry {
 	if _, err := os.Stat(filepath.Join(util.CacheDir(), "applications.json")); err != nil {
 		a.entries = parse()
 	}

@@ -58,6 +58,7 @@ func setupModules() {
 		modules.Commands{},
 		modules.Hyprland{},
 		modules.SSH{},
+		modules.Finder{},
 		appstate.Clipboard,
 	}
 
@@ -467,7 +468,7 @@ func processAsync(ctx context.Context) {
 		}
 	}
 
-	handler.receiver = make(chan []modules.Entry, len(p))
+	handler.receiver = make(chan []modules.Entry)
 	go handler.handle()
 
 	var wg sync.WaitGroup
@@ -484,7 +485,7 @@ func processAsync(ctx context.Context) {
 		go func(ctx context.Context, wg *sync.WaitGroup, text string, w modules.Workable) {
 			defer wg.Done()
 
-			e := w.Entries(text)
+			e := w.Entries(ctx, text)
 
 			toPush := []modules.Entry{}
 
@@ -542,7 +543,7 @@ func setInitials() {
 				continue
 			}
 
-			e := proc.Entries("")
+			e := proc.Entries(nil, "")
 
 			for _, entry := range e {
 				if val, ok := hstry[entry.HistoryIdentifier]; ok {

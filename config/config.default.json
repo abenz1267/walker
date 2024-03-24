@@ -57,6 +57,11 @@
       "switcher_exclusive": true
     },
     {
+      "name": "finder",
+      "prefix": "",
+      "switcher_exclusive": true
+    },
+    {
       "name": "commands",
       "prefix": "",
       "switcher_exclusive": true

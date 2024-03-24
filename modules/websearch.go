@@ -1,6 +1,7 @@
 package modules
 
 import (
+	"context"
 	"net/url"
 	"strings"
 
@@ -36,7 +37,7 @@ func (Websearch) Name() string {
 	return "websearch"
 }
 
-func (w Websearch) Entries(term string) []Entry {
+func (w Websearch) Entries(ctx context.Context, term string) []Entry {
 	entries := []Entry{}
 
 	if term == "" {

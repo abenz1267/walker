@@ -2,6 +2,7 @@ package modules
 
 import (
 	"bufio"
+	"context"
 	"encoding/json"
 	"log"
 	"os/exec"
@@ -47,7 +48,7 @@ func (e External) Prefix() string {
 	return e.prefix
 }
 
-func (e External) Entries(term string) []Entry {
+func (e External) Entries(ctx context.Context, term string) []Entry {
 	entries := []Entry{}
 
 	if e.src == "" {

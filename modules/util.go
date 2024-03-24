@@ -1,6 +1,7 @@
 package modules
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -13,7 +14,7 @@ import (
 )
 
 type Workable interface {
-	Entries(term string) []Entry
+	Entries(ctx context.Context, term string) []Entry
 	Prefix() string
 	Name() string
 	SwitcherExclusive() bool
@@ -37,6 +38,8 @@ type Entry struct {
 	Piped             Piped        `json:"piped,omitempty"`
 	Icon              string       `json:"icon,omitempty"`
 	IconIsImage       bool         `json:"icon_is_image,omitempty"`
+	DragDrop          bool         `json:"drag_drop,omitempty"`
+	DragDropData      string       `json:"drag_drop_data,omitempty"`
 	Image             string       `json:"image,omitempty"`
 	HideText          bool         `json:"hide_text,omitempty"`
 	Categories        []string     `json:"categories,omitempty"`

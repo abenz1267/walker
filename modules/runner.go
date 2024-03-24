@@ -2,6 +2,7 @@ package modules
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"io/fs"
 	"log"
@@ -67,7 +68,7 @@ func (Runner) Name() string {
 	return "runner"
 }
 
-func (r Runner) Entries(term string) []Entry {
+func (r Runner) Entries(ctx context.Context, term string) []Entry {
 	entries := []Entry{}
 
 	if term == "" {

@@ -2,6 +2,7 @@ package modules
 
 import (
 	"bufio"
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -17,7 +18,7 @@ type SSH struct {
 	entries           []Entry
 }
 
-func (s SSH) Entries(term string) []Entry {
+func (s SSH) Entries(ctx context.Context, term string) []Entry {
 	fields := strings.Fields(term)
 
 	cmd := "ssh"

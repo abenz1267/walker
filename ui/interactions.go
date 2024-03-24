@@ -480,6 +480,7 @@ func processAsync(ctx context.Context) {
 	for _, proc := range p {
 		if proc.SwitcherExclusive() {
 			if singleProc == nil || singleProc.Name() != proc.Name() {
+				wg.Done()
 				handler.receiver <- []modules.Entry{}
 				continue
 			}

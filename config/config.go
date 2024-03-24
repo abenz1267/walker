@@ -61,8 +61,9 @@ type Module struct {
 }
 
 type Search struct {
-	Delay     int  `json:"delay,omitempty"`
-	HideIcons bool `json:"hide_icons,omitempty"`
+	Delay         int  `json:"delay,omitempty"`
+	HideIcons     bool `json:"hide_icons,omitempty"`
+	MarginSpinner int  `json:"margin_spinner,omitempty"`
 }
 
 type Icons struct {

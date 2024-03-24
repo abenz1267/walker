@@ -7,15 +7,26 @@
         <property name="orientation">vertical</property>
         <property name="name">box</property>
         <child>
-          <object class="GtkOverlay">
-            <child type="overlay">
-              <object class="GtkSearchEntry" id="search">
-                <property name="name">search</property>
+          <object class="GtkBox" id="searchwrapper">
+            <property name="orientation">horizontal</property>
+            <property name="name">searchwrapper</property>
+            <child>
+              <object class="GtkOverlay">
+                <child type="overlay">
+                  <object class="GtkSearchEntry" id="search">
+                    <property name="name">search</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkSearchEntry" id="typeahead">
+                    <property name="name">typeahead</property>
+                  </object>
+                </child>
               </object>
             </child>
             <child>
-              <object class="GtkSearchEntry" id="typeahead">
-                <property name="name">typeahead</property>
+              <object class="GtkSpinner" id="spinner">
+                <property name="name">spinner</property>
               </object>
             </child>
           </object>

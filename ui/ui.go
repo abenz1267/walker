@@ -44,6 +44,8 @@ type UI struct {
 	app           *gtk.Application
 	builder       *gtk.Builder
 	scroll        *gtk.ScrolledWindow
+	spinner       *gtk.Spinner
+	searchwrapper *gtk.Box
 	box           *gtk.Box
 	appwin        *gtk.ApplicationWindow
 	typeahead     *gtk.SearchEntry
@@ -129,6 +131,8 @@ func setupUI(app *gtk.Application) {
 	ui = &UI{
 		app:           app,
 		builder:       builder,
+		spinner:       builder.GetObject("spinner").Cast().(*gtk.Spinner),
+		searchwrapper: builder.GetObject("searchwrapper").Cast().(*gtk.Box),
 		typeahead:     builder.GetObject("typeahead").Cast().(*gtk.SearchEntry),
 		scroll:        builder.GetObject("scroll").Cast().(*gtk.ScrolledWindow),
 		box:           builder.GetObject("box").Cast().(*gtk.Box),
@@ -139,6 +143,14 @@ func setupUI(app *gtk.Application) {
 		selection:     gtk.NewSingleSelection(items.ListModel),
 		prefixClasses: make(map[string][]string),
 	}
+
+	if cfg.Search.MarginSpinner != 0 {
+		ui.searchwrapper.SetSpacing(cfg.Search.MarginSpinner)
+	}
+
+	ui.spinner.SetVisible(false)
+	ui.spinner.SetSpinning(true)
+	ui.typeahead.SetHExpand(true)
 
 	fc := gtk.NewEventControllerFocus()
 	fc.Connect("enter", func() {

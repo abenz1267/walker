@@ -378,6 +378,8 @@ var cancel context.CancelFunc
 var tah []string
 
 func process() {
+	ui.spinner.SetVisible(true)
+
 	if cfg.EnableTypeahead {
 		ui.typeahead.SetText("")
 
@@ -420,6 +422,7 @@ func processAsync(ctx context.Context) {
 	handler := handlerPool.Get().(*Handler)
 	defer func() {
 		handlerPool.Put(handler)
+		ui.spinner.SetVisible(false)
 		cancel()
 	}()
 
@@ -568,6 +571,8 @@ func setInitials() {
 	ui.items.Splice(0, ui.items.NItems(), entrySlice...)
 
 	ui.selection.SetSelected(0)
+
+	ui.spinner.SetVisible(false)
 }
 
 func usageModifier(item modules.Entry) int {

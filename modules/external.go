@@ -112,10 +112,9 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 		return entries
 	}
 
-	for k, v := range entries {
+	for k := range entries {
 		entries[k].Class = e.ModuleName
 		entries[k].Sub = e.ModuleName
-		entries[k].Exec = strings.ReplaceAll(e.cmd, "%RESULT%", v.Label)
 	}
 
 	return entries

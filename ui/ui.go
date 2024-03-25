@@ -120,7 +120,6 @@ func setupUI(app *gtk.Application) {
 	builder := gtk.NewBuilderFromString(layout, len(layout))
 
 	items := gioutil.NewListModel[modules.Entry]()
-	gtk.NewSingleSelection(items.ListModel)
 
 	ui = &UI{
 		app:           app,

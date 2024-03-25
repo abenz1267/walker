@@ -29,6 +29,7 @@ var (
 	amKey             uint
 	amModifier        gdk.ModifierType
 	commands          map[string]func()
+	tah               []string
 )
 
 func setupCommands() {
@@ -48,9 +49,15 @@ func setupCommands() {
 	commands["clearclipboard"] = func() {
 		os.Remove(filepath.Join(util.CacheDir(), "clipboard.gob"))
 	}
+	commands["cleartypeaheadcache"] = func() {
+		os.Remove(filepath.Join(util.CacheDir(), "typeahead.gob"))
+		tah = []string{}
+	}
 }
 
 func setupModules() {
+	util.FromGob(filepath.Join(util.CacheDir(), "typeahead.gob"), &tah)
+
 	internals := []modules.Workable{
 		modules.Applications{},
 		modules.Runner{ShellConfig: cfg.ShellConfig},
@@ -366,6 +373,7 @@ func activateItem(keepOpen bool) {
 func closeAfterActivation(keepOpen bool) {
 	if cfg.EnableTypeahead {
 		tah = append(tah, ui.search.Text())
+		util.ToGob(&tah, filepath.Join(util.CacheDir(), "typeahead.gob"))
 	}
 
 	if !keepOpen {
@@ -381,8 +389,6 @@ func closeAfterActivation(keepOpen bool) {
 const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 var cancel context.CancelFunc
-
-var tah []string
 
 func process() {
 	ui.spinner.SetVisible(true)
@@ -617,11 +623,16 @@ func quit() {
 		singleProc = nil
 
 		ui.appwin.SetVisible(false)
-		ui.search.SetText("")
-		ui.search.SetObjectProperty("placeholder-text", cfg.Placeholder)
 
-		appstate.IsRunning = false
-		appstate.IsMeasured = false
+		go func() {
+			glib.IdleAdd(func() {
+				ui.search.SetText("")
+				ui.search.SetObjectProperty("placeholder-text", cfg.Placeholder)
+
+				appstate.IsRunning = false
+				appstate.IsMeasured = false
+			})
+		}()
 
 		ui.app.Hold()
 	} else {

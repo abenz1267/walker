@@ -60,6 +60,10 @@ func (cc Commands) Setup(cfg *config.Config) Workable {
 			label: "Clear Applications Cache",
 			exec:  "clearapplicationscache",
 		},
+		{
+			label: "Clear Typeahead Cache",
+			exec:  "cleartypeaheadcache",
+		},
 	}
 
 	for _, v := range entries {

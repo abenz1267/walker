@@ -144,6 +144,9 @@ func setupUI(app *gtk.Application) {
 	ui.spinner.SetVisible(false)
 	ui.spinner.SetSpinning(true)
 	ui.typeahead.SetHExpand(true)
+	ui.typeahead.SetFocusable(false)
+	ui.typeahead.SetFocusOnClick(false)
+	ui.typeahead.SetCanFocus(false)
 
 	fc := gtk.NewEventControllerFocus()
 	fc.Connect("enter", func() {

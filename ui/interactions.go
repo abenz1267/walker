@@ -422,7 +422,12 @@ func process() {
 	var ctx context.Context
 	ctx, cancel = context.WithCancel(context.Background())
 
-	go processAsync(ctx)
+	if ui.search.Text() != "" {
+		go processAsync(ctx)
+	} else {
+		ui.items.Splice(0, ui.items.NItems())
+		ui.spinner.SetVisible(false)
+	}
 }
 
 var handlerPool = sync.Pool{

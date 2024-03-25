@@ -114,7 +114,6 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 
 	for k := range entries {
 		entries[k].Class = e.ModuleName
-		entries[k].Sub = e.ModuleName
 	}
 
 	return entries

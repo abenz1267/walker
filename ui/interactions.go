@@ -270,7 +270,14 @@ func disableSingleProc() {
 	if singleProc != nil {
 		singleProc = nil
 		ui.search.SetObjectProperty("placeholder-text", cfg.Placeholder)
-		process()
+
+		if ui.search.Text() != "" {
+			ui.search.SetText("")
+		} else {
+			if cfg.ShowInitialEntries {
+				process()
+			}
+		}
 	}
 }
 
@@ -607,9 +614,15 @@ func quit() {
 			ui.search.GrabFocus()
 		}
 
+		singleProc = nil
+
+		ui.appwin.SetVisible(false)
+		ui.search.SetText("")
+		ui.search.SetObjectProperty("placeholder-text", cfg.Placeholder)
+
 		appstate.IsRunning = false
 		appstate.IsMeasured = false
-		ui.appwin.SetVisible(false)
+
 		ui.app.Hold()
 	} else {
 		ui.appwin.Close()

@@ -33,7 +33,7 @@ in {
   config = lib.mkIf cfg.enabled {
     home.packages = [inputs.self.packages.${system}.walker];
 
-    xdg.configFile."walker/config.json".text = builtins.toJSON (defaultConfig // config.programs.walker.config);
+    xdg.configFile."walker/config.json".text = builtins.toJSON lib.recursiveUpdate defaultConfig config.programs.walker.config;
     xdg.configFile."walker/style.css".text = config.programs.walker.style;
 
     systemd.user.services.walker = lib.mkIf cfg.runAsService {

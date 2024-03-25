@@ -255,140 +255,132 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 	factory.ConnectBind(func(item *gtk.ListItem) {
 		val := ui.items.Item(int(item.Position()))
+		child := item.Child()
+
+		if child == nil {
+			return
+		}
+
+		box, ok := child.(*gtk.Box)
+		if !ok {
+			log.Panicln("child is not a box")
+		}
 
 		if item.Selected() {
-			child := item.Child()
-			if child != nil {
-				box, ok := child.(*gtk.Box)
-				if !ok {
-					log.Panicln("child is not a box")
-				}
-
-				if !activationEnabled {
-					box.GrabFocus()
-					ui.appwin.SetCSSClasses([]string{val.Class})
-					ui.search.GrabFocus()
-				}
+			if !activationEnabled {
+				box.GrabFocus()
+				ui.appwin.SetCSSClasses([]string{val.Class})
+				ui.search.GrabFocus()
 			}
 		}
 
-		child := item.Child()
+		if box.FirstChild() != nil {
+			return
+		}
 
-		if child != nil {
+		if val.DragDrop {
+			dd := gtk.NewDragSource()
+			dd.ConnectPrepare(func(_, _ float64) *gdk.ContentProvider {
+				file := gio.NewFileForPath(val.DragDropData)
 
-			box, ok := child.(*gtk.Box)
-			if !ok {
-				log.Panicln("child is not a box")
-			}
+				b := glib.NewBytes([]byte(fmt.Sprintf("%s\n", file.URI())))
 
-			if box.FirstChild() != nil {
-				return
-			}
+				cp := gdk.NewContentProviderForBytes("text/uri-list", b)
 
+				return cp
+			})
+
+			dd.ConnectDragBegin(func(_ gdk.Dragger) {
+				closeAfterActivation(false)
+			})
+
+			box.AddController(dd)
+		}
+
+		box.SetCSSClasses([]string{"item", val.Class})
+
+		if !cfg.IgnoreMouse {
+			motion := gtk.NewEventControllerMotion()
+			motion.ConnectEnter(func(_, _ float64) {
+				ui.selection.SetSelected(item.Position())
+			})
+
+			click := gtk.NewGestureClick()
 			if val.DragDrop {
-				dd := gtk.NewDragSource()
-				dd.ConnectPrepare(func(_, _ float64) *gdk.ContentProvider {
-					file := gio.NewFileForPath(val.DragDropData)
-
-					b := glib.NewBytes([]byte(fmt.Sprintf("%s\n", file.URI())))
-
-					cp := gdk.NewContentProviderForBytes("text/uri-list", b)
-
-					return cp
+				click.ConnectReleased(func(m int, _, _ float64) {
+					activateItem(false)
 				})
-
-				dd.ConnectDragBegin(func(_ gdk.Dragger) {
-					closeAfterActivation(false)
-				})
-
-				box.AddController(dd)
-			}
-
-			box.SetCSSClasses([]string{"item", val.Class})
-
-			if !cfg.IgnoreMouse {
-				motion := gtk.NewEventControllerMotion()
-				motion.ConnectEnter(func(_, _ float64) {
-					ui.selection.SetSelected(item.Position())
-				})
-
-				click := gtk.NewGestureClick()
-				if val.DragDrop {
-					click.ConnectReleased(func(m int, _, _ float64) {
-						activateItem(false)
-					})
-				} else {
-					click.ConnectPressed(func(m int, _, _ float64) {
-						activateItem(false)
-					})
-				}
-
-				box.AddController(click)
-				box.AddController(motion)
 			} else {
-				ui.appwin.Window.SetCursor(gdk.NewCursorFromName("none", nil))
+				click.ConnectPressed(func(m int, _, _ float64) {
+					activateItem(false)
+				})
 			}
 
-			wrapper := gtk.NewBox(gtk.OrientationVertical, 0)
-			wrapper.SetCSSClasses([]string{"textwrapper"})
-			wrapper.SetHExpand(true)
+			box.AddController(click)
+			box.AddController(motion)
+		} else {
+			ui.appwin.Window.SetCursor(gdk.NewCursorFromName("none", nil))
+		}
 
-			if val.Image != "" {
-				image := gtk.NewImageFromFile(val.Image)
-				image.SetHExpand(true)
-				image.SetSizeRequest(-1, cfg.Clipboard.ImageHeight)
+		wrapper := gtk.NewBox(gtk.OrientationVertical, 0)
+		wrapper.SetCSSClasses([]string{"textwrapper"})
+		wrapper.SetHExpand(true)
+
+		if val.Image != "" {
+			image := gtk.NewImageFromFile(val.Image)
+			image.SetHExpand(true)
+			image.SetSizeRequest(-1, cfg.Clipboard.ImageHeight)
+			box.Append(image)
+		}
+
+		if cfg.Icons.Hide || val.Icon != "" {
+			if val.IconIsImage {
+				image := gtk.NewPictureForFilename(val.Icon)
+				image.SetMarginEnd(10)
+				image.SetSizeRequest(0, 200)
+				image.SetCanShrink(true)
+				if val.HideText {
+					image.SetHExpand(true)
+				}
 				box.Append(image)
-			}
-
-			if cfg.Icons.Hide || val.Icon != "" {
-				if val.IconIsImage {
-					image := gtk.NewPictureForFilename(val.Icon)
-					image.SetMarginEnd(10)
-					image.SetSizeRequest(0, 200)
-					image.SetCanShrink(true)
-					if val.HideText {
-						image.SetHExpand(true)
-					}
-					box.Append(image)
-				} else {
-					icon := gtk.NewImageFromIconName(val.Icon)
-					icon.SetIconSize(gtk.IconSizeLarge)
-					icon.SetPixelSize(cfg.Icons.Size)
-					icon.SetCSSClasses([]string{"icon"})
-					box.Append(icon)
-				}
-			}
-
-			if !val.HideText {
-				box.Append(wrapper)
-			}
-
-			top := gtk.NewLabel(val.Label)
-			top.SetMaxWidthChars(0)
-			top.SetWrap(true)
-			top.SetHAlign(gtk.AlignStart)
-			top.SetCSSClasses([]string{"label"})
-
-			wrapper.Append(top)
-
-			if val.Sub != "" {
-				bottom := gtk.NewLabel(val.Sub)
-				bottom.SetMaxWidthChars(0)
-				bottom.SetWrap(true)
-				bottom.SetHAlign(gtk.AlignStart)
-				bottom.SetCSSClasses([]string{"sub"})
-
-				wrapper.Append(bottom)
 			} else {
-				wrapper.SetVAlign(gtk.AlignCenter)
+				icon := gtk.NewImageFromIconName(val.Icon)
+				icon.SetIconSize(gtk.IconSizeLarge)
+				icon.SetPixelSize(cfg.Icons.Size)
+				icon.SetCSSClasses([]string{"icon"})
+				box.Append(icon)
 			}
+		}
 
-			if !cfg.ActivationMode.Disabled {
-				if item.Position()+1 <= uint(len(labels)) {
-					l := gtk.NewLabel(labels[item.Position()])
-					l.SetCSSClasses([]string{"activationlabel"})
-					box.Append(l)
-				}
+		if !val.HideText {
+			box.Append(wrapper)
+		}
+
+		top := gtk.NewLabel(val.Label)
+		top.SetMaxWidthChars(0)
+		top.SetWrap(true)
+		top.SetHAlign(gtk.AlignStart)
+		top.SetCSSClasses([]string{"label"})
+
+		wrapper.Append(top)
+
+		if val.Sub != "" {
+			bottom := gtk.NewLabel(val.Sub)
+			bottom.SetMaxWidthChars(0)
+			bottom.SetWrap(true)
+			bottom.SetHAlign(gtk.AlignStart)
+			bottom.SetCSSClasses([]string{"sub"})
+
+			wrapper.Append(bottom)
+		} else {
+			wrapper.SetVAlign(gtk.AlignCenter)
+		}
+
+		if !cfg.ActivationMode.Disabled {
+			if item.Position()+1 <= uint(len(labels)) {
+				l := gtk.NewLabel(labels[item.Position()])
+				l.SetCSSClasses([]string{"activationlabel"})
+				box.Append(l)
 			}
 		}
 	})

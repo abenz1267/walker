@@ -41,6 +41,52 @@ arch:
 yay -S walker
 ```
 
+<details>
+<summary>Install using nix</summary>
+
+You have two options of installing walker using nix.
+1. Using the package exposed by this flake
+	1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
+	2. Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`
+
+2. Using the home-manager module exposed by this flake
+	1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
+	2. Add `imports = [inputs.walker.homeManagerModules.walker];` into your home-manager config
+	3. Configure walker using:
+	```nix
+      programs.walker = {
+        enabled = true;
+        runAsService = true;
+
+        # All options from the config.json can be used here.
+        config = {
+          placeholder = "Example";
+          fullscreen = true;
+          list = {
+            height = 200;
+          };
+          modules = [
+            {
+              name = "websearch";
+              prefix = "?";
+            }
+            {
+              name = "switcher";
+              prefix = "/";
+            }
+          ];
+        };
+
+        # If this is not set the default styling is used.
+        style = ''
+          * {
+            color: #dcd7ba;
+          }
+        '';
+      };
+	```
+</details>
+
 ## Config & Style
 
 Default config will be put into `$HOME/.config/walker/`.

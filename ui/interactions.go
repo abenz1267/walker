@@ -202,9 +202,12 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 	switch val {
 	case gdk.KEY_Escape:
 		disabledAM()
+
+	case gdk.KEY_J, gdk.KEY_K, gdk.KEY_L, gdk.KEY_colon, gdk.KEY_A, gdk.KEY_S, gdk.KEY_D, gdk.KEY_F:
+		fallthrough
 	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_semicolon, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
 		if !cfg.ActivationMode.Disabled {
-			if modifier == amModifier {
+			if modifier == gdk.ShiftMask {
 				selectActivationMode(val, true)
 			} else {
 				selectActivationMode(val, false)
@@ -232,7 +235,7 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 
 	switch val {
 	case gdk.KEY_Return:
-		if modifier == gdk.ControlMask {
+		if modifier == gdk.ShiftMask {
 			activateItem(true)
 		}
 	case gdk.KEY_Escape:
@@ -655,6 +658,14 @@ func createActivationKeys() {
 	keys[gdk.KEY_s] = 5
 	keys[gdk.KEY_d] = 6
 	keys[gdk.KEY_f] = 7
+	keys[gdk.KEY_J] = 0
+	keys[gdk.KEY_K] = 1
+	keys[gdk.KEY_L] = 2
+	keys[gdk.KEY_colon] = 3
+	keys[gdk.KEY_A] = 4
+	keys[gdk.KEY_S] = 5
+	keys[gdk.KEY_D] = 6
+	keys[gdk.KEY_F] = 7
 }
 
 func calculateFuzzyScore(text, target string) int {

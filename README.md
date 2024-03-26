@@ -45,47 +45,49 @@ yay -S walker
 <summary>Install using nix</summary>
 
 You have two options of installing walker using nix.
-1. Using the package exposed by this flake
-	1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
-	2. Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`
 
-2. Using the home-manager module exposed by this flake
-	1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
-	2. Add `imports = [inputs.walker.homeManagerModules.walker];` into your home-manager config
-	3. Configure walker using:
-	```nix
-      programs.walker = {
-        enabled = true;
-        runAsService = true;
+1.  Using the package exposed by this flake
 
-        # All options from the config.json can be used here.
-        config = {
-          placeholder = "Example";
-          fullscreen = true;
-          list = {
-            height = 200;
+    1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
+    2. Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`
+
+2.  Using the home-manager module exposed by this flake 1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";` 2. Add `imports = [inputs.walker.homeManagerModules.walker];` into your home-manager config 3. Configure walker using:
+
+    ````nix
+    programs.walker = {
+    enabled = true;
+    runAsService = true;
+
+            # All options from the config.json can be used here.
+            config = {
+              placeholder = "Example";
+              fullscreen = true;
+              list = {
+                height = 200;
+              };
+              modules = [
+                {
+                  name = "websearch";
+                  prefix = "?";
+                }
+                {
+                  name = "switcher";
+                  prefix = "/";
+                }
+              ];
+            };
+
+            # If this is not set the default styling is used.
+            style = ''
+              * {
+                color: #dcd7ba;
+              }
+            '';
           };
-          modules = [
-            {
-              name = "websearch";
-              prefix = "?";
-            }
-            {
-              name = "switcher";
-              prefix = "/";
-            }
-          ];
-        };
+        ```
 
-        # If this is not set the default styling is used.
-        style = ''
-          * {
-            color: #dcd7ba;
-          }
-        '';
-      };
-	```
-</details>
+    </details>
+    ````
 
 ## Config & Style
 
@@ -201,13 +203,13 @@ AM = Activation Mode
 | Key                                                                     | Description                        |
 | ----------------------------------------------------------------------- | ---------------------------------- |
 | `Enter`                                                                 | activate selection                 |
-| `Ctrl+Enter`                                                            | activate selection without closing |
+| `Shift+Enter`                                                           | activate selection without closing |
 | `Ctrl+j` (if ActivationMode is disabled), `Down`, `Tab`                 | next entry                         |
 | `Ctrl+k` (if ActivationMode is disabled), `Up`, `LEFT_TAB` (shift+tab?) | previous entry                     |
 | `Escape`                                                                | close                              |
 | `Ctrl`                                                                  | start AM                           |
 | in AM: `<label>`                                                        | activate item                      |
-| in AM: Hold `Ctrl+<label>`                                              | activate item (don't close)        |
+| in AM: Hold `Shift+<label>`                                             | activate item (don't close)        |
 | in AM: `Escape`                                                         | stop AM                            |
 
 ### Activation Mode

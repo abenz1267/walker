@@ -124,7 +124,7 @@ func setupInteractions(appstate *state.AppState) {
 
 	ui.search.AddController(keycontroller)
 	ui.search.Connect("search-changed", process)
-	ui.search.Connect("activate", func() { activateItem(false) })
+	ui.search.Connect("activate", func() { activateItem(false, false) })
 
 	if !cfg.ActivationMode.Disabled {
 		listkc := gtk.NewEventControllerKey()
@@ -174,11 +174,11 @@ func selectActivationMode(val uint, keepOpen bool) {
 	ui.selection.SetSelected(keys[val])
 
 	if keepOpen {
-		activateItem(true)
+		activateItem(true, false)
 		return
 	}
 
-	activateItem(false)
+	activateItem(false, false)
 }
 
 func disabledAM() {
@@ -236,7 +236,7 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	switch val {
 	case gdk.KEY_Return:
 		if modifier == gdk.ShiftMask {
-			activateItem(true)
+			activateItem(true, true)
 		}
 	case gdk.KEY_Escape:
 		if singleProc != nil {
@@ -291,7 +291,7 @@ func disableSingleProc() {
 	}
 }
 
-func activateItem(keepOpen bool) {
+func activateItem(keepOpen, selectNext bool) {
 	if ui.list.Model().NItems() == 0 {
 		return
 	}
@@ -300,7 +300,7 @@ func activateItem(keepOpen bool) {
 
 	if entry.Sub == "Walker" {
 		commands[entry.Exec]()
-		closeAfterActivation(keepOpen)
+		closeAfterActivation(keepOpen, selectNext)
 		return
 	}
 
@@ -370,10 +370,10 @@ func activateItem(keepOpen bool) {
 		log.Println(err)
 	}
 
-	closeAfterActivation(keepOpen)
+	closeAfterActivation(keepOpen, selectNext)
 }
 
-func closeAfterActivation(keepOpen bool) {
+func closeAfterActivation(keepOpen, sn bool) {
 	if cfg.EnableTypeahead {
 		tah = append(tah, ui.search.Text())
 		util.ToGob(&tah, filepath.Join(util.CacheDir(), "typeahead.gob"))
@@ -384,8 +384,12 @@ func closeAfterActivation(keepOpen bool) {
 		return
 	}
 
-	if !activationEnabled {
+	if !activationEnabled && !sn {
 		ui.search.SetText("")
+	}
+
+	if sn {
+		selectNext()
 	}
 }
 

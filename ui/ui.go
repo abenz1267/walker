@@ -294,7 +294,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 			})
 
 			dd.ConnectDragBegin(func(_ gdk.Dragger) {
-				closeAfterActivation(false)
+				closeAfterActivation(false, false)
 			})
 
 			box.AddController(dd)
@@ -311,11 +311,11 @@ func setupFactory() *gtk.SignalListItemFactory {
 			click := gtk.NewGestureClick()
 			if val.DragDrop {
 				click.ConnectReleased(func(m int, _, _ float64) {
-					activateItem(false)
+					activateItem(false, false)
 				})
 			} else {
 				click.ConnectPressed(func(m int, _, _ float64) {
-					activateItem(false)
+					activateItem(false, false)
 				})
 			}
 

@@ -375,7 +375,7 @@ func activateItem(keepOpen, selectNext bool) {
 
 func closeAfterActivation(keepOpen, sn bool) {
 	if cfg.EnableTypeahead {
-		tah = append(tah, ui.search.Text())
+		tah = append([]string{ui.search.Text()}, tah...)
 		util.ToGob(&tah, filepath.Join(util.CacheDir(), "typeahead.gob"))
 	}
 

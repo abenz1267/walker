@@ -74,11 +74,12 @@ func main() {
 		options := cmd.OptionsDict()
 
 		val := options.LookupValue("modules", glib.NewVariantString("s").Type())
-		_ = strings.Split(val.String(), ",")
+		modules := strings.Split(val.String(), ",")
+		fmt.Println(modules)
 
 		app.Activate()
 
-		return 1
+		return 0
 	})
 
 	if state.IsService {

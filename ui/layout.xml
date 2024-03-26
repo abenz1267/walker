@@ -29,6 +29,11 @@
                 <property name="name">spinner</property>
               </object>
             </child>
+            <child>
+              <object class="GtkLabel" id="workspace">
+                <property name="name">workspace</property>
+              </object>
+            </child>
           </object>
         </child>
         <child>

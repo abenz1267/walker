@@ -8,6 +8,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"syscall"
@@ -23,13 +24,19 @@ import (
 	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
+const NoWorkspace uint = 9999
+
 var (
+	workspaces        map[uint]uint
 	keys              map[uint]uint
 	activationEnabled bool
 	amKey             uint
 	amModifier        gdk.ModifierType
+	wsModifier        gdk.ModifierType
 	commands          map[string]func()
 	tah               []string
+	wh                modules.Workable
+	workspace         = NoWorkspace
 )
 
 func setupCommands() {
@@ -81,9 +88,13 @@ func setupModules() {
 
 	procs = make(map[string][]modules.Workable)
 
-	for _, v := range internals {
+	for k, v := range internals {
 		if v == nil {
 			continue
+		}
+
+		if v.Name() == cfg.WorkspaceHandler {
+			wh = internals[k]
 		}
 
 		if v.Name() == "switcher" {
@@ -116,6 +127,7 @@ func setupModules() {
 func setupInteractions(appstate *state.AppState) {
 	setupCommands()
 	createActivationKeys()
+	createWorkspaceMap()
 
 	setupModules()
 
@@ -220,6 +232,22 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 	return true
 }
 
+func setWorkspace(val uint) {
+	if workspace == val {
+		ui.workspace.SetText("")
+		ui.workspace.SetVisible(false)
+		workspace = NoWorkspace
+		return
+	}
+
+	workspace = val
+
+	ws := strconv.Itoa(int(val))
+
+	ui.workspace.SetText(ws)
+	ui.workspace.SetVisible(true)
+}
+
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 {
 		if val == amKey {
@@ -264,6 +292,10 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	case gdk.KEY_k:
 		if cfg.ActivationMode.Disabled {
 			selectPrev()
+		}
+	case gdk.KEY_1, gdk.KEY_2, gdk.KEY_3, gdk.KEY_4, gdk.KEY_5, gdk.KEY_6, gdk.KEY_7, gdk.KEY_8, gdk.KEY_9, gdk.KEY_0:
+		if modifier == wsModifier {
+			setWorkspace(workspaces[val])
 		}
 	default:
 		if modifier == amModifier {
@@ -363,6 +395,10 @@ func activateItem(keepOpen, selectNext bool) {
 		if entry.HistoryIdentifier != "" {
 			hstry.Save(entry.HistoryIdentifier)
 		}
+	}
+
+	if workspace != NoWorkspace {
+		go wh.HandleWorkspace(int(workspace))
 	}
 
 	err := cmd.Start()
@@ -650,6 +686,26 @@ func quit() {
 	} else {
 		ui.appwin.Close()
 	}
+}
+
+func createWorkspaceMap() {
+	wsModifier = gdk.AltMask
+
+	if cfg.ActivationMode.UseAlt {
+		wsModifier = gdk.ControlMask
+	}
+
+	workspaces = make(map[uint]uint)
+	workspaces[gdk.KEY_0] = 10
+	workspaces[gdk.KEY_1] = 1
+	workspaces[gdk.KEY_2] = 2
+	workspaces[gdk.KEY_3] = 3
+	workspaces[gdk.KEY_4] = 4
+	workspaces[gdk.KEY_5] = 5
+	workspaces[gdk.KEY_6] = 6
+	workspaces[gdk.KEY_7] = 7
+	workspaces[gdk.KEY_8] = 8
+	workspaces[gdk.KEY_9] = 9
 }
 
 func createActivationKeys() {

@@ -18,6 +18,8 @@ type SSH struct {
 	entries           []Entry
 }
 
+func (s SSH) HandleWorkspace(number int) {}
+
 func (s SSH) Entries(ctx context.Context, term string) []Entry {
 	fields := strings.Fields(term)
 

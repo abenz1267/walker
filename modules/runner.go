@@ -24,6 +24,8 @@ type Runner struct {
 	switcherExclusive bool
 }
 
+func (r Runner) HandleWorkspace(number int) {}
+
 func (r Runner) SwitcherExclusive() bool {
 	return r.switcherExclusive
 }

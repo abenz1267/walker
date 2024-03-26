@@ -12,6 +12,8 @@ type Commands struct {
 	entries           []Entry
 }
 
+func (c Commands) HandleWorkspace(number int) {}
+
 func (c Commands) Entries(ctx context.Context, term string) []Entry {
 	return c.entries
 }

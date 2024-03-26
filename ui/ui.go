@@ -43,6 +43,7 @@ var (
 type UI struct {
 	app           *gtk.Application
 	builder       *gtk.Builder
+	workspace     *gtk.Label
 	scroll        *gtk.ScrolledWindow
 	spinner       *gtk.Spinner
 	searchwrapper *gtk.Box
@@ -129,6 +130,7 @@ func setupUI(app *gtk.Application) {
 		app:           app,
 		builder:       builder,
 		spinner:       builder.GetObject("spinner").Cast().(*gtk.Spinner),
+		workspace:     builder.GetObject("workspace").Cast().(*gtk.Label),
 		searchwrapper: builder.GetObject("searchwrapper").Cast().(*gtk.Box),
 		typeahead:     builder.GetObject("typeahead").Cast().(*gtk.SearchEntry),
 		scroll:        builder.GetObject("scroll").Cast().(*gtk.ScrolledWindow),
@@ -143,6 +145,10 @@ func setupUI(app *gtk.Application) {
 
 	if cfg.Search.MarginSpinner != 0 {
 		ui.searchwrapper.SetSpacing(cfg.Search.MarginSpinner)
+	}
+
+	if workspace == NoWorkspace {
+		ui.workspace.SetVisible(false)
 	}
 
 	ui.spinner.SetVisible(false)

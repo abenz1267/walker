@@ -13,12 +13,15 @@ import (
 	"github.com/abenz1267/walker/config"
 )
 
+type WorkspaceHandler interface{}
+
 type Workable interface {
 	Entries(ctx context.Context, term string) []Entry
 	Prefix() string
 	Name() string
 	SwitcherExclusive() bool
 	Setup(cfg *config.Config) Workable
+	HandleWorkspace(number int)
 }
 
 type MatchingType int

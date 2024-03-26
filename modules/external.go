@@ -21,6 +21,8 @@ type External struct {
 	recalculateScore  bool
 }
 
+func (e External) HandleWorkspace(number int) {}
+
 func (e External) SwitcherExclusive() bool {
 	return e.switcherExclusive
 }

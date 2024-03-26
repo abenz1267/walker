@@ -15,6 +15,8 @@ func (s Switcher) SwitcherExclusive() bool {
 	return false
 }
 
+func (s Switcher) HandleWorkspace(number int) {}
+
 func (s Switcher) Entries(ctx context.Context, term string) []Entry {
 	entries := []Entry{}
 

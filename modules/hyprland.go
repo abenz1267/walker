@@ -8,6 +8,7 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/abenz1267/walker/config"
 )
@@ -15,6 +16,42 @@ import (
 type Hyprland struct {
 	prefix            string
 	switcherExclusive bool
+}
+
+func (h Hyprland) HandleWorkspace(number int) {
+	current := h.getWindows()
+
+	exists := make(map[string]bool)
+
+	for _, v := range current {
+		exists[v.title] = true
+	}
+
+	done := make(chan bool)
+
+	go func(done chan bool) {
+		time.Sleep(1 * time.Second)
+
+		n := h.getWindows()
+
+		fmt.Println(exists)
+
+		for _, v := range n {
+			if _, ok := exists[v.title]; !ok {
+				fmt.Println("switching")
+				cmd := exec.Command("hyprctl", "dispatch", "movetoworkspacesilent", fmt.Sprintf("%d,title:%s", number, v.title))
+
+				err := cmd.Run()
+				if err != nil {
+					log.Println(err)
+				}
+			}
+		}
+
+		done <- true
+	}(done)
+
+	<-done
 }
 
 func (h Hyprland) SwitcherExclusive() bool {
@@ -54,16 +91,13 @@ type window struct {
 	initialTitle string
 }
 
-func (Hyprland) Entries(ctx context.Context, term string) []Entry {
+func (Hyprland) getWindows() []window {
 	cmd := exec.Command("hyprctl", "clients")
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Println(err)
-		return nil
+		log.Panicln(err)
 	}
-
-	entries := []Entry{}
 
 	scanner := bufio.NewScanner(bytes.NewReader(out))
 
@@ -102,7 +136,13 @@ func (Hyprland) Entries(ctx context.Context, term string) []Entry {
 		}
 	}
 
-	for _, v := range windows {
+	return windows
+}
+
+func (h Hyprland) Entries(ctx context.Context, term string) []Entry {
+	entries := []Entry{}
+
+	for _, v := range h.getWindows() {
 		if v.pid == "-1" {
 			continue
 		}

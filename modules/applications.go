@@ -27,6 +27,8 @@ type Application struct {
 	Actions []Entry `json:"actions,omitempty"`
 }
 
+func (a Applications) HandleWorkspace(number int) {}
+
 func (a Applications) SwitcherExclusive() bool {
 	return a.switcherExclusive
 }

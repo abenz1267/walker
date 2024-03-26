@@ -13,6 +13,8 @@ type Websearch struct {
 	switcherExclusive bool
 }
 
+func (w Websearch) HandleWorkspace(number int) {}
+
 func (w Websearch) SwitcherExclusive() bool {
 	return w.switcherExclusive
 }

@@ -16,6 +16,7 @@ var config []byte
 
 type Config struct {
 	Placeholder        string         `json:"placeholder,omitempty"`
+	WorkspaceHandler   string         `json:"workspace_handler,omitempty"`
 	EnableTypeahead    bool           `json:"enable_typeahead,omitempty"`
 	IgnoreMouse        bool           `json:"ignore_mouse,omitempty"`
 	ShowInitialEntries bool           `json:"show_initial_entries,omitempty"`

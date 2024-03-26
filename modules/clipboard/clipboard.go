@@ -29,6 +29,8 @@ type Clipboard struct {
 	switcherExclusive bool
 }
 
+func (c Clipboard) HandleWorkspace(number int) {}
+
 func (c Clipboard) SwitcherExclusive() bool {
 	return c.switcherExclusive
 }

@@ -53,7 +53,7 @@ You have two options of installing walker using nix.
 
 2.  Using the home-manager module exposed by this flake 1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";` 2. Add `imports = [inputs.walker.homeManagerModules.walker];` into your home-manager config 3. Configure walker using:
 
-    ````nix
+```nix
     programs.walker = {
     enabled = true;
     runAsService = true;
@@ -84,10 +84,10 @@ You have two options of installing walker using nix.
               }
             '';
           };
-        ```
 
-    </details>
-    ````
+```
+
+</details>
 
 ## Config & Style
 

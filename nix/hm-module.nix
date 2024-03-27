@@ -9,9 +9,12 @@ inputs: {
   defaultStyle = builtins.readFile ../ui/themes/style.default.css;
   cfg = config.programs.walker;
 in {
+  imports = [
+    (lib.mkRenamedOptionModule [ "programs" "walker" "enabled" ] [ "programs" "walker" "enable" ])
+  ];
   options = {
     programs.walker = with lib; {
-      enabled = mkEnableOption "Enable walker";
+      enable = mkEnableOption "walker";
       runAsService = mkOption {
         type = types.bool;
         default = false;

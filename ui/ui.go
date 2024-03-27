@@ -152,6 +152,10 @@ func setupUI(app *gtk.Application) {
 		prefixClasses: make(map[string][]string),
 	}
 
+	if cfg.IgnoreMouse {
+		ui.appwin.Window.SetCursor(gdk.NewCursorFromName("none", nil))
+	}
+
 	ui.list.SetSingleClickActivate(true)
 	ui.list.ConnectActivate(func(pos uint) {
 		activateItem(false, false)
@@ -330,8 +334,6 @@ func setupFactory() *gtk.SignalListItemFactory {
 			// }
 			//
 			// box.AddController(click)
-		} else {
-			ui.appwin.Window.SetCursor(gdk.NewCursorFromName("none", nil))
 		}
 
 		wrapper := gtk.NewBox(gtk.OrientationVertical, 0)

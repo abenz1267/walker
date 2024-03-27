@@ -33,6 +33,7 @@ type Config struct {
 	Clipboard          Clipboard      `json:"clipboard,omitempty"`
 	Runner             Runner         `json:"runner,omitempty"`
 	ActivationMode     ActivationMode `json:"activation_mode,omitempty"`
+	ScrollbarPolicy    string         `json:"scrollbar_policy,omitempty"`
 }
 
 type ActivationMode struct {

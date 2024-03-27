@@ -4,6 +4,7 @@
   "enable_typeahead": false,
   "show_initial_entries": true,
   "fullscreen": false,
+  "scrollbar_policy": "automatic",
   "activation_mode": {
     "disabled": false,
     "use_alt": false

@@ -221,6 +221,18 @@ func setupUserStyle() {
 	alignments["end"] = gtk.AlignEnd
 	alignments["center"] = gtk.AlignCenter
 
+	policies := make(map[string]gtk.PolicyType)
+	policies["never"] = gtk.PolicyNever
+	policies["always"] = gtk.PolicyAlways
+	policies["automatic"] = gtk.PolicyAutomatic
+	policies["external"] = gtk.PolicyExternal
+
+	ui.scroll.SetPolicy(gtk.PolicyNever, gtk.PolicyAutomatic)
+
+	if cfg.ScrollbarPolicy != "" {
+		ui.scroll.SetPolicy(gtk.PolicyNever, policies[cfg.ScrollbarPolicy])
+	}
+
 	if cfg.Align.Width != 0 {
 		ui.box.SetSizeRequest(cfg.Align.Width, -1)
 	}

@@ -16,8 +16,6 @@ import (
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
-	"github.com/diamondburned/gotk4/pkg/gio/v2"
-	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
@@ -151,6 +149,11 @@ func setupUI(app *gtk.Application) {
 		prefixClasses: make(map[string][]string),
 	}
 
+	ui.list.SetSingleClickActivate(true)
+	ui.list.ConnectActivate(func(pos uint) {
+		activateItem(false, false)
+	})
+
 	if cfg.Search.MarginSpinner != 0 {
 		ui.searchwrapper.SetSpacing(cfg.Search.MarginSpinner)
 	}
@@ -278,7 +281,6 @@ func setupFactory() *gtk.SignalListItemFactory {
 		}
 
 		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
-		box.SetFocusable(true)
 		item.SetChild(box)
 	})
 
@@ -295,58 +297,41 @@ func setupFactory() *gtk.SignalListItemFactory {
 			log.Panicln("child is not a box")
 		}
 
-		if item.Selected() {
-			if !activationEnabled {
-				box.GrabFocus()
-				ui.appwin.SetCSSClasses([]string{val.Class})
-				ui.search.GrabFocus()
-			}
-		}
-
 		if box.FirstChild() != nil {
 			return
 		}
 
-		if val.DragDrop {
-			dd := gtk.NewDragSource()
-			dd.ConnectPrepare(func(_, _ float64) *gdk.ContentProvider {
-				file := gio.NewFileForPath(val.DragDropData)
-
-				b := glib.NewBytes([]byte(fmt.Sprintf("%s\n", file.URI())))
-
-				cp := gdk.NewContentProviderForBytes("text/uri-list", b)
-
-				return cp
-			})
-
-			dd.ConnectDragBegin(func(_ gdk.Dragger) {
-				closeAfterActivation(false, false)
-			})
-
-			box.AddController(dd)
-		}
+		// if val.DragDrop {
+		// 	dd := gtk.NewDragSource()
+		// 	dd.ConnectPrepare(func(_, _ float64) *gdk.ContentProvider {
+		// 		file := gio.NewFileForPath(val.DragDropData)
+		//
+		// 		b := glib.NewBytes([]byte(fmt.Sprintf("%s\n", file.URI())))
+		//
+		// 		cp := gdk.NewContentProviderForBytes("text/uri-list", b)
+		//
+		// 		return cp
+		// 	})
+		//
+		// 	dd.ConnectDragBegin(func(_ gdk.Dragger) {
+		// 		closeAfterActivation(false, false)
+		// 	})
+		//
+		// 	box.AddController(dd)
+		// }
 
 		box.SetCSSClasses([]string{"item", val.Class})
 
 		if !cfg.IgnoreMouse {
-			motion := gtk.NewEventControllerMotion()
-			motion.ConnectEnter(func(_, _ float64) {
-				ui.selection.SetSelected(item.Position())
-			})
-
-			click := gtk.NewGestureClick()
-			if val.DragDrop {
-				click.ConnectReleased(func(m int, _, _ float64) {
-					activateItem(false, false)
-				})
-			} else {
-				click.ConnectPressed(func(m int, _, _ float64) {
-					activateItem(false, false)
-				})
-			}
-
-			box.AddController(click)
-			box.AddController(motion)
+			// click := gtk.NewGestureClick()
+			//
+			// if val.DragDrop {
+			// 	click.ConnectReleased(func(m int, _, _ float64) {
+			// 		activateItem(false, false)
+			// 	})
+			// }
+			//
+			// box.AddController(click)
 		} else {
 			ui.appwin.Window.SetCursor(gdk.NewCursorFromName("none", nil))
 		}

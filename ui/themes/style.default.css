@@ -39,7 +39,7 @@
 #list {
 }
 
-#list *:selected {
+row:selected {
   background: #1f1f28;
 }
 

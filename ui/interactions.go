@@ -199,21 +199,58 @@ func disabledAM() {
 }
 
 func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
-	switch val {
-	case gdk.KEY_Escape:
-		disabledAM()
+	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 {
+		if val == amKey {
+			c := ui.appwin.CSSClasses()
+			c = append(c, "activation")
+			ui.appwin.SetCSSClasses(c)
+			ui.list.GrabFocus()
+			activationEnabled = true
 
+			return true
+		}
+	}
+
+	switch val {
+	case gdk.KEY_Shift_L:
+		return true
+	case gdk.KEY_Return:
+		if modifier == gdk.ShiftMask {
+			activateItem(true, true)
+		}
+	case gdk.KEY_Escape:
+		if activationEnabled {
+			disabledAM()
+		} else {
+			if singleProc != nil {
+				disableSingleProc()
+			} else {
+				quit()
+			}
+		}
+	case gdk.KEY_Tab:
+		if ui.typeahead.Text() != "" {
+			ui.search.SetText(ui.typeahead.Text())
+			ui.search.SetPosition(-1)
+		} else {
+			selectNext()
+		}
+	case gdk.KEY_ISO_Left_Tab:
+		selectPrev()
 	case gdk.KEY_J, gdk.KEY_K, gdk.KEY_L, gdk.KEY_colon, gdk.KEY_A, gdk.KEY_S, gdk.KEY_D, gdk.KEY_F:
 		fallthrough
 	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_semicolon, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
-		if !cfg.ActivationMode.Disabled {
+		if !cfg.ActivationMode.Disabled && activationEnabled {
 			if modifier == gdk.ShiftMask {
 				selectActivationMode(val, true)
 			} else {
 				selectActivationMode(val, false)
 			}
+		} else {
+			ui.search.GrabFocus()
 		}
 	default:
+		ui.search.GrabFocus()
 		return false
 	}
 
@@ -244,10 +281,6 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		} else {
 			quit()
 		}
-	case gdk.KEY_Down:
-		selectNext()
-	case gdk.KEY_Up:
-		selectPrev()
 	case gdk.KEY_Tab:
 		if ui.typeahead.Text() != "" {
 			ui.search.SetText(ui.typeahead.Text())

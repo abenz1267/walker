@@ -78,6 +78,8 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 				appstate.IsMeasured = true
 			}
 
+			ui.search.GrabFocus()
+
 			return
 		}
 

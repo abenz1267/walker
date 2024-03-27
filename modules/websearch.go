@@ -2,7 +2,9 @@ package modules
 
 import (
 	"context"
+	"log"
 	"net/url"
+	"os/exec"
 	"strings"
 
 	"github.com/abenz1267/walker/config"
@@ -46,6 +48,12 @@ func (w Websearch) Entries(ctx context.Context, term string) []Entry {
 
 	if w.prefix != "" && len(term) < 2 {
 		return entries
+	}
+
+	path, _ := exec.LookPath("xdg-open")
+	if path == "" {
+		log.Println("xdg-open not found. Disabling websearch.")
+		return nil
 	}
 
 	term = strings.TrimPrefix(term, w.prefix)

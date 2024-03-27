@@ -55,7 +55,7 @@ You have two options of installing walker using nix.
 
 ```nix
     programs.walker = {
-    enabled = true;
+    enable = true;
     runAsService = true;
 
             # All options from the config.json can be used here.

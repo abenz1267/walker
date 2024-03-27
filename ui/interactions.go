@@ -345,6 +345,7 @@ func activateItem(keepOpen, selectNext bool) {
 					ui.items.Splice(0, ui.items.NItems())
 					ui.search.SetObjectProperty("placeholder-text", w.Name())
 					ui.search.SetText("")
+					ui.search.GrabFocus()
 					return
 				}
 			}

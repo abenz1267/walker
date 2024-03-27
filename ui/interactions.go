@@ -126,12 +126,10 @@ func setupInteractions(appstate *state.AppState) {
 	ui.search.Connect("search-changed", process)
 	ui.search.Connect("activate", func() { activateItem(false, false) })
 
-	if !cfg.ActivationMode.Disabled {
-		listkc := gtk.NewEventControllerKey()
-		listkc.ConnectKeyPressed(handleListKeysPressed)
+	listkc := gtk.NewEventControllerKey()
+	listkc.ConnectKeyPressed(handleListKeysPressed)
 
-		ui.list.AddController(listkc)
-	}
+	ui.list.AddController(listkc)
 
 	amKey = gdk.KEY_Control_L
 	amModifier = gdk.ControlMask
@@ -217,6 +215,8 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 	case gdk.KEY_Return:
 		if modifier == gdk.ShiftMask {
 			activateItem(true, true)
+		} else {
+			return false
 		}
 	case gdk.KEY_Escape:
 		if activationEnabled {

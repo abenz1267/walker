@@ -275,11 +275,6 @@ func setupUserStyle() {
 func setupFactory() *gtk.SignalListItemFactory {
 	factory := gtk.NewSignalListItemFactory()
 	factory.ConnectSetup(func(item *gtk.ListItem) {
-		if cfg.IgnoreMouse {
-			item.SetSelectable(false)
-			item.SetActivatable(false)
-		}
-
 		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
 		item.SetChild(box)
 	})

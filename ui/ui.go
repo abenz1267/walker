@@ -152,10 +152,6 @@ func setupUI(app *gtk.Application) {
 		prefixClasses: make(map[string][]string),
 	}
 
-	if cfg.IgnoreMouse {
-		ui.appwin.Window.SetCursor(gdk.NewCursorFromName("none", nil))
-	}
-
 	ui.list.SetSingleClickActivate(true)
 	ui.list.ConnectActivate(func(pos uint) {
 		activateItem(false, false)
@@ -324,17 +320,17 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		box.SetCSSClasses([]string{"item", val.Class})
 
-		if !cfg.IgnoreMouse {
-			// click := gtk.NewGestureClick()
-			//
-			// if val.DragDrop {
-			// 	click.ConnectReleased(func(m int, _, _ float64) {
-			// 		activateItem(false, false)
-			// 	})
-			// }
-			//
-			// box.AddController(click)
-		}
+		// if !cfg.IgnoreMouse {
+		// click := gtk.NewGestureClick()
+		//
+		// if val.DragDrop {
+		// 	click.ConnectReleased(func(m int, _, _ float64) {
+		// 		activateItem(false, false)
+		// 	})
+		// }
+		//
+		// box.AddController(click)
+		// }
 
 		wrapper := gtk.NewBox(gtk.OrientationVertical, 0)
 		wrapper.SetCSSClasses([]string{"textwrapper"})

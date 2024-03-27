@@ -462,7 +462,7 @@ func process() {
 	var ctx context.Context
 	ctx, cancel = context.WithCancel(context.Background())
 
-	if ui.search.Text() != "" {
+	if ui.search.Text() != "" || singleProc != nil {
 		go processAsync(ctx)
 	} else {
 		ui.items.Splice(0, ui.items.NItems())

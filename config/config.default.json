@@ -23,6 +23,7 @@
   "align": {
     "width": 400,
     "horizontal": "center",
+    "anchor": "",
     "vertical": "start",
     "margins": {
       "top": 20,

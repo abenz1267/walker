@@ -77,6 +77,7 @@ type Align struct {
 	Vertical   string  `json:"vertical,omitempty"`
 	Width      int     `json:"width,omitempty"`
 	Margins    Margins `json:"margins,omitempty"`
+	Anchor     string  `json:"anchor,omitempty"`
 }
 
 type Margins struct {

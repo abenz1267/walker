@@ -101,8 +101,17 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		}
 
 		if !cfg.Fullscreen {
+			anchors := make(map[string]gtk4layershell.Edge)
+			anchors["top"] = gtk4layershell.LayerShellEdgeTop
+			anchors["bottom"] = gtk4layershell.LayerShellEdgeBottom
+			anchors["left"] = gtk4layershell.LayerShellEdgeLeft
+			anchors["right"] = gtk4layershell.LayerShellEdgeRight
+
 			gtk4layershell.SetLayer(&ui.appwin.Window, gtk4layershell.LayerShellLayerTop)
-			gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeTop, true)
+
+			if cfg.Align.Anchor != "" {
+				gtk4layershell.SetAnchor(&ui.appwin.Window, anchors[cfg.Align.Anchor], true)
+			}
 		} else {
 			gtk4layershell.SetLayer(&ui.appwin.Window, gtk4layershell.LayerShellLayerOverlay)
 			gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeTop, true)

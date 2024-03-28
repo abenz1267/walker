@@ -53,7 +53,7 @@ type Entry struct {
 	Matching         MatchingType `json:"matching,omitempty"`
 	RecalculateScore bool         `json:"recalculate_score,omitempty"`
 	ScoreFinal       float64      `json:"score_final,omitempty"`
-	ScoreFuzzy       int          `json:"score_fuzzy,omitempty"`
+	ScoreFuzzy       float64      `json:"score_fuzzy,omitempty"`
 	Used             int          `json:"-"`
 	DaysSinceUsed    int          `json:"-"`
 	LastUsed         time.Time    `json:"-"`

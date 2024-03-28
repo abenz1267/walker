@@ -705,12 +705,47 @@ func createActivationKeys() {
 	keys[gdk.KEY_F] = 7
 }
 
+const modifier = 0.10
+
 func fuzzyScore(entry modules.Entry, text string) float64 {
 	textLength := len(text)
 
 	if textLength == 0 {
 		return 1
 	}
+
+	entry.Categories = append([]string{entry.Label, entry.Sub, entry.Searchable}, entry.Categories...)
+
+	multiplier := 0
+
+	for k, t := range entry.Categories {
+		if t == "" {
+			continue
+		}
+
+		score := util.FuzzyScore(text, t)
+
+		if score == 0 {
+			continue
+		}
+
+		if score > entry.ScoreFuzzy {
+			multiplier = k
+			entry.ScoreFuzzy = score
+		}
+	}
+
+	if entry.ScoreFuzzy == 0 {
+		return 0
+	}
+
+	m := (1 - modifier*float64(multiplier))
+
+	if m < 0.7 {
+		m = 0.7
+	}
+
+	entry.ScoreFuzzy = entry.ScoreFuzzy * m
 
 	if p, ok := hstry[text]; ok {
 		if val, ok := p[entry.Identifier()]; ok {
@@ -720,30 +755,13 @@ func fuzzyScore(entry modules.Entry, text string) float64 {
 		}
 	}
 
-	entry.Categories = append(entry.Categories, entry.Label, entry.Sub, entry.Searchable)
-
-	tm := 1.0 / float64(textLength)
-
-	for _, t := range entry.Categories {
-		if t == "" {
-			continue
-		}
-
-		score := util.FuzzyScore(text, t)
-		if score > entry.ScoreFuzzy {
-			entry.ScoreFuzzy = score
-		}
-	}
-
-	if entry.ScoreFuzzy == 0 {
-		return 0
-	}
-
 	usageScore := usageModifier(entry)
 
 	if textLength == 0 {
 		textLength = 1
 	}
+
+	tm := 1.0 / float64(textLength)
 
 	return float64(usageScore)*tm + float64(entry.ScoreFuzzy)/tm
 }

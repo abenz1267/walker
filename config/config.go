@@ -19,6 +19,7 @@ type Config struct {
 	EnableTypeahead    bool           `json:"enable_typeahead,omitempty"`
 	ShowInitialEntries bool           `json:"show_initial_entries,omitempty"`
 	ForceKeyboardFocus bool           `json:"force_keyboard_focus,omitempty"`
+	SSHHostFile        string         `json:"ssh_host_file,omitempty"`
 	ShellConfig        string         `json:"shell_config,omitempty"`
 	Terminal           string         `json:"terminal,omitempty"`
 	Orientation        string         `json:"orientation,omitempty"`

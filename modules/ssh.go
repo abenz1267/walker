@@ -63,6 +63,14 @@ func (SSH) Setup(cfg *config.Config) Workable {
 	}
 
 	hosts := filepath.Join(home, ".ssh", "known_hosts")
+	if cfg.SSHHostFile != "" {
+		hosts = cfg.SSHHostFile
+	}
+
+	if _, err := os.Stat(hosts); err != nil {
+		log.Println("SSH host file not found, disabling ssh module")
+		return nil
+	}
 
 	file, err := os.Open(hosts)
 	if err != nil {

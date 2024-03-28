@@ -13,6 +13,7 @@
 - display images
 - non-blocking async handling of results
 - typeahead (currently not persisted)
+- history-aware
 
 ## Builtin Modules
 

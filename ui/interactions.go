@@ -20,7 +20,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/lithammer/fuzzysearch/fuzzy"
 )
 
 var (
@@ -706,25 +705,6 @@ func createActivationKeys() {
 	keys[gdk.KEY_F] = 7
 }
 
-func calculateFuzzyScore(text, target string) int {
-	final := 100
-	score := fuzzy.RankMatchFold(text, target)
-
-	if score == 0 {
-		if len(target) != len(text) {
-			return 95
-		}
-
-		return 100
-	}
-
-	if score == -1 {
-		return 0
-	} else {
-		return final - score
-	}
-}
-
 func fuzzyScore(entry modules.Entry, text string) float64 {
 	textLength := len(text)
 
@@ -747,13 +727,9 @@ func fuzzyScore(entry modules.Entry, text string) float64 {
 			continue
 		}
 
-		score := calculateFuzzyScore(text, t)
+		score := util.FuzzyScore(text, t)
 		if score > entry.ScoreFuzzy {
 			entry.ScoreFuzzy = score
-		}
-
-		if score == 100 {
-			return 100 / tm
 		}
 	}
 

@@ -9,7 +9,7 @@ buildGoModule {
   version = lib.fileContents ./version.txt;
 
   src = ./.;
-  vendorHash = "sha256-rzhcKIphKdb5woKEtNb3V6iFyc2R6QS8WK7942z7F2o=";
+  vendorHash = "sha256-KvFv3NMYYjPu4PjadWGW44yCSwqElUUTjkEZkUlEFag=";
 
   nativeBuildInputs = [pkg-config];
   buildInputs = dependencies;

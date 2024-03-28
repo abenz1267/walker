@@ -13,7 +13,7 @@ import (
 	"strings"
 
 	"github.com/abenz1267/walker/config"
-	"github.com/lithammer/fuzzysearch/fuzzy"
+	"github.com/abenz1267/walker/util"
 )
 
 type Runner struct {
@@ -37,13 +37,13 @@ func (r Runner) Setup(cfg *config.Config) Workable {
 	r.prefix = module.Prefix
 	r.switcherExclusive = module.SwitcherExclusive
 
+	r.parseAliases()
+
 	if len(cfg.Runner.Includes) > 0 {
 		r.bins = cfg.Runner.Includes
 	} else {
 		r.getBins()
 	}
-
-	r.parseAliases()
 
 	filtered := []string{}
 
@@ -94,21 +94,18 @@ func (r Runner) Entries(ctx context.Context, term string) []Entry {
 		}
 
 		n := Entry{
-			Label:      label,
-			Searchable: v,
-			Sub:        "Runner",
-			Exec:       fmt.Sprintf("%s %s", label, strings.Join(fields[1:], " ")),
-			Class:      "runner",
-			Matching:   AlwaysTop,
+			Label:            label,
+			Searchable:       v,
+			Sub:              "Runner",
+			Exec:             fmt.Sprintf("%s %s", label, strings.Join(fields[1:], " ")),
+			Class:            "runner",
+			RecalculateScore: true,
 		}
 
-		rank := fuzzy.RankMatchFold(matchable, v)
+		rank := util.FuzzyScore(matchable, v)
+		n.ScoreFinal = float64(rank)
 
-		if rank == 0 {
-			return []Entry{n}
-		}
-
-		if rank > 5 || rank < 0 {
+		if rank < 20 {
 			continue
 		}
 
@@ -127,8 +124,8 @@ func (r Runner) Entries(ctx context.Context, term string) []Entry {
 		return 0
 	})
 
-	if len(entries) > 3 {
-		return entries[0:3]
+	if len(entries) > 5 {
+		return entries[0:5]
 	}
 
 	return entries

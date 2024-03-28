@@ -39,7 +39,7 @@ func setupCommands() {
 		setupModules()
 	}
 	commands["resethistory"] = func() {
-		os.Remove(filepath.Join(util.CacheDir(), "history.json"))
+		os.Remove(filepath.Join(util.CacheDir(), "history.gob"))
 		hstry = history.Get()
 	}
 	commands["clearapplicationscache"] = func() {
@@ -393,9 +393,7 @@ func activateItem(keepOpen, selectNext bool) {
 	}
 
 	if entry.History {
-		if entry.HistoryIdentifier != "" {
-			hstry.Save(entry.HistoryIdentifier)
-		}
+		hstry.Save(entry.Identifier(), strings.TrimSpace(ui.search.Text()))
 	}
 
 	err := cmd.Start()
@@ -608,10 +606,12 @@ func setInitials() {
 			e := proc.Entries(nil, "")
 
 			for _, entry := range e {
-				if val, ok := hstry[entry.HistoryIdentifier]; ok {
-					entry.Used = val.Used
-					entry.DaysSinceUsed = val.DaysSinceUsed
-					entry.LastUsed = val.LastUsed
+				for _, v := range hstry {
+					if val, ok := v[entry.Identifier()]; ok {
+						entry.Used = val.Used
+						entry.DaysSinceUsed = val.DaysSinceUsed
+						entry.LastUsed = val.LastUsed
+					}
 				}
 
 				entry.ScoreFinal = float64(usageModifier(entry))
@@ -712,10 +712,12 @@ func fuzzyScore(entry modules.Entry, text string) float64 {
 		return 1
 	}
 
-	if val, ok := hstry[entry.HistoryIdentifier]; ok {
-		entry.Used = val.Used
-		entry.DaysSinceUsed = val.DaysSinceUsed
-		entry.LastUsed = val.LastUsed
+	if p, ok := hstry[text]; ok {
+		if val, ok := p[entry.Identifier()]; ok {
+			entry.Used = val.Used
+			entry.DaysSinceUsed = val.DaysSinceUsed
+			entry.LastUsed = val.LastUsed
+		}
 	}
 
 	entry.Categories = append(entry.Categories, entry.Label, entry.Sub, entry.Searchable)

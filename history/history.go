@@ -7,7 +7,14 @@ import (
 	"github.com/abenz1267/walker/util"
 )
 
-type History map[string]HistoryEntry
+type (
+	Prefix string
+	Hash   string
+)
+
+type HistoryMap map[string]map[string]HistoryEntry
+
+type History HistoryMap
 
 type HistoryEntry struct {
 	LastUsed      time.Time `json:"last_used,omitempty"`
@@ -15,8 +22,14 @@ type HistoryEntry struct {
 	DaysSinceUsed int       `json:"-"`
 }
 
-func (s History) Save(entry string) {
-	h, ok := s[entry]
+func (s History) Save(hash string, prefix string) {
+	p, ok := s[prefix]
+	if !ok {
+		p = make(map[string]HistoryEntry)
+		s[prefix] = p
+	}
+
+	h, ok := p[hash]
 	if !ok {
 		h = HistoryEntry{
 			LastUsed: time.Now(),
@@ -32,22 +45,22 @@ func (s History) Save(entry string) {
 		h.LastUsed = time.Now()
 	}
 
-	s[entry] = h
+	p[hash] = h
 
-	util.ToJson(&s, filepath.Join(util.CacheDir(), "history.json"))
+	util.ToGob(&s, filepath.Join(util.CacheDir(), "history.gob"))
 }
 
 func Get() History {
-	file := filepath.Join(util.CacheDir(), "history.json")
+	file := filepath.Join(util.CacheDir(), "history.gob")
 
 	history := History{}
-	_ = util.FromJson(file, &history)
+	_ = util.FromGob(file, &history)
 
-	for k, v := range history {
-		today := time.Now()
-		v.DaysSinceUsed = int(today.Sub(v.LastUsed).Hours() / 24)
-
-		history[k] = v
+	for _, v := range history {
+		for _, vv := range v {
+			today := time.Now()
+			vv.DaysSinceUsed = int(today.Sub(vv.LastUsed).Hours() / 24)
+		}
 	}
 
 	return history

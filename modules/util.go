@@ -2,12 +2,15 @@ package modules
 
 import (
 	"context"
+	"crypto/md5"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"io"
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/abenz1267/walker/config"
@@ -30,31 +33,37 @@ const (
 )
 
 type Entry struct {
-	Label             string       `json:"label,omitempty"`
-	Sub               string       `json:"sub,omitempty"`
-	Exec              string       `json:"exec,omitempty"`
-	RawExec           []string     `json:"raw_exec,omitempty"`
-	Terminal          bool         `json:"terminal,omitempty"`
-	Piped             Piped        `json:"piped,omitempty"`
-	Icon              string       `json:"icon,omitempty"`
-	IconIsImage       bool         `json:"icon_is_image,omitempty"`
-	DragDrop          bool         `json:"drag_drop,omitempty"`
-	DragDropData      string       `json:"drag_drop_data,omitempty"`
-	Image             string       `json:"image,omitempty"`
-	HideText          bool         `json:"hide_text,omitempty"`
-	Categories        []string     `json:"categories,omitempty"`
-	Searchable        string       `json:"searchable,omitempty"`
-	MatchFields       int          `json:"match_fields,omitempty"`
-	Class             string       `json:"class,omitempty"`
-	History           bool         `json:"history,omitempty"`
-	HistoryIdentifier string       `json:"history_identifier,omitempty"`
-	Matching          MatchingType `json:"matching,omitempty"`
-	RecalculateScore  bool         `json:"recalculate_score,omitempty"`
-	ScoreFinal        float64      `json:"score_final,omitempty"`
-	ScoreFuzzy        int          `json:"score_fuzzy,omitempty"`
-	Used              int          `json:"-"`
-	DaysSinceUsed     int          `json:"-"`
-	LastUsed          time.Time    `json:"-"`
+	Label            string       `json:"label,omitempty"`
+	Sub              string       `json:"sub,omitempty"`
+	Exec             string       `json:"exec,omitempty"`
+	RawExec          []string     `json:"raw_exec,omitempty"`
+	Terminal         bool         `json:"terminal,omitempty"`
+	Piped            Piped        `json:"piped,omitempty"`
+	Icon             string       `json:"icon,omitempty"`
+	IconIsImage      bool         `json:"icon_is_image,omitempty"`
+	DragDrop         bool         `json:"drag_drop,omitempty"`
+	DragDropData     string       `json:"drag_drop_data,omitempty"`
+	Image            string       `json:"image,omitempty"`
+	HideText         bool         `json:"hide_text,omitempty"`
+	Categories       []string     `json:"categories,omitempty"`
+	Searchable       string       `json:"searchable,omitempty"`
+	MatchFields      int          `json:"match_fields,omitempty"`
+	Class            string       `json:"class,omitempty"`
+	History          bool         `json:"history,omitempty"`
+	Matching         MatchingType `json:"matching,omitempty"`
+	RecalculateScore bool         `json:"recalculate_score,omitempty"`
+	ScoreFinal       float64      `json:"score_final,omitempty"`
+	ScoreFuzzy       int          `json:"score_fuzzy,omitempty"`
+	Used             int          `json:"-"`
+	DaysSinceUsed    int          `json:"-"`
+	LastUsed         time.Time    `json:"-"`
+}
+
+func (e Entry) Identifier() string {
+	str := fmt.Sprintf("%s %s %s %s", e.Label, e.Sub, e.Searchable, strings.Join(e.Categories, " "))
+
+	hash := md5.Sum([]byte(str))
+	return hex.EncodeToString(hash[:])
 }
 
 type Piped struct {

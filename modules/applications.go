@@ -106,15 +106,14 @@ func parse() []Entry {
 
 					if strings.HasPrefix(line, "[Desktop Action") {
 						app.Actions = append(app.Actions, Entry{
-							Sub:               app.Generic.Label,
-							Icon:              app.Generic.Icon,
-							Terminal:          app.Generic.Terminal,
-							Class:             ApplicationsName,
-							Matching:          app.Generic.Matching,
-							Categories:        app.Generic.Categories,
-							History:           app.Generic.History,
-							HistoryIdentifier: app.Generic.Label,
-							RecalculateScore:  true,
+							Sub:              app.Generic.Label,
+							Icon:             app.Generic.Icon,
+							Terminal:         app.Generic.Terminal,
+							Class:            ApplicationsName,
+							Matching:         app.Generic.Matching,
+							Categories:       app.Generic.Categories,
+							History:          app.Generic.History,
+							RecalculateScore: true,
 						})
 
 						isAction = true
@@ -133,7 +132,6 @@ func parse() []Entry {
 					if !isAction {
 						if strings.HasPrefix(line, "Name=") {
 							app.Generic.Label = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
-							app.Generic.HistoryIdentifier = app.Generic.Label
 							continue
 						}
 
@@ -185,7 +183,6 @@ func parse() []Entry {
 
 						if strings.HasPrefix(line, "Name=") {
 							app.Actions[len(app.Actions)-1].Label = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
-							app.Actions[len(app.Actions)-1].HistoryIdentifier = fmt.Sprintf("%s:%s", app.Actions[len(app.Actions)-1].HistoryIdentifier, app.Actions[len(app.Actions)-1].Label)
 							continue
 						}
 					}

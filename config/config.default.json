@@ -1,6 +1,7 @@
 {
   "placeholder": "Search...",
   "keep_open": false,
+  "ignore_mouse": false,
   "ssh_host_file": "",
   "enable_typeahead": false,
   "show_initial_entries": true,
@@ -23,10 +24,16 @@
     "image_height": 300
   },
   "align": {
+    "ignore_exlusive": true,
     "width": 400,
     "horizontal": "center",
-    "anchor": "",
     "vertical": "start",
+    "anchors": {
+      "top": false,
+      "left": false,
+      "bottom": false,
+      "right": false
+    },
     "margins": {
       "top": 20,
       "bottom": 0,
@@ -37,7 +44,8 @@
   "list": {
     "height": 300,
     "margin_top": 10,
-    "always_show": true
+    "always_show": true,
+    "hide_sub": false
   },
   "orientation": "vertical",
   "icons": {

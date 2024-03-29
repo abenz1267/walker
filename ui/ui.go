@@ -102,16 +102,26 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		}
 
 		if !cfg.Fullscreen {
-			anchors := make(map[string]gtk4layershell.Edge)
-			anchors["top"] = gtk4layershell.LayerShellEdgeTop
-			anchors["bottom"] = gtk4layershell.LayerShellEdgeBottom
-			anchors["left"] = gtk4layershell.LayerShellEdgeLeft
-			anchors["right"] = gtk4layershell.LayerShellEdgeRight
-
 			gtk4layershell.SetLayer(&ui.appwin.Window, gtk4layershell.LayerShellLayerTop)
 
-			if cfg.Align.Anchor != "" {
-				gtk4layershell.SetAnchor(&ui.appwin.Window, anchors[cfg.Align.Anchor], true)
+			if cfg.Align.Anchors.Top {
+				gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeTop, true)
+			}
+
+			if cfg.Align.Anchors.Bottom {
+				gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeBottom, true)
+			}
+
+			if cfg.Align.Anchors.Left {
+				gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeLeft, true)
+			}
+
+			if cfg.Align.Anchors.Right {
+				gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeRight, true)
+			}
+
+			if cfg.Align.IgnoreExclusive {
+				gtk4layershell.SetExclusiveZone(&ui.appwin.Window, -1)
 			}
 		} else {
 			gtk4layershell.SetLayer(&ui.appwin.Window, gtk4layershell.LayerShellLayerOverlay)
@@ -119,7 +129,10 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeBottom, true)
 			gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeLeft, true)
 			gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeRight, true)
-			gtk4layershell.SetExclusiveZone(&ui.appwin.Window, -1)
+
+			if cfg.Align.IgnoreExclusive {
+				gtk4layershell.SetExclusiveZone(&ui.appwin.Window, -1)
+			}
 		}
 
 		ui.appwin.Show()
@@ -161,7 +174,6 @@ func setupUI(app *gtk.Application) {
 		ui.searchwrapper.SetSpacing(cfg.Search.MarginSpinner)
 	}
 
-	ui.spinner.SetVisible(false)
 	ui.spinner.SetSpinning(true)
 	ui.typeahead.SetHExpand(true)
 	ui.typeahead.SetFocusable(false)
@@ -210,6 +222,10 @@ func setupUserStyle() {
 	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
 	ui.search.SetObjectProperty("search-delay", cfg.Search.Delay)
 
+	if cfg.IgnoreMouse {
+		ui.list.SetCanTarget(false)
+	}
+
 	if cfg.List.MarginTop != 0 {
 		ui.list.SetMarginTop(cfg.List.MarginTop)
 	}
@@ -239,9 +255,17 @@ func setupUserStyle() {
 		ui.scroll.SetPolicy(gtk.PolicyNever, policies[cfg.ScrollbarPolicy])
 	}
 
+	width := -1
 	if cfg.Align.Width != 0 {
-		ui.box.SetSizeRequest(cfg.Align.Width, -1)
+		width = cfg.Align.Width
 	}
+
+	height := -1
+	if cfg.Align.Height != 0 {
+		height = cfg.Align.Height
+	}
+
+	ui.box.SetSizeRequest(width, height)
 
 	if cfg.List.Height != 0 {
 		ui.scroll.SetMaxContentHeight(cfg.List.Height)
@@ -262,8 +286,16 @@ func setupUserStyle() {
 
 	if cfg.Orientation == "horizontal" {
 		ui.box.SetObjectProperty("orientation", gtk.OrientationHorizontal)
-		ui.search.SetVAlign(gtk.AlignStart)
+		ui.search.SetVAlign(gtk.AlignCenter)
+		ui.typeahead.SetVAlign(gtk.AlignCenter)
+		ui.search.SetHExpand(false)
+		ui.typeahead.SetHExpand(false)
+		ui.list.SetOrientation(gtk.OrientationHorizontal)
+		ui.scroll.SetPolicy(policies[cfg.ScrollbarPolicy], gtk.PolicyNever)
 	}
+
+	ui.scroll.SetMaxContentWidth(cfg.List.Width)
+	ui.scroll.SetMaxContentHeight(cfg.List.Height)
 
 	if cfg.Placeholder != "" {
 		ui.search.SetObjectProperty("placeholder-text", cfg.Placeholder)
@@ -343,7 +375,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 			box.Append(image)
 		}
 
-		if cfg.Icons.Hide || val.Icon != "" {
+		if !cfg.Icons.Hide && val.Icon != "" {
 			if val.IconIsImage {
 				image := gtk.NewPictureForFilename(val.Icon)
 				image.SetMarginEnd(10)
@@ -368,16 +400,24 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		top := gtk.NewLabel(val.Label)
 		top.SetMaxWidthChars(0)
-		top.SetWrap(true)
+
+		if cfg.Orientation != "horizontal" {
+			top.SetWrap(true)
+		}
+
 		top.SetHAlign(gtk.AlignStart)
 		top.SetCSSClasses([]string{"label"})
 
 		wrapper.Append(top)
 
-		if val.Sub != "" {
+		if val.Sub != "" && !cfg.List.HideSub {
 			bottom := gtk.NewLabel(val.Sub)
 			bottom.SetMaxWidthChars(0)
-			bottom.SetWrap(true)
+
+			if cfg.Orientation != "horizontal" {
+				bottom.SetWrap(true)
+			}
+
 			bottom.SetHAlign(gtk.AlignStart)
 			bottom.SetCSSClasses([]string{"sub"})
 

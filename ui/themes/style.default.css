@@ -11,6 +11,9 @@
   border-radius: 2px;
 }
 
+#searchwrapper {
+}
+
 #search,
 #typeahead {
   border-radius: 0;
@@ -25,6 +28,14 @@
   padding-top: 0px;
   padding-bottom: 0px;
   border-radius: 2px;
+}
+
+#spinner {
+  opacity: 0;
+}
+
+#spinner.visible {
+  opacity: 1;
 }
 
 #typeahead {

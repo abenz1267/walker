@@ -429,7 +429,7 @@ const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 var cancel context.CancelFunc
 
 func process() {
-	ui.spinner.SetVisible(true)
+	ui.spinner.SetCSSClasses([]string{"visible"})
 
 	if cfg.EnableTypeahead {
 		ui.typeahead.SetText("")
@@ -464,7 +464,7 @@ func process() {
 		go processAsync(ctx)
 	} else {
 		ui.items.Splice(0, ui.items.NItems())
-		ui.spinner.SetVisible(false)
+		ui.spinner.SetCSSClasses([]string{})
 	}
 }
 
@@ -478,7 +478,7 @@ func processAsync(ctx context.Context) {
 	handler := handlerPool.Get().(*Handler)
 	defer func() {
 		handlerPool.Put(handler)
-		ui.spinner.SetVisible(false)
+		ui.spinner.SetCSSClasses([]string{})
 		cancel()
 	}()
 
@@ -631,7 +631,7 @@ func setInitials() {
 
 	ui.selection.SetSelected(0)
 
-	ui.spinner.SetVisible(false)
+	ui.spinner.SetCSSClasses([]string{})
 }
 
 func usageModifier(item modules.Entry) int {

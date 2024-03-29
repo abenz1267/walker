@@ -34,6 +34,7 @@ type Config struct {
 	Runner             Runner         `json:"runner,omitempty"`
 	ActivationMode     ActivationMode `json:"activation_mode,omitempty"`
 	ScrollbarPolicy    string         `json:"scrollbar_policy,omitempty"`
+	IgnoreMouse        bool           `json:"ignore_mouse,omitempty"`
 }
 
 type ActivationMode struct {
@@ -74,11 +75,20 @@ type Icons struct {
 }
 
 type Align struct {
-	Horizontal string  `json:"horizontal,omitempty"`
-	Vertical   string  `json:"vertical,omitempty"`
-	Width      int     `json:"width,omitempty"`
-	Margins    Margins `json:"margins,omitempty"`
-	Anchor     string  `json:"anchor,omitempty"`
+	IgnoreExclusive bool    `json:"ignore_exclusive,omitempty"`
+	Horizontal      string  `json:"horizontal,omitempty"`
+	Vertical        string  `json:"vertical,omitempty"`
+	Width           int     `json:"width,omitempty"`
+	Height          int     `json:"height,omitempty"`
+	Margins         Margins `json:"margins,omitempty"`
+	Anchors         Anchors `json:"anchors,omitempty"`
+}
+
+type Anchors struct {
+	Top    bool `json:"top,omitempty"`
+	Left   bool `json:"left,omitempty"`
+	Right  bool `json:"right,omitempty"`
+	Bottom bool `json:"bottom,omitempty"`
 }
 
 type Margins struct {
@@ -91,8 +101,10 @@ type Margins struct {
 type List struct {
 	MarginTop   int  `json:"margin_top,omitempty"`
 	Height      int  `json:"height,omitempty"`
+	Width       int  `json:"width,omitempty"`
 	AlwaysShow  bool `json:"always_show,omitempty"`
 	FixedHeight bool `json:"fixed_height,omitempty"`
+	HideSub     bool `json:"hide_sub,omitempty"`
 }
 
 func Get() *Config {

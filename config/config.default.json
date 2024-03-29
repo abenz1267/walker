@@ -50,6 +50,7 @@
   },
   "orientation": "vertical",
   "icons": {
+    "theme": "",
     "hide": false,
     "size": 28,
     "image_height": 200

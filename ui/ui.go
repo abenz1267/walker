@@ -16,7 +16,6 @@ import (
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
-	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
@@ -53,6 +52,7 @@ type UI struct {
 	items         *gioutil.ListModel[modules.Entry]
 	selection     *gtk.SingleSelection
 	prefixClasses map[string][]string
+	iconTheme     *gtk.IconTheme
 }
 
 func Activate(state *state.AppState) func(app *gtk.Application) {
@@ -164,6 +164,13 @@ func setupUI(app *gtk.Application) {
 		items:         items,
 		selection:     gtk.NewSingleSelection(items.ListModel),
 		prefixClasses: make(map[string][]string),
+	}
+
+	if cfg.Icons.Theme != "" {
+		ui.iconTheme = gtk.NewIconTheme()
+		ui.iconTheme.SetThemeName(cfg.Icons.Theme)
+	} else {
+		ui.iconTheme = gtk.IconThemeGetForDisplay(gdk.DisplayGetDefault())
 	}
 
 	ui.list.SetSingleClickActivate(true)
@@ -374,14 +381,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 		wrapper.SetHExpand(true)
 
 		if val.Image != "" {
-			f := gio.NewFileForPath(val.Image)
-
-			texture, err := gdk.NewTextureFromFile(f)
-			if err != nil {
-				log.Println(err)
-			}
-
-			image := gtk.NewImageFromPaintable(texture)
+			image := gtk.NewImageFromFile(val.Image)
 			image.SetHExpand(true)
 			image.SetSizeRequest(-1, cfg.Clipboard.ImageHeight)
 			box.Append(image)
@@ -398,7 +398,8 @@ func setupFactory() *gtk.SignalListItemFactory {
 				}
 				box.Append(image)
 			} else {
-				icon := gtk.NewImageFromIconName(val.Icon)
+				i := ui.iconTheme.LookupIcon(val.Icon, []string{}, cfg.Icons.Size, 1, gtk.GetLocaleDirection(), 0)
+				icon := gtk.NewImageFromPaintable(i)
 				icon.SetIconSize(gtk.IconSizeLarge)
 				icon.SetPixelSize(cfg.Icons.Size)
 				icon.SetCSSClasses([]string{"icon"})

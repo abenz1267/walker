@@ -70,9 +70,10 @@ type Search struct {
 }
 
 type Icons struct {
-	Hide        bool `json:"hide,omitempty"`
-	Size        int  `json:"size,omitempty"`
-	ImageHeight int  `json:"image_height,omitempty"`
+	Hide        bool   `json:"hide,omitempty"`
+	Size        int    `json:"size,omitempty"`
+	ImageHeight int    `json:"image_height,omitempty"`
+	Theme       string `json:"theme,omitempty"`
 }
 
 type Align struct {

@@ -11,6 +11,8 @@ jobs:
   goreleaser:
     runs-on: ubuntu-latest
     steps:
+      - name: install libgirepository
+        run: sudo apt-get install libgirepository1.0-dev
       - name: Checkout
         uses: actions/checkout@v4
         with:

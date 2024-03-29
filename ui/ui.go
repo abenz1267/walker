@@ -230,6 +230,10 @@ func setupUserStyle() {
 		ui.list.SetMarginTop(cfg.List.MarginTop)
 	}
 
+	if cfg.Search.HideSpinner {
+		ui.spinner.SetVisible(false)
+	}
+
 	if cfg.Search.HideIcons {
 		ui.search.FirstChild().(*gtk.Image).Hide()
 		ui.search.LastChild().(*gtk.Image).Hide()

@@ -14,7 +14,8 @@
   "search": {
     "delay": 0,
     "hide_icons": false,
-    "margin_spinner": 10
+    "margin_spinner": 10,
+    "hide_spinner": false
   },
   "runner": {
     "excludes": ["rm"]

@@ -16,6 +16,7 @@ import (
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
@@ -373,7 +374,14 @@ func setupFactory() *gtk.SignalListItemFactory {
 		wrapper.SetHExpand(true)
 
 		if val.Image != "" {
-			image := gtk.NewImageFromFile(val.Image)
+			f := gio.NewFileForPath(val.Image)
+
+			texture, err := gdk.NewTextureFromFile(f)
+			if err != nil {
+				log.Println(err)
+			}
+
+			image := gtk.NewImageFromPaintable(texture)
 			image.SetHExpand(true)
 			image.SetSizeRequest(-1, cfg.Clipboard.ImageHeight)
 			box.Append(image)

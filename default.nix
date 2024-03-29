@@ -16,7 +16,10 @@ buildGoModule {
   pname = "walker";
   version = lib.fileContents ./version.txt;
 
-  src = ./.;
+  src = builtins.path {
+    name = "walker-source";
+    path = ./.;
+  };
   vendorHash = "sha256-KvFv3NMYYjPu4PjadWGW44yCSwqElUUTjkEZkUlEFag=";
 
   nativeBuildInputs = [

@@ -1,15 +1,7 @@
 {
   mkShell,
-  go,
-  pkg-config,
-  dependencies,
+  walker,
 }:
 mkShell {
-  packages =
-    [
-      # Build
-      go
-      pkg-config
-    ]
-    ++ dependencies;
+  inputsFrom = [walker];
 }

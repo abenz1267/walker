@@ -2,7 +2,14 @@
   buildGoModule,
   lib,
   pkg-config,
-  dependencies,
+  glib,
+  gobject-introspection,
+  gtk4,
+  gtk4-layer-shell,
+  gdk-pixbuf,
+  graphene,
+  cairo,
+  pango,
 }:
 buildGoModule {
   pname = "walker";
@@ -12,7 +19,16 @@ buildGoModule {
   vendorHash = "sha256-KvFv3NMYYjPu4PjadWGW44yCSwqElUUTjkEZkUlEFag=";
 
   nativeBuildInputs = [pkg-config];
-  buildInputs = dependencies;
+  buildInputs = [
+    glib
+    gobject-introspection
+    gtk4
+    gtk4-layer-shell
+    gdk-pixbuf
+    graphene
+    cairo
+    pango
+  ];
 
   meta = with lib; {
     description = "Wayland-native application runner";

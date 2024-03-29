@@ -33,7 +33,7 @@ in {
     };
   };
 
-  config = lib.mkIf cfg.enabled {
+  config = lib.mkIf cfg.enable {
     home.packages = [inputs.self.packages.${system}.walker];
 
     xdg.configFile."walker/config.json".text = builtins.toJSON (lib.recursiveUpdate defaultConfig config.programs.walker.config);

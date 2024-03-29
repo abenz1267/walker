@@ -714,11 +714,12 @@ func fuzzyScore(entry modules.Entry, text string) float64 {
 		return 1
 	}
 
-	entry.Categories = append([]string{entry.Label, entry.Sub, entry.Searchable}, entry.Categories...)
+	matchables := []string{entry.Label, entry.Sub, entry.Searchable}
+	matchables = append(matchables, entry.Categories...)
 
 	multiplier := 0
 
-	for k, t := range entry.Categories {
+	for k, t := range matchables {
 		if t == "" {
 			continue
 		}

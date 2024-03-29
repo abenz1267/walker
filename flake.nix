@@ -18,27 +18,17 @@
         system,
         ...
       }: let
-        inherit (pkgs) callPackage;
+        callPackage = pkgs.lib.callPackageWith (pkgs // packages);
 
-        dependencies = with pkgs; [
-          glib
-          gobject-introspection
-          gtk4
-          gtk4-layer-shell
-          gdk-pixbuf
-          graphene
-          cairo
-          pango
-        ];
+        packages = {
+          walker = callPackage ./. {};
+        };
       in {
         formatter = pkgs.alejandra;
 
-        devShells.default = callPackage ./shell.nix {inherit dependencies;};
+        devShells.default = callPackage ./shell.nix {};
 
-        packages = rec {
-          default = callPackage ./. {inherit dependencies;};
-          walker = default;
-        };
+        packages = packages // {default = packages.walker;};
       };
 
       flake = {

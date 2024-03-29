@@ -4,6 +4,10 @@
 
 (default style)
 
+![Screenshot](https://github.com/abenz1267/walker/blob/master/screenshot_horizontal.png?raw=true)
+
+(horizontal example)
+
 ## Features
 
 - Icons

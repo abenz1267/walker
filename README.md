@@ -26,7 +26,7 @@
 - runner
 - desktop applications
 - websearch
-- hyprland windows
+- hyprland windows, context-aware history (based on open windows)
 - clipboard with fuzzy find and images (currently "wl-clipboard" only)
 - module switcher
 - commands (for Walker, f.e. clear cache)

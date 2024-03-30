@@ -18,6 +18,8 @@
 - non-blocking async handling of results
 - typeahead (currently not persisted)
 - history-aware
+- labels: F<1-8> or jkl;asdf
+- toggle force-running in terminal
 
 ## Builtin Modules
 
@@ -217,6 +219,13 @@ The window and items will have a class based on the source. Selecting an item wi
 
 F.e. search = `!somecommand` => `#window.runner`
 
+| class                   | condition                     |
+| ----------------------- | ----------------------------- |
+| `#window.activation`    | AM enabled                    |
+| `#window.forceterminal` | Force-Terminal toggle enabled |
+| `#spinner.visible`      | Processing in progress        |
+| `#item.<entryclass>`    | Always                        |
+
 ### Starting as service
 
 Start with `walker --gapplication-service` to start in service-mode. Calling `walker` normally afterwards should be rather fast.
@@ -233,6 +242,7 @@ AM = Activation Mode
 | `Ctrl+k` (if ActivationMode is disabled), `Up`, `LEFT_TAB` (shift+tab?) | previous entry                     |
 | `Escape`                                                                | close                              |
 | `Ctrl`                                                                  | start AM                           |
+| `Super`                                                                 | toggle force-open in terminal      |
 | in AM: `<label>`                                                        | activate item                      |
 | in AM: Hold `Shift+<label>`                                             | activate item (don't close)        |
 | in AM: `Escape`                                                         | stop AM                            |

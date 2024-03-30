@@ -199,6 +199,24 @@ func disabledAM() {
 	}
 }
 
+func toggleForceTerminal() {
+	forceTerminal = !forceTerminal
+
+	c := ui.appwin.CSSClasses()
+
+	if !forceTerminal {
+		for k, v := range c {
+			if v == "forceterminal" {
+				c = slices.Delete(c, k, k+1)
+			}
+		}
+	} else {
+		c = append(c, "forceterminal")
+	}
+
+	ui.appwin.SetCSSClasses(c)
+}
+
 func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 {
 		if val == amKey {
@@ -213,6 +231,8 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 	}
 
 	switch val {
+	case gdk.KEY_Super_L:
+		toggleForceTerminal()
 	case gdk.KEY_Shift_L:
 		return true
 	case gdk.KEY_Return:
@@ -268,6 +288,8 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 	return true
 }
 
+var forceTerminal bool
+
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 && !cfg.ActivationMode.UseFKeys {
 		if val == amKey {
@@ -282,6 +304,8 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	}
 
 	switch val {
+	case gdk.KEY_Super_L:
+		toggleForceTerminal()
 	case gdk.KEY_Return:
 		if modifier == gdk.ShiftMask {
 			activateItem(true, true)
@@ -384,7 +408,7 @@ func activateItem(keepOpen, selectNext bool) {
 	}
 
 	if cfg.Terminal != "" {
-		if entry.Terminal {
+		if entry.Terminal || forceTerminal {
 			f = append([]string{cfg.Terminal, "-e"}, f...)
 		}
 	} else {

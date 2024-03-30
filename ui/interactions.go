@@ -168,8 +168,8 @@ func selectPrev() {
 }
 
 func selectActivationMode(val uint, keepOpen bool) {
-	if val, ok := specialLabels[val]; ok {
-		ui.selection.SetSelected(val)
+	if k, ok := specialLabels[val]; ok {
+		ui.selection.SetSelected(k)
 	} else {
 		ui.selection.SetSelected(keys[val])
 	}
@@ -269,7 +269,7 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 }
 
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
-	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 {
+	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 && !cfg.ActivationMode.UseFKeys {
 		if val == amKey {
 			c := ui.appwin.CSSClasses()
 			c = append(c, "activation")
@@ -312,6 +312,12 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	case gdk.KEY_k:
 		if cfg.ActivationMode.Disabled {
 			selectPrev()
+		}
+	case gdk.KEY_F1, gdk.KEY_F2, gdk.KEY_F3, gdk.KEY_F4, gdk.KEY_F5, gdk.KEY_F6, gdk.KEY_F7, gdk.KEY_F8:
+		if modifier == gdk.ShiftMask {
+			selectActivationMode(val, true)
+		} else {
+			selectActivationMode(val, false)
 		}
 	default:
 		if modifier == amModifier {
@@ -719,6 +725,14 @@ func createActivationKeys() {
 	keys[gdk.KEY_S] = 5
 	keys[gdk.KEY_D] = 6
 	keys[gdk.KEY_F] = 7
+	keys[gdk.KEY_F1] = 0
+	keys[gdk.KEY_F2] = 1
+	keys[gdk.KEY_F3] = 2
+	keys[gdk.KEY_F4] = 3
+	keys[gdk.KEY_F5] = 4
+	keys[gdk.KEY_F6] = 5
+	keys[gdk.KEY_F7] = 6
+	keys[gdk.KEY_F8] = 7
 }
 
 const modifier = 0.10

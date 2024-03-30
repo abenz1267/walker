@@ -9,6 +9,7 @@
   "scrollbar_policy": "automatic",
   "activation_mode": {
     "disabled": false,
+    "use_f_keys": false,
     "use_alt": false
   },
   "search": {

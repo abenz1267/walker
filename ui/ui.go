@@ -27,6 +27,8 @@ var style []byte
 
 var (
 	labels        = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
+	labelF        = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
+	usedLabels    []string
 	specialLabels = make(map[uint]uint)
 )
 
@@ -147,6 +149,11 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 func setupUI(app *gtk.Application) {
 	if !gtk4layershell.IsSupported() {
 		log.Panicln("gtk-layer-shell not supported")
+	}
+
+	usedLabels = labels
+	if cfg.ActivationMode.UseFKeys {
+		usedLabels = labelF
 	}
 
 	builder := gtk.NewBuilderFromString(layout, len(layout))
@@ -449,7 +456,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 		}
 
 		if !cfg.ActivationMode.Disabled {
-			if val.SpecialLabel != "" {
+			if !cfg.ActivationMode.UseFKeys && val.SpecialLabel != "" {
 				l := gtk.NewLabel(val.SpecialLabel)
 				l.SetCSSClasses([]string{"activationlabel"})
 				box.Append(l)
@@ -461,7 +468,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 			}
 
 			if item.Position()+1 <= uint(len(labels)) {
-				l := gtk.NewLabel(labels[item.Position()])
+				l := gtk.NewLabel(usedLabels[item.Position()])
 				l.SetCSSClasses([]string{"activationlabel"})
 				box.Append(l)
 			}

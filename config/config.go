@@ -40,6 +40,7 @@ type Config struct {
 type ActivationMode struct {
 	UseAlt   bool `json:"use_alt,omitempty"`
 	Disabled bool `json:"disabled,omitempty"`
+	UseFKeys bool `json:"use_f_keys,omitempty"`
 }
 
 type Clipboard struct {

@@ -58,6 +58,8 @@ type Entry struct {
 	DaysSinceUsed    int          `json:"-"`
 	SpecialLabel     string       `json:"special_label,omitempty"`
 	LastUsed         time.Time    `json:"-"`
+	InitialClass     string       `json:"initial_class,omitempty"`
+	OpenWindows      uint         `json:"-"`
 }
 
 func (e Entry) Identifier() string {

@@ -113,6 +113,7 @@ func parse() []Entry {
 							Matching:         app.Generic.Matching,
 							Categories:       app.Generic.Categories,
 							History:          app.Generic.History,
+							InitialClass:     app.Generic.InitialClass,
 							RecalculateScore: true,
 						})
 
@@ -154,6 +155,11 @@ func parse() []Entry {
 
 						if strings.HasPrefix(line, "Terminal=") {
 							app.Generic.Terminal = strings.TrimSpace(strings.TrimPrefix(line, "Terminal=")) == "true"
+							continue
+						}
+
+						if strings.HasPrefix(line, "StartupWMClass=") {
+							app.Generic.InitialClass = strings.ToLower(strings.TrimSpace(strings.TrimPrefix(line, "StartupWMClass=")))
 							continue
 						}
 

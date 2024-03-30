@@ -8,6 +8,7 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/abenz1267/walker/config"
 )
@@ -15,6 +16,7 @@ import (
 type Hyprland struct {
 	prefix            string
 	switcherExclusive bool
+	windows           map[string]uint
 }
 
 func (h Hyprland) SwitcherExclusive() bool {
@@ -27,16 +29,59 @@ func (h Hyprland) Setup(cfg *config.Config) Workable {
 		return nil
 	}
 
+	b := &Hyprland{}
+
 	pth, _ := exec.LookPath("hyprctl")
 	if pth == "" {
 		log.Println("Hyprland not found. Disabling module.")
 		return nil
 	}
 
-	h.prefix = module.Prefix
-	h.switcherExclusive = module.SwitcherExclusive
+	b.prefix = module.Prefix
+	b.switcherExclusive = module.SwitcherExclusive
+	b.windows = make(map[string]uint)
 
-	return h
+	if cfg.IsService && cfg.Hyprland.ContextAwareHistory {
+		go b.monitorWindows()
+	}
+
+	return b
+}
+
+func (h *Hyprland) monitorWindows() {
+	for {
+		clear(h.windows)
+
+		cmd := exec.Command("hyprctl", "clients")
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			log.Println(err)
+			continue
+		}
+
+		scanner := bufio.NewScanner(bytes.NewReader(out))
+
+		for scanner.Scan() {
+			text := scanner.Text()
+
+			text = strings.TrimSpace(text)
+
+			if strings.HasPrefix(text, "initialClass:") {
+				text = strings.ToLower(strings.TrimSpace(strings.TrimPrefix(text, "initialClass:")))
+				h.windows[text] = h.windows[text] + 1
+			}
+		}
+
+		time.Sleep(500 * time.Millisecond)
+	}
+}
+
+func (h *Hyprland) GetWindowAmount(class string) uint {
+	if val, ok := h.windows[class]; ok {
+		return val
+	}
+
+	return 0
 }
 
 func (Hyprland) Name() string {

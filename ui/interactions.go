@@ -587,6 +587,17 @@ func processAsync(ctx context.Context) {
 	handler.receiver = make(chan []modules.Entry)
 	go handler.handle()
 
+	var hyprland *modules.Hyprland
+
+	if cfg.Hyprland.ContextAwareHistory && cfg.IsService {
+		for _, v := range p {
+			if v.Name() == "hyprland" {
+				hyprland = v.(*modules.Hyprland)
+				break
+			}
+		}
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(len(p))
 
@@ -625,7 +636,7 @@ func processAsync(ctx context.Context) {
 				if e[k].ScoreFinal == 0 {
 					switch e[k].Matching {
 					case modules.Fuzzy:
-						e[k].ScoreFinal = fuzzyScore(e[k], toMatch)
+						e[k].ScoreFinal = fuzzyScore(e[k], toMatch, hyprland)
 					case modules.AlwaysTop:
 						if e[k].ScoreFinal == 0 {
 							e[k].ScoreFinal = 1000
@@ -654,6 +665,19 @@ func processAsync(ctx context.Context) {
 func setInitials() {
 	entrySlice := []modules.Entry{}
 
+	var hyprland *modules.Hyprland
+
+	if cfg.Hyprland.ContextAwareHistory && cfg.IsService {
+		for _, v := range procs {
+			for _, proc := range v {
+				if proc.Name() == "hyprland" {
+					hyprland = proc.(*modules.Hyprland)
+					break
+				}
+			}
+		}
+	}
+
 	for _, v := range procs {
 		for _, proc := range v {
 			if proc.Name() != "applications" {
@@ -672,6 +696,7 @@ func setInitials() {
 				}
 
 				entry.ScoreFinal = float64(usageModifier(entry))
+				entry.OpenWindows = hyprland.GetWindowAmount(entry.InitialClass)
 
 				entrySlice = append(entrySlice, entry)
 			}
@@ -776,7 +801,7 @@ func createActivationKeys() {
 
 const modifier = 0.10
 
-func fuzzyScore(entry modules.Entry, text string) float64 {
+func fuzzyScore(entry modules.Entry, text string, hyprland *modules.Hyprland) float64 {
 	textLength := len(text)
 
 	if textLength == 0 {
@@ -787,6 +812,10 @@ func fuzzyScore(entry modules.Entry, text string) float64 {
 	matchables = append(matchables, entry.Categories...)
 
 	multiplier := 0
+
+	if hyprland != nil {
+		entry.OpenWindows = hyprland.GetWindowAmount(entry.InitialClass)
+	}
 
 	for k, t := range matchables {
 		if t == "" {

@@ -7,6 +7,9 @@
   "show_initial_entries": true,
   "fullscreen": false,
   "scrollbar_policy": "automatic",
+  "hyprland": {
+    "context_aware_history": false
+  },
   "activation_mode": {
     "disabled": false,
     "use_f_keys": false,

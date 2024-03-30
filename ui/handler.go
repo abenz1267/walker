@@ -63,6 +63,18 @@ func sortEntries(entries []modules.Entry) {
 			return -1
 		}
 
+		if cfg.Hyprland.ContextAwareHistory && cfg.IsService {
+			if !a.LastUsed.IsZero() && !b.LastUsed.IsZero() {
+				if a.OpenWindows > b.OpenWindows {
+					return 1
+				}
+
+				if a.OpenWindows < b.OpenWindows {
+					return -1
+				}
+			}
+		}
+
 		if a.ScoreFinal == b.ScoreFinal {
 			if !a.LastUsed.IsZero() && !b.LastUsed.IsZero() {
 				return b.LastUsed.Compare(a.LastUsed)

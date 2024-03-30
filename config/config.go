@@ -35,6 +35,12 @@ type Config struct {
 	ActivationMode     ActivationMode `json:"activation_mode,omitempty"`
 	ScrollbarPolicy    string         `json:"scrollbar_policy,omitempty"`
 	IgnoreMouse        bool           `json:"ignore_mouse,omitempty"`
+	Hyprland           Hyprland       `json:"hyprland,omitempty"`
+	IsService          bool           `json:"-"`
+}
+
+type Hyprland struct {
+	ContextAwareHistory bool `json:"context_aware_history,omitempty"`
 }
 
 type ActivationMode struct {

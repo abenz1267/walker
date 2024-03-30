@@ -91,6 +91,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		}
 
 		cfg = config.Get()
+		cfg.IsService = appstate.IsService
 		hstry = history.Get()
 
 		setupUI(app)

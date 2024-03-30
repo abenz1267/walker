@@ -31,7 +31,7 @@
 - module switcher
 - commands (for Walker, f.e. clear cache)
 - ssh
-- finder (requires fzf and fd) with drag&drop
+- finder
 
 ## Requirements
 

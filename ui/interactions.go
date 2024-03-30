@@ -696,6 +696,10 @@ func usageModifier(item modules.Entry) int {
 
 func quit() {
 	if appstate.IsService {
+		if forceTerminal {
+			toggleForceTerminal()
+		}
+
 		if !cfg.ActivationMode.Disabled && activationEnabled {
 			activationEnabled = false
 

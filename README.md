@@ -120,6 +120,7 @@ type Module struct {
 	Name              string `json:"name,omitempty"`
 	Src               string `json:"src,omitempty"`
 	Cmd               string `json:"cmd,omitempty"`
+	SpecialLabel      string `json:"special_label,omitempty"`
 	Transform         bool   `json:"transform,omitempty"`
 	History           bool   `json:"history,omitempty"`
 	SwitcherExclusive bool   `json:"switcher_exclusive,omitempty"`
@@ -129,6 +130,10 @@ type Module struct {
 ## Usage SSH Module
 
 In the searchbar type in: `<host> <username>`. Select the host you want. Enter.
+
+## Special Labels
+
+Modules can define a `special_label` which is used for AM. It only really makes sense, if a module returns one entry. This could be used to f.e. always have the websearch result have the same label, so you can activate it with the same label every time, even if you don't see it.
 
 ## Styling with typeahead enabled
 
@@ -154,28 +159,31 @@ Your plugin simply needs to return json with the following format:
 
 ```go
 type Entry struct {
-	Label             string       `json:"label,omitempty"`
-	Sub               string       `json:"sub,omitempty"`
-	Exec              string       `json:"exec,omitempty"`
-	RawExec           []string     `json:"raw_exec,omitempty"`
-	Terminal          bool         `json:"terminal,omitempty"`
-	Piped             Piped        `json:"piped,omitempty"`
-	Icon              string       `json:"icon,omitempty"`
-	IconIsImage       bool         `json:"icon_is_image,omitempty"`
-	Image             string       `json:"image,omitempty"`
-	HideText          bool         `json:"hide_text,omitempty"`
-	Categories        []string     `json:"categories,omitempty"`
-	Searchable        string       `json:"searchable,omitempty"`
-	Class             string       `json:"class,omitempty"`
-	History           bool         `json:"history,omitempty"`
-	HistoryIdentifier string       `json:"history_identifier,omitempty"`
-	Matching          MatchingType `json:"matching,omitempty"`
-	RecalculateScore  bool         `json:"recalculate_score,omitempty"`
-	ScoreFinal        float64      `json:"score_final,omitempty"`
-	ScoreFuzzy        int          `json:"score_fuzzy,omitempty"`
-	Used              int          `json:"-"`
-	DaysSinceUsed     int          `json:"-"`
-	LastUsed          time.Time    `json:"-"`
+	Label            string       `json:"label,omitempty"`
+	Sub              string       `json:"sub,omitempty"`
+	Exec             string       `json:"exec,omitempty"`
+	RawExec          []string     `json:"raw_exec,omitempty"`
+	Terminal         bool         `json:"terminal,omitempty"`
+	Piped            Piped        `json:"piped,omitempty"`
+	Icon             string       `json:"icon,omitempty"`
+	IconIsImage      bool         `json:"icon_is_image,omitempty"`
+	DragDrop         bool         `json:"drag_drop,omitempty"`
+	DragDropData     string       `json:"drag_drop_data,omitempty"`
+	Image            string       `json:"image,omitempty"`
+	HideText         bool         `json:"hide_text,omitempty"`
+	Categories       []string     `json:"categories,omitempty"`
+	Searchable       string       `json:"searchable,omitempty"`
+	MatchFields      int          `json:"match_fields,omitempty"`
+	Class            string       `json:"class,omitempty"`
+	History          bool         `json:"history,omitempty"`
+	Matching         MatchingType `json:"matching,omitempty"`
+	RecalculateScore bool         `json:"recalculate_score,omitempty"`
+	ScoreFinal       float64      `json:"score_final,omitempty"`
+	ScoreFuzzy       float64      `json:"score_fuzzy,omitempty"`
+	Used             int          `json:"-"`
+	DaysSinceUsed    int          `json:"-"`
+	SpecialLabel     string       `json:"special_label,omitempty"`
+	LastUsed         time.Time    `json:"-"`
 }
 ```
 

@@ -56,6 +56,7 @@ type Entry struct {
 	ScoreFuzzy       float64      `json:"score_fuzzy,omitempty"`
 	Used             int          `json:"-"`
 	DaysSinceUsed    int          `json:"-"`
+	SpecialLabel     string       `json:"special_label,omitempty"`
 	LastUsed         time.Time    `json:"-"`
 }
 

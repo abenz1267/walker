@@ -25,7 +25,10 @@ var layout string
 //go:embed themes/style.default.css
 var style []byte
 
-var labels = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
+var (
+	labels        = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
+	specialLabels = make(map[uint]uint)
+)
 
 type ProcMap map[string][]modules.Workable
 
@@ -446,6 +449,17 @@ func setupFactory() *gtk.SignalListItemFactory {
 		}
 
 		if !cfg.ActivationMode.Disabled {
+			if val.SpecialLabel != "" {
+				l := gtk.NewLabel(val.SpecialLabel)
+				l.SetCSSClasses([]string{"activationlabel"})
+				box.Append(l)
+
+				k := gdk.UnicodeToKeyval(uint32(val.SpecialLabel[0]))
+				specialLabels[k] = item.Position()
+
+				return
+			}
+
 			if item.Position()+1 <= uint(len(labels)) {
 				l := gtk.NewLabel(labels[item.Position()])
 				l.SetCSSClasses([]string{"activationlabel"})

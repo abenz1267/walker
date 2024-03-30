@@ -13,6 +13,7 @@ import (
 type Websearch struct {
 	prefix            string
 	switcherExclusive bool
+	specialLabel      string
 }
 
 func (w Websearch) SwitcherExclusive() bool {
@@ -27,6 +28,7 @@ func (w Websearch) Setup(cfg *config.Config) Workable {
 
 	w.prefix = module.Prefix
 	w.switcherExclusive = module.SwitcherExclusive
+	w.specialLabel = module.SpecialLabel
 
 	return w
 }
@@ -59,11 +61,12 @@ func (w Websearch) Entries(ctx context.Context, term string) []Entry {
 	term = strings.TrimPrefix(term, w.prefix)
 
 	n := Entry{
-		Label:    "Search with Google",
-		Sub:      "Websearch",
-		Exec:     "xdg-open https://www.google.com/search?q=" + url.QueryEscape(term),
-		Class:    "websearch",
-		Matching: AlwaysBottom,
+		Label:        "Search with Google",
+		Sub:          "Websearch",
+		Exec:         "xdg-open https://www.google.com/search?q=" + url.QueryEscape(term),
+		Class:        "websearch",
+		Matching:     AlwaysBottom,
+		SpecialLabel: w.specialLabel,
 	}
 
 	entries = append(entries, n)

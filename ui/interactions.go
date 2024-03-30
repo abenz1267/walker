@@ -168,7 +168,11 @@ func selectPrev() {
 }
 
 func selectActivationMode(val uint, keepOpen bool) {
-	ui.selection.SetSelected(keys[val])
+	if val, ok := specialLabels[val]; ok {
+		ui.selection.SetSelected(val)
+	} else {
+		ui.selection.SetSelected(keys[val])
+	}
 
 	if keepOpen {
 		activateItem(true, false)
@@ -249,8 +253,16 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 			ui.search.GrabFocus()
 		}
 	default:
-		ui.search.GrabFocus()
-		return false
+		if _, ok := specialLabels[val]; ok {
+			if modifier == gdk.ShiftMask {
+				selectActivationMode(val, true)
+			} else {
+				selectActivationMode(val, false)
+			}
+		} else {
+			ui.search.GrabFocus()
+			return false
+		}
 	}
 
 	return true

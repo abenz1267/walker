@@ -94,12 +94,14 @@ func (r Runner) Entries(ctx context.Context, term string) []Entry {
 		}
 
 		n := Entry{
-			Label:      label,
-			Searchable: v,
-			Sub:        "Runner",
-			Exec:       fmt.Sprintf("%s %s", label, strings.Join(fields[1:], " ")),
-			Class:      "runner",
-			History:    true,
+			Label:            label,
+			Searchable:       v,
+			Sub:              "Runner",
+			Exec:             fmt.Sprintf("%s %s", label, strings.Join(fields[1:], " ")),
+			Class:            "runner",
+			History:          true,
+			RecalculateScore: true,
+			MatchFields:      1,
 		}
 
 		rank := util.FuzzyScore(matchable, v)

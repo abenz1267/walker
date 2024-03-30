@@ -9,6 +9,8 @@ require (
 )
 
 require (
+	github.com/boyter/gocodewalker v1.1.1 // indirect
+	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/rivo/uniseg v0.4.7 // indirect
 )

@@ -1,17 +1,14 @@
 package modules
 
 import (
-	"bufio"
 	"context"
 	"fmt"
-	"io"
 	"log"
 	"os"
-	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/boyter/gocodewalker"
 )
 
 type Finder struct {
@@ -31,46 +28,30 @@ func (f Finder) Entries(ctx context.Context, term string) []Entry {
 		log.Panic(err)
 	}
 
-	fd := exec.Command("fd")
-	fd.Dir = homedir
+	fileListQueue := make(chan *gocodewalker.File)
 
-	fzf := exec.Command("fzf", "-f", term)
+	fileWalker := gocodewalker.NewFileWalker(homedir, fileListQueue)
 
-	r, w := io.Pipe()
-	fd.Stdout = w
-	fzf.Stdin = r
+	errorHandler := func(e error) bool {
+		log.Println(e)
+		return true
+	}
 
-	var result strings.Builder
-	fzf.Stdout = &result
+	fileWalker.SetErrorHandler(errorHandler)
 
-	fd.Start()
-	fzf.Start()
-	fd.Wait()
-	w.Close()
-	fzf.Wait()
+	go fileWalker.Start()
 
-	scanner := bufio.NewScanner(strings.NewReader(result.String()))
-
-	counter := 0
-	for scanner.Scan() {
-		v := scanner.Text()
-
-		full := filepath.Join(homedir, v)
-
+	for f := range fileListQueue {
 		e = append(e, Entry{
-			Label:            v,
-			Sub:              "fzf",
-			Exec:             fmt.Sprintf("xdg-open %s", full),
-			DragDrop:         true,
-			DragDropData:     full,
-			Categories:       []string{"finder", "fzf"},
-			Class:            "finder",
-			Matching:         Fuzzy,
-			RecalculateScore: false,
-			ScoreFinal:       float64(100 - counter),
+			Label:        strings.TrimPrefix(strings.TrimPrefix(f.Location, homedir), "/"),
+			Sub:          "fzf",
+			Exec:         fmt.Sprintf("xdg-open %s", f.Location),
+			DragDrop:     true,
+			DragDropData: f.Location,
+			Categories:   []string{"finder", "fzf"},
+			Class:        "finder",
+			Matching:     Fuzzy,
 		})
-
-		counter++
 	}
 
 	return e
@@ -89,14 +70,6 @@ func (f Finder) SwitcherExclusive() bool {
 }
 
 func (Finder) Setup(cfg *config.Config) Workable {
-	fd, _ := exec.LookPath("fd")
-	fzf, _ := exec.LookPath("fzf")
-
-	if fd == "" || fzf == "" {
-		log.Println("fd or fzf not found. Disabling finder.")
-		return nil
-	}
-
 	f := &Finder{}
 
 	module := Find(cfg.Modules, f.Name())

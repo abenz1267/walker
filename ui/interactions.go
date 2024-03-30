@@ -696,7 +696,10 @@ func setInitials() {
 				}
 
 				entry.ScoreFinal = float64(usageModifier(entry))
-				entry.OpenWindows = hyprland.GetWindowAmount(entry.InitialClass)
+
+				if cfg.Hyprland.ContextAwareHistory && cfg.IsService {
+					entry.OpenWindows = hyprland.GetWindowAmount(entry.InitialClass)
+				}
 
 				entrySlice = append(entrySlice, entry)
 			}

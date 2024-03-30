@@ -169,9 +169,19 @@ func selectPrev() {
 
 func selectActivationMode(val uint, keepOpen bool) {
 	if k, ok := specialLabels[val]; ok {
+		if k >= ui.selection.NItems() {
+			return
+		}
+
 		ui.selection.SetSelected(k)
 	} else {
-		ui.selection.SetSelected(keys[val])
+		if n, ok := keys[val]; ok {
+			if n >= ui.selection.NItems() {
+				return
+			}
+
+			ui.selection.SetSelected(n)
+		}
 	}
 
 	if keepOpen {
@@ -280,8 +290,10 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 				selectActivationMode(val, false)
 			}
 		} else {
-			ui.search.GrabFocus()
-			return false
+			if !activationEnabled {
+				ui.search.GrabFocus()
+				return false
+			}
 		}
 	}
 
@@ -535,7 +547,6 @@ func processAsync(ctx context.Context) {
 
 	glib.IdleAdd(func() {
 		ui.items.Splice(0, ui.items.NItems())
-		ui.appwin.SetCSSClasses([]string{})
 	})
 
 	prefix := text

@@ -324,6 +324,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 	factory.ConnectSetup(func(item *gtk.ListItem) {
 		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
 		item.SetChild(box)
+		box.SetFocusable(true)
 	})
 
 	factory.ConnectBind(func(item *gtk.ListItem) {
@@ -337,6 +338,11 @@ func setupFactory() *gtk.SignalListItemFactory {
 		box, ok := child.(*gtk.Box)
 		if !ok {
 			log.Panicln("child is not a box")
+		}
+
+		if item.Selected() {
+			box.GrabFocus()
+			ui.search.GrabFocus()
 		}
 
 		if box.FirstChild() != nil {

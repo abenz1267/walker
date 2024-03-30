@@ -287,6 +287,10 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		} else {
 			selectNext()
 		}
+	case gdk.KEY_Down:
+		selectNext()
+	case gdk.KEY_Up:
+		selectPrev()
 	case gdk.KEY_ISO_Left_Tab:
 		selectPrev()
 	case gdk.KEY_j:

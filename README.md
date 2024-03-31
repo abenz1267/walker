@@ -137,6 +137,20 @@ In the searchbar type in: `<host> <username>`. Select the host you want. Enter.
 
 Modules can define a `special_label` which is used for AM. It only really makes sense, if a module returns one entry. This could be used to f.e. always have the websearch result have the same label, so you can activate it with the same label every time, even if you don't see it.
 
+### Custom Special Labels
+
+Format for custom special labels is: `"<entry label>;<entry sub>": "<special label>"`.
+
+Example:
+
+```json
+{
+  "special_labels": {
+    "discord;internet messenger": "1"
+  }
+}
+```
+
 ## Styling with typeahead enabled
 
 If you have typeahead enabled, make sure that your `#search` has no background, so the typeahead is readable.

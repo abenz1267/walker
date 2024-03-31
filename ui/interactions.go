@@ -168,20 +168,18 @@ func selectPrev() {
 }
 
 func selectActivationMode(val uint, keepOpen bool) {
-	if k, ok := specialLabels[val]; ok {
-		if k >= ui.selection.NItems() {
-			return
-		}
+	var target uint
 
-		ui.selection.SetSelected(k)
+	if k, ok := specialLabels[val]; ok {
+		target = k
 	} else {
 		if n, ok := keys[val]; ok {
-			if n >= ui.selection.NItems() {
-				return
-			}
-
-			ui.selection.SetSelected(n)
+			target = n
 		}
+	}
+
+	if target < ui.selection.NItems() {
+		ui.selection.SetSelected(target)
 	}
 
 	if keepOpen {
@@ -192,9 +190,20 @@ func selectActivationMode(val uint, keepOpen bool) {
 	activateItem(false, false)
 }
 
+func enableAM() {
+	c := ui.appwin.CSSClasses()
+	c = append(c, "activation")
+
+	ui.appwin.SetCSSClasses(c)
+	ui.list.GrabFocus()
+
+	activationEnabled = true
+}
+
 func disabledAM() {
 	if !cfg.ActivationMode.Disabled && activationEnabled {
 		activationEnabled = false
+		ui.search.SetFocusable(false)
 
 		c := ui.appwin.CSSClasses()
 
@@ -230,12 +239,7 @@ func toggleForceTerminal() {
 func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 {
 		if val == amKey {
-			c := ui.appwin.CSSClasses()
-			c = append(c, "activation")
-			ui.appwin.SetCSSClasses(c)
-			ui.list.GrabFocus()
-			activationEnabled = true
-
+			enableAM()
 			return true
 		}
 	}
@@ -283,11 +287,14 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 			ui.search.GrabFocus()
 		}
 	default:
-		if _, ok := specialLabels[val]; ok {
+		uni := strings.ToLower(string(gdk.KeyvalToUnicode(val)))
+		check := gdk.UnicodeToKeyval(uint32(uni[0]))
+
+		if _, ok := specialLabels[check]; ok {
 			if modifier == gdk.ShiftMask {
-				selectActivationMode(val, true)
+				selectActivationMode(check, true)
 			} else {
-				selectActivationMode(val, false)
+				selectActivationMode(check, false)
 			}
 		} else {
 			if !activationEnabled {
@@ -305,12 +312,7 @@ var forceTerminal bool
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 && !cfg.ActivationMode.UseFKeys {
 		if val == amKey {
-			c := ui.appwin.CSSClasses()
-			c = append(c, "activation")
-			ui.appwin.SetCSSClasses(c)
-			ui.list.GrabFocus()
-			activationEnabled = true
-
+			enableAM()
 			return true
 		}
 	}
@@ -741,20 +743,7 @@ func quit() {
 			toggleForceTerminal()
 		}
 
-		if !cfg.ActivationMode.Disabled && activationEnabled {
-			activationEnabled = false
-
-			c := ui.appwin.CSSClasses()
-
-			for k, v := range c {
-				if v == "activation" {
-					c = slices.Delete(c, k, k+1)
-				}
-			}
-
-			ui.appwin.SetCSSClasses(c)
-			ui.search.GrabFocus()
-		}
+		disabledAM()
 
 		singleProc = nil
 

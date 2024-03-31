@@ -354,7 +354,10 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		if item.Selected() {
 			box.GrabFocus()
-			ui.search.GrabFocus()
+
+			if !activationEnabled {
+				ui.search.GrabFocus()
+			}
 		}
 
 		if box.FirstChild() != nil {

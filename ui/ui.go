@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/abenz1267/walker/config"
@@ -457,6 +458,10 @@ func setupFactory() *gtk.SignalListItemFactory {
 		}
 
 		if !cfg.ActivationMode.Disabled {
+			if l, ok := cfg.SpecialLabels[fmt.Sprintf("%s;%s", strings.ToLower(val.Label), strings.ToLower(val.Sub))]; ok {
+				val.SpecialLabel = l
+			}
+
 			if !cfg.ActivationMode.UseFKeys && val.SpecialLabel != "" {
 				l := gtk.NewLabel(val.SpecialLabel)
 				l.SetCSSClasses([]string{"activationlabel"})

@@ -15,28 +15,29 @@ import (
 var config []byte
 
 type Config struct {
-	Placeholder        string         `json:"placeholder,omitempty"`
-	EnableTypeahead    bool           `json:"enable_typeahead,omitempty"`
-	ShowInitialEntries bool           `json:"show_initial_entries,omitempty"`
-	ForceKeyboardFocus bool           `json:"force_keyboard_focus,omitempty"`
-	SSHHostFile        string         `json:"ssh_host_file,omitempty"`
-	ShellConfig        string         `json:"shell_config,omitempty"`
-	Terminal           string         `json:"terminal,omitempty"`
-	Orientation        string         `json:"orientation,omitempty"`
-	Fullscreen         bool           `json:"fullscreen,omitempty"`
-	Modules            []Module       `json:"modules,omitempty"`
-	External           []Module       `json:"external,omitempty"`
-	Icons              Icons          `json:"icons,omitempty"`
-	Align              Align          `json:"align,omitempty"`
-	List               List           `json:"list,omitempty"`
-	Search             Search         `json:"search,omitempty"`
-	Clipboard          Clipboard      `json:"clipboard,omitempty"`
-	Runner             Runner         `json:"runner,omitempty"`
-	ActivationMode     ActivationMode `json:"activation_mode,omitempty"`
-	ScrollbarPolicy    string         `json:"scrollbar_policy,omitempty"`
-	IgnoreMouse        bool           `json:"ignore_mouse,omitempty"`
-	Hyprland           Hyprland       `json:"hyprland,omitempty"`
-	IsService          bool           `json:"-"`
+	Placeholder        string            `json:"placeholder,omitempty"`
+	EnableTypeahead    bool              `json:"enable_typeahead,omitempty"`
+	ShowInitialEntries bool              `json:"show_initial_entries,omitempty"`
+	ForceKeyboardFocus bool              `json:"force_keyboard_focus,omitempty"`
+	SSHHostFile        string            `json:"ssh_host_file,omitempty"`
+	ShellConfig        string            `json:"shell_config,omitempty"`
+	Terminal           string            `json:"terminal,omitempty"`
+	Orientation        string            `json:"orientation,omitempty"`
+	Fullscreen         bool              `json:"fullscreen,omitempty"`
+	Modules            []Module          `json:"modules,omitempty"`
+	External           []Module          `json:"external,omitempty"`
+	Icons              Icons             `json:"icons,omitempty"`
+	Align              Align             `json:"align,omitempty"`
+	List               List              `json:"list,omitempty"`
+	Search             Search            `json:"search,omitempty"`
+	Clipboard          Clipboard         `json:"clipboard,omitempty"`
+	Runner             Runner            `json:"runner,omitempty"`
+	ActivationMode     ActivationMode    `json:"activation_mode,omitempty"`
+	ScrollbarPolicy    string            `json:"scrollbar_policy,omitempty"`
+	IgnoreMouse        bool              `json:"ignore_mouse,omitempty"`
+	Hyprland           Hyprland          `json:"hyprland,omitempty"`
+	SpecialLabels      map[string]string `json:"special_labels,omitempty"`
+	IsService          bool              `json:"-"`
 }
 
 type Hyprland struct {

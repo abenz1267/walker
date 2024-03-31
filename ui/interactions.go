@@ -689,9 +689,11 @@ func setInitials() {
 			for _, entry := range e {
 				for _, v := range hstry {
 					if val, ok := v[entry.Identifier()]; ok {
-						entry.Used = val.Used
-						entry.DaysSinceUsed = val.DaysSinceUsed
-						entry.LastUsed = val.LastUsed
+						if entry.LastUsed.IsZero() || val.LastUsed.After(entry.LastUsed) {
+							entry.Used = val.Used
+							entry.DaysSinceUsed = val.DaysSinceUsed
+							entry.LastUsed = val.LastUsed
+						}
 					}
 				}
 

@@ -432,7 +432,9 @@ func activateItem(keepOpen, selectNext bool) {
 
 	cmd := exec.Command(f[0])
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setsid:     true,
+		Setsid: true,
+		// Setpgid:    true,
+		// Pgid:       0,
 		Foreground: false,
 	}
 
@@ -717,8 +719,6 @@ func setInitials() {
 	sortEntries(entrySlice)
 
 	ui.items.Splice(0, ui.items.NItems(), entrySlice...)
-
-	ui.selection.SetSelected(0)
 
 	ui.spinner.SetCSSClasses([]string{})
 }

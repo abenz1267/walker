@@ -74,10 +74,6 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		appstate.IsRunning = true
 
 		if appstate.HasUI {
-			if ui.items.NItems() > 0 {
-				ui.selection.SetSelected(0)
-			}
-
 			ui.appwin.SetVisible(true)
 
 			if !appstate.IsMeasured {
@@ -220,6 +216,10 @@ func setupUI(app *gtk.Application) {
 	handleListVisibility()
 
 	ui.selection.ConnectItemsChanged(func(p, r, a uint) {
+		if ui.selection.NItems() > 0 {
+			ui.selection.SetSelected(0)
+		}
+
 		handleListVisibility()
 	})
 }

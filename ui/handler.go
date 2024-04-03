@@ -33,7 +33,6 @@ func (h *Handler) handle() {
 			if len(h.entries) > 0 {
 				glib.IdleAdd(func() {
 					ui.items.Splice(0, ui.items.NItems(), h.entries...)
-					ui.selection.SetSelected(0)
 				})
 			}
 

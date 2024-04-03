@@ -16,7 +16,7 @@
 - activation-mode: run entries via labels
 - display images
 - non-blocking async handling of results
-- typeahead (currently not persisted)
+- typeahead
 - history-aware
 - labels: F<1-8> or jkl;asdf
 - toggle force-running in terminal

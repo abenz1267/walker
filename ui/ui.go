@@ -403,20 +403,16 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		if val.Image != "" {
 			image := gtk.NewImageFromFile(val.Image)
-			image.SetHExpand(true)
+			image.SetHExpand(false)
 			image.SetSizeRequest(-1, cfg.Clipboard.ImageHeight)
 			box.Append(image)
 		}
 
 		if !cfg.Icons.Hide && val.Icon != "" {
 			if val.IconIsImage {
-				image := gtk.NewPictureForFilename(val.Icon)
+				image := gtk.NewImageFromFile(val.Icon)
 				image.SetMarginEnd(10)
-				image.SetSizeRequest(0, 200)
-				image.SetCanShrink(true)
-				if val.HideText {
-					image.SetHExpand(true)
-				}
+				image.SetSizeRequest(cfg.Icons.ImageSize, cfg.Icons.ImageSize)
 				box.Append(image)
 			} else {
 				i := ui.iconTheme.LookupIcon(val.Icon, []string{}, cfg.Icons.Size, 1, gtk.GetLocaleDirection(), 0)

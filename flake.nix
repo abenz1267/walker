@@ -33,7 +33,7 @@
 
       flake = {
         homeManagerModules = rec {
-          walker = import ./nix/hm-module.nix inputs;
+          walker = import ./nix/hm-module.nix inputs.self;
           default = walker;
         };
       };

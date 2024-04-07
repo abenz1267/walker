@@ -6,12 +6,14 @@ self: {
 }: let
   inherit (lib) mkEnableOption mkOption mkPackageOption types mkIf;
 
+  packages = self.packages.${pkgs.stdenv.hostPlatform.system};
+
   cfg = config.programs.walker;
 in {
   options = {
     programs.walker = {
       enable = mkEnableOption "walker";
-      package = mkPackageOption self.packages.${pkgs.stdenv.hostPlatform.system} "walker" {
+      package = mkPackageOption packages "walker" {
         default = "default";
         pkgsText = "walker.packages.\${pkgs.stdenv.hostPlatform.system}";
       };
@@ -20,6 +22,7 @@ in {
         default = false;
         description = "Run as a service";
       };
+
       config = mkOption {
         type = types.attrs;
         default = builtins.fromJSON (builtins.readFile ../config/config.default.json);
@@ -36,8 +39,10 @@ in {
   config = mkIf cfg.enable {
     home.packages = [cfg.package];
 
-    xdg.configFile."walker/config.json".text = cfg.config;
-    xdg.configFile."walker/style.css".text = cfg.style;
+    xdg.configFile = {
+      "walker/config.json".text = mkIf (cfg.config != { }) cfg.config;
+      "walker/style.css".text = mkIf (cfg.style != { }) cfg.style;
+    };
 
     systemd.user.services.walker = mkIf cfg.runAsService {
       Unit = {

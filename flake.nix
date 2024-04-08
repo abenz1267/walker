@@ -18,17 +18,18 @@
         system,
         ...
       }: let
-        callPackage = pkgs.lib.callPackageWith (pkgs // packages);
-
-        packages = {
-          walker = callPackage ./. {};
-        };
+        walker = pkgs.callPackage ./. {};
       in {
         formatter = pkgs.alejandra;
 
-        devShells.default = callPackage ./shell.nix {};
+        devShells.default = pkgs.mkShell {
+          inputsFrom = [walker];
+        };
 
-        packages = packages // {default = packages.walker;};
+        packages = {
+          default = walker;
+          inherit walker;
+        };
       };
 
       flake = {

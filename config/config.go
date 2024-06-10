@@ -38,10 +38,15 @@ type Config struct {
 	Hyprland           Hyprland          `json:"hyprland,omitempty"`
 	SpecialLabels      map[string]string `json:"special_labels,omitempty"`
 	IsService          bool              `json:"-"`
+	Applications       Applications      `json:"applications,omitempty"`
 }
 
 type Hyprland struct {
 	ContextAwareHistory bool `json:"context_aware_history,omitempty"`
+}
+
+type Applications struct {
+	DisableCache bool `json:"disable_cache,omitempty"`
 }
 
 type ActivationMode struct {

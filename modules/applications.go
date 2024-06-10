@@ -20,6 +20,7 @@ type Applications struct {
 	entries           []Entry
 	prefix            string
 	switcherExclusive bool
+	disableCache      bool
 }
 
 type Application struct {
@@ -39,8 +40,11 @@ func (a Applications) Setup(cfg *config.Config) Workable {
 
 	a.prefix = module.Prefix
 	a.switcherExclusive = module.SwitcherExclusive
+	a.disableCache = cfg.Applications.DisableCache
 
-	a.entries = parse()
+	if !a.disableCache {
+		a.entries = parse(a.disableCache)
+	}
 
 	return a
 }
@@ -54,20 +58,18 @@ func (a Applications) Prefix() string {
 }
 
 func (a Applications) Entries(ctx context.Context, _ string) []Entry {
-	if _, err := os.Stat(filepath.Join(util.CacheDir(), "applications.json")); err != nil {
-		a.entries = parse()
-	}
-
-	return a.entries
+	return parse(a.disableCache)
 }
 
-func parse() []Entry {
+func parse(disableCache bool) []Entry {
 	apps := []Application{}
 	entries := []Entry{}
 
-	ok := readCache(ApplicationsName, &entries)
-	if ok {
-		return entries
+	if !disableCache {
+		ok := readCache(ApplicationsName, &entries)
+		if ok {
+			return entries
+		}
 	}
 
 	dirs := xdg.ApplicationDirs
@@ -211,7 +213,9 @@ func parse() []Entry {
 		entries = append(entries, v.Generic)
 	}
 
-	util.ToJson(&entries, filepath.Join(util.CacheDir(), fmt.Sprintf("%s.json", ApplicationsName)))
+	if !disableCache {
+		util.ToJson(&entries, filepath.Join(util.CacheDir(), fmt.Sprintf("%s.json", ApplicationsName)))
+	}
 
 	return entries
 }

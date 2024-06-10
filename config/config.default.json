@@ -10,6 +10,9 @@
   "hyprland": {
     "context_aware_history": false
   },
+  "applications": {
+    "disable_cache": false
+  },
   "activation_mode": {
     "disabled": false,
     "use_f_keys": false,

@@ -403,7 +403,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		if val.Image != "" {
 			image := gtk.NewImageFromFile(val.Image)
-			image.SetHExpand(false)
+			image.SetHExpand(true)
 			image.SetSizeRequest(-1, cfg.Clipboard.ImageHeight)
 			box.Append(image)
 		}

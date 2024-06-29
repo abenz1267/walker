@@ -1,38 +1,41 @@
 package util
 
 import (
-	"strings"
+	"unicode"
 )
 
-func ParseShellCommand(command string) (string, []string) {
-	f := strings.Fields(command)
-	args := parseArgs(f)
+func ParseShellCommand(cmd string) (string, []string) {
+	words := []string{}
 
-	return args[0], args[1:]
-}
-
-func parseArgs(args []string) []string {
-	if len(args) == 0 {
-		return []string{}
-	}
-
-	arg := args[0]
-	i := 1
-	for ; i < len(args); i++ {
-		startsWithQuote := (strings.HasPrefix(arg, "\"") || strings.HasPrefix(arg, "'")) && 
-			!(strings.HasPrefix(arg, "\\\"") || strings.HasPrefix(arg, "\\'"))
-	
-		endsWithQuote := (strings.HasSuffix(arg, "\"") || strings.HasSuffix(arg, "'")) && 
-			!(strings.HasSuffix(arg, "\\\"") || strings.HasSuffix(arg, "\\'"))
-	
-		endsWithBackslash := strings.HasSuffix(arg, "\\")
-
-		if (!startsWithQuote || endsWithQuote) && !endsWithBackslash {
-			break
+	currentWord := ""
+	isEscaped := false
+	isQuote := false
+	for _, c := range cmd {
+		if isEscaped {
+			currentWord += string(c)
+			isEscaped = false
+			continue
 		}
 
-		arg += " " + args[i]
-	}
+		if c == '\\' {
+			isEscaped = true
+			continue
+		} 
 
-	return append([]string{arg}, parseArgs(args[i:])...)
+		if c == '"' || c == '\'' {
+			isQuote = !isQuote
+			continue
+		}
+
+		if unicode.IsSpace(c) && !isQuote {
+			words = append(words, currentWord)
+			currentWord = ""
+			continue
+		}
+
+		currentWord += string(c)
+	}
+	words = append(words, currentWord)
+
+	return words[0], words[1:]
 }

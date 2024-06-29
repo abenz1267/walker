@@ -411,26 +411,26 @@ func activateItem(keepOpen, selectNext bool) {
 		}
 	}
 
-	f := strings.Fields(entry.Exec)
+	name, args := util.ParseShellCommand(entry.Exec)
 
 	if len(entry.RawExec) > 0 {
-		f = entry.RawExec
+		name, args = entry.RawExec[0], entry.RawExec[1:]
 	}
 
-	if len(f) == 0 {
+	if len(name) == 0 {
 		return
 	}
 
 	if cfg.Terminal != "" {
 		if entry.Terminal || forceTerminal {
-			f = append([]string{cfg.Terminal, "-e"}, f...)
+			args = append([]string{cfg.Terminal, "-e"}, args...)
 		}
 	} else {
 		log.Println("terminal is not set")
 		return
 	}
 
-	cmd := exec.Command(f[0])
+	cmd := exec.Command(name)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setsid: true,
 		// Setpgid:    true,
@@ -450,8 +450,8 @@ func activateItem(keepOpen, selectNext bool) {
 		}
 	}
 
-	if len(f) > 1 {
-		cmd = exec.Command(f[0], f[1:]...)
+	if len(args) != 0 {
+		cmd = exec.Command(name, args...)
 	}
 
 	if entry.History {

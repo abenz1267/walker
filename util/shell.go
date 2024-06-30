@@ -20,7 +20,7 @@ func ParseShellCommand(cmd string) (string, []string) {
 		if c == '\\' {
 			isEscaped = true
 			continue
-		} 
+		}
 
 		if c == '"' || c == '\'' {
 			isQuote = !isQuote
@@ -35,7 +35,11 @@ func ParseShellCommand(cmd string) (string, []string) {
 
 		currentWord += string(c)
 	}
-	words = append(words, currentWord)
+
+	if currentWord != "" {
+		words = append(words, currentWord)
+	}
 
 	return words[0], words[1:]
 }
+

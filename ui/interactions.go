@@ -840,11 +840,15 @@ func fuzzyScore(entry modules.Entry, text string, hyprland *modules.Hyprland) fl
 
 	entry.ScoreFuzzy = entry.ScoreFuzzy * m
 
-	if p, ok := hstry[text]; ok {
-		if val, ok := p[entry.Identifier()]; ok {
-			entry.Used = val.Used
-			entry.DaysSinceUsed = val.DaysSinceUsed
-			entry.LastUsed = val.LastUsed
+	for k, v := range hstry {
+		if strings.HasPrefix(k, text) {
+			if val, ok := v[entry.Identifier()]; ok {
+				if entry.LastUsed.IsZero() || val.LastUsed.After(entry.LastUsed) {
+					entry.Used = val.Used
+					entry.DaysSinceUsed = val.DaysSinceUsed
+					entry.LastUsed = val.LastUsed
+				}
+			}
 		}
 	}
 

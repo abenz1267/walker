@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/util"
 )
 
 type External struct {
@@ -66,9 +67,8 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 	e.src = strings.ReplaceAll(e.src, "%TERM%", term)
 
 	if e.transform {
-		fields := strings.Fields(e.src)
-
-		cmd := exec.Command(fields[0], fields[1:]...)
+		name, args := util.ParseShellCommand(e.src)
+		cmd := exec.Command(name, args...)
 
 		out, err := cmd.CombinedOutput()
 		if err != nil {
@@ -96,10 +96,10 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 		return entries
 	}
 
-	fields := strings.Fields(e.src)
-	fields = append(fields, term)
+	name, args := util.ParseShellCommand(e.src)
+	args = append(args, term)
 
-	cmd := exec.Command(fields[0], fields[1:]...)
+	cmd := exec.Command(name, args...)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Println(err)

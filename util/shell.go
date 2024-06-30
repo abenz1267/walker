@@ -1,0 +1,41 @@
+package util
+
+import (
+	"unicode"
+)
+
+func ParseShellCommand(cmd string) (string, []string) {
+	words := []string{}
+
+	currentWord := ""
+	isEscaped := false
+	isQuote := false
+	for _, c := range cmd {
+		if isEscaped {
+			currentWord += string(c)
+			isEscaped = false
+			continue
+		}
+
+		if c == '\\' {
+			isEscaped = true
+			continue
+		} 
+
+		if c == '"' || c == '\'' {
+			isQuote = !isQuote
+			continue
+		}
+
+		if unicode.IsSpace(c) && !isQuote {
+			words = append(words, currentWord)
+			currentWord = ""
+			continue
+		}
+
+		currentWord += string(c)
+	}
+	words = append(words, currentWord)
+
+	return words[0], words[1:]
+}

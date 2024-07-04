@@ -281,3 +281,17 @@ Measured time is until the focus is in the search-bar and you can type.
 ### "lockfile exists" - i can't run Walker.
 
 This happens if Walker get's closed unexpectedly, f.e. via SIGKILL. Remove `/tmp/walker.lock` manually and try again.
+
+### Newly installed or removed applications aren't shown / are still shown
+
+Make sure to clean the applications cache by either running the "Clear Applications Cache" command from within Walker (using the `commands` module) or by deleting the `applications.json` file in `$HOME/.cache/walker/`.
+
+Additionally you can diasble the cache completely by setting
+
+```json
+  "applications": {
+    "disable_cache": true
+  },
+```
+
+in your config.

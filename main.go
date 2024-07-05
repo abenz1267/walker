@@ -38,16 +38,6 @@ func main() {
 		if len(os.Args) > 0 {
 			switch args[0] {
 			case "-m", "--modules":
-				// this is a hack to close the remote instance. Needed due to gotk4 bug.
-				go func() {
-					time.Sleep(time.Millisecond * 250)
-
-					if !state.IsService {
-						os.Remove(filepath.Join(util.TmpDir(), "walker.lock"))
-
-						os.Exit(0)
-					}
-				}()
 			case "--version":
 				fmt.Println(version)
 				return
@@ -63,9 +53,23 @@ func main() {
 		}
 	}
 
-	if !state.IsService && !withArgs {
-		tmp := util.TmpDir()
+	// this is a hack to close the remote instance. Needed due to gotk4 bug.
+	if !state.IsService {
+		go func() {
+			time.Sleep(time.Millisecond * 250)
 
+			if _, err := os.Stat(filepath.Join(util.TmpDir(), "walker-service.lock")); err == nil {
+				os.Remove(filepath.Join(util.TmpDir(), "walker.lock"))
+
+				os.Exit(0)
+				return
+			}
+		}()
+	}
+
+	tmp := util.TmpDir()
+
+	if !state.IsService && !withArgs {
 		if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
 			log.Println("lockfile exists. exiting. Remove '/tmp/walker.lock' and try again.")
 			return
@@ -76,6 +80,19 @@ func main() {
 			log.Panicln(err)
 		}
 		defer os.Remove(filepath.Join(tmp, "walker.lock"))
+	}
+
+	if state.IsService {
+		if _, err := os.Stat(filepath.Join(tmp, "walker-service.lock")); err == nil {
+			log.Println("lockfile exists. exiting. Remove '/tmp/walker-service.lock' and try again.")
+			return
+		}
+
+		err := os.WriteFile(filepath.Join(tmp, "walker-service.lock"), []byte{}, 0o600)
+		if err != nil {
+			log.Panicln(err)
+		}
+		defer os.Remove(filepath.Join(tmp, "walker-service.lock"))
 	}
 
 	app := gtk.NewApplication("dev.benz.walker", gio.ApplicationHandlesCommandLine)
@@ -117,6 +134,11 @@ func main() {
 			<-signal_chan
 
 			os.Remove(filepath.Join(util.TmpDir(), "walker.lock"))
+
+			if state.IsService {
+				os.Remove(filepath.Join(util.TmpDir(), "walker-service.lock"))
+			}
+
 			os.Exit(0)
 		}
 	}()

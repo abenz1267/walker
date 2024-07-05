@@ -20,7 +20,7 @@
 - history-aware
 - labels: F<1-8> or jkl;asdf
 - toggle force-running in terminal
-- start with explicit modules (only works when running as a service for now)
+- start with explicit modules
 
 ## Builtin Modules
 
@@ -135,7 +135,7 @@ In the searchbar type in: `<host> <username>`. Select the host you want. Enter.
 
 ## Start Walker with explicit modules
 
-You can start walker with explicit modules by using the `--modules` flag. Currently this only works when running Walker as a service. F.e:
+You can start walker with explicit modules by using the `--modules` flag. F.e:
 
 ```bash
 walker --modules applications,ssh

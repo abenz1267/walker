@@ -3,7 +3,6 @@ package ui
 import (
 	"bytes"
 	"context"
-	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -517,9 +516,6 @@ func process() {
 
 	text := strings.TrimSpace(ui.search.Text())
 
-	for k, v := range appstate.ExplicitModules {
-		fmt.Println(k, v)
-	}
 	if text == "" && cfg.ShowInitialEntries && singleProc == nil && len(appstate.ExplicitModules) == 0 {
 		setInitials()
 		return

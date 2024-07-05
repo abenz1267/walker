@@ -2,10 +2,13 @@ package modules
 
 import (
 	"context"
+	"fmt"
 	"log"
+	"net/http"
 	"net/url"
 	"os/exec"
 	"strings"
+	"time"
 
 	"github.com/abenz1267/walker/config"
 )
@@ -71,5 +74,32 @@ func (w Websearch) Entries(ctx context.Context, term string) []Entry {
 
 	entries = append(entries, n)
 
+	if strings.ContainsAny(term, ".") && !strings.HasSuffix(term, ".") {
+		_, err := url.ParseRequestURI(fmt.Sprintf("https://%s", term))
+		if err == nil {
+			entries = append(entries, Entry{
+				Label:    fmt.Sprintf("Visit https://%s", term),
+				Sub:      "Websearch",
+				Exec:     "xdg-open https://" + term,
+				Class:    "websearch",
+				Matching: AlwaysTop,
+			})
+		}
+	}
+
 	return entries
+}
+
+var httpClient = &http.Client{
+	Timeout: time.Second * 1,
+}
+
+func ping(url string) bool {
+	resp, err := httpClient.Head(url)
+	if err != nil {
+		return false
+	}
+	defer resp.Body.Close()
+
+	return resp.StatusCode == http.StatusOK
 }

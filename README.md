@@ -133,7 +133,7 @@ type Module struct {
 
 In the searchbar type in: `<host> <username>`. Select the host you want. Enter.
 
-## Star Walker with explicit modules
+## Start Walker with explicit modules
 
 You can start walker with explicit modules by using the `--modules` flag. Currently this only works when running Walker as a service. F.e:
 

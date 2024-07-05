@@ -12,7 +12,7 @@ import (
 )
 
 //go:embed config.default.json
-var config []byte
+var defaultConfig []byte
 
 type Config struct {
 	Placeholder        string            `json:"placeholder,omitempty"`
@@ -46,7 +46,7 @@ type Hyprland struct {
 }
 
 type Applications struct {
-	DisableCache bool `json:"disable_cache,omitempty"`
+	EnableCache bool `json:"enable_cache,omitempty"`
 }
 
 type ActivationMode struct {
@@ -130,7 +130,7 @@ func Get() *Config {
 	ok := util.FromJson(file, cfg)
 
 	if !ok {
-		err := json.Unmarshal(config, &cfg)
+		err := json.Unmarshal(defaultConfig, &cfg)
 		if err != nil {
 			log.Panicln(err)
 		}

@@ -24,7 +24,7 @@ import (
 var layout string
 
 //go:embed themes/style.default.css
-var style []byte
+var defaultStyle []byte
 
 var (
 	labels        = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
@@ -231,9 +231,9 @@ func setupUserStyle() {
 	if _, err := os.Stat(cssFile); err == nil {
 		cssProvider.LoadFromPath(cssFile)
 	} else {
-		cssProvider.LoadFromData(string(style))
+		cssProvider.LoadFromData(string(defaultStyle))
 
-		err := os.WriteFile(cssFile, style, 0o600)
+		err := os.WriteFile(cssFile, defaultStyle, 0o600)
 		if err != nil {
 			log.Panicln(err)
 		}

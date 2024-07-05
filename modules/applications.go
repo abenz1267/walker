@@ -17,10 +17,9 @@ import (
 const ApplicationsName = "applications"
 
 type Applications struct {
-	entries           []Entry
 	prefix            string
 	switcherExclusive bool
-	disableCache      bool
+	enableCache       bool
 }
 
 type Application struct {
@@ -40,11 +39,7 @@ func (a Applications) Setup(cfg *config.Config) Workable {
 
 	a.prefix = module.Prefix
 	a.switcherExclusive = module.SwitcherExclusive
-	a.disableCache = cfg.Applications.DisableCache
-
-	if !a.disableCache {
-		a.entries = parse(a.disableCache)
-	}
+	a.enableCache = cfg.Applications.EnableCache
 
 	return a
 }
@@ -58,14 +53,14 @@ func (a Applications) Prefix() string {
 }
 
 func (a Applications) Entries(ctx context.Context, _ string) []Entry {
-	return parse(a.disableCache)
+	return parse(a.enableCache)
 }
 
-func parse(disableCache bool) []Entry {
+func parse(enableCache bool) []Entry {
 	apps := []Application{}
 	entries := []Entry{}
 
-	if !disableCache {
+	if enableCache {
 		ok := readCache(ApplicationsName, &entries)
 		if ok {
 			return entries
@@ -213,7 +208,7 @@ func parse(disableCache bool) []Entry {
 		entries = append(entries, v.Generic)
 	}
 
-	if !disableCache {
+	if enableCache {
 		util.ToJson(&entries, filepath.Join(util.CacheDir(), fmt.Sprintf("%s.json", ApplicationsName)))
 	}
 

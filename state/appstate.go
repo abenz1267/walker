@@ -9,12 +9,13 @@ import (
 )
 
 type AppState struct {
-	Started    time.Time
-	IsMeasured bool
-	IsService  bool
-	IsRunning  bool
-	HasUI      bool
-	Clipboard  modules.Workable
+	Started         time.Time
+	IsMeasured      bool
+	IsService       bool
+	IsRunning       bool
+	HasUI           bool
+	Clipboard       modules.Workable
+	ExplicitModules []string
 }
 
 func Get() *AppState {

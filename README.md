@@ -20,6 +20,7 @@
 - history-aware
 - labels: F<1-8> or jkl;asdf
 - toggle force-running in terminal
+- start with explicit modules (only works when running as a service for now)
 
 ## Builtin Modules
 
@@ -131,6 +132,16 @@ type Module struct {
 ## Usage SSH Module
 
 In the searchbar type in: `<host> <username>`. Select the host you want. Enter.
+
+## Star Walker with explicit modules
+
+You can start walker with explicit modules by using the `--modules` flag. Currently this only works when running Walker as a service. F.e:
+
+```bash
+walker --modules applications,ssh
+```
+
+Will tell Walker to only use the applications and ssh module.
 
 ## Special Labels
 

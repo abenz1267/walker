@@ -7,12 +7,16 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
+	"time"
 
 	"github.com/abenz1267/walker/config"
 	"github.com/abenz1267/walker/state"
 	"github.com/abenz1267/walker/ui"
 	"github.com/abenz1267/walker/util"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
@@ -33,6 +37,17 @@ func main() {
 
 		if len(os.Args) > 0 {
 			switch args[0] {
+			case "-m", "--modules":
+				// this is a hack to close the remote instance. Needed due to gotk4 bug.
+				go func() {
+					time.Sleep(time.Millisecond * 250)
+
+					if !state.IsService {
+						os.Remove(filepath.Join(util.TmpDir(), "walker.lock"))
+
+						os.Exit(0)
+					}
+				}()
 			case "--version":
 				fmt.Println(version)
 				return
@@ -63,8 +78,22 @@ func main() {
 		defer os.Remove(filepath.Join(tmp, "walker.lock"))
 	}
 
-	app := gtk.NewApplication("dev.benz.walker", 0)
+	app := gtk.NewApplication("dev.benz.walker", gio.ApplicationHandlesCommandLine)
+	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
+
 	app.Connect("activate", ui.Activate(state))
+
+	app.ConnectCommandLine(func(cmd *gio.ApplicationCommandLine) int {
+		options := cmd.OptionsDict()
+
+		val := options.LookupValue("modules", glib.NewVariantString("s").Type())
+		modules := strings.Split(val.String(), ",")
+		state.ExplicitModules = modules
+
+		app.Activate()
+
+		return 0
+	})
 
 	app.Flags()
 

@@ -515,7 +515,7 @@ func process() {
 	}
 
 	text := strings.TrimSpace(ui.search.Text())
-	if text == "" && cfg.ShowInitialEntries && singleProc == nil {
+	if text == "" && cfg.ShowInitialEntries && singleProc == nil && len(appstate.ExplicitModules) == 0 {
 		setInitials()
 		return
 	}
@@ -523,7 +523,7 @@ func process() {
 	var ctx context.Context
 	ctx, cancel = context.WithCancel(context.Background())
 
-	if ui.search.Text() != "" || singleProc != nil {
+	if (ui.search.Text() != "" || singleProc != nil) || (len(appstate.ExplicitModules) > 0 && cfg.ShowInitialEntries) {
 		go processAsync(ctx)
 	} else {
 		ui.items.Splice(0, ui.items.NItems())
@@ -544,6 +544,8 @@ func processAsync(ctx context.Context) {
 		ui.spinner.SetCSSClasses([]string{})
 		cancel()
 	}()
+
+	hasExplicit := len(appstate.ExplicitModules) > 0
 
 	handler.ctx = ctx
 	handler.entries = []modules.Entry{}
@@ -603,11 +605,25 @@ func processAsync(ctx context.Context) {
 		}
 	}
 
+	explicitModules := []modules.Workable{}
+
+	if hasExplicit {
+		for _, v := range procs {
+			for _, proc := range v {
+				if slices.Contains(appstate.ExplicitModules, proc.Name()) {
+					explicitModules = append(explicitModules, proc)
+				}
+			}
+		}
+
+		p = explicitModules
+	}
+
 	var wg sync.WaitGroup
 	wg.Add(len(p))
 
 	for _, proc := range p {
-		if proc.SwitcherExclusive() {
+		if proc.SwitcherExclusive() && !hasExplicit {
 			if singleProc == nil || singleProc.Name() != proc.Name() {
 				wg.Done()
 				handler.receiver <- []modules.Entry{}
@@ -668,6 +684,10 @@ func processAsync(ctx context.Context) {
 }
 
 func setInitials() {
+	if len(appstate.ExplicitModules) > 0 {
+		return
+	}
+
 	entrySlice := []modules.Entry{}
 
 	var hyprland *modules.Hyprland
@@ -745,6 +765,8 @@ func quit() {
 		}
 
 		disabledAM()
+
+		appstate.ExplicitModules = []string{}
 
 		singleProc = nil
 

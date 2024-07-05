@@ -79,6 +79,7 @@ func main() {
 	}
 
 	app := gtk.NewApplication("dev.benz.walker", gio.ApplicationHandlesCommandLine)
+
 	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
 
 	app.Connect("activate", ui.Activate(state))
@@ -87,8 +88,11 @@ func main() {
 		options := cmd.OptionsDict()
 
 		val := options.LookupValue("modules", glib.NewVariantString("s").Type())
-		modules := strings.Split(val.String(), ",")
-		state.ExplicitModules = modules
+
+		if val.String() != "" {
+			modules := strings.Split(val.String(), ",")
+			state.ExplicitModules = modules
+		}
 
 		app.Activate()
 

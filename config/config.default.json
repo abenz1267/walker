@@ -1,6 +1,5 @@
 {
   "placeholder": "Search...",
-  "keep_open": false,
   "ignore_mouse": false,
   "ssh_host_file": "",
   "enable_typeahead": false,

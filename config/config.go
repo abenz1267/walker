@@ -71,7 +71,6 @@ type Module struct {
 	Src               string `json:"src,omitempty"`
 	Cmd               string `json:"cmd,omitempty"`
 	SpecialLabel      string `json:"special_label,omitempty"`
-	Transform         bool   `json:"transform,omitempty"`
 	History           bool   `json:"history,omitempty"`
 	SwitcherExclusive bool   `json:"switcher_exclusive,omitempty"`
 }

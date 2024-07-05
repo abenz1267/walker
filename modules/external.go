@@ -17,7 +17,6 @@ type External struct {
 	ModuleName        string
 	src               string
 	cmd               string
-	transform         bool
 	switcherExclusive bool
 	recalculateScore  bool
 }
@@ -36,7 +35,6 @@ func (e External) Setup(cfg *config.Config) Workable {
 	e.switcherExclusive = module.SwitcherExclusive
 	e.src = module.Src
 	e.cmd = module.Cmd
-	e.transform = module.Transform
 
 	return e
 }
@@ -66,7 +64,7 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 
 	e.src = strings.ReplaceAll(e.src, "%TERM%", term)
 
-	if e.transform {
+	if e.cmd != "" {
 		name, args := util.ParseShellCommand(e.src)
 		cmd := exec.Command(name, args...)
 
@@ -79,18 +77,16 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 		scanner := bufio.NewScanner(strings.NewReader(string(out)))
 
 		for scanner.Scan() {
-			for scanner.Scan() {
-				txt := scanner.Text()
+			txt := scanner.Text()
 
-				e := Entry{
-					Label: txt,
-					Sub:   e.ModuleName,
-					Class: e.ModuleName,
-					Exec:  strings.ReplaceAll(e.cmd, "%RESULT%", txt),
-				}
-
-				entries = append(entries, e)
+			e := Entry{
+				Label: txt,
+				Sub:   e.ModuleName,
+				Class: e.ModuleName,
+				Exec:  strings.ReplaceAll(e.cmd, "%RESULT%", txt),
 			}
+
+			entries = append(entries, e)
 		}
 
 		return entries

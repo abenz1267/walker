@@ -34,7 +34,7 @@ var (
 func setupCommands() {
 	commands = make(map[string]func())
 	commands["reloadconfig"] = func() {
-		cfg = config.Get()
+		cfg = config.Get(appstate.ExplicitConfig)
 		setupUserStyle()
 		setupModules()
 	}

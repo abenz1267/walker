@@ -31,19 +31,25 @@ func main() {
 	}
 
 	withArgs := false
+	forceNew := false
+	appName := "dev.benz.walker"
 
 	if len(os.Args) > 1 {
 		args := os.Args[1:]
 
 		if len(os.Args) > 0 {
 			switch args[0] {
+			case "-n", "--new":
+				forceNew = true
+				appName = fmt.Sprintf("%s-%d", appName, time.Now().Unix())
+			case "-c", "--config":
+			case "-s", "--style":
 			case "-m", "--modules":
 			case "--version":
 				fmt.Println(version)
 				return
 			case "--gapplication-service":
 				state.IsService = true
-				state.StartServiceableModules(config.Get())
 			case "--help", "-h", "--help-all":
 				withArgs = true
 			default:
@@ -53,8 +59,13 @@ func main() {
 		}
 	}
 
+	if forceNew && state.IsService {
+		log.Println("new instance is not supported with service mode")
+		return
+	}
+
 	// this is a hack to close the remote instance. Needed due to gotk4 bug.
-	if !state.IsService {
+	if !state.IsService && !forceNew {
 		go func() {
 			time.Sleep(time.Millisecond * 250)
 
@@ -69,7 +80,7 @@ func main() {
 
 	tmp := util.TmpDir()
 
-	if !state.IsService && !withArgs {
+	if !state.IsService && !withArgs && !forceNew {
 		if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
 			log.Println("lockfile exists. exiting. Remove '/tmp/walker.lock' and try again.")
 			return
@@ -82,7 +93,7 @@ func main() {
 		defer os.Remove(filepath.Join(tmp, "walker.lock"))
 	}
 
-	if state.IsService {
+	if state.IsService && !forceNew {
 		if _, err := os.Stat(filepath.Join(tmp, "walker-service.lock")); err == nil {
 			log.Println("lockfile exists. exiting. Remove '/tmp/walker-service.lock' and try again.")
 			return
@@ -95,20 +106,37 @@ func main() {
 		defer os.Remove(filepath.Join(tmp, "walker-service.lock"))
 	}
 
-	app := gtk.NewApplication("dev.benz.walker", gio.ApplicationHandlesCommandLine)
+	app := gtk.NewApplication(appName, gio.ApplicationHandlesCommandLine)
 
 	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
+	app.AddMainOption("new", 'n', glib.OptionFlagNone, glib.OptionArgNone, "start new instance ignoring service", "")
+	app.AddMainOption("config", 'c', glib.OptionFlagNone, glib.OptionArgString, "config file to use", "")
+	app.AddMainOption("style", 's', glib.OptionFlagNone, glib.OptionArgString, "style file to use", "")
 
 	app.Connect("activate", ui.Activate(state))
 
 	app.ConnectCommandLine(func(cmd *gio.ApplicationCommandLine) int {
 		options := cmd.OptionsDict()
 
-		val := options.LookupValue("modules", glib.NewVariantString("s").Type())
+		modulesString := options.LookupValue("modules", glib.NewVariantString("s").Type())
+		configString := options.LookupValue("config", glib.NewVariantString("s").Type())
+		styleString := options.LookupValue("style", glib.NewVariantString("s").Type())
 
-		if val.String() != "" {
-			modules := strings.Split(val.String(), ",")
+		if modulesString.String() != "" {
+			modules := strings.Split(modulesString.String(), ",")
 			state.ExplicitModules = modules
+		}
+
+		if configString.String() != "" {
+			state.ExplicitConfig = configString.String()
+		}
+
+		if styleString.String() != "" {
+			state.ExplicitStyle = styleString.String()
+		}
+
+		if state.IsService {
+			state.StartServiceableModules(config.Get(state.ExplicitConfig))
 		}
 
 		app.Activate()

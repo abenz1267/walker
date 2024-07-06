@@ -16,15 +16,19 @@ type AppState struct {
 	HasUI           bool
 	Clipboard       modules.Workable
 	ExplicitModules []string
+	ExplicitConfig  string
+	ExplicitStyle   string
 }
 
 func Get() *AppState {
 	return &AppState{
-		Started:    time.Now(),
-		IsService:  false,
-		IsRunning:  false,
-		IsMeasured: false,
-		HasUI:      false,
+		Started:        time.Now(),
+		IsService:      false,
+		IsRunning:      false,
+		IsMeasured:     false,
+		HasUI:          false,
+		ExplicitConfig: "config.json",
+		ExplicitStyle:  "style.css",
 	}
 }
 

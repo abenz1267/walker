@@ -122,8 +122,8 @@ type List struct {
 	HideSub     bool `json:"hide_sub,omitempty"`
 }
 
-func Get() *Config {
-	file := filepath.Join(util.ConfigDir(), "config.json")
+func Get(config string) *Config {
+	file := filepath.Join(util.ConfigDir(), config)
 
 	cfg := &Config{}
 	ok := util.FromJson(file, cfg)

@@ -253,6 +253,15 @@ F.e. search = `!somecommand` => `#window.runner`
 
 Start with `walker --gapplication-service` to start in service-mode. Calling `walker` normally afterwards should be rather fast.
 
+### Additional flags
+
+| Flag              | Description                         |
+| ----------------- | ----------------------------------- |
+| `--modules`, `-m` | Run with explicit modules           |
+| `--new`, `-n`     | Start new instance ignoring service |
+| `--config`, `-c`  | Config file to use                  |
+| `--style`, `-s`   | Style file to use                   |
+
 ## Keybinds
 
 AM = Activation Mode

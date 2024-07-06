@@ -87,7 +87,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			return
 		}
 
-		cfg = config.Get()
+		cfg = config.Get(appstate.ExplicitConfig)
 		cfg.IsService = appstate.IsService
 		hstry = history.Get()
 
@@ -225,7 +225,7 @@ func setupUI(app *gtk.Application) {
 }
 
 func setupUserStyle() {
-	cssFile := filepath.Join(util.ConfigDir(), "style.css")
+	cssFile := filepath.Join(util.ConfigDir(), appstate.ExplicitStyle)
 
 	cssProvider := gtk.NewCSSProvider()
 	if _, err := os.Stat(cssFile); err == nil {

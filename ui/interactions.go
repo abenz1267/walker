@@ -440,7 +440,10 @@ func activateItem(keepOpen, selectNext bool) {
 	}
 
 	if entry.Piped.Content != "" {
-		if entry.Piped.Type == "file" {
+		switch entry.Piped.Type {
+		case "string":
+			cmd.Stdin = strings.NewReader(entry.Piped.Content)
+		case "file":
 			b, err := os.ReadFile(entry.Piped.Content)
 			if err != nil {
 				log.Panic(err)

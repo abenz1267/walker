@@ -63,10 +63,15 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 	}
 
 	hasExplicitTerm := false
+	hasExplicitResult := false
 
 	if strings.Contains(e.src, "%TERM%") {
 		hasExplicitTerm = true
 		e.src = strings.ReplaceAll(e.src, "%TERM%", term)
+	}
+
+	if strings.Contains(e.cmd, "%RESULT%") {
+		hasExplicitResult = true
 	}
 
 	if e.cmd != "" {
@@ -93,6 +98,11 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 				Sub:   e.ModuleName,
 				Class: e.ModuleName,
 				Exec:  strings.ReplaceAll(e.cmd, "%RESULT%", txt),
+			}
+
+			if !hasExplicitResult {
+				e.Piped.Content = txt
+				e.Piped.Type = "string"
 			}
 
 			entries = append(entries, e)

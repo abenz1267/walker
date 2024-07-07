@@ -39,6 +39,11 @@ type Config struct {
 	SpecialLabels      map[string]string `json:"special_labels,omitempty"`
 	IsService          bool              `json:"-"`
 	Applications       Applications      `json:"applications,omitempty"`
+	Websearch          Websearch         `json:"websearch,omitempty"`
+}
+
+type Websearch struct {
+	Engines []string `json:"engines,omitempty"`
 }
 
 type Hyprland struct {

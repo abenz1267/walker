@@ -26,7 +26,7 @@
 
 - runner
 - desktop applications
-- websearch
+- websearch (google, duckduckgo, ecosia, yandex)
 - hyprland windows, context-aware history (based on open windows)
 - clipboard with fuzzy find and images (currently "wl-clipboard" only)
 - module switcher

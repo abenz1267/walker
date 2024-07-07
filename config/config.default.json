@@ -6,6 +6,9 @@
   "show_initial_entries": true,
   "fullscreen": false,
   "scrollbar_policy": "automatic",
+  "websearch": {
+    "engines": ["google"]
+  },
   "hyprland": {
     "context_aware_history": false
   },

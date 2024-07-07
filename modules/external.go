@@ -93,7 +93,6 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 	}
 
 	name, args := util.ParseShellCommand(e.src)
-	args = append(args, term)
 
 	cmd := exec.Command(name, args...)
 	out, err := cmd.CombinedOutput()

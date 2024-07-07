@@ -51,6 +51,10 @@ func (w Websearch) Setup(cfg *config.Config) Workable {
 
 	slices.Reverse(w.engines)
 
+	if len(w.engines) == 0 {
+		w.engines = []string{"google"}
+	}
+
 	w.engineInfo = make(map[string]EngineInfo)
 
 	w.engineInfo["google"] = EngineInfo{

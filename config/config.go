@@ -51,7 +51,8 @@ type Hyprland struct {
 }
 
 type Applications struct {
-	EnableCache bool `json:"enable_cache,omitempty"`
+	EnableCache   bool `json:"enable_cache,omitempty"`
+	IgnoreActions bool `json:"ignore_actions,omitempty"`
 }
 
 type ActivationMode struct {

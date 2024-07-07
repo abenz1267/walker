@@ -13,7 +13,8 @@
     "context_aware_history": false
   },
   "applications": {
-    "enable_cache": false
+    "enable_cache": false,
+    "ignore_actions": false
   },
   "activation_mode": {
     "disabled": false,

@@ -20,6 +20,7 @@ type Applications struct {
 	prefix            string
 	switcherExclusive bool
 	enableCache       bool
+	ignoreActions     bool
 }
 
 type Application struct {
@@ -40,6 +41,7 @@ func (a Applications) Setup(cfg *config.Config) Workable {
 	a.prefix = module.Prefix
 	a.switcherExclusive = module.SwitcherExclusive
 	a.enableCache = cfg.Applications.EnableCache
+	a.ignoreActions = cfg.Applications.IgnoreActions
 
 	return a
 }
@@ -53,10 +55,10 @@ func (a Applications) Prefix() string {
 }
 
 func (a Applications) Entries(ctx context.Context, _ string) []Entry {
-	return parse(a.enableCache)
+	return parse(a.enableCache, a.ignoreActions)
 }
 
-func parse(enableCache bool) []Entry {
+func parse(enableCache bool, ignoreActions bool) []Entry {
 	apps := []Application{}
 	entries := []Entry{}
 
@@ -189,6 +191,10 @@ func parse(enableCache bool) []Entry {
 							continue
 						}
 					}
+				}
+
+				if ignoreActions {
+					app.Actions = []Entry{}
 				}
 
 				apps = append(apps, app)

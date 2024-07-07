@@ -62,11 +62,20 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 		term = strings.TrimPrefix(term, e.prefix)
 	}
 
-	e.src = strings.ReplaceAll(e.src, "%TERM%", term)
+	hasExplicitTerm := false
+
+	if strings.Contains(e.src, "%TERM%") {
+		hasExplicitTerm = true
+		e.src = strings.ReplaceAll(e.src, "%TERM%", term)
+	}
 
 	if e.cmd != "" {
 		name, args := util.ParseShellCommand(e.src)
 		cmd := exec.Command(name, args...)
+
+		if !hasExplicitTerm {
+			cmd.Stdin = strings.NewReader(term)
+		}
 
 		out, err := cmd.CombinedOutput()
 		if err != nil {
@@ -95,6 +104,11 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 	name, args := util.ParseShellCommand(e.src)
 
 	cmd := exec.Command(name, args...)
+
+	if !hasExplicitTerm {
+		cmd.Stdin = strings.NewReader(term)
+	}
+
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		log.Println(err)

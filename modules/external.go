@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"net/url"
 	"os/exec"
 	"strings"
 
@@ -93,8 +94,14 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 		for scanner.Scan() {
 			txt := scanner.Text()
 
+			unescaped, err := url.QueryUnescape(txt)
+			if err != nil {
+				log.Println(err)
+				continue
+			}
+
 			e := Entry{
-				Label: txt,
+				Label: unescaped,
 				Sub:   e.ModuleName,
 				Class: e.ModuleName,
 				Exec:  strings.ReplaceAll(e.cmd, "%RESULT%", txt),

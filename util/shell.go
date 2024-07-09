@@ -40,6 +40,10 @@ func ParseShellCommand(cmd string) (string, []string) {
 		words = append(words, currentWord)
 	}
 
+	if len(words) == 0 {
+		return "", []string{}
+	}
+
 	return words[0], words[1:]
 }
 

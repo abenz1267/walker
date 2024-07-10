@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/url"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -74,6 +75,8 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 	if strings.Contains(e.cmd, "%RESULT%") {
 		hasExplicitResult = true
 	}
+
+	e.src = os.ExpandEnv(e.src)
 
 	if e.cmd != "" {
 		name, args := util.ParseShellCommand(e.src)

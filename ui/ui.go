@@ -41,6 +41,7 @@ var (
 	procs      ProcMap
 	singleProc modules.Workable
 	hstry      history.History
+	inputhstry history.InputHistory
 	appstate   *state.AppState
 )
 
@@ -90,6 +91,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		cfg = config.Get(appstate.ExplicitConfig)
 		cfg.IsService = appstate.IsService
 		hstry = history.Get()
+		inputhstry = history.GetInputHistory()
 
 		setupUI(app)
 		setupInteractions(appstate)

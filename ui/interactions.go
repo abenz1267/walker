@@ -309,6 +309,8 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 
 var forceTerminal bool
 
+var historyIndex = 0
+
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 && !cfg.ActivationMode.UseFKeys {
 		if val == amKey {
@@ -340,6 +342,34 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	case gdk.KEY_Down:
 		selectNext()
 	case gdk.KEY_Up:
+		if ui.selection.Selected() == 0 {
+			currentInput := ui.search.Text()
+
+			if currentInput != "" && !slices.Contains(inputhstry, currentInput) {
+				break
+			}
+
+			if historyIndex == len(inputhstry)-1 || currentInput == "" {
+				historyIndex = 0
+			}
+
+			i := inputhstry[historyIndex]
+
+			for i == currentInput {
+				if historyIndex == len(inputhstry)-1 {
+					break
+				}
+
+				historyIndex++
+				i = inputhstry[historyIndex]
+			}
+
+			glib.IdleAdd(func() {
+				ui.search.SetText(i)
+				ui.search.SetPosition(-1)
+			})
+		}
+
 		selectPrev()
 	case gdk.KEY_ISO_Left_Tab:
 		selectPrev()
@@ -461,6 +491,8 @@ func activateItem(keepOpen, selectNext bool) {
 	if entry.History {
 		hstry.Save(entry.Identifier(), strings.TrimSpace(ui.search.Text()))
 	}
+
+	inputhstry.SaveToInputHistory(ui.search.Text())
 
 	err := cmd.Start()
 	if err != nil {

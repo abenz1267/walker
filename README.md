@@ -20,7 +20,7 @@
 - history-aware
 - labels: F<1-8> or jkl;asdf
 - toggle force-running in terminal
-- start with explicit modules
+- start with explicit modules, style or config
 
 ## Builtin Modules
 

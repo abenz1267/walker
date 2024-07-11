@@ -342,7 +342,7 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	case gdk.KEY_Down:
 		selectNext()
 	case gdk.KEY_Up:
-		if ui.selection.Selected() == 0 {
+		if ui.selection.Selected() == 0 && len(inputhstry) > 0 {
 			currentInput := ui.search.Text()
 
 			if currentInput != "" && !slices.Contains(inputhstry, currentInput) {
@@ -492,7 +492,7 @@ func activateItem(keepOpen, selectNext bool) {
 		hstry.Save(entry.Identifier(), strings.TrimSpace(ui.search.Text()))
 	}
 
-	inputhstry.SaveToInputHistory(ui.search.Text())
+	inputhstry = inputhstry.SaveToInputHistory(ui.search.Text())
 
 	err := cmd.Start()
 	if err != nil {

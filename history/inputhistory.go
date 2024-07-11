@@ -9,7 +9,7 @@ import (
 
 type InputHistory []string
 
-func (h InputHistory) SaveToInputHistory(input string) {
+func (h InputHistory) SaveToInputHistory(input string) InputHistory {
 	i := slices.Index(h, input)
 
 	if i != -1 {
@@ -23,6 +23,8 @@ func (h InputHistory) SaveToInputHistory(input string) {
 	}
 
 	util.ToGob(&h, filepath.Join(util.CacheDir(), "inputhistory.gob"))
+
+	return h
 }
 
 func GetInputHistory() InputHistory {

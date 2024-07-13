@@ -151,6 +151,8 @@ func selectNext() {
 	if current+1 < items {
 		ui.selection.SetSelected(current + 1)
 	}
+
+	ui.list.ScrollTo(ui.selection.Selected(), gtk.ListScrollNone, nil)
 }
 
 func selectPrev() {
@@ -165,6 +167,8 @@ func selectPrev() {
 	if current > 0 {
 		ui.selection.SetSelected(current - 1)
 	}
+
+	ui.list.ScrollTo(ui.selection.Selected(), gtk.ListScrollNone, nil)
 }
 
 func selectActivationMode(val uint, keepOpen bool) {
@@ -418,7 +422,7 @@ func activateItem(keepOpen, selectNext bool) {
 		return
 	}
 
-	entry := ui.items.Item(int(ui.selection.Selected()))
+	entry := ui.listModelType.ObjectValue(ui.items.Item(ui.selection.Selected()))
 
 	if entry.Sub == "Walker" {
 		commands[entry.Exec]()
@@ -431,7 +435,7 @@ func activateItem(keepOpen, selectNext bool) {
 			for _, w := range v {
 				if w.Name() == entry.Label {
 					singleProc = w
-					ui.items.Splice(0, ui.items.NItems())
+					ui.items.Splice(0, int(ui.items.NItems()))
 					ui.search.SetObjectProperty("placeholder-text", w.Name())
 					ui.search.SetText("")
 					ui.search.GrabFocus()
@@ -562,7 +566,7 @@ func process() {
 	if (ui.search.Text() != "" || singleProc != nil) || (len(appstate.ExplicitModules) > 0 && cfg.ShowInitialEntries) {
 		go processAsync(ctx)
 	} else {
-		ui.items.Splice(0, ui.items.NItems())
+		ui.items.Splice(0, int(ui.items.NItems()))
 		ui.spinner.SetCSSClasses([]string{})
 	}
 }
@@ -589,7 +593,7 @@ func processAsync(ctx context.Context) {
 	text := strings.TrimSpace(ui.search.Text())
 
 	glib.IdleAdd(func() {
-		ui.items.Splice(0, ui.items.NItems())
+		ui.items.Splice(0, int(ui.items.NItems()))
 	})
 
 	prefix := text
@@ -775,7 +779,7 @@ func setInitials() {
 
 	sortEntries(entrySlice)
 
-	ui.items.Splice(0, ui.items.NItems(), entrySlice...)
+	ui.items.Splice(0, int(ui.items.NItems()), entrySlice...)
 
 	ui.spinner.SetCSSClasses([]string{})
 }

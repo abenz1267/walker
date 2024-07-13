@@ -16,6 +16,7 @@ import (
 	"github.com/abenz1267/walker/util"
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
+	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -56,6 +57,7 @@ type UI struct {
 	typeahead     *gtk.SearchEntry
 	search        *gtk.SearchEntry
 	list          *gtk.ListView
+	listModelType *gioutil.ListModelType[modules.Entry]
 	items         *gioutil.ListModel[modules.Entry]
 	selection     *gtk.SingleSelection
 	prefixClasses map[string][]string
@@ -141,7 +143,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			}
 		}
 
-		ui.appwin.Show()
+		ui.appwin.SetVisible(true)
 		appstate.HasUI = true
 	}
 }
@@ -156,9 +158,10 @@ func setupUI(app *gtk.Application) {
 		usedLabels = labelF
 	}
 
-	builder := gtk.NewBuilderFromString(layout, len(layout))
+	builder := gtk.NewBuilderFromString(layout)
 
-	items := gioutil.NewListModel[modules.Entry]()
+	listModelType := gioutil.NewListModelType[modules.Entry]()
+	items := listModelType.New()
 
 	ui = &UI{
 		app:           app,
@@ -171,6 +174,7 @@ func setupUI(app *gtk.Application) {
 		appwin:        builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
 		search:        builder.GetObject("search").Cast().(*gtk.SearchEntry),
 		list:          builder.GetObject("list").Cast().(*gtk.ListView),
+		listModelType: &listModelType,
 		items:         items,
 		selection:     gtk.NewSingleSelection(items.ListModel),
 		prefixClasses: make(map[string][]string),
@@ -335,14 +339,17 @@ func setupUserStyle() {
 
 func setupFactory() *gtk.SignalListItemFactory {
 	factory := gtk.NewSignalListItemFactory()
-	factory.ConnectSetup(func(item *gtk.ListItem) {
+	factory.ConnectSetup(func(object *glib.Object) {
+		item := object.Cast().(*gtk.ListItem)
 		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
 		item.SetChild(box)
 		box.SetFocusable(true)
 	})
 
-	factory.ConnectBind(func(item *gtk.ListItem) {
-		val := ui.items.Item(int(item.Position()))
+	factory.ConnectBind(func(object *glib.Object) {
+		item := object.Cast().(*gtk.ListItem)
+		valObj := ui.items.Item(item.Position())
+		val := ui.listModelType.ObjectValue(valObj)
 		child := item.Child()
 
 		if child == nil {
@@ -352,14 +359,6 @@ func setupFactory() *gtk.SignalListItemFactory {
 		box, ok := child.(*gtk.Box)
 		if !ok {
 			log.Panicln("child is not a box")
-		}
-
-		if item.Selected() {
-			box.GrabFocus()
-
-			if !activationEnabled {
-				ui.search.GrabFocus()
-			}
 		}
 
 		if box.FirstChild() != nil {

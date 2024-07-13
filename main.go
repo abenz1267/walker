@@ -64,20 +64,6 @@ func main() {
 		return
 	}
 
-	// this is a hack to close the remote instance. Needed due to gotk4 bug.
-	if !state.IsService && !forceNew {
-		go func() {
-			time.Sleep(time.Millisecond * 250)
-
-			if _, err := os.Stat(filepath.Join(util.TmpDir(), "walker-service.lock")); err == nil {
-				os.Remove(filepath.Join(util.TmpDir(), "walker.lock"))
-
-				os.Exit(0)
-				return
-			}
-		}()
-	}
-
 	tmp := util.TmpDir()
 
 	if !state.IsService && !withArgs && !forceNew {
@@ -122,24 +108,25 @@ func main() {
 		configString := options.LookupValue("config", glib.NewVariantString("s").Type())
 		styleString := options.LookupValue("style", glib.NewVariantString("s").Type())
 
-		if modulesString.String() != "" {
+		if modulesString != nil && modulesString.String() != "" {
 			modules := strings.Split(modulesString.String(), ",")
 			state.ExplicitModules = modules
 		}
 
-		if configString.String() != "" {
+		if configString != nil && configString.String() != "" {
 			state.ExplicitConfig = configString.String()
 		}
 
-		if styleString.String() != "" {
+		if styleString != nil && styleString.String() != "" {
 			state.ExplicitStyle = styleString.String()
 		}
 
-		if state.IsService {
+		if state != nil && state.IsService {
 			state.StartServiceableModules(config.Get(state.ExplicitConfig))
 		}
 
 		app.Activate()
+		cmd.Done()
 
 		return 0
 	})

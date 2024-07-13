@@ -22,6 +22,7 @@
 - toggle force-running in terminal
 - start with explicit modules, style or config
 - arrow-up history
+- drag&drop support
 
 ## Builtin Modules
 

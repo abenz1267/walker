@@ -533,6 +533,10 @@ const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 var cancel context.CancelFunc
 
 func process() {
+	if cfg.IgnoreMouse {
+		ui.list.SetCanTarget(false)
+	}
+
 	ui.spinner.SetCSSClasses([]string{"visible"})
 
 	if cfg.EnableTypeahead {
@@ -580,10 +584,6 @@ var handlerPool = sync.Pool{
 }
 
 func processAsync(ctx context.Context) {
-	if cfg.IgnoreMouse {
-		ui.list.SetCanTarget(false)
-	}
-
 	handler := handlerPool.Get().(*Handler)
 	defer func() {
 		handlerPool.Put(handler)

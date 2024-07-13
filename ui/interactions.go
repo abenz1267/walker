@@ -496,7 +496,9 @@ func activateItem(keepOpen, selectNext bool) {
 		hstry.Save(entry.Identifier(), strings.TrimSpace(ui.search.Text()))
 	}
 
-	inputhstry = inputhstry.SaveToInputHistory(ui.search.Text())
+	if !cfg.DisableUpHistory {
+		inputhstry = inputhstry.SaveToInputHistory(ui.search.Text())
+	}
 
 	err := cmd.Start()
 	if err != nil {
@@ -578,6 +580,10 @@ var handlerPool = sync.Pool{
 }
 
 func processAsync(ctx context.Context) {
+	if cfg.IgnoreMouse {
+		ui.list.SetCanTarget(false)
+	}
+
 	handler := handlerPool.Get().(*Handler)
 	defer func() {
 		handlerPool.Put(handler)
@@ -679,6 +685,10 @@ func processAsync(ctx context.Context) {
 			toPush := []modules.Entry{}
 
 			for k := range e {
+				if e[k].DragDrop && !ui.list.CanTarget() {
+					ui.list.SetCanTarget(true)
+				}
+
 				toMatch := text
 
 				if e[k].MatchFields > 0 {

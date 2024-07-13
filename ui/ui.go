@@ -16,8 +16,10 @@ import (
 	"github.com/abenz1267/walker/util"
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
-	"github.com/diamondburned/gotk4/pkg/core/glib"
+	coreglib "github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
@@ -93,7 +95,10 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		cfg = config.Get(appstate.ExplicitConfig)
 		cfg.IsService = appstate.IsService
 		hstry = history.Get()
-		inputhstry = history.GetInputHistory()
+
+		if !cfg.DisableUpHistory {
+			inputhstry = history.GetInputHistory()
+		}
 
 		setupUI(app)
 		setupInteractions(appstate)
@@ -248,10 +253,6 @@ func setupUserStyle() {
 	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
 	ui.search.SetObjectProperty("search-delay", cfg.Search.Delay)
 
-	if cfg.IgnoreMouse {
-		ui.list.SetCanTarget(false)
-	}
-
 	if cfg.List.MarginTop != 0 {
 		ui.list.SetMarginTop(cfg.List.MarginTop)
 	}
@@ -339,14 +340,14 @@ func setupUserStyle() {
 
 func setupFactory() *gtk.SignalListItemFactory {
 	factory := gtk.NewSignalListItemFactory()
-	factory.ConnectSetup(func(object *glib.Object) {
+	factory.ConnectSetup(func(object *coreglib.Object) {
 		item := object.Cast().(*gtk.ListItem)
 		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
 		item.SetChild(box)
 		box.SetFocusable(true)
 	})
 
-	factory.ConnectBind(func(object *glib.Object) {
+	factory.ConnectBind(func(object *coreglib.Object) {
 		item := object.Cast().(*gtk.ListItem)
 		valObj := ui.items.Item(item.Position())
 		val := ui.listModelType.ObjectValue(valObj)
@@ -365,38 +366,30 @@ func setupFactory() *gtk.SignalListItemFactory {
 			return
 		}
 
-		// if val.DragDrop {
-		// 	dd := gtk.NewDragSource()
-		// 	dd.ConnectPrepare(func(_, _ float64) *gdk.ContentProvider {
-		// 		file := gio.NewFileForPath(val.DragDropData)
-		//
-		// 		b := glib.NewBytes([]byte(fmt.Sprintf("%s\n", file.URI())))
-		//
-		// 		cp := gdk.NewContentProviderForBytes("text/uri-list", b)
-		//
-		// 		return cp
-		// 	})
-		//
-		// 	dd.ConnectDragBegin(func(_ gdk.Dragger) {
-		// 		closeAfterActivation(false, false)
-		// 	})
-		//
-		// 	box.AddController(dd)
-		// }
+		if val.DragDrop {
+			dd := gtk.NewDragSource()
+			dd.ConnectPrepare(func(_, _ float64) *gdk.ContentProvider {
+				file := gio.NewFileForPath(val.DragDropData)
+
+				b := glib.NewBytes([]byte(fmt.Sprintf("%s\n", file.URI())))
+
+				cp := gdk.NewContentProviderForBytes("text/uri-list", b)
+
+				return cp
+			})
+
+			dd.ConnectDragBegin(func(_ gdk.Dragger) {
+				ui.appwin.SetVisible(false)
+			})
+
+			dd.ConnectDragEnd(func(_ gdk.Dragger, _ bool) {
+				closeAfterActivation(false, false)
+			})
+
+			box.AddController(dd)
+		}
 
 		box.SetCSSClasses([]string{"item", val.Class})
-
-		// if !cfg.IgnoreMouse {
-		// click := gtk.NewGestureClick()
-		//
-		// if val.DragDrop {
-		// 	click.ConnectReleased(func(m int, _, _ float64) {
-		// 		activateItem(false, false)
-		// 	})
-		// }
-		//
-		// box.AddController(click)
-		// }
 
 		wrapper := gtk.NewBox(gtk.OrientationVertical, 0)
 		wrapper.SetCSSClasses([]string{"textwrapper"})

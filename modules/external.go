@@ -21,6 +21,7 @@ type External struct {
 	cmd               string
 	switcherExclusive bool
 	recalculateScore  bool
+	terminal          bool
 }
 
 func (e External) SwitcherExclusive() bool {
@@ -37,6 +38,7 @@ func (e External) Setup(cfg *config.Config) Workable {
 	e.switcherExclusive = module.SwitcherExclusive
 	e.src = module.Src
 	e.cmd = module.Cmd
+	e.terminal = module.Terminal
 
 	return e
 }
@@ -104,10 +106,11 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 			}
 
 			e := Entry{
-				Label: unescaped,
-				Sub:   e.ModuleName,
-				Class: e.ModuleName,
-				Exec:  strings.ReplaceAll(e.cmd, "%RESULT%", txt),
+				Label:    unescaped,
+				Sub:      e.ModuleName,
+				Class:    e.ModuleName,
+				Terminal: e.terminal,
+				Exec:     strings.ReplaceAll(e.cmd, "%RESULT%", txt),
 			}
 
 			if !hasExplicitResult {

@@ -80,6 +80,7 @@ type Module struct {
 	SpecialLabel      string `json:"special_label,omitempty"`
 	History           bool   `json:"history,omitempty"`
 	SwitcherExclusive bool   `json:"switcher_exclusive,omitempty"`
+	Terminal          bool   `json:"terminal,omitempty"`
 }
 
 type Search struct {

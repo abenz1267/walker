@@ -74,7 +74,7 @@ func (w Websearch) Setup(cfg *config.Config) Workable {
 
 	w.engineInfo["yandex"] = EngineInfo{
 		Label: "Yandex",
-		URL:   EcosiaURL,
+		URL:   YandexURL,
 	}
 
 	return w

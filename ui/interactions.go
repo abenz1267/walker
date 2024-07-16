@@ -15,6 +15,7 @@ import (
 	"github.com/abenz1267/walker/config"
 	"github.com/abenz1267/walker/history"
 	"github.com/abenz1267/walker/modules"
+	"github.com/abenz1267/walker/modules/emojis"
 	"github.com/abenz1267/walker/state"
 	"github.com/abenz1267/walker/util"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
@@ -66,6 +67,7 @@ func setupModules() {
 		modules.Hyprland{},
 		modules.SSH{},
 		modules.Finder{},
+		emojis.Emojis{},
 		appstate.Clipboard,
 	}
 

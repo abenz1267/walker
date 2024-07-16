@@ -35,6 +35,7 @@
 - commands (for Walker, f.e. clear cache)
 - ssh
 - finder
+- emojis
 
 ## Requirements
 

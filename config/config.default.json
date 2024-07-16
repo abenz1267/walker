@@ -77,6 +77,10 @@
       "prefix": ""
     },
     {
+      "name": "emojis",
+      "switcher_exclusive": true
+    },
+    {
       "name": "ssh",
       "prefix": "",
       "switcher_exclusive": true

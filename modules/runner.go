@@ -60,6 +60,8 @@ func (r Runner) Setup(cfg *config.Config) Workable {
 	return r
 }
 
+func (r Runner) Refresh() {}
+
 func (r Runner) Prefix() string {
 	return r.prefix
 }

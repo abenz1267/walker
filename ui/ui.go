@@ -81,6 +81,12 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		if appstate.HasUI {
 			ui.appwin.SetVisible(true)
 
+			for _, v := range procs {
+				for _, proc := range v {
+					proc.Refresh()
+				}
+			}
+
 			if !appstate.IsMeasured {
 				fmt.Printf("startup time: %s\n", time.Since(appstate.Started))
 				appstate.IsMeasured = true

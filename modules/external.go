@@ -19,6 +19,8 @@ type External struct {
 	ModuleName        string
 	src               string
 	cmd               string
+	cachedOutput      []byte
+	refresh           bool
 	switcherExclusive bool
 	recalculateScore  bool
 	terminal          bool
@@ -28,7 +30,7 @@ func (e External) SwitcherExclusive() bool {
 	return e.switcherExclusive
 }
 
-func (e External) Setup(cfg *config.Config) Workable {
+func (e *External) Setup(cfg *config.Config) Workable {
 	module := Find(cfg.External, e.Name())
 	if module == nil {
 		return nil
@@ -36,11 +38,24 @@ func (e External) Setup(cfg *config.Config) Workable {
 
 	e.prefix = module.Prefix
 	e.switcherExclusive = module.SwitcherExclusive
-	e.src = module.Src
-	e.cmd = module.Cmd
+	e.src = os.ExpandEnv(module.Src)
+	e.cmd = os.ExpandEnv(module.Cmd)
 	e.terminal = module.Terminal
 
+	if module.SrcOnce != "" {
+		e.src = os.ExpandEnv(module.SrcOnce)
+		e.cachedOutput = e.getSrcOutput(false, "")
+	}
+
+	e.refresh = module.SrcOnceRefresh
+
 	return e
+}
+
+func (e *External) Refresh() {
+	if e.refresh {
+		e.cachedOutput = e.getSrcOutput(false, "")
+	}
 }
 
 func (e External) Name() string {
@@ -78,20 +93,13 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 		hasExplicitResult = true
 	}
 
-	e.src = os.ExpandEnv(e.src)
-
 	if e.cmd != "" {
-		name, args := util.ParseShellCommand(e.src)
-		cmd := exec.Command(name, args...)
+		var out []byte
 
-		if !hasExplicitTerm {
-			cmd.Stdin = strings.NewReader(term)
-		}
-
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			log.Println(err)
-			return entries
+		if e.cachedOutput != nil {
+			out = e.cachedOutput
+		} else {
+			out = e.getSrcOutput(hasExplicitTerm, term)
 		}
 
 		scanner := bufio.NewScanner(strings.NewReader(string(out)))
@@ -149,4 +157,21 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 	}
 
 	return entries
+}
+
+func (e External) getSrcOutput(hasExplicitTerm bool, term string) []byte {
+	name, args := util.ParseShellCommand(e.src)
+	cmd := exec.Command(name, args...)
+
+	if !hasExplicitTerm && term != "" {
+		cmd.Stdin = strings.NewReader(term)
+	}
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	return out
 }

@@ -123,6 +123,8 @@ Definition for modules:
 type Module struct {
 	Prefix            string `json:"prefix,omitempty"`
 	Name              string `json:"name,omitempty"`
+    SrcOnce           string `json:"src_once,omitempty"`
+    SrcOnceRefresh    bool   `json:"src_once_refresh,omitempty"`
 	Src               string `json:"src,omitempty"`
 	Cmd               string `json:"cmd,omitempty"`
 	SpecialLabel      string `json:"special_label,omitempty"`

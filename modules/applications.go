@@ -46,6 +46,8 @@ func (a Applications) Setup(cfg *config.Config) Workable {
 	return a
 }
 
+func (a Applications) Refresh() {}
+
 func (a Applications) Name() string {
 	return ApplicationsName
 }

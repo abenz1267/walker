@@ -58,3 +58,5 @@ func (s Switcher) Setup(cfg *config.Config) Workable {
 
 	return s
 }
+
+func (s Switcher) Refresh() {}

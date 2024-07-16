@@ -22,6 +22,7 @@ type Workable interface {
 	Name() string
 	SwitcherExclusive() bool
 	Setup(cfg *config.Config) Workable
+	Refresh()
 }
 
 type MatchingType int

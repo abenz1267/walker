@@ -69,7 +69,7 @@ func setupModules() {
 	}
 
 	for _, v := range cfg.External {
-		e := modules.External{
+		e := &modules.External{
 			ModuleName: v.Name,
 		}
 

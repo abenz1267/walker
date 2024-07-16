@@ -48,6 +48,8 @@ func (h Hyprland) Setup(cfg *config.Config) Workable {
 	return b
 }
 
+func (h Hyprland) Refresh() {}
+
 func (h *Hyprland) monitorWindows() {
 	for {
 		clear(h.windows)

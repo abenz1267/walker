@@ -33,6 +33,8 @@ func (c Clipboard) SwitcherExclusive() bool {
 	return c.switcherExclusive
 }
 
+func (c Clipboard) Refresh() {}
+
 type ClipboardItem struct {
 	Content string    `json:"content,omitempty"`
 	Time    time.Time `json:"time,omitempty"`

@@ -77,3 +77,5 @@ func (cc Commands) Setup(cfg *config.Config) Workable {
 
 	return c
 }
+
+func (c Commands) Refresh() {}

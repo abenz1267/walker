@@ -18,6 +18,8 @@ type SSH struct {
 	entries           []Entry
 }
 
+func (s SSH) Refresh() {}
+
 func (s SSH) Entries(ctx context.Context, term string) []Entry {
 	fields := strings.Fields(term)
 

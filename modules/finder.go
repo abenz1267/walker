@@ -16,6 +16,8 @@ type Finder struct {
 	switcherExclusive bool
 }
 
+func (f Finder) Refresh() {}
+
 func (f Finder) Entries(ctx context.Context, term string) []Entry {
 	e := []Entry{}
 

@@ -80,6 +80,8 @@ func (w Websearch) Setup(cfg *config.Config) Workable {
 	return w
 }
 
+func (w Websearch) Refresh() {}
+
 func (w Websearch) Prefix() string {
 	return w.prefix
 }

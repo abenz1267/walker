@@ -57,7 +57,8 @@
     "height": 300,
     "margin_top": 10,
     "always_show": true,
-    "hide_sub": false
+    "hide_sub": false,
+    "max_entries": 50
   },
   "orientation": "vertical",
   "icons": {

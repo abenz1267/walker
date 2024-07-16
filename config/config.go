@@ -130,6 +130,7 @@ type List struct {
 	AlwaysShow  bool `json:"always_show,omitempty"`
 	FixedHeight bool `json:"fixed_height,omitempty"`
 	HideSub     bool `json:"hide_sub,omitempty"`
+	MaxEntries  int  `json:"max_entries,omitempty"`
 }
 
 func Get(config string) *Config {
@@ -152,6 +153,11 @@ func Get(config string) *Config {
 	if len(cfg.Modules) == 0 {
 		log.Println("no modules configured")
 		os.Exit(1)
+	}
+
+	// defaults
+	if cfg.List.MaxEntries == 0 {
+		cfg.List.MaxEntries = 50
 	}
 
 	return cfg

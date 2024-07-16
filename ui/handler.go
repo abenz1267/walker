@@ -30,6 +30,10 @@ func (h *Handler) handle() {
 
 			sortEntries(h.entries)
 
+			if len(h.entries) > cfg.List.MaxEntries {
+				h.entries = h.entries[:cfg.List.MaxEntries]
+			}
+
 			if len(h.entries) > 0 {
 				glib.IdleAdd(func() {
 					ui.items.Splice(0, int(ui.items.NItems()), h.entries...)

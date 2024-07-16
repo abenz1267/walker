@@ -59,7 +59,6 @@ type UI struct {
 	typeahead     *gtk.SearchEntry
 	search        *gtk.SearchEntry
 	list          *gtk.ListView
-	listModelType *gioutil.ListModelType[modules.Entry]
 	items         *gioutil.ListModel[modules.Entry]
 	selection     *gtk.SingleSelection
 	prefixClasses map[string][]string
@@ -171,8 +170,7 @@ func setupUI(app *gtk.Application) {
 
 	builder := gtk.NewBuilderFromString(layout)
 
-	listModelType := gioutil.NewListModelType[modules.Entry]()
-	items := listModelType.New()
+	items := gioutil.NewListModel[modules.Entry]()
 
 	ui = &UI{
 		app:           app,
@@ -185,7 +183,6 @@ func setupUI(app *gtk.Application) {
 		appwin:        builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
 		search:        builder.GetObject("search").Cast().(*gtk.SearchEntry),
 		list:          builder.GetObject("list").Cast().(*gtk.ListView),
-		listModelType: &listModelType,
 		items:         items,
 		selection:     gtk.NewSingleSelection(items.ListModel),
 		prefixClasses: make(map[string][]string),
@@ -356,7 +353,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 	factory.ConnectBind(func(object *coreglib.Object) {
 		item := object.Cast().(*gtk.ListItem)
 		valObj := ui.items.Item(item.Position())
-		val := ui.listModelType.ObjectValue(valObj)
+		val := gioutil.ObjectValue[modules.Entry](valObj)
 		child := item.Child()
 
 		if child == nil {

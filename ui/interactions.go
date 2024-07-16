@@ -17,6 +17,7 @@ import (
 	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/state"
 	"github.com/abenz1267/walker/util"
+	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -422,7 +423,7 @@ func activateItem(keepOpen, selectNext bool) {
 		return
 	}
 
-	entry := ui.listModelType.ObjectValue(ui.items.Item(ui.selection.Selected()))
+	entry := gioutil.ObjectValue[modules.Entry](ui.items.Item(ui.selection.Selected()))
 
 	if entry.Sub == "Walker" {
 		commands[entry.Exec]()
@@ -533,6 +534,10 @@ const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 var cancel context.CancelFunc
 
 func process() {
+	if cancel != nil {
+		cancel()
+	}
+
 	if cfg.IgnoreMouse {
 		ui.list.SetCanTarget(false)
 	}
@@ -553,10 +558,6 @@ func process() {
 
 	if !appstate.IsRunning {
 		return
-	}
-
-	if cancel != nil {
-		cancel()
 	}
 
 	text := strings.TrimSpace(ui.search.Text())

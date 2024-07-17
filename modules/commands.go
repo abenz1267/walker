@@ -28,12 +28,7 @@ func (c Commands) SwitcherExclusive() bool {
 	return c.switcherExclusive
 }
 
-func (cc Commands) Setup(cfg *config.Config) Workable {
-	module := Find(cfg.Modules, cc.Name())
-	if module == nil {
-		return nil
-	}
-
+func (cc Commands) Setup(cfg *config.Config, module *config.Module) Workable {
 	c := &Commands{
 		prefix:            module.Prefix,
 		switcherExclusive: module.SwitcherExclusive,

@@ -21,7 +21,7 @@ type Workable interface {
 	Prefix() string
 	Name() string
 	SwitcherExclusive() bool
-	Setup(cfg *config.Config) Workable
+	Setup(cfg *config.Config, config *config.Module) Workable
 	Refresh()
 }
 

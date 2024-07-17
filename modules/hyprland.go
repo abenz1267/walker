@@ -23,12 +23,7 @@ func (h Hyprland) SwitcherExclusive() bool {
 	return h.switcherExclusive
 }
 
-func (h Hyprland) Setup(cfg *config.Config) Workable {
-	module := Find(cfg.Modules, h.Name())
-	if module == nil {
-		return nil
-	}
-
+func (h Hyprland) Setup(cfg *config.Config, module *config.Module) Workable {
 	b := &Hyprland{}
 
 	pth, _ := exec.LookPath("hyprctl")

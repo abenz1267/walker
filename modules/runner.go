@@ -28,12 +28,7 @@ func (r Runner) SwitcherExclusive() bool {
 	return r.switcherExclusive
 }
 
-func (r Runner) Setup(cfg *config.Config) Workable {
-	module := Find(cfg.Modules, r.Name())
-	if module == nil {
-		return nil
-	}
-
+func (r Runner) Setup(cfg *config.Config, module *config.Module) Workable {
 	r.prefix = module.Prefix
 	r.switcherExclusive = module.SwitcherExclusive
 

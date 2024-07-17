@@ -71,10 +71,14 @@ func setupModules() {
 		appstate.Clipboard,
 	}
 
+	externals := make(map[string]struct{})
+
 	for _, v := range cfg.External {
 		e := &modules.External{
 			ModuleName: v.Name,
 		}
+
+		externals[e.Name()] = struct{}{}
 
 		internals = append(internals, e)
 	}
@@ -92,7 +96,17 @@ func setupModules() {
 			continue
 		}
 
-		w := v.Setup(cfg)
+		s := modules.Find(cfg.Modules, v.Name())
+
+		if _, ok := externals[v.Name()]; ok {
+			s = modules.Find(cfg.External, v.Name())
+		}
+
+		if s == nil {
+			continue
+		}
+
+		w := v.Setup(cfg, s)
 		if w != nil {
 			procs[w.Prefix()] = append(procs[w.Prefix()], w)
 		}
@@ -101,9 +115,14 @@ func setupModules() {
 	// setup switcher individually
 	switcher := modules.Switcher{Procs: procs}
 
-	s := switcher.Setup(cfg)
-	if s != nil {
-		procs[s.Prefix()] = append(procs[s.Prefix()], s)
+	module := modules.Find(cfg.Modules, switcher.Name())
+
+	if module != nil {
+		s := switcher.Setup(cfg, module)
+
+		if s != nil {
+			procs[s.Prefix()] = append(procs[s.Prefix()], s)
+		}
 	}
 
 	clear(ui.prefixClasses)

@@ -32,12 +32,7 @@ func (a Applications) SwitcherExclusive() bool {
 	return a.switcherExclusive
 }
 
-func (a Applications) Setup(cfg *config.Config) Workable {
-	module := Find(cfg.Modules, a.Name())
-	if module == nil {
-		return nil
-	}
-
+func (a Applications) Setup(cfg *config.Config, module *config.Module) Workable {
 	a.prefix = module.Prefix
 	a.switcherExclusive = module.SwitcherExclusive
 	a.enableCache = cfg.Applications.EnableCache

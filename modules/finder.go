@@ -71,13 +71,8 @@ func (f Finder) SwitcherExclusive() bool {
 	return f.switcherExclusive
 }
 
-func (Finder) Setup(cfg *config.Config) Workable {
+func (Finder) Setup(cfg *config.Config, module *config.Module) Workable {
 	f := &Finder{}
-
-	module := Find(cfg.Modules, f.Name())
-	if module == nil {
-		return nil
-	}
 
 	f.prefix = module.Prefix
 	f.switcherExclusive = module.SwitcherExclusive

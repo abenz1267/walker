@@ -86,7 +86,7 @@ func (c Clipboard) Name() string {
 	return ClipboardName
 }
 
-func (c Clipboard) Setup(cfg *config.Config) modules.Workable {
+func (c Clipboard) Setup(cfg *config.Config, module *config.Module) modules.Workable {
 	pth, _ := exec.LookPath("wl-copy")
 	if pth == "" {
 		log.Println("currently wl-clipboard only.")
@@ -96,11 +96,6 @@ func (c Clipboard) Setup(cfg *config.Config) modules.Workable {
 	pth, _ = exec.LookPath("wl-paste")
 	if pth == "" {
 		log.Println("currently wl-clipboard only.")
-		return nil
-	}
-
-	module := modules.Find(cfg.Modules, c.Name())
-	if module == nil {
 		return nil
 	}
 

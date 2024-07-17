@@ -48,13 +48,8 @@ func (s SSH) SwitcherExclusive() bool {
 	return s.switcherExclusive
 }
 
-func (SSH) Setup(cfg *config.Config) Workable {
+func (SSH) Setup(cfg *config.Config, module *config.Module) Workable {
 	s := &SSH{}
-
-	module := Find(cfg.Modules, s.Name())
-	if module == nil {
-		return nil
-	}
 
 	s.prefix = module.Prefix
 	s.switcherExclusive = module.SwitcherExclusive

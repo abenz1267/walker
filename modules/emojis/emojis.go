@@ -37,12 +37,7 @@ func (e Emojis) SwitcherExclusive() bool {
 	return e.switcherExclusive
 }
 
-func (e Emojis) Setup(cfg *config.Config) modules.Workable {
-	module := modules.Find(cfg.Modules, e.Name())
-	if module == nil {
-		return nil
-	}
-
+func (e Emojis) Setup(cfg *config.Config, module *config.Module) modules.Workable {
 	e.prefix = module.Prefix
 	e.switcherExclusive = module.SwitcherExclusive
 

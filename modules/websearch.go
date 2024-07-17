@@ -38,12 +38,7 @@ func (w Websearch) SwitcherExclusive() bool {
 	return w.switcherExclusive
 }
 
-func (w Websearch) Setup(cfg *config.Config) Workable {
-	module := Find(cfg.Modules, w.Name())
-	if module == nil {
-		return nil
-	}
-
+func (w Websearch) Setup(cfg *config.Config, module *config.Module) Workable {
 	w.engines = cfg.Websearch.Engines
 	w.prefix = module.Prefix
 	w.switcherExclusive = module.SwitcherExclusive

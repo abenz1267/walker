@@ -48,12 +48,7 @@ func (s Switcher) Name() string {
 	return "switcher"
 }
 
-func (s Switcher) Setup(cfg *config.Config) Workable {
-	module := Find(cfg.Modules, s.Name())
-	if module == nil {
-		return nil
-	}
-
+func (s Switcher) Setup(cfg *config.Config, module *config.Module) Workable {
 	s.prefix = module.Prefix
 
 	return s

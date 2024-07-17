@@ -30,12 +30,7 @@ func (e External) SwitcherExclusive() bool {
 	return e.switcherExclusive
 }
 
-func (e *External) Setup(cfg *config.Config) Workable {
-	module := Find(cfg.External, e.Name())
-	if module == nil {
-		return nil
-	}
-
+func (e *External) Setup(cfg *config.Config, module *config.Module) Workable {
 	e.prefix = module.Prefix
 	e.switcherExclusive = module.SwitcherExclusive
 	e.src = os.ExpandEnv(module.Src)

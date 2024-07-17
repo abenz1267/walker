@@ -72,6 +72,9 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 		return entries
 	}
 
+	e.src = strings.ReplaceAll(e.src, "~", os.Getenv("HOME"))
+	e.cmd = strings.ReplaceAll(e.cmd, "~", os.Getenv("HOME"))
+
 	if e.prefix != "" {
 		term = strings.TrimPrefix(term, e.prefix)
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bufio"
 	_ "embed"
 	"fmt"
 	"log"
@@ -12,6 +13,7 @@ import (
 	"time"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/state"
 	"github.com/abenz1267/walker/ui"
 	"github.com/abenz1267/walker/util"
@@ -47,6 +49,20 @@ func main() {
 			case "-c", "--config":
 			case "-s", "--style":
 			case "-m", "--modules":
+			case "-d", "--dmenu":
+				forceNew = true
+
+				dmenu := modules.Dmenu{
+					Content: []string{},
+				}
+
+				scanner := bufio.NewScanner(os.Stdin)
+
+				for scanner.Scan() {
+					dmenu.Content = append(dmenu.Content, scanner.Text())
+				}
+
+				state.Dmenu = &dmenu
 			case "--version":
 				fmt.Println(version)
 				return
@@ -98,6 +114,7 @@ func main() {
 
 	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
 	app.AddMainOption("new", 'n', glib.OptionFlagNone, glib.OptionArgNone, "start new instance ignoring service", "")
+	app.AddMainOption("dmenu", 'd', glib.OptionFlagNone, glib.OptionArgNone, "run in dmenu mode", "")
 	app.AddMainOption("config", 'c', glib.OptionFlagNone, glib.OptionArgString, "config file to use", "")
 	app.AddMainOption("style", 's', glib.OptionFlagNone, glib.OptionArgString, "style file to use", "")
 

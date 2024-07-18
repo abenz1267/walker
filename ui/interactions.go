@@ -3,6 +3,7 @@ package ui
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"log"
 	"os"
 	"os/exec"
@@ -59,28 +60,38 @@ func setupCommands() {
 func setupModules() {
 	util.FromGob(filepath.Join(util.CacheDir(), "typeahead.gob"), &tah)
 
-	internals := []modules.Workable{
-		modules.Applications{},
-		modules.Runner{ShellConfig: cfg.ShellConfig},
-		modules.Websearch{},
-		modules.Commands{},
-		modules.Hyprland{},
-		modules.SSH{},
-		modules.Finder{},
-		emojis.Emojis{},
-		appstate.Clipboard,
+	var internals []modules.Workable
+
+	if appstate.Dmenu != nil {
+		internals = []modules.Workable{
+			appstate.Dmenu,
+		}
+	} else {
+		internals = []modules.Workable{
+			modules.Applications{},
+			modules.Runner{ShellConfig: cfg.ShellConfig},
+			modules.Websearch{},
+			modules.Commands{},
+			modules.Hyprland{},
+			modules.SSH{},
+			modules.Finder{},
+			emojis.Emojis{},
+			appstate.Clipboard,
+		}
 	}
 
 	externals := make(map[string]struct{})
 
-	for _, v := range cfg.External {
-		e := &modules.External{
-			ModuleName: v.Name,
+	if appstate.Dmenu == nil {
+		for _, v := range cfg.External {
+			e := &modules.External{
+				ModuleName: v.Name,
+			}
+
+			externals[e.Name()] = struct{}{}
+
+			internals = append(internals, e)
 		}
-
-		externals[e.Name()] = struct{}{}
-
-		internals = append(internals, e)
 	}
 
 	clear(procs)
@@ -102,7 +113,7 @@ func setupModules() {
 			s = modules.Find(cfg.External, v.Name())
 		}
 
-		if s == nil {
+		if s == nil && appstate.Dmenu == nil {
 			continue
 		}
 
@@ -112,16 +123,18 @@ func setupModules() {
 		}
 	}
 
-	// setup switcher individually
-	switcher := modules.Switcher{Procs: procs}
+	if appstate.Dmenu == nil {
+		// setup switcher individually
+		switcher := modules.Switcher{Procs: procs}
 
-	module := modules.Find(cfg.Modules, switcher.Name())
+		module := modules.Find(cfg.Modules, switcher.Name())
 
-	if module != nil {
-		s := switcher.Setup(cfg, module)
+		if module != nil {
+			s := switcher.Setup(cfg, module)
 
-		if s != nil {
-			procs[s.Prefix()] = append(procs[s.Prefix()], s)
+			if s != nil {
+				procs[s.Prefix()] = append(procs[s.Prefix()], s)
+			}
 		}
 	}
 
@@ -454,6 +467,12 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	entry := gioutil.ObjectValue[modules.Entry](ui.items.Item(ui.selection.Selected()))
 
+	if appstate.Dmenu != nil {
+		fmt.Println(entry.Label)
+		closeAfterActivation(keepOpen, selectNext)
+		return
+	}
+
 	if entry.Sub == "Walker" {
 		commands[entry.Exec]()
 		closeAfterActivation(keepOpen, selectNext)
@@ -603,7 +622,7 @@ func process() {
 
 	text := strings.TrimSpace(ui.search.Text())
 
-	if text == "" && cfg.ShowInitialEntries && singleProc == nil && len(appstate.ExplicitModules) == 0 {
+	if text == "" && cfg.ShowInitialEntries && singleProc == nil && len(appstate.ExplicitModules) == 0 && appstate.Dmenu == nil {
 		setInitials()
 		return
 	}
@@ -611,7 +630,7 @@ func process() {
 	var ctx context.Context
 	ctx, cancel = context.WithCancel(context.Background())
 
-	if (ui.search.Text() != "" || singleProc != nil) || (len(appstate.ExplicitModules) > 0 && cfg.ShowInitialEntries) {
+	if (ui.search.Text() != "" || singleProc != nil || appstate.Dmenu != nil) || (len(appstate.ExplicitModules) > 0 && cfg.ShowInitialEntries) {
 		go processAsync(ctx)
 	} else {
 		ui.items.Splice(0, int(ui.items.NItems()))

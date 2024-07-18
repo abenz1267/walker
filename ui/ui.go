@@ -86,7 +86,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 				}
 			}
 
-			if !appstate.IsMeasured {
+			if !appstate.IsMeasured && appstate.Dmenu == nil {
 				fmt.Printf("startup time: %s\n", time.Since(appstate.Started))
 				appstate.IsMeasured = true
 			}
@@ -212,7 +212,7 @@ func setupUI(app *gtk.Application) {
 
 	fc := gtk.NewEventControllerFocus()
 	fc.Connect("enter", func() {
-		if !appstate.IsMeasured {
+		if !appstate.IsMeasured && appstate.Dmenu == nil {
 			fmt.Printf("startup time: %s\n", time.Since(appstate.Started))
 			appstate.IsMeasured = true
 		}

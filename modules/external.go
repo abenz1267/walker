@@ -19,6 +19,7 @@ type External struct {
 	ModuleName        string
 	src               string
 	cmd               string
+	cmdAlt            string
 	cachedOutput      []byte
 	refresh           bool
 	switcherExclusive bool
@@ -35,6 +36,7 @@ func (e *External) Setup(cfg *config.Config, module *config.Module) Workable {
 	e.switcherExclusive = module.SwitcherExclusive
 	e.src = os.ExpandEnv(module.Src)
 	e.cmd = os.ExpandEnv(module.Cmd)
+	e.cmdAlt = os.ExpandEnv(module.CmdAlt)
 	e.terminal = module.Terminal
 
 	if module.SrcOnce != "" {
@@ -74,6 +76,7 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 
 	e.src = strings.ReplaceAll(e.src, "~", os.Getenv("HOME"))
 	e.cmd = strings.ReplaceAll(e.cmd, "~", os.Getenv("HOME"))
+	e.cmdAlt = strings.ReplaceAll(e.cmdAlt, "~", os.Getenv("HOME"))
 
 	if e.prefix != "" {
 		term = strings.TrimPrefix(term, e.prefix)
@@ -81,6 +84,7 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 
 	hasExplicitTerm := false
 	hasExplicitResult := false
+	hasExplicitResultAlt := false
 
 	if strings.Contains(e.src, "%TERM%") {
 		hasExplicitTerm = true
@@ -89,6 +93,10 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 
 	if strings.Contains(e.cmd, "%RESULT%") {
 		hasExplicitResult = true
+	}
+
+	if strings.Contains(e.cmdAlt, "%RESULT%") {
+		hasExplicitResultAlt = true
 	}
 
 	if e.cmd != "" {
@@ -117,11 +125,17 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 				Class:    e.ModuleName,
 				Terminal: e.terminal,
 				Exec:     strings.ReplaceAll(e.cmd, "%RESULT%", txt),
+				ExecAlt:  strings.ReplaceAll(e.cmdAlt, "%RESULT%", txt),
 			}
 
 			if !hasExplicitResult {
 				e.Piped.Content = txt
 				e.Piped.Type = "string"
+			}
+
+			if !hasExplicitResultAlt {
+				e.PipedAlt.Content = txt
+				e.PipedAlt.Type = "string"
 			}
 
 			entries = append(entries, e)

@@ -145,7 +145,7 @@ func setupInteractions(appstate *state.AppState) {
 
 	ui.search.AddController(keycontroller)
 	ui.search.Connect("search-changed", process)
-	ui.search.Connect("activate", func() { activateItem(false, false) })
+	ui.search.Connect("activate", func() { activateItem(false, false, false) })
 
 	listkc := gtk.NewEventControllerKey()
 	listkc.ConnectKeyPressed(handleListKeysPressed)
@@ -209,11 +209,11 @@ func selectActivationMode(val uint, keepOpen bool) {
 	}
 
 	if keepOpen {
-		activateItem(true, false)
+		activateItem(true, false, false)
 		return
 	}
 
-	activateItem(false, false)
+	activateItem(false, false, false)
 }
 
 func enableAM() {
@@ -277,7 +277,7 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 		return true
 	case gdk.KEY_Return:
 		if modifier == gdk.ShiftMask {
-			activateItem(true, true)
+			activateItem(true, true, false)
 		} else {
 			return false
 		}
@@ -349,9 +349,17 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	case gdk.KEY_Super_L:
 		toggleForceTerminal()
 	case gdk.KEY_Return:
-		if modifier == gdk.ShiftMask {
-			activateItem(true, true)
+		isShift := modifier == gdk.ShiftMask
+		isAlt := modifier == gdk.AltMask
+
+		isAltShift := modifier == (gdk.ShiftMask | gdk.AltMask)
+
+		if isAltShift {
+			isShift = true
+			isAlt = true
 		}
+
+		activateItem(isShift, isShift, isAlt)
 	case gdk.KEY_Escape:
 		if singleProc != nil {
 			disableSingleProc()
@@ -439,7 +447,7 @@ func disableSingleProc() {
 	}
 }
 
-func activateItem(keepOpen, selectNext bool) {
+func activateItem(keepOpen, selectNext, alt bool) {
 	if ui.list.Model().NItems() == 0 {
 		return
 	}
@@ -469,6 +477,10 @@ func activateItem(keepOpen, selectNext bool) {
 
 	toRun, args := util.ParseShellCommand(entry.Exec)
 
+	if alt {
+		toRun, args = util.ParseShellCommand(entry.ExecAlt)
+	}
+
 	if len(entry.RawExec) > 0 {
 		toRun, args = entry.RawExec[0], entry.RawExec[1:]
 	}
@@ -495,19 +507,10 @@ func activateItem(keepOpen, selectNext bool) {
 		Foreground: false,
 	}
 
-	if entry.Piped.Content != "" {
-		switch entry.Piped.Type {
-		case "string":
-			cmd.Stdin = strings.NewReader(entry.Piped.Content)
-		case "file":
-			b, err := os.ReadFile(entry.Piped.Content)
-			if err != nil {
-				log.Panic(err)
-			}
+	setStdin(cmd, &entry.Piped)
 
-			r := bytes.NewReader(b)
-			cmd.Stdin = r
-		}
+	if alt {
+		setStdin(cmd, &entry.PipedAlt)
 	}
 
 	if len(args) != 0 {
@@ -528,6 +531,23 @@ func activateItem(keepOpen, selectNext bool) {
 	}
 
 	closeAfterActivation(keepOpen, selectNext)
+}
+
+func setStdin(cmd *exec.Cmd, piped *modules.Piped) {
+	if piped.Content != "" {
+		switch piped.Type {
+		case "string":
+			cmd.Stdin = strings.NewReader(piped.Content)
+		case "file":
+			b, err := os.ReadFile(piped.Content)
+			if err != nil {
+				log.Panic(err)
+			}
+
+			r := bytes.NewReader(b)
+			cmd.Stdin = r
+		}
+	}
 }
 
 func closeAfterActivation(keepOpen, sn bool) {

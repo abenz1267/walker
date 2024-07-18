@@ -37,9 +37,11 @@ type Entry struct {
 	Label            string       `json:"label,omitempty"`
 	Sub              string       `json:"sub,omitempty"`
 	Exec             string       `json:"exec,omitempty"`
+	ExecAlt          string       `json:"exec_alt,omitempty"`
 	RawExec          []string     `json:"raw_exec,omitempty"`
 	Terminal         bool         `json:"terminal,omitempty"`
-	Piped            Piped        `json:"piped,omitempty"`
+	Piped            Piped        `json:"-"`
+	PipedAlt         Piped        `json:"-"`
 	Icon             string       `json:"icon,omitempty"`
 	IconIsImage      bool         `json:"icon_is_image,omitempty"`
 	DragDrop         bool         `json:"drag_drop,omitempty"`

@@ -2,6 +2,7 @@
   "placeholder": "Search...",
   "ignore_mouse": false,
   "ssh_host_file": "",
+  "force_keyboard_focus": false,
   "disable_up_history": false,
   "enable_typeahead": false,
   "show_initial_entries": true,

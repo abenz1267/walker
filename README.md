@@ -124,13 +124,15 @@ Definition for modules:
 type Module struct {
 	Prefix            string `json:"prefix,omitempty"`
 	Name              string `json:"name,omitempty"`
-    SrcOnce           string `json:"src_once,omitempty"`
-    SrcOnceRefresh    bool   `json:"src_once_refresh,omitempty"`
+	SrcOnce           string `json:"src_once,omitempty"`
+	SrcOnceRefresh    bool   `json:"src_once_refresh,omitempty"`
 	Src               string `json:"src,omitempty"`
 	Cmd               string `json:"cmd,omitempty"`
+	CmdAlt            string `json:"cmd_alt,omitempty"`
 	SpecialLabel      string `json:"special_label,omitempty"`
 	History           bool   `json:"history,omitempty"`
 	SwitcherExclusive bool   `json:"switcher_exclusive,omitempty"`
+	Terminal          bool   `json:"terminal,omitempty"`
 }
 ```
 
@@ -186,20 +188,18 @@ If you want to extend walker with your own modules, you can do that in the confi
 }
 ```
 
-Your plugin simply needs to return json with the following format:
+Your plugin simply needs to return a json-array with objects of the following type (not all fields mandatory...relax):
 
 ```go
 type Entry struct {
 	Label            string       `json:"label,omitempty"`
 	Sub              string       `json:"sub,omitempty"`
 	Exec             string       `json:"exec,omitempty"`
+	ExecAlt          string       `json:"exec_alt,omitempty"`
 	RawExec          []string     `json:"raw_exec,omitempty"`
 	Terminal         bool         `json:"terminal,omitempty"`
-	Piped            Piped        `json:"piped,omitempty"`
 	Icon             string       `json:"icon,omitempty"`
 	IconIsImage      bool         `json:"icon_is_image,omitempty"`
-	DragDrop         bool         `json:"drag_drop,omitempty"`
-	DragDropData     string       `json:"drag_drop_data,omitempty"`
 	Image            string       `json:"image,omitempty"`
 	HideText         bool         `json:"hide_text,omitempty"`
 	Categories       []string     `json:"categories,omitempty"`
@@ -211,10 +211,8 @@ type Entry struct {
 	RecalculateScore bool         `json:"recalculate_score,omitempty"`
 	ScoreFinal       float64      `json:"score_final,omitempty"`
 	ScoreFuzzy       float64      `json:"score_fuzzy,omitempty"`
-	Used             int          `json:"-"`
-	DaysSinceUsed    int          `json:"-"`
 	SpecialLabel     string       `json:"special_label,omitempty"`
-	LastUsed         time.Time    `json:"-"`
+	InitialClass     string       `json:"initial_class,omitempty"`
 }
 ```
 

@@ -197,7 +197,7 @@ func setupUI(app *gtk.Application) {
 
 	ui.list.SetSingleClickActivate(true)
 	ui.list.ConnectActivate(func(pos uint) {
-		activateItem(false, false)
+		activateItem(false, false, false)
 	})
 
 	if cfg.Search.MarginSpinner != 0 {

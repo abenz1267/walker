@@ -45,7 +45,6 @@ func main() {
 			switch args[0] {
 			case "-n", "--new":
 				forceNew = true
-				appName = fmt.Sprintf("%s-%d", appName, time.Now().Unix())
 			case "-c", "--config":
 			case "-s", "--style":
 			case "-m", "--modules":
@@ -75,6 +74,10 @@ func main() {
 				return
 			}
 		}
+	}
+
+	if forceNew {
+		appName = fmt.Sprintf("%s-%d", appName, time.Now().Unix())
 	}
 
 	if forceNew && state.IsService {

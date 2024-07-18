@@ -23,6 +23,7 @@
 - start with explicit modules, style or config
 - arrow-up history
 - drag&drop support
+- dmenu-mode
 
 ## Builtin Modules
 
@@ -264,6 +265,7 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 | `--new`, `-n`     | Start new instance ignoring service |
 | `--config`, `-c`  | Config file to use                  |
 | `--style`, `-s`   | Style file to use                   |
+| `--dmenu`, `-d`   | Start in dmenu mode                 |
 
 ## Keybinds
 

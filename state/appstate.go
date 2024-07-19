@@ -16,6 +16,7 @@ type AppState struct {
 	HasUI               bool
 	Clipboard           modules.Workable
 	Dmenu               modules.Workable
+	Password            bool
 	ExplicitModules     []string
 	ExplicitConfig      string
 	ExplicitStyle       string

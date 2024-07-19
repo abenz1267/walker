@@ -11,6 +11,14 @@
   border-radius: 2px;
 }
 
+#password {
+  outline: none;
+  outline-width: 0px;
+  border-radius: 0;
+  box-shadow: none;
+  background: #1f1f28;
+}
+
 #searchwrapper {
 }
 

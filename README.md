@@ -24,6 +24,7 @@
 - arrow-up history
 - drag&drop support
 - dmenu-mode
+- run as password input
 
 ## Builtin Modules
 
@@ -268,6 +269,7 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 | `--keepsort`, `-k`    | Don't sort alphabetically           |
 | `--placeholder`, `-p` | Placeholder text                    |
 | `--labelcolumn`, `-l` | Column to use for the label         |
+| `--password`, `-y`    | Launch in password mode             |
 
 ## Keybinds
 

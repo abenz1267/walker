@@ -63,6 +63,7 @@ type UI struct {
 	selection     *gtk.SingleSelection
 	prefixClasses map[string][]string
 	iconTheme     *gtk.IconTheme
+	password      *gtk.PasswordEntry
 }
 
 func Activate(state *state.AppState) func(app *gtk.Application) {
@@ -191,6 +192,19 @@ func setupUI(app *gtk.Application) {
 		items:         items,
 		selection:     gtk.NewSingleSelection(items.ListModel),
 		prefixClasses: make(map[string][]string),
+	}
+
+	if appstate.Password {
+		cfg.Search.HideIcons = true
+		cfg.Search.HideSpinner = true
+
+		ui.searchwrapper.SetVisible(false)
+
+		pw := gtk.NewPasswordEntry()
+		pw.SetName("password")
+
+		ui.password = pw
+		ui.box.Append(pw)
 	}
 
 	if cfg.Icons.Theme != "" {

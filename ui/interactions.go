@@ -153,12 +153,35 @@ func setupInteractions(appstate *state.AppState) {
 
 	setupModules()
 
+	if appstate.Password {
+		controller := gtk.NewEventControllerKey()
+		controller.ConnectKeyPressed(handlePasswordKeysPressed)
+
+		ui.password.AddController(controller)
+		ui.password.Connect("activate", func() {
+			fmt.Print(ui.password.Text())
+			closeAfterActivation(false, false)
+		})
+
+		return
+	}
+
 	keycontroller := gtk.NewEventControllerKey()
 	keycontroller.ConnectKeyPressed(handleSearchKeysPressed)
 
 	ui.search.AddController(keycontroller)
 	ui.search.Connect("search-changed", process)
-	ui.search.Connect("activate", func() { activateItem(false, false, false) })
+	ui.search.Connect("activate", func() {
+		if appstate.Password {
+			fmt.Print(ui.search.Text())
+
+			closeAfterActivation(false, false)
+
+			return
+		}
+
+		activateItem(false, false, false)
+	})
 
 	listkc := gtk.NewEventControllerKey()
 	listkc.ConnectKeyPressed(handleListKeysPressed)
@@ -349,6 +372,16 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 var forceTerminal bool
 
 var historyIndex = 0
+
+func handlePasswordKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
+	switch val {
+	case gdk.KEY_Escape:
+		closeAfterActivation(false, false)
+		return true
+	}
+
+	return false
+}
 
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 && !cfg.ActivationMode.UseFKeys {
@@ -585,7 +618,7 @@ func process() {
 
 	ui.spinner.SetCSSClasses([]string{"visible"})
 
-	if cfg.EnableTypeahead {
+	if cfg.EnableTypeahead && appstate.Password {
 		ui.typeahead.SetText("")
 
 		if strings.TrimSpace(ui.search.Text()) != "" {

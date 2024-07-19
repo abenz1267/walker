@@ -1,50 +1,50 @@
 <interface>
-  <object class="GtkApplicationWindow" id="win">
-    <property name="title">Walker</property>
-    <property name="name">window</property>
-    <child>
-      <object class="GtkBox" id="box">
-        <property name="orientation">vertical</property>
-        <property name="name">box</property>
+    <object class="GtkApplicationWindow" id="win">
+        <property name="title">Walker</property>
+        <property name="name">window</property>
         <child>
-          <object class="GtkBox" id="searchwrapper">
-            <property name="orientation">horizontal</property>
-            <property name="name">searchwrapper</property>
-            <child>
-              <object class="GtkOverlay">
-                <child type="overlay">
-                  <object class="GtkSearchEntry" id="search">
-                    <property name="name">search</property>
-                  </object>
+            <object class="GtkBox" id="box">
+                <property name="orientation">vertical</property>
+                <property name="name">box</property>
+                <child>
+                    <object class="GtkBox" id="searchwrapper">
+                        <property name="orientation">horizontal</property>
+                        <property name="name">searchwrapper</property>
+                        <child>
+                            <object class="GtkOverlay">
+                                <child type="overlay">
+                                    <object class="GtkSearchEntry" id="search">
+                                        <property name="name">search</property>
+                                    </object>
+                                </child>
+                                <child>
+                                    <object class="GtkSearchEntry" id="typeahead">
+                                        <property name="name">typeahead</property>
+                                    </object>
+                                </child>
+                            </object>
+                        </child>
+                        <child>
+                            <object class="GtkSpinner" id="spinner">
+                                <property name="name">spinner</property>
+                            </object>
+                        </child>
+                    </object>
                 </child>
                 <child>
-                  <object class="GtkSearchEntry" id="typeahead">
-                    <property name="name">typeahead</property>
-                  </object>
+                    <object class="GtkScrolledWindow" id="scroll">
+                        <property name="propagate-natural-height">true</property>
+                        <property name="propagate-natural-width">true</property>
+                        <property name="hscrollbar-policy">never</property>
+                        <property name="overlay-scrolling">true</property>
+                        <child>
+                            <object class="GtkListView" id="list">
+                                <property name="name">list</property>
+                            </object>
+                        </child>
+                    </object>
                 </child>
-              </object>
-            </child>
-            <child>
-              <object class="GtkSpinner" id="spinner">
-                <property name="name">spinner</property>
-              </object>
-            </child>
-          </object>
+            </object>
         </child>
-        <child>
-          <object class="GtkScrolledWindow" id="scroll">
-            <property name="propagate-natural-height">true</property>
-            <property name="propagate-natural-width">true</property>
-            <property name="hscrollbar-policy">never</property>
-            <property name="overlay-scrolling">true</property>
-            <child>
-              <object class="GtkListView" id="list">
-                <property name="name">list</property>
-              </object>
-            </child>
-          </object>
-        </child>
-      </object>
-    </child>
-  </object>
+    </object>
 </interface>

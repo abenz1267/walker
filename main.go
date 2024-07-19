@@ -71,6 +71,11 @@ func main() {
 				state.KeepSort = true
 			}
 
+			if slices.Contains(args, "-y") || slices.Contains(args, "--password") {
+				forceNew = true
+				state.Password = true
+			}
+
 			if slices.Contains(args, "--gapplication-service") {
 				state.IsService = true
 			}
@@ -123,6 +128,7 @@ func main() {
 	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
 	app.AddMainOption("new", 'n', glib.OptionFlagNone, glib.OptionArgNone, "start new instance ignoring service", "")
 	app.AddMainOption("keepsort", 'k', glib.OptionFlagNone, glib.OptionArgNone, "don't sort alphabetically", "")
+	app.AddMainOption("password", 'y', glib.OptionFlagNone, glib.OptionArgNone, "launch in password mode", "")
 	app.AddMainOption("dmenu", 'd', glib.OptionFlagNone, glib.OptionArgNone, "run in dmenu mode", "")
 	app.AddMainOption("config", 'c', glib.OptionFlagNone, glib.OptionArgString, "config file to use", "")
 	app.AddMainOption("style", 's', glib.OptionFlagNone, glib.OptionArgString, "style file to use", "")
@@ -160,8 +166,8 @@ func main() {
 		}
 
 		if modulesString != nil && modulesString.String() != "" {
-			modules := strings.Split(modulesString.String(), ",")
-			state.ExplicitModules = modules
+			m := strings.Split(modulesString.String(), ",")
+			state.ExplicitModules = m
 		}
 
 		if configString != nil && configString.String() != "" {

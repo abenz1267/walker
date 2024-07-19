@@ -146,10 +146,6 @@ func main() {
 				log.Panicln(err)
 			}
 
-			if col < 1 {
-				col = 1
-			}
-
 			dmenu.LabelColumn = col
 		}
 

@@ -13,15 +13,21 @@ type Dmenu struct {
 }
 
 func (d Dmenu) Entries(ctx context.Context, term string) []Entry {
-	if d.LabelColumn < 1 {
-		d.LabelColumn = 1
-	}
-
 	entries := []Entry{}
 
 	for _, v := range d.Content {
+		label := v
+
+		if d.LabelColumn > 0 {
+			split := strings.Split(v, "\t")
+
+			if len(split) >= d.LabelColumn {
+				label = split[d.LabelColumn-1]
+			}
+		}
+
 		entries = append(entries, Entry{
-			Label: strings.Split(v, "\t")[d.LabelColumn-1],
+			Label: label,
 			Sub:   "Dmenu",
 			Exec:  v,
 		})

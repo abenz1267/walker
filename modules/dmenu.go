@@ -2,6 +2,7 @@ package modules
 
 import (
 	"context"
+	"strconv"
 	"strings"
 
 	"github.com/abenz1267/walker/config"
@@ -9,6 +10,7 @@ import (
 
 type Dmenu struct {
 	Content     []string
+	Separator   string
 	LabelColumn int
 }
 
@@ -19,7 +21,7 @@ func (d Dmenu) Entries(ctx context.Context, term string) []Entry {
 		label := v
 
 		if d.LabelColumn > 0 {
-			split := strings.Split(v, "\t")
+			split := strings.Split(v, d.Separator)
 
 			if len(split) >= d.LabelColumn {
 				label = split[d.LabelColumn-1]
@@ -48,7 +50,16 @@ func (Dmenu) SwitcherExclusive() bool {
 	return false
 }
 
-func (d Dmenu) Setup(cfg *config.Config, config *config.Module) Workable {
+func (d *Dmenu) Setup(cfg *config.Config, config *config.Module) Workable {
+	if d.Separator == "" {
+		d.Separator = "\t"
+	}
+
+	s, err := strconv.Unquote(d.Separator)
+	if err == nil {
+		d.Separator = s
+	}
+
 	return d
 }
 

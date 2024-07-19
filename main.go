@@ -128,6 +128,7 @@ func main() {
 	app.AddMainOption("style", 's', glib.OptionFlagNone, glib.OptionArgString, "style file to use", "")
 	app.AddMainOption("placeholder", 'p', glib.OptionFlagNone, glib.OptionArgString, "placeholder text", "")
 	app.AddMainOption("labelcolumn", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
+	app.AddMainOption("separator", 't', glib.OptionFlagNone, glib.OptionArgString, "column separator", "")
 
 	app.Connect("activate", ui.Activate(state))
 
@@ -139,6 +140,11 @@ func main() {
 		styleString := options.LookupValue("style", glib.NewVariantString("").Type())
 		placeholderString := options.LookupValue("placeholder", glib.NewVariantString("").Type())
 		labelColumnString := options.LookupValue("labelcolumn", glib.NewVariantString("").Type())
+		separatorString := options.LookupValue("separator", glib.NewVariantString("").Type())
+
+		if separatorString != nil && separatorString.String() != "" {
+			dmenu.Separator = separatorString.String()
+		}
 
 		if labelColumnString != nil && labelColumnString.String() != "" {
 			col, err := strconv.Atoi(labelColumnString.String())

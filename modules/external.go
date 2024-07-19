@@ -4,16 +4,13 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/url"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 
 	"github.com/abenz1267/walker/config"
-	"github.com/abenz1267/walker/util"
 )
 
 type External struct {
@@ -47,32 +44,6 @@ func (e *External) Setup(cfg *config.Config, module *config.Module) Workable {
 	}
 
 	e.refresh = module.SrcOnceRefresh
-
-	if module.CmdToScript {
-		script := fmt.Sprintf("walker-%s.sh", url.QueryEscape(e.ModuleName))
-		content := fmt.Sprintf("#!/bin/bash\n%s", e.cmd)
-
-		path := filepath.Join(util.TmpDir(), script)
-		err := os.WriteFile(path, []byte(content), 0o755)
-		if err != nil {
-			log.Panicln(err)
-		}
-
-		e.cmd = path
-	}
-
-	if module.CmdAltToScript {
-		script := fmt.Sprintf("walker-%s-alt.sh", url.QueryEscape(e.ModuleName))
-		content := fmt.Sprintf("#!/bin/bash\n%s", e.cmdAlt)
-
-		pathAlt := filepath.Join(util.TmpDir(), script)
-		err := os.WriteFile(pathAlt, []byte(content), 0o755)
-		if err != nil {
-			log.Panicln(err)
-		}
-
-		e.cmdAlt = pathAlt
-	}
 
 	return e
 }
@@ -172,9 +143,7 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 		return entries
 	}
 
-	name, args := util.ParseShellCommand(e.src)
-
-	cmd := exec.Command(name, args...)
+	cmd := exec.Command("sh", "-c", e.src)
 
 	if !hasExplicitTerm {
 		cmd.Stdin = strings.NewReader(term)
@@ -200,8 +169,7 @@ func (e External) Entries(ctx context.Context, term string) []Entry {
 }
 
 func (e External) getSrcOutput(hasExplicitTerm bool, term string) []byte {
-	name, args := util.ParseShellCommand(e.src)
-	cmd := exec.Command(name, args...)
+	cmd := exec.Command("sh", "-c", e.src)
 
 	if !hasExplicitTerm && term != "" {
 		cmd.Stdin = strings.NewReader(term)

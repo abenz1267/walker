@@ -494,31 +494,16 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		}
 	}
 
-	toRun, args := util.ParseShellCommand(entry.Exec)
-
-	if alt {
-		toRun, args = util.ParseShellCommand(entry.ExecAlt)
-	}
-
-	if len(entry.RawExec) > 0 {
-		toRun, args = entry.RawExec[0], entry.RawExec[1:]
-	}
-
-	if toRun == "" {
-		return
-	}
-
 	if cfg.Terminal != "" {
 		if entry.Terminal || forceTerminal {
-			args = append([]string{"-e", toRun}, args...)
-			toRun = cfg.Terminal
+			entry.Exec = fmt.Sprintf("%s -e %s", cfg.Terminal, entry.Exec)
 		}
 	} else {
 		log.Println("terminal is not set")
 		return
 	}
 
-	cmd := exec.Command(toRun)
+	cmd := exec.Command("sh", "-c", entry.Exec)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setsid: true,
 		// Setpgid:    true,
@@ -530,10 +515,6 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	if alt {
 		setStdin(cmd, &entry.PipedAlt)
-	}
-
-	if len(args) != 0 {
-		cmd = exec.Command(toRun, args...)
 	}
 
 	if entry.History {

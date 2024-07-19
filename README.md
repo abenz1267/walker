@@ -130,8 +130,6 @@ type Module struct {
 	Src               string `json:"src,omitempty"`
 	Cmd               string `json:"cmd,omitempty"`
 	CmdAlt            string `json:"cmd_alt,omitempty"`
-    CmdToScript       bool   `json:"cmd_to_script,omitempty"`
-    CmdAltToScript    bool   `json:"cmd_alt_to_script,omitempty"`
 	SpecialLabel      string `json:"special_label,omitempty"`
 	History           bool   `json:"history,omitempty"`
 	SwitcherExclusive bool   `json:"switcher_exclusive,omitempty"`

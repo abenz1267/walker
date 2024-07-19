@@ -13,6 +13,10 @@ type Dmenu struct {
 }
 
 func (d Dmenu) Entries(ctx context.Context, term string) []Entry {
+	if d.LabelColumn < 1 {
+		d.LabelColumn = 1
+	}
+
 	entries := []Entry{}
 
 	for _, v := range d.Content {

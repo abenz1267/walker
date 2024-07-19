@@ -50,7 +50,8 @@ func main() {
 				forceNew = true
 
 				dmenu = &modules.Dmenu{
-					Content: []string{},
+					Content:     []string{},
+					LabelColumn: 0,
 				}
 
 				scanner := bufio.NewScanner(os.Stdin)
@@ -143,6 +144,10 @@ func main() {
 			col, err := strconv.Atoi(labelColumnString.String())
 			if err != nil {
 				log.Panicln(err)
+			}
+
+			if col < 1 {
+				col = 1
 			}
 
 			dmenu.LabelColumn = col

@@ -53,7 +53,8 @@ func (c Clipboard) Entries(ctx context.Context, term string) []modules.Entry {
 		e := modules.Entry{
 			Label:      v.Content,
 			Sub:        "Text",
-			RawExec:    []string{"wl-copy", v.Content},
+			Exec:       "wl-copy",
+			Piped:      modules.Piped{Content: v.Content, Type: "string"},
 			Categories: []string{"clipboard"},
 			Class:      "clipboard",
 			Matching:   modules.Fuzzy,
@@ -63,7 +64,6 @@ func (c Clipboard) Entries(ctx context.Context, term string) []modules.Entry {
 		if v.IsImg {
 			e.Label = "Image"
 			e.Image = v.Content
-			e.RawExec = []string{}
 			e.Exec = "wl-copy"
 			e.Piped = modules.Piped{
 				Content: v.Content,

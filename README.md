@@ -197,7 +197,6 @@ type Entry struct {
 	Sub              string       `json:"sub,omitempty"`
 	Exec             string       `json:"exec,omitempty"`
 	ExecAlt          string       `json:"exec_alt,omitempty"`
-	RawExec          []string     `json:"raw_exec,omitempty"`
 	Terminal         bool         `json:"terminal,omitempty"`
 	Icon             string       `json:"icon,omitempty"`
 	IconIsImage      bool         `json:"icon_is_image,omitempty"`

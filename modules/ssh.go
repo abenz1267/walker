@@ -93,7 +93,6 @@ func (SSH) Setup(cfg *config.Config, module *config.Module) Workable {
 			Exec:             "ssh",
 			MatchFields:      1,
 			Searchable:       k,
-			RawExec:          []string{},
 			Terminal:         true,
 			Categories:       []string{"ssh"},
 			Class:            "ssh",

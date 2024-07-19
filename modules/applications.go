@@ -202,13 +202,8 @@ func parse(enableCache bool, ignoreActions bool) []Entry {
 	}
 
 	for _, v := range apps {
-		if len(v.Actions) > 0 {
-			entries = append(entries, v.Actions...)
-
-			continue
-		}
-
 		entries = append(entries, v.Generic)
+		entries = append(entries, v.Actions...)
 	}
 
 	if enableCache {

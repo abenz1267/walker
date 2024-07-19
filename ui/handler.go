@@ -83,6 +83,10 @@ func sortEntries(entries []modules.Entry) {
 				return b.LastUsed.Compare(a.LastUsed)
 			}
 
+			if appstate.KeepSort {
+				return 1
+			}
+
 			return strings.Compare(a.Label, b.Label)
 		}
 

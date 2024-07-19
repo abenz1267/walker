@@ -9,16 +9,18 @@ import (
 )
 
 type AppState struct {
-	Started         time.Time
-	IsMeasured      bool
-	IsService       bool
-	IsRunning       bool
-	HasUI           bool
-	Clipboard       modules.Workable
-	Dmenu           modules.Workable
-	ExplicitModules []string
-	ExplicitConfig  string
-	ExplicitStyle   string
+	Started             time.Time
+	IsMeasured          bool
+	IsService           bool
+	IsRunning           bool
+	HasUI               bool
+	Clipboard           modules.Workable
+	Dmenu               modules.Workable
+	ExplicitModules     []string
+	ExplicitConfig      string
+	ExplicitStyle       string
+	ExplicitPlaceholder string
+	KeepSort            bool
 }
 
 func Get() *AppState {

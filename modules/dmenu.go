@@ -2,13 +2,14 @@ package modules
 
 import (
 	"context"
-	"fmt"
+	"strings"
 
 	"github.com/abenz1267/walker/config"
 )
 
 type Dmenu struct {
-	Content []string
+	Content     []string
+	LabelColumn int
 }
 
 func (d Dmenu) Entries(ctx context.Context, term string) []Entry {
@@ -16,9 +17,9 @@ func (d Dmenu) Entries(ctx context.Context, term string) []Entry {
 
 	for _, v := range d.Content {
 		entries = append(entries, Entry{
-			Label: v,
+			Label: strings.Split(v, "\t")[d.LabelColumn-1],
 			Sub:   "Dmenu",
-			Exec:  fmt.Sprintf("echo '%s'", v),
+			Exec:  v,
 		})
 	}
 

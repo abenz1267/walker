@@ -99,6 +99,11 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 		cfg = config.Get(appstate.ExplicitConfig)
 		cfg.IsService = appstate.IsService
+
+		if appstate.ExplicitPlaceholder != "" {
+			cfg.Placeholder = appstate.ExplicitPlaceholder
+		}
+
 		hstry = history.Get()
 
 		if !cfg.DisableUpHistory {
@@ -437,7 +442,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		wrapper.Append(top)
 
-		if val.Sub != "" && !cfg.List.HideSub {
+		if val.Sub != "" && !cfg.List.HideSub && appstate.Dmenu == nil {
 			bottom := gtk.NewLabel(val.Sub)
 			bottom.SetMaxWidthChars(0)
 

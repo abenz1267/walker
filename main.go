@@ -8,6 +8,8 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"slices"
+	"strconv"
 	"strings"
 	"syscall"
 	"time"
@@ -38,20 +40,16 @@ func main() {
 	forceNew := false
 	appName := "dev.benz.walker"
 
+	var dmenu *modules.Dmenu
+
 	if len(os.Args) > 1 {
 		args := os.Args[1:]
 
 		if len(os.Args) > 0 {
-			switch args[0] {
-			case "-n", "--new":
-				forceNew = true
-			case "-c", "--config":
-			case "-s", "--style":
-			case "-m", "--modules":
-			case "-d", "--dmenu":
+			if slices.Contains(args, "-d") || slices.Contains(args, "--dmenu") {
 				forceNew = true
 
-				dmenu := modules.Dmenu{
+				dmenu = &modules.Dmenu{
 					Content: []string{},
 				}
 
@@ -61,17 +59,23 @@ func main() {
 					dmenu.Content = append(dmenu.Content, scanner.Text())
 				}
 
-				state.Dmenu = &dmenu
-			case "--version":
-				fmt.Println(version)
-				return
-			case "--gapplication-service":
+				state.Dmenu = dmenu
+			}
+
+			if slices.Contains(args, "-n") || slices.Contains(args, "--new") {
+				forceNew = true
+			}
+
+			if slices.Contains(args, "-k") || slices.Contains(args, "--keepsort") {
+				state.KeepSort = true
+			}
+
+			if slices.Contains(args, "--gapplication-service") {
 				state.IsService = true
-			case "--help", "-h", "--help-all":
+			}
+
+			if slices.Contains(args, "--help") || slices.Contains(args, "-h") || slices.Contains(args, "--help-all") {
 				withArgs = true
-			default:
-				fmt.Printf("Unsupported option '%s'\n", args[0])
-				return
 			}
 		}
 	}
@@ -117,18 +121,36 @@ func main() {
 
 	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
 	app.AddMainOption("new", 'n', glib.OptionFlagNone, glib.OptionArgNone, "start new instance ignoring service", "")
+	app.AddMainOption("keepsort", 'k', glib.OptionFlagNone, glib.OptionArgNone, "don't sort alphabetically", "")
 	app.AddMainOption("dmenu", 'd', glib.OptionFlagNone, glib.OptionArgNone, "run in dmenu mode", "")
 	app.AddMainOption("config", 'c', glib.OptionFlagNone, glib.OptionArgString, "config file to use", "")
 	app.AddMainOption("style", 's', glib.OptionFlagNone, glib.OptionArgString, "style file to use", "")
+	app.AddMainOption("placeholder", 'p', glib.OptionFlagNone, glib.OptionArgString, "placeholder text", "")
+	app.AddMainOption("labelcolumn", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
 
 	app.Connect("activate", ui.Activate(state))
 
 	app.ConnectCommandLine(func(cmd *gio.ApplicationCommandLine) int {
 		options := cmd.OptionsDict()
 
-		modulesString := options.LookupValue("modules", glib.NewVariantString("s").Type())
-		configString := options.LookupValue("config", glib.NewVariantString("s").Type())
-		styleString := options.LookupValue("style", glib.NewVariantString("s").Type())
+		modulesString := options.LookupValue("modules", glib.NewVariantString("").Type())
+		configString := options.LookupValue("config", glib.NewVariantString("").Type())
+		styleString := options.LookupValue("style", glib.NewVariantString("").Type())
+		placeholderString := options.LookupValue("placeholder", glib.NewVariantString("").Type())
+		labelColumnString := options.LookupValue("labelcolumn", glib.NewVariantString("").Type())
+
+		if labelColumnString != nil && labelColumnString.String() != "" {
+			col, err := strconv.Atoi(labelColumnString.String())
+			if err != nil {
+				log.Panicln(err)
+			}
+
+			dmenu.LabelColumn = col
+		}
+
+		if placeholderString != nil && placeholderString.String() != "" {
+			state.ExplicitPlaceholder = placeholderString.String()
+		}
 
 		if modulesString != nil && modulesString.String() != "" {
 			modules := strings.Split(modulesString.String(), ",")

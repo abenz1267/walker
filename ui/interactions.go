@@ -468,7 +468,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	entry := gioutil.ObjectValue[modules.Entry](ui.items.Item(ui.selection.Selected()))
 
 	if appstate.Dmenu != nil {
-		fmt.Println(entry.Label)
+		fmt.Print(entry.Exec)
 		closeAfterActivation(keepOpen, selectNext)
 		return
 	}

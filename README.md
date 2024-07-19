@@ -259,13 +259,16 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 
 ### Additional flags
 
-| Flag              | Description                         |
-| ----------------- | ----------------------------------- |
-| `--modules`, `-m` | Run with explicit modules           |
-| `--new`, `-n`     | Start new instance ignoring service |
-| `--config`, `-c`  | Config file to use                  |
-| `--style`, `-s`   | Style file to use                   |
-| `--dmenu`, `-d`   | Start in dmenu mode                 |
+| Flag                  | Description                         |
+| --------------------- | ----------------------------------- |
+| `--modules`, `-m`     | Run with explicit modules           |
+| `--new`, `-n`         | Start new instance ignoring service |
+| `--config`, `-c`      | Config file to use                  |
+| `--style`, `-s`       | Style file to use                   |
+| `--dmenu`, `-d`       | Start in dmenu mode                 |
+| `--keepsort`, `-k`    | Don't sort alphabetically           |
+| `--placeholder`, `-p` | Placeholder text                    |
+| `--labelcolumn`, `-l` | Column to use for the label         |
 
 ## Keybinds
 

@@ -116,7 +116,6 @@ type Plugin struct {
 	Src            string `mapstructure:"src"`
 	Cmd            string `mapstructure:"cmd"`
 	CmdAlt         string `mapstructure:"cmd_alt"`
-	History        bool   `mapstructure:"history"`
 	Terminal       bool   `mapstructure:"terminal"`
 }
 

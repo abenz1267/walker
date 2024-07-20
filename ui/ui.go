@@ -26,6 +26,9 @@ import (
 //go:embed layout.xml
 var layout string
 
+//go:embed layout_password.xml
+var layoutPassword string
+
 //go:embed themes/style.default.css
 var defaultStyle []byte
 
@@ -111,8 +114,12 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			inputhstry = history.GetInputHistory()
 		}
 
-		setupUI(app)
-		setupInteractions(appstate)
+		if appstate.Password {
+			setupUIPassword(app)
+		} else {
+			setupUI(app)
+			setupInteractions(appstate)
+		}
 
 		ui.appwin.SetApplication(app)
 
@@ -164,6 +171,42 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 	}
 }
 
+func setupUIPassword(app *gtk.Application) {
+	if !gtk4layershell.IsSupported() {
+		log.Panicln("gtk-layer-shell not supported")
+	}
+
+	builder := gtk.NewBuilderFromString(layoutPassword)
+	pw := builder.GetObject("password").Cast().(*gtk.PasswordEntry)
+
+	controller := gtk.NewEventControllerKey()
+	controller.ConnectKeyPressed(func(val uint, code uint, modifier gdk.ModifierType) bool {
+		switch val {
+		case gdk.KEY_Escape:
+			fmt.Print("")
+			ui.appwin.Close()
+			return true
+		}
+
+		return false
+	})
+
+	pw.AddController(controller)
+	pw.Connect("activate", func() {
+		fmt.Print(pw.Text())
+		ui.appwin.Close()
+	})
+
+	ui = &UI{
+		appwin:        builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
+		box:           builder.GetObject("box").Cast().(*gtk.Box),
+		searchwrapper: builder.GetObject("searchwrapper").Cast().(*gtk.Box),
+		password:      pw,
+	}
+
+	setupUserStylePassword()
+}
+
 func setupUI(app *gtk.Application) {
 	if !gtk4layershell.IsSupported() {
 		log.Panicln("gtk-layer-shell not supported")
@@ -192,19 +235,6 @@ func setupUI(app *gtk.Application) {
 		items:         items,
 		selection:     gtk.NewSingleSelection(items.ListModel),
 		prefixClasses: make(map[string][]string),
-	}
-
-	if appstate.Password {
-		cfg.Search.Icons = false
-		cfg.Search.Spinner = false
-
-		ui.searchwrapper.SetVisible(false)
-
-		pw := gtk.NewPasswordEntry()
-		pw.SetName("password")
-
-		ui.password = pw
-		ui.box.Append(pw)
 	}
 
 	if cfg.UI.Icons.Theme != "" {
@@ -257,6 +287,69 @@ func setupUI(app *gtk.Application) {
 	})
 }
 
+func setupUserStylePassword() {
+	cssFile := filepath.Join(util.ConfigDir(), appstate.ExplicitStyle)
+
+	cssProvider := gtk.NewCSSProvider()
+	if _, err := os.Stat(cssFile); err == nil {
+		cssProvider.LoadFromPath(cssFile)
+	} else {
+		cssProvider.LoadFromString(string(defaultStyle))
+
+		err := os.WriteFile(cssFile, defaultStyle, 0o600)
+		if err != nil {
+			log.Panicln(err)
+		}
+	}
+
+	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
+
+	alignments := make(map[string]gtk.Align)
+	alignments["fill"] = gtk.AlignFill
+	alignments["start"] = gtk.AlignStart
+	alignments["end"] = gtk.AlignEnd
+	alignments["center"] = gtk.AlignCenter
+
+	policies := make(map[string]gtk.PolicyType)
+	policies["never"] = gtk.PolicyNever
+	policies["always"] = gtk.PolicyAlways
+	policies["automatic"] = gtk.PolicyAutomatic
+	policies["external"] = gtk.PolicyExternal
+
+	width := -1
+	if cfg.UI.Width != 0 {
+		width = cfg.UI.Width
+	}
+
+	height := -1
+	if cfg.UI.Height != 0 {
+		height = cfg.UI.Height
+	}
+
+	ui.box.SetSizeRequest(width, height)
+
+	if cfg.List.Width != 0 {
+		ui.password.SetSizeRequest(cfg.List.Width, -1)
+	}
+
+	if cfg.UI.Horizontal != "" {
+		ui.box.SetObjectProperty("halign", alignments[cfg.UI.Horizontal])
+	}
+
+	if cfg.UI.Vertical != "" {
+		ui.box.SetObjectProperty("valign", alignments[cfg.UI.Vertical])
+	}
+
+	if cfg.UI.Orientation == "horizontal" {
+		ui.box.SetObjectProperty("orientation", gtk.OrientationHorizontal)
+	}
+
+	ui.box.SetMarginBottom(cfg.UI.Margins.Bottom)
+	ui.box.SetMarginTop(cfg.UI.Margins.Top)
+	ui.box.SetMarginStart(cfg.UI.Margins.Start)
+	ui.box.SetMarginEnd(cfg.UI.Margins.End)
+}
+
 func setupUserStyle() {
 	cssFile := filepath.Join(util.ConfigDir(), appstate.ExplicitStyle)
 
@@ -264,7 +357,7 @@ func setupUserStyle() {
 	if _, err := os.Stat(cssFile); err == nil {
 		cssProvider.LoadFromPath(cssFile)
 	} else {
-		cssProvider.LoadFromData(string(defaultStyle))
+		cssProvider.LoadFromString(string(defaultStyle))
 
 		err := os.WriteFile(cssFile, defaultStyle, 0o600)
 		if err != nil {

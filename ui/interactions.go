@@ -120,19 +120,6 @@ func setupInteractions(appstate *state.AppState) {
 
 	setupModules()
 
-	if appstate.Password {
-		controller := gtk.NewEventControllerKey()
-		controller.ConnectKeyPressed(handlePasswordKeysPressed)
-
-		ui.password.AddController(controller)
-		ui.password.Connect("activate", func() {
-			fmt.Print(ui.password.Text())
-			closeAfterActivation(false, false)
-		})
-
-		return
-	}
-
 	keycontroller := gtk.NewEventControllerKey()
 	keycontroller.ConnectKeyPressed(handleSearchKeysPressed)
 
@@ -339,16 +326,6 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 var forceTerminal bool
 
 var historyIndex = 0
-
-func handlePasswordKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
-	switch val {
-	case gdk.KEY_Escape:
-		closeAfterActivation(false, false)
-		return true
-	}
-
-	return false
-}
 
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 && !cfg.ActivationMode.UseFKeys {

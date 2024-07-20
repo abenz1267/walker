@@ -126,14 +126,6 @@ func setupInteractions(appstate *state.AppState) {
 	ui.search.AddController(keycontroller)
 	ui.search.Connect("search-changed", process)
 	ui.search.Connect("activate", func() {
-		if appstate.Password {
-			fmt.Print(ui.search.Text())
-
-			closeAfterActivation(false, false)
-
-			return
-		}
-
 		activateItem(false, false, false)
 	})
 
@@ -562,7 +554,7 @@ func process() {
 
 	ui.spinner.SetCSSClasses([]string{"visible"})
 
-	if cfg.Search.Typeahead && appstate.Password {
+	if cfg.Search.Typeahead {
 		ui.typeahead.SetText("")
 
 		if strings.TrimSpace(ui.search.Text()) != "" {
@@ -589,7 +581,7 @@ func process() {
 	ctx, cancel = context.WithCancel(context.Background())
 
 	if (ui.search.Text() != "" || singleProc != nil || appstate.Dmenu != nil) || (len(appstate.ExplicitModules) > 0 && cfg.List.ShowInitialEntries) {
-		go processAsync(ctx)
+		go processAsync(ctx, text)
 	} else {
 		ui.items.Splice(0, int(ui.items.NItems()))
 		ui.spinner.SetCSSClasses([]string{})
@@ -602,7 +594,7 @@ var handlerPool = sync.Pool{
 	},
 }
 
-func processAsync(ctx context.Context) {
+func processAsync(ctx context.Context, text string) {
 	handler := handlerPool.Get().(*Handler)
 	defer func() {
 		handlerPool.Put(handler)
@@ -614,8 +606,6 @@ func processAsync(ctx context.Context) {
 
 	handler.ctx = ctx
 	handler.entries = []modules.Entry{}
-
-	text := strings.TrimSpace(ui.search.Text())
 
 	glib.IdleAdd(func() {
 		ui.items.Splice(0, int(ui.items.NItems()))

@@ -1,83 +1,45 @@
 {
-  "ignore_mouse": false,
   "ui": {
-    "icons": {
-      "theme": "",
-      "hide": false,
-      "size": 38,
-      "image_size": 150
-    },
+    "icons": { "size": 38, "image_size": 150 },
     "orientation": "vertical",
-    "fullscreen": false,
     "ignore_exclusive": true,
-    "width": 400,
     "horizontal": "center",
     "vertical": "start",
-    "anchors": {
-      "top": false,
-      "left": false,
-      "bottom": false,
-      "right": false
-    },
+    "width": 400,
     "margins": {
-      "top": 20,
-      "bottom": 0,
-      "end": 0,
-      "start": 0
+      "top": 100
+    },
+    "anchors": {
+      "top": true
     }
   },
   "list": {
-    "height": 300,
-    "width": 400,
-    "margin_top": 10,
     "always_show": true,
-    "fixed_height": false,
+    "height": 300,
+    "margin_top": 10,
     "max_entries": 50,
     "scrollbar_policy": "automatic",
-    "show_initial_entries": true
+    "show_initial_entries": true,
+    "width": 400
   },
   "search": {
-    "placeholder": "Search...",
-    "delay": 0,
+    "typeahead": true,
+    "force_keyboard_focus": true,
     "icons": true,
     "history": true,
-    "typeahead": true,
-    "spinner": false,
-    "force_keyboard_focus": true
+    "placeholder": "Search..."
   },
-  "activation_mode": {
-    "disabled": false,
-    "use_f_keys": false,
-    "use_alt": false
-  },
+  "activation_mode": {},
   "builtins": {
-    "applications": {
-      "cache": false,
-      "actions": true
-    },
-    "clipboard": {
-      "max_entries": 10,
-      "image_height": 300
-    },
-    "commands": {
-      "switcher_only": true
-    },
-    "emojis": {
-      "switcher_only": true
-    },
-    "finder": {
-      "switcher_only": true
-    },
-    "hyprland": {
-      "context_aware_history": true
-    },
-    "runner": {},
-    "ssh": {
-      "switcher_only": true
-    },
-    "switcher": {
-      "prefix": "/"
-    },
+    "applications": { "actions": true },
+    "clipboard": { "image_height": 300, "max_entries": 10 },
+    "commands": { "switcher_only": true },
+    "emojis": { "switcher_only": true },
+    "finder": { "switcher_only": true },
+    "hyprland": { "context_aware_history": true },
+    "runner": { "Excludes": null, "Includes": null },
+    "ssh": { "switcher_only": true },
+    "switcher": { "prefix": "/" },
     "websearch": {}
   }
 }

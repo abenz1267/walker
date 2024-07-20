@@ -17,6 +17,14 @@ type SSH struct {
 	entries []Entry
 }
 
+func (s SSH) Placeholder() string {
+	if s.general.Placeholder == "" {
+		return "ssh"
+	}
+
+	return s.general.Placeholder
+}
+
 func (s SSH) Refresh() {}
 
 func (s SSH) Entries(ctx context.Context, term string) []Entry {

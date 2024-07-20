@@ -15,6 +15,14 @@ type Finder struct {
 	general config.GeneralModule
 }
 
+func (f Finder) Placeholder() string {
+	if f.general.Placeholder == "" {
+		return "finder"
+	}
+
+	return f.general.Placeholder
+}
+
 func (f Finder) Refresh() {}
 
 func (f Finder) Entries(ctx context.Context, term string) []Entry {

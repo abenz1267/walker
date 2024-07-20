@@ -120,6 +120,14 @@ func (c Clipboard) Setup(cfg *config.Config) modules.Workable {
 	return c
 }
 
+func (c Clipboard) Placeholder() string {
+	if c.general.Placeholder == "" {
+		return "clipboard"
+	}
+
+	return c.general.Placeholder
+}
+
 func clean(entries []ClipboardItem, file string) []ClipboardItem {
 	cleaned := []ClipboardItem{}
 

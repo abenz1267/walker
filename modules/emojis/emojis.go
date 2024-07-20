@@ -71,4 +71,12 @@ func (e Emojis) Setup(cfg *config.Config) modules.Workable {
 	return e
 }
 
+func (e Emojis) Placeholder() string {
+	if e.general.Placeholder == "" {
+		return "emojis"
+	}
+
+	return e.general.Placeholder
+}
+
 func (Emojis) Refresh() {}

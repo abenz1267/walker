@@ -27,6 +27,14 @@ type Application struct {
 	Actions []Entry `json:"actions,omitempty"`
 }
 
+func (a Applications) Placeholder() string {
+	if a.general.Placeholder == "" {
+		return "applications"
+	}
+
+	return a.general.Placeholder
+}
+
 func (a Applications) SwitcherOnly() bool {
 	return a.general.SwitcherOnly
 }

@@ -63,4 +63,12 @@ func (d *Dmenu) Setup(cfg *config.Config) Workable {
 	return d
 }
 
+func (d Dmenu) Placeholder() string {
+	if d.Separator == "" {
+		return "dmenu"
+	}
+
+	return d.Separator
+}
+
 func (Dmenu) Refresh() {}

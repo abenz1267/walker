@@ -30,6 +30,14 @@ func (e *Plugin) Setup(cfg *config.Config) Workable {
 	return e
 }
 
+func (e Plugin) Placeholder() string {
+	if e.General.Placeholder == "" {
+		return e.General.Name
+	}
+
+	return e.General.Placeholder
+}
+
 func (e *Plugin) Refresh() {
 	if e.General.SrcOnceRefresh {
 		e.cachedOutput = e.getSrcOutput(false, "")

@@ -23,6 +23,14 @@ type Runner struct {
 	bins        []string
 }
 
+func (r Runner) Placeholder() string {
+	if r.general.Placeholder == "" {
+		return "runner"
+	}
+
+	return r.general.Placeholder
+}
+
 func (r Runner) SwitcherOnly() bool {
 	return r.general.SwitcherOnly
 }

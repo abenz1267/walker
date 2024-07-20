@@ -57,59 +57,98 @@ func setupCommands() {
 	}
 }
 
+func getModules() []modules.Workable {
+	res := []modules.Workable{
+		modules.Applications{},
+		modules.Runner{},
+		modules.Websearch{},
+		modules.Commands{},
+		modules.Hyprland{},
+		modules.SSH{},
+		modules.Finder{},
+		modules.Switcher{},
+		emojis.Emojis{},
+		appstate.Clipboard,
+	}
+
+	for _, v := range cfg.Plugins {
+		e := &modules.Plugin{}
+		e.General = v
+
+		res = append(res, e)
+	}
+
+	return res
+}
+
+func findModule(name string, modules []modules.Workable) modules.Workable {
+	for _, v := range modules {
+		if v.Name() == name {
+			return v
+		}
+	}
+
+	return nil
+}
+
+func setExplicits() {
+	explicits = []modules.Workable{}
+
+	for _, v := range getModules() {
+		if v != nil {
+			if slices.Contains(appstate.ExplicitModules, v.Name()) {
+				explicits = append(explicits, v.Setup(cfg))
+			}
+		}
+	}
+}
+
 func setupModules() {
 	util.FromGob(filepath.Join(util.CacheDir(), "typeahead.gob"), &tah)
 
-	var enabledModules []modules.Workable
+	enabledModules := []modules.Workable{
+		appstate.Dmenu,
+	}
 
-	if appstate.Dmenu != nil {
-		enabledModules = []modules.Workable{
-			appstate.Dmenu,
-		}
-	} else {
-		enabledModules = []modules.Workable{
-			modules.Applications{},
-			modules.Runner{},
-			modules.Websearch{},
-			modules.Commands{},
-			modules.Hyprland{},
-			modules.SSH{},
-			modules.Finder{},
-			modules.Switcher{},
-			emojis.Emojis{},
-			appstate.Clipboard,
-		}
-
-		for _, v := range cfg.Plugins {
-			e := &modules.Plugin{}
-			e.General = v
-
-			enabledModules = append(enabledModules, e)
-		}
-
+	if appstate.Dmenu == nil {
+		enabledModules = getModules()
 		clear(procs)
 	}
 
-	procs = make(map[string][]modules.Workable)
-
-	for _, v := range enabledModules {
-		if v == nil || slices.Contains(cfg.Disabled, v.Name()) {
-			continue
-		}
-
-		w := v.Setup(cfg)
-
-		if w != nil {
-			procs[w.Prefix()] = append(procs[w.Prefix()], w)
-			cfg.Enabled = append(cfg.Enabled, w.Name())
-		}
+	if len(appstate.ExplicitModules) > 0 {
+		setExplicits()
 	}
 
-	clear(ui.prefixClasses)
+	if len(explicits) > 0 {
+		enabledModules = explicits
+	}
 
-	for _, v := range procs {
-		for _, vv := range v {
-			ui.prefixClasses[vv.Prefix()] = append(ui.prefixClasses[vv.Prefix()], vv.Name())
+	if len(enabledModules) == 1 {
+		ui.search.SetObjectProperty("placeholder-text", enabledModules[0].Placeholder())
+	}
+
+	if len(explicits) == 0 {
+		procs = make(map[string][]modules.Workable)
+
+		for _, v := range enabledModules {
+			if v == nil || slices.Contains(cfg.Disabled, v.Name()) {
+				continue
+			}
+
+			w := v.Setup(cfg)
+
+			if w != nil {
+				procs[w.Prefix()] = append(procs[w.Prefix()], w)
+				cfg.Enabled = append(cfg.Enabled, w.Name())
+			}
+		}
+
+		clear(ui.prefixClasses)
+
+		for _, v := range procs {
+			for _, vv := range v {
+				ui.prefixClasses[vv.Prefix()] = append(ui.prefixClasses[vv.Prefix()], vv.Name())
+			}
 		}
 	}
 }
@@ -460,7 +499,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 				if w.Name() == entry.Label {
 					singleProc = w
 					ui.items.Splice(0, int(ui.items.NItems()))
-					ui.search.SetObjectProperty("placeholder-text", w.Name())
+					ui.search.SetObjectProperty("placeholder-text", w.Placeholder())
 					ui.search.SetText("")
 					ui.search.GrabFocus()
 					return
@@ -608,7 +647,7 @@ func processAsync(ctx context.Context, text string) {
 		cancel()
 	}()
 
-	hasExplicit := len(appstate.ExplicitModules) > 0
+	hasExplicit := len(explicits) > 0
 
 	handler.ctx = ctx
 	handler.entries = []modules.Entry{}
@@ -625,31 +664,35 @@ func processAsync(ctx context.Context, text string) {
 
 	p := []modules.Workable{}
 
-	if singleProc == nil {
-		hasPrefix := true
+	if !hasExplicit {
+		if singleProc == nil {
+			hasPrefix := true
 
-		var ok bool
-		p, ok = procs[prefix]
-		if !ok {
-			p = procs[""]
-			hasPrefix = false
-		}
+			var ok bool
+			p, ok = procs[prefix]
+			if !ok {
+				p = procs[""]
+				hasPrefix = false
+			}
 
-		if hasPrefix {
-			glib.IdleAdd(func() {
-				ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
-			})
+			if hasPrefix {
+				glib.IdleAdd(func() {
+					ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
+				})
 
-			text = strings.TrimPrefix(text, prefix)
+				text = strings.TrimPrefix(text, prefix)
+			}
+		} else {
+			p = []modules.Workable{singleProc}
+
+			if singleProc != nil {
+				glib.IdleAdd(func() {
+					ui.appwin.SetCSSClasses(ui.prefixClasses[singleProc.Prefix()])
+				})
+			}
 		}
 	} else {
-		p = []modules.Workable{singleProc}
-
-		if singleProc != nil {
-			glib.IdleAdd(func() {
-				ui.appwin.SetCSSClasses(ui.prefixClasses[singleProc.Prefix()])
-			})
-		}
+		p = explicits
 	}
 
 	handler.receiver = make(chan []modules.Entry)
@@ -664,20 +707,6 @@ func processAsync(ctx context.Context, text string) {
 				break
 			}
 		}
-	}
-
-	explicitModules := []modules.Workable{}
-
-	if hasExplicit {
-		for _, v := range procs {
-			for _, proc := range v {
-				if slices.Contains(appstate.ExplicitModules, proc.Name()) {
-					explicitModules = append(explicitModules, proc)
-				}
-			}
-		}
-
-		p = explicitModules
 	}
 
 	var wg sync.WaitGroup
@@ -832,6 +861,7 @@ func quit() {
 		disabledAM()
 
 		appstate.ExplicitModules = []string{}
+		explicits = []modules.Workable{}
 
 		singleProc = nil
 

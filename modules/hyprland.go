@@ -18,6 +18,14 @@ type Hyprland struct {
 	windows map[string]uint
 }
 
+func (h Hyprland) Placeholder() string {
+	if h.general.Placeholder == "" {
+		return "hyprland"
+	}
+
+	return h.general.Placeholder
+}
+
 func (h Hyprland) SwitcherOnly() bool {
 	return h.general.SwitcherOnly
 }

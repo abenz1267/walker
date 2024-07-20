@@ -45,6 +45,7 @@ var (
 	cfg        *config.Config
 	ui         *UI
 	procs      ProcMap
+	explicits  []modules.Workable
 	singleProc modules.Workable
 	hstry      history.History
 	inputhstry history.InputHistory
@@ -88,6 +89,14 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 				for _, proc := range v {
 					proc.Refresh()
 				}
+			}
+
+			if len(appstate.ExplicitModules) > 0 {
+				setExplicits()
+			}
+
+			if len(explicits) == 1 {
+				ui.search.SetObjectProperty("placeholder-text", explicits[0].Placeholder())
 			}
 
 			if !appstate.IsMeasured && appstate.Dmenu == nil {

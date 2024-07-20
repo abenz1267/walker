@@ -11,6 +11,14 @@ type Switcher struct {
 	cfg     *config.Config
 }
 
+func (s Switcher) Placeholder() string {
+	if s.general.Placeholder == "" {
+		return "switcher"
+	}
+
+	return s.general.Placeholder
+}
+
 func (s Switcher) SwitcherOnly() bool {
 	return false
 }

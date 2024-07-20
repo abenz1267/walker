@@ -11,6 +11,14 @@ type Commands struct {
 	entries []Entry
 }
 
+func (c Commands) Placeholder() string {
+	if c.general.Placeholder == "" {
+		return "commands"
+	}
+
+	return c.general.Placeholder
+}
+
 func (c Commands) Entries(ctx context.Context, term string) []Entry {
 	return c.entries
 }

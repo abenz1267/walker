@@ -32,6 +32,14 @@ type EngineInfo struct {
 	URL   string
 }
 
+func (w Websearch) Placeholder() string {
+	if w.general.Placeholder == "" {
+		return "websearch"
+	}
+
+	return w.general.Placeholder
+}
+
 func (w Websearch) SwitcherOnly() bool {
 	return w.general.SwitcherOnly
 }

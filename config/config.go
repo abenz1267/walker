@@ -45,6 +45,7 @@ type Builtins struct {
 }
 
 type GeneralModule struct {
+	Placeholder  string `mapstructure:"placeholder"`
 	SpecialLabel string `mapstructure:"special_label"`
 	Prefix       string `mapstructure:"prefix"`
 	SwitcherOnly bool   `mapstructure:"switcher_only"`

@@ -21,6 +21,7 @@ type Workable interface {
 	Entries(ctx context.Context, term string) []Entry
 	Prefix() string
 	Name() string
+	Placeholder() string
 	SwitcherOnly() bool
 	Setup(cfg *config.Config) Workable
 	Refresh()

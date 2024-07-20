@@ -22,11 +22,9 @@ const (
 )
 
 type Websearch struct {
-	prefix            string
-	switcherExclusive bool
-	specialLabel      string
-	engines           []string
-	engineInfo        map[string]EngineInfo
+	general    config.GeneralModule
+	engines    []string
+	engineInfo map[string]EngineInfo
 }
 
 type EngineInfo struct {
@@ -34,15 +32,15 @@ type EngineInfo struct {
 	URL   string
 }
 
-func (w Websearch) SwitcherExclusive() bool {
-	return w.switcherExclusive
+func (w Websearch) SwitcherOnly() bool {
+	return w.general.SwitcherOnly
 }
 
-func (w Websearch) Setup(cfg *config.Config, module *config.Module) Workable {
-	w.engines = cfg.Websearch.Engines
-	w.prefix = module.Prefix
-	w.switcherExclusive = module.SwitcherExclusive
-	w.specialLabel = module.SpecialLabel
+func (w Websearch) Setup(cfg *config.Config) Workable {
+	w.engines = cfg.Builtins.Websearch.Engines
+	w.general.Prefix = cfg.Builtins.Websearch.Prefix
+	w.general.SwitcherOnly = cfg.Builtins.Websearch.SwitcherOnly
+	w.general.SpecialLabel = cfg.Builtins.Websearch.SpecialLabel
 
 	slices.Reverse(w.engines)
 
@@ -78,7 +76,7 @@ func (w Websearch) Setup(cfg *config.Config, module *config.Module) Workable {
 func (w Websearch) Refresh() {}
 
 func (w Websearch) Prefix() string {
-	return w.prefix
+	return w.general.Prefix
 }
 
 func (Websearch) Name() string {
@@ -92,7 +90,7 @@ func (w Websearch) Entries(ctx context.Context, term string) []Entry {
 		return entries
 	}
 
-	if w.prefix != "" && len(term) < 2 {
+	if w.general.Prefix != "" && len(term) < 2 {
 		return entries
 	}
 
@@ -102,7 +100,7 @@ func (w Websearch) Entries(ctx context.Context, term string) []Entry {
 		return nil
 	}
 
-	term = strings.TrimPrefix(term, w.prefix)
+	term = strings.TrimPrefix(term, w.general.Prefix)
 
 	for k, v := range w.engines {
 		if val, ok := w.engineInfo[strings.ToLower(v)]; ok {
@@ -117,7 +115,7 @@ func (w Websearch) Entries(ctx context.Context, term string) []Entry {
 			}
 
 			if len(w.engines) == 1 {
-				n.SpecialLabel = w.specialLabel
+				n.SpecialLabel = w.general.SpecialLabel
 			}
 
 			entries = append(entries, n)

@@ -16,9 +16,8 @@ import (
 var list string
 
 type Emojis struct {
-	entries           []modules.Entry
-	prefix            string
-	switcherExclusive bool
+	general config.GeneralModule
+	entries []modules.Entry
 }
 
 func (e Emojis) Entries(ctx context.Context, term string) []modules.Entry {
@@ -26,20 +25,21 @@ func (e Emojis) Entries(ctx context.Context, term string) []modules.Entry {
 }
 
 func (e Emojis) Prefix() string {
-	return e.prefix
+	return e.general.Prefix
 }
 
 func (Emojis) Name() string {
 	return "emojis"
 }
 
-func (e Emojis) SwitcherExclusive() bool {
-	return e.switcherExclusive
+func (e Emojis) SwitcherOnly() bool {
+	return e.general.SwitcherOnly
 }
 
-func (e Emojis) Setup(cfg *config.Config, module *config.Module) modules.Workable {
-	e.prefix = module.Prefix
-	e.switcherExclusive = module.SwitcherExclusive
+func (e Emojis) Setup(cfg *config.Config) modules.Workable {
+	e.general.Prefix = cfg.Builtins.Emojis.Prefix
+	e.general.SwitcherOnly = cfg.Builtins.Emojis.SwitcherOnly
+	e.general.SpecialLabel = cfg.Builtins.Emojis.SpecialLabel
 
 	scanner := bufio.NewScanner(strings.NewReader(list))
 

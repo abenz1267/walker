@@ -17,34 +17,36 @@ import (
 )
 
 type Runner struct {
-	ShellConfig       string
-	prefix            string
-	aliases           map[string]string
-	bins              []string
-	switcherExclusive bool
+	general     config.GeneralModule
+	shellConfig string
+	aliases     map[string]string
+	bins        []string
 }
 
-func (r Runner) SwitcherExclusive() bool {
-	return r.switcherExclusive
+func (r Runner) SwitcherOnly() bool {
+	return r.general.SwitcherOnly
 }
 
-func (r Runner) Setup(cfg *config.Config, module *config.Module) Workable {
-	r.prefix = module.Prefix
-	r.switcherExclusive = module.SwitcherExclusive
+func (r Runner) Setup(cfg *config.Config) Workable {
+	r.general.Prefix = cfg.Builtins.Runner.Prefix
+	r.general.SwitcherOnly = cfg.Builtins.Runner.SwitcherOnly
+	r.general.SpecialLabel = cfg.Builtins.Runner.SpecialLabel
+
+	r.shellConfig = cfg.Builtins.Runner.ShellConfig
 
 	r.parseAliases()
 
-	if len(cfg.Runner.Includes) > 0 {
-		r.bins = cfg.Runner.Includes
+	if len(cfg.Builtins.Runner.Includes) > 0 {
+		r.bins = cfg.Builtins.Runner.Includes
 	} else {
 		r.getBins()
 	}
 
 	filtered := []string{}
 
-	if len(cfg.Runner.Excludes) > 0 {
+	if len(cfg.Builtins.Runner.Excludes) > 0 {
 		for _, v := range r.bins {
-			if !slices.Contains(cfg.Runner.Excludes, v) {
+			if !slices.Contains(cfg.Builtins.Runner.Excludes, v) {
 				filtered = append(filtered, v)
 			}
 		}
@@ -58,7 +60,7 @@ func (r Runner) Setup(cfg *config.Config, module *config.Module) Workable {
 func (r Runner) Refresh() {}
 
 func (r Runner) Prefix() string {
-	return r.prefix
+	return r.general.Prefix
 }
 
 func (Runner) Name() string {
@@ -72,12 +74,12 @@ func (r Runner) Entries(ctx context.Context, term string) []Entry {
 		return entries
 	}
 
-	if r.prefix != "" && len(term) < 2 {
+	if r.general.Prefix != "" && len(term) < 2 {
 		return entries
 	}
 
-	if r.prefix != "" {
-		term = strings.TrimPrefix(term, r.prefix)
+	if r.general.Prefix != "" {
+		term = strings.TrimPrefix(term, r.general.Prefix)
 	}
 
 	fields := strings.Fields(term)
@@ -175,13 +177,13 @@ func (r *Runner) getBins() {
 }
 
 func (r *Runner) parseAliases() {
-	if r.ShellConfig == "" {
+	if r.shellConfig == "" {
 		return
 	}
 
 	r.aliases = make(map[string]string)
 
-	file, err := os.Open(r.ShellConfig)
+	file, err := os.Open(r.shellConfig)
 	if err != nil {
 		log.Println(err)
 		return

@@ -7,9 +7,8 @@ import (
 )
 
 type Commands struct {
-	prefix            string
-	switcherExclusive bool
-	entries           []Entry
+	general config.GeneralModule
+	entries []Entry
 }
 
 func (c Commands) Entries(ctx context.Context, term string) []Entry {
@@ -17,23 +16,25 @@ func (c Commands) Entries(ctx context.Context, term string) []Entry {
 }
 
 func (c Commands) Prefix() string {
-	return c.prefix
+	return c.general.Prefix
 }
 
 func (c Commands) Name() string {
 	return "commands"
 }
 
-func (c Commands) SwitcherExclusive() bool {
-	return c.switcherExclusive
+func (c Commands) SwitcherOnly() bool {
+	return c.general.SwitcherOnly
 }
 
-func (cc Commands) Setup(cfg *config.Config, module *config.Module) Workable {
+func (cc Commands) Setup(cfg *config.Config) Workable {
 	c := &Commands{
-		prefix:            module.Prefix,
-		switcherExclusive: module.SwitcherExclusive,
-		entries:           []Entry{},
+		entries: []Entry{},
 	}
+
+	c.general.Prefix = cfg.Builtins.Commands.Prefix
+	c.general.SwitcherOnly = cfg.Builtins.Commands.SwitcherOnly
+	c.general.SpecialLabel = cfg.Builtins.Commands.SpecialLabel
 
 	entries := []struct {
 		label string

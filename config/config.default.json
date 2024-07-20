@@ -1,43 +1,15 @@
 {
-  "placeholder": "Search...",
   "ignore_mouse": false,
-  "ssh_host_file": "",
-  "force_keyboard_focus": false,
-  "disable_up_history": false,
-  "enable_typeahead": false,
-  "show_initial_entries": true,
-  "fullscreen": false,
-  "scrollbar_policy": "automatic",
-  "websearch": {
-    "engines": ["google"]
-  },
-  "hyprland": {
-    "context_aware_history": false
-  },
-  "applications": {
-    "enable_cache": false,
-    "ignore_actions": false
-  },
-  "activation_mode": {
-    "disabled": false,
-    "use_f_keys": false,
-    "use_alt": false
-  },
-  "search": {
-    "delay": 0,
-    "hide_icons": false,
-    "margin_spinner": 10,
-    "hide_spinner": false
-  },
-  "runner": {
-    "excludes": ["rm"]
-  },
-  "clipboard": {
-    "max_entries": 10,
-    "image_height": 300
-  },
-  "align": {
-    "ignore_exlusive": true,
+  "ui": {
+    "icons": {
+      "theme": "",
+      "hide": false,
+      "size": 38,
+      "image_size": 150
+    },
+    "orientation": "vertical",
+    "fullscreen": false,
+    "ignore_exclusive": true,
     "width": 400,
     "horizontal": "center",
     "vertical": "start",
@@ -56,53 +28,56 @@
   },
   "list": {
     "height": 300,
+    "width": 400,
     "margin_top": 10,
     "always_show": true,
-    "hide_sub": false,
-    "max_entries": 50
+    "fixed_height": false,
+    "max_entries": 50,
+    "scrollbar_policy": "automatic",
+    "show_initial_entries": true
   },
-  "orientation": "vertical",
-  "icons": {
-    "theme": "",
-    "hide": false,
-    "size": 28,
-    "image_height": 200
+  "search": {
+    "placeholder": "Search...",
+    "delay": 0,
+    "icons": true,
+    "history": true,
+    "typeahead": true,
+    "spinner": false,
+    "force_keyboard_focus": true
   },
-  "modules": [
-    {
-      "name": "runner",
-      "prefix": ""
+  "activation_mode": {
+    "disabled": false,
+    "use_f_keys": false,
+    "use_alt": false
+  },
+  "builtins": {
+    "applications": {
+      "cache": false,
+      "actions": true
     },
-    {
-      "name": "applications",
-      "prefix": ""
+    "clipboard": {
+      "max_entries": 10,
+      "image_height": 300
     },
-    {
-      "name": "emojis",
-      "switcher_exclusive": true
+    "commands": {
+      "switcher_only": true
     },
-    {
-      "name": "ssh",
-      "prefix": "",
-      "switcher_exclusive": true
+    "emojis": {
+      "switcher_only": true
     },
-    {
-      "name": "finder",
-      "prefix": "",
-      "switcher_exclusive": true
+    "finder": {
+      "switcher_only": true
     },
-    {
-      "name": "commands",
-      "prefix": "",
-      "switcher_exclusive": true
+    "hyprland": {
+      "context_aware_history": true
     },
-    {
-      "name": "websearch",
-      "prefix": "?"
+    "runner": {},
+    "ssh": {
+      "switcher_only": true
     },
-    {
-      "name": "switcher",
+    "switcher": {
       "prefix": "/"
-    }
-  ]
+    },
+    "websearch": {}
+  }
 }

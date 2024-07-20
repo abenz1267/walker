@@ -14,16 +14,15 @@ import (
 )
 
 type Hyprland struct {
-	prefix            string
-	switcherExclusive bool
-	windows           map[string]uint
+	general config.GeneralModule
+	windows map[string]uint
 }
 
-func (h Hyprland) SwitcherExclusive() bool {
-	return h.switcherExclusive
+func (h Hyprland) SwitcherOnly() bool {
+	return h.general.SwitcherOnly
 }
 
-func (h Hyprland) Setup(cfg *config.Config, module *config.Module) Workable {
+func (h Hyprland) Setup(cfg *config.Config) Workable {
 	b := &Hyprland{}
 
 	pth, _ := exec.LookPath("hyprctl")
@@ -32,11 +31,13 @@ func (h Hyprland) Setup(cfg *config.Config, module *config.Module) Workable {
 		return nil
 	}
 
-	b.prefix = module.Prefix
-	b.switcherExclusive = module.SwitcherExclusive
+	b.general.Prefix = cfg.Builtins.Hyprland.Prefix
+	b.general.SwitcherOnly = cfg.Builtins.Hyprland.SwitcherOnly
+	b.general.SpecialLabel = cfg.Builtins.Hyprland.SpecialLabel
+
 	b.windows = make(map[string]uint)
 
-	if cfg.IsService && cfg.Hyprland.ContextAwareHistory {
+	if cfg.IsService && cfg.Builtins.Hyprland.ContextAwareHistory {
 		go b.monitorWindows()
 	}
 
@@ -86,7 +87,7 @@ func (Hyprland) Name() string {
 }
 
 func (h Hyprland) Prefix() string {
-	return h.prefix
+	return h.general.Prefix
 }
 
 type window struct {

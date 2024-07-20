@@ -46,11 +46,11 @@ func (Dmenu) Name() string {
 	return "dmenu"
 }
 
-func (Dmenu) SwitcherExclusive() bool {
+func (Dmenu) SwitcherOnly() bool {
 	return false
 }
 
-func (d *Dmenu) Setup(cfg *config.Config, config *config.Module) Workable {
+func (d *Dmenu) Setup(cfg *config.Config) Workable {
 	if d.Separator == "" {
 		d.Separator = "\t"
 	}

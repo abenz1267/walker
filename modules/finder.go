@@ -12,8 +12,7 @@ import (
 )
 
 type Finder struct {
-	prefix            string
-	switcherExclusive bool
+	general config.GeneralModule
 }
 
 func (f Finder) Refresh() {}
@@ -60,22 +59,23 @@ func (f Finder) Entries(ctx context.Context, term string) []Entry {
 }
 
 func (f Finder) Prefix() string {
-	return f.prefix
+	return f.general.Prefix
 }
 
 func (f Finder) Name() string {
 	return "finder"
 }
 
-func (f Finder) SwitcherExclusive() bool {
-	return f.switcherExclusive
+func (f Finder) SwitcherOnly() bool {
+	return f.general.SwitcherOnly
 }
 
-func (Finder) Setup(cfg *config.Config, module *config.Module) Workable {
+func (Finder) Setup(cfg *config.Config) Workable {
 	f := &Finder{}
 
-	f.prefix = module.Prefix
-	f.switcherExclusive = module.SwitcherExclusive
+	f.general.Prefix = cfg.Builtins.Finder.Prefix
+	f.general.SwitcherOnly = cfg.Builtins.Finder.SwitcherOnly
+	f.general.SpecialLabel = cfg.Builtins.Finder.SpecialLabel
 
 	return f
 }

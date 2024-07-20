@@ -37,11 +37,5 @@ func Get() *AppState {
 }
 
 func (app *AppState) StartServiceableModules(cfg *config.Config) {
-	module := modules.Find(cfg.Modules, clipboard.ClipboardName)
-
-	if module == nil {
-		return
-	}
-
-	app.Clipboard = clipboard.Clipboard{}.Setup(cfg, module)
+	app.Clipboard = clipboard.Clipboard{}.Setup(cfg)
 }

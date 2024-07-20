@@ -5,6 +5,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -20,8 +21,8 @@ type Workable interface {
 	Entries(ctx context.Context, term string) []Entry
 	Prefix() string
 	Name() string
-	SwitcherExclusive() bool
-	Setup(cfg *config.Config, config *config.Module) Workable
+	SwitcherOnly() bool
+	Setup(cfg *config.Config) Workable
 	Refresh()
 }
 
@@ -110,12 +111,12 @@ func readCache(name string, data any) bool {
 	return false
 }
 
-func Find(modules []config.Module, name string) *config.Module {
-	for _, v := range modules {
+func Find(plugins []config.Plugin, name string) (config.Plugin, error) {
+	for _, v := range plugins {
 		if v.Name == name {
-			return &v
+			return v, nil
 		}
 	}
 
-	return nil
+	return config.Plugin{}, errors.New("plugin not found")
 }

@@ -17,10 +17,9 @@ import (
 const ApplicationsName = "applications"
 
 type Applications struct {
-	prefix            string
-	switcherExclusive bool
-	enableCache       bool
-	ignoreActions     bool
+	general config.GeneralModule
+	cache   bool
+	actions bool
 }
 
 type Application struct {
@@ -28,15 +27,17 @@ type Application struct {
 	Actions []Entry `json:"actions,omitempty"`
 }
 
-func (a Applications) SwitcherExclusive() bool {
-	return a.switcherExclusive
+func (a Applications) SwitcherOnly() bool {
+	return a.general.SwitcherOnly
 }
 
-func (a Applications) Setup(cfg *config.Config, module *config.Module) Workable {
-	a.prefix = module.Prefix
-	a.switcherExclusive = module.SwitcherExclusive
-	a.enableCache = cfg.Applications.EnableCache
-	a.ignoreActions = cfg.Applications.IgnoreActions
+func (a Applications) Setup(cfg *config.Config) Workable {
+	a.general.Prefix = cfg.Builtins.Applications.Prefix
+	a.general.SwitcherOnly = cfg.Builtins.Applications.SwitcherOnly
+	a.general.SpecialLabel = cfg.Builtins.Applications.SpecialLabel
+
+	a.cache = cfg.Builtins.Applications.Cache
+	a.actions = cfg.Builtins.Applications.Actions
 
 	return a
 }
@@ -48,18 +49,18 @@ func (a Applications) Name() string {
 }
 
 func (a Applications) Prefix() string {
-	return a.prefix
+	return a.general.Prefix
 }
 
 func (a Applications) Entries(ctx context.Context, _ string) []Entry {
-	return parse(a.enableCache, a.ignoreActions)
+	return parse(a.cache, a.actions)
 }
 
-func parse(enableCache bool, ignoreActions bool) []Entry {
+func parse(cache bool, actions bool) []Entry {
 	apps := []Application{}
 	entries := []Entry{}
 
-	if enableCache {
+	if cache {
 		ok := readCache(ApplicationsName, &entries)
 		if ok {
 			return entries
@@ -190,7 +191,7 @@ func parse(enableCache bool, ignoreActions bool) []Entry {
 					}
 				}
 
-				if ignoreActions {
+				if !actions {
 					app.Actions = []Entry{}
 				}
 
@@ -206,7 +207,7 @@ func parse(enableCache bool, ignoreActions bool) []Entry {
 		entries = append(entries, v.Actions...)
 	}
 
-	if enableCache {
+	if cache {
 		util.ToJson(&entries, filepath.Join(util.CacheDir(), fmt.Sprintf("%s.json", ApplicationsName)))
 	}
 

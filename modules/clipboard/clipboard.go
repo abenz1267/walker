@@ -21,16 +21,15 @@ import (
 const ClipboardName = "clipboard"
 
 type Clipboard struct {
-	prefix            string
-	entries           []ClipboardItem
-	file              string
-	imgTypes          map[string]string
-	max               int
-	switcherExclusive bool
+	general  config.GeneralModule
+	entries  []ClipboardItem
+	file     string
+	imgTypes map[string]string
+	max      int
 }
 
-func (c Clipboard) SwitcherExclusive() bool {
-	return c.switcherExclusive
+func (c Clipboard) SwitcherOnly() bool {
+	return c.general.SwitcherOnly
 }
 
 func (c Clipboard) Refresh() {}
@@ -79,14 +78,14 @@ func (c Clipboard) Entries(ctx context.Context, term string) []modules.Entry {
 }
 
 func (c Clipboard) Prefix() string {
-	return c.prefix
+	return c.general.Prefix
 }
 
 func (c Clipboard) Name() string {
 	return ClipboardName
 }
 
-func (c Clipboard) Setup(cfg *config.Config, module *config.Module) modules.Workable {
+func (c Clipboard) Setup(cfg *config.Config) modules.Workable {
 	pth, _ := exec.LookPath("wl-copy")
 	if pth == "" {
 		log.Println("currently wl-clipboard only.")
@@ -99,10 +98,12 @@ func (c Clipboard) Setup(cfg *config.Config, module *config.Module) modules.Work
 		return nil
 	}
 
-	c.prefix = module.Prefix
-	c.switcherExclusive = module.SwitcherExclusive
+	c.general.Prefix = cfg.Builtins.Clipboard.Prefix
+	c.general.SwitcherOnly = cfg.Builtins.Clipboard.SwitcherOnly
+	c.general.SpecialLabel = cfg.Builtins.Clipboard.SpecialLabel
+
 	c.file = filepath.Join(util.CacheDir(), "clipboard.gob")
-	c.max = cfg.Clipboard.MaxEntries
+	c.max = cfg.Builtins.Clipboard.MaxEntries
 
 	c.imgTypes = make(map[string]string)
 	c.imgTypes["image/png"] = "png"

@@ -102,12 +102,12 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		cfg.IsService = appstate.IsService
 
 		if appstate.ExplicitPlaceholder != "" {
-			cfg.Placeholder = appstate.ExplicitPlaceholder
+			cfg.Search.Placeholder = appstate.ExplicitPlaceholder
 		}
 
 		hstry = history.Get()
 
-		if !cfg.DisableUpHistory {
+		if cfg.Search.History {
 			inputhstry = history.GetInputHistory()
 		}
 
@@ -119,32 +119,32 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		gtk4layershell.InitForWindow(&ui.appwin.Window)
 		gtk4layershell.SetNamespace(&ui.appwin.Window, "walker")
 
-		if cfg.ForceKeyboardFocus {
+		if cfg.Search.ForceKeyboardFocus {
 			gtk4layershell.SetKeyboardMode(&ui.appwin.Window, gtk4layershell.LayerShellKeyboardModeExclusive)
 		} else {
 			gtk4layershell.SetKeyboardMode(&ui.appwin.Window, gtk4layershell.LayerShellKeyboardModeOnDemand)
 		}
 
-		if !cfg.Fullscreen {
+		if !cfg.UI.Fullscreen {
 			gtk4layershell.SetLayer(&ui.appwin.Window, gtk4layershell.LayerShellLayerTop)
 
-			if cfg.Align.Anchors.Top {
+			if cfg.UI.Anchors.Top {
 				gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeTop, true)
 			}
 
-			if cfg.Align.Anchors.Bottom {
+			if cfg.UI.Anchors.Bottom {
 				gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeBottom, true)
 			}
 
-			if cfg.Align.Anchors.Left {
+			if cfg.UI.Anchors.Left {
 				gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeLeft, true)
 			}
 
-			if cfg.Align.Anchors.Right {
+			if cfg.UI.Anchors.Right {
 				gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeRight, true)
 			}
 
-			if cfg.Align.IgnoreExclusive {
+			if cfg.UI.IgnoreExclusive {
 				gtk4layershell.SetExclusiveZone(&ui.appwin.Window, -1)
 			}
 		} else {
@@ -154,7 +154,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeLeft, true)
 			gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeRight, true)
 
-			if cfg.Align.IgnoreExclusive {
+			if cfg.UI.IgnoreExclusive {
 				gtk4layershell.SetExclusiveZone(&ui.appwin.Window, -1)
 			}
 		}
@@ -195,8 +195,8 @@ func setupUI(app *gtk.Application) {
 	}
 
 	if appstate.Password {
-		cfg.Search.HideIcons = true
-		cfg.Search.HideSpinner = true
+		cfg.Search.Icons = false
+		cfg.Search.Spinner = false
 
 		ui.searchwrapper.SetVisible(false)
 
@@ -207,9 +207,9 @@ func setupUI(app *gtk.Application) {
 		ui.box.Append(pw)
 	}
 
-	if cfg.Icons.Theme != "" {
+	if cfg.UI.Icons.Theme != "" {
 		ui.iconTheme = gtk.NewIconTheme()
-		ui.iconTheme.SetThemeName(cfg.Icons.Theme)
+		ui.iconTheme.SetThemeName(cfg.UI.Icons.Theme)
 	} else {
 		ui.iconTheme = gtk.IconThemeGetForDisplay(gdk.DisplayGetDefault())
 	}
@@ -279,15 +279,15 @@ func setupUserStyle() {
 		ui.list.SetMarginTop(cfg.List.MarginTop)
 	}
 
-	if cfg.Search.HideSpinner {
+	if !cfg.Search.Spinner {
 		ui.spinner.SetVisible(false)
 	}
 
-	if cfg.Search.HideIcons {
-		ui.search.FirstChild().(*gtk.Image).Hide()
-		ui.search.LastChild().(*gtk.Image).Hide()
-		ui.typeahead.FirstChild().(*gtk.Image).Hide()
-		ui.typeahead.LastChild().(*gtk.Image).Hide()
+	if !cfg.Search.Icons {
+		ui.search.FirstChild().(*gtk.Image).SetVisible(false)
+		ui.search.LastChild().(*gtk.Image).SetVisible(false)
+		ui.typeahead.FirstChild().(*gtk.Image).SetVisible(false)
+		ui.typeahead.LastChild().(*gtk.Image).SetVisible(false)
 	}
 
 	alignments := make(map[string]gtk.Align)
@@ -304,18 +304,18 @@ func setupUserStyle() {
 
 	ui.scroll.SetPolicy(gtk.PolicyNever, gtk.PolicyAutomatic)
 
-	if cfg.ScrollbarPolicy != "" {
-		ui.scroll.SetPolicy(gtk.PolicyNever, policies[cfg.ScrollbarPolicy])
+	if cfg.List.ScrollbarPolicy != "" {
+		ui.scroll.SetPolicy(gtk.PolicyNever, policies[cfg.List.ScrollbarPolicy])
 	}
 
 	width := -1
-	if cfg.Align.Width != 0 {
-		width = cfg.Align.Width
+	if cfg.UI.Width != 0 {
+		width = cfg.UI.Width
 	}
 
 	height := -1
-	if cfg.Align.Height != 0 {
-		height = cfg.Align.Height
+	if cfg.UI.Height != 0 {
+		height = cfg.UI.Height
 	}
 
 	ui.box.SetSizeRequest(width, height)
@@ -324,40 +324,40 @@ func setupUserStyle() {
 		ui.scroll.SetMaxContentHeight(cfg.List.Height)
 
 		if cfg.List.FixedHeight {
-			ui.list.SetSizeRequest(cfg.Align.Width, cfg.List.Height)
-			ui.scroll.SetSizeRequest(cfg.Align.Width, cfg.List.Height)
+			ui.list.SetSizeRequest(cfg.UI.Width, cfg.List.Height)
+			ui.scroll.SetSizeRequest(cfg.UI.Width, cfg.List.Height)
 		}
 	}
 
-	if cfg.Align.Horizontal != "" {
-		ui.box.SetObjectProperty("halign", alignments[cfg.Align.Horizontal])
+	if cfg.UI.Horizontal != "" {
+		ui.box.SetObjectProperty("halign", alignments[cfg.UI.Horizontal])
 	}
 
-	if cfg.Align.Vertical != "" {
-		ui.box.SetObjectProperty("valign", alignments[cfg.Align.Vertical])
+	if cfg.UI.Vertical != "" {
+		ui.box.SetObjectProperty("valign", alignments[cfg.UI.Vertical])
 	}
 
-	if cfg.Orientation == "horizontal" {
+	if cfg.UI.Orientation == "horizontal" {
 		ui.box.SetObjectProperty("orientation", gtk.OrientationHorizontal)
 		ui.search.SetVAlign(gtk.AlignCenter)
 		ui.typeahead.SetVAlign(gtk.AlignCenter)
 		ui.search.SetHExpand(false)
 		ui.typeahead.SetHExpand(false)
 		ui.list.SetOrientation(gtk.OrientationHorizontal)
-		ui.scroll.SetPolicy(policies[cfg.ScrollbarPolicy], gtk.PolicyNever)
+		ui.scroll.SetPolicy(policies[cfg.List.ScrollbarPolicy], gtk.PolicyNever)
 	}
 
 	ui.scroll.SetMaxContentWidth(cfg.List.Width)
 	ui.scroll.SetMaxContentHeight(cfg.List.Height)
 
-	if cfg.Placeholder != "" {
-		ui.search.SetObjectProperty("placeholder-text", cfg.Placeholder)
+	if cfg.Search.Placeholder != "" {
+		ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
 	}
 
-	ui.box.SetMarginBottom(cfg.Align.Margins.Bottom)
-	ui.box.SetMarginTop(cfg.Align.Margins.Top)
-	ui.box.SetMarginStart(cfg.Align.Margins.Start)
-	ui.box.SetMarginEnd(cfg.Align.Margins.End)
+	ui.box.SetMarginBottom(cfg.UI.Margins.Bottom)
+	ui.box.SetMarginTop(cfg.UI.Margins.Top)
+	ui.box.SetMarginStart(cfg.UI.Margins.Start)
+	ui.box.SetMarginEnd(cfg.UI.Margins.End)
 }
 
 func setupFactory() *gtk.SignalListItemFactory {
@@ -420,21 +420,21 @@ func setupFactory() *gtk.SignalListItemFactory {
 		if val.Image != "" {
 			image := gtk.NewImageFromFile(val.Image)
 			image.SetHExpand(true)
-			image.SetSizeRequest(-1, cfg.Clipboard.ImageHeight)
+			image.SetSizeRequest(-1, cfg.Builtins.Clipboard.ImageHeight)
 			box.Append(image)
 		}
 
-		if !cfg.Icons.Hide && val.Icon != "" {
+		if !cfg.UI.Icons.Hide && val.Icon != "" {
 			if val.IconIsImage {
 				image := gtk.NewImageFromFile(val.Icon)
 				image.SetMarginEnd(10)
-				image.SetSizeRequest(cfg.Icons.ImageSize, cfg.Icons.ImageSize)
+				image.SetSizeRequest(cfg.UI.Icons.ImageSize, cfg.UI.Icons.ImageSize)
 				box.Append(image)
 			} else {
-				i := ui.iconTheme.LookupIcon(val.Icon, []string{}, cfg.Icons.Size, 1, gtk.GetLocaleDirection(), 0)
+				i := ui.iconTheme.LookupIcon(val.Icon, []string{}, cfg.UI.Icons.Size, 1, gtk.GetLocaleDirection(), 0)
 				icon := gtk.NewImageFromPaintable(i)
 				icon.SetIconSize(gtk.IconSizeLarge)
-				icon.SetPixelSize(cfg.Icons.Size)
+				icon.SetPixelSize(cfg.UI.Icons.Size)
 				icon.SetCSSClasses([]string{"icon"})
 				box.Append(icon)
 			}
@@ -447,7 +447,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 		top := gtk.NewLabel(val.Label)
 		top.SetMaxWidthChars(0)
 
-		if cfg.Orientation != "horizontal" {
+		if cfg.UI.Orientation != "horizontal" {
 			top.SetWrap(true)
 		}
 
@@ -460,7 +460,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 			bottom := gtk.NewLabel(val.Sub)
 			bottom.SetMaxWidthChars(0)
 
-			if cfg.Orientation != "horizontal" {
+			if cfg.UI.Orientation != "horizontal" {
 				bottom.SetWrap(true)
 			}
 

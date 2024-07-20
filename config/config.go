@@ -15,45 +15,76 @@ import (
 var defaultConfig []byte
 
 type Config struct {
-	Placeholder        string            `json:"placeholder,omitempty"`
-	EnableTypeahead    bool              `json:"enable_typeahead,omitempty"`
-	ShowInitialEntries bool              `json:"show_initial_entries,omitempty"`
-	DisableUpHistory   bool              `json:"disable_up_history,omitempty"`
-	ForceKeyboardFocus bool              `json:"force_keyboard_focus,omitempty"`
-	SSHHostFile        string            `json:"ssh_host_file,omitempty"`
-	ShellConfig        string            `json:"shell_config,omitempty"`
-	Terminal           string            `json:"terminal,omitempty"`
-	Orientation        string            `json:"orientation,omitempty"`
-	Fullscreen         bool              `json:"fullscreen,omitempty"`
-	Modules            []Module          `json:"modules,omitempty"`
-	External           []Module          `json:"external,omitempty"`
-	Icons              Icons             `json:"icons,omitempty"`
-	Align              Align             `json:"align,omitempty"`
-	List               List              `json:"list,omitempty"`
-	Search             Search            `json:"search,omitempty"`
-	Clipboard          Clipboard         `json:"clipboard,omitempty"`
-	Runner             Runner            `json:"runner,omitempty"`
-	ActivationMode     ActivationMode    `json:"activation_mode,omitempty"`
-	ScrollbarPolicy    string            `json:"scrollbar_policy,omitempty"`
-	IgnoreMouse        bool              `json:"ignore_mouse,omitempty"`
-	Hyprland           Hyprland          `json:"hyprland,omitempty"`
-	SpecialLabels      map[string]string `json:"special_labels,omitempty"`
-	IsService          bool              `json:"-"`
-	Applications       Applications      `json:"applications,omitempty"`
-	Websearch          Websearch         `json:"websearch,omitempty"`
+	Terminal       string            `json:"terminal,omitempty"`
+	IgnoreMouse    bool              `json:"ignore_mouse,omitempty"`
+	SpecialLabels  map[string]string `json:"special_labels,omitempty"`
+	UI             UI                `json:"ui,omitempty"`
+	List           List              `json:"list,omitempty"`
+	Search         Search            `json:"search,omitempty"`
+	ActivationMode ActivationMode    `json:"activation_mode,omitempty"`
+	Disabled       []string          `json:"disabled,omitempty"`
+	Plugins        []Plugin          `json:"plugins,omitempty"`
+	Builtins       Builtins          `json:"builtins,omitempty"`
+
+	// internal
+	IsService bool     `json:"-"`
+	Enabled   []string `json:"-"`
+}
+
+type Builtins struct {
+	Applications Applications `json:"applications,omitempty"`
+	Clipboard    Clipboard    `json:"clipboard,omitempty"`
+	Commands     Commands     `json:"commands,omitempty"`
+	Emojis       Emojis       `json:"emojis,omitempty"`
+	Finder       Finder       `json:"finder,omitempty"`
+	Hyprland     Hyprland     `json:"hyprland,omitempty"`
+	Runner       Runner       `json:"runner,omitempty"`
+	SSH          SSH          `json:"ssh,omitempty"`
+	Switcher     Switcher     `json:"switcher,omitempty"`
+	Websearch    Websearch    `json:"websearch,omitempty"`
+}
+
+type GeneralModule struct {
+	SpecialLabel string `json:"special_label,omitempty"`
+	Prefix       string `json:"prefix,omitempty"`
+	SwitcherOnly bool   `json:"switcher_only,omitempty"`
+}
+
+type Finder struct {
+	GeneralModule
+}
+
+type Commands struct {
+	GeneralModule
+}
+
+type Switcher struct {
+	GeneralModule
+}
+
+type Emojis struct {
+	GeneralModule
+}
+
+type SSH struct {
+	GeneralModule
+	HostFile string `json:"host_file,omitempty"`
 }
 
 type Websearch struct {
+	GeneralModule
 	Engines []string `json:"engines,omitempty"`
 }
 
 type Hyprland struct {
+	GeneralModule
 	ContextAwareHistory bool `json:"context_aware_history,omitempty"`
 }
 
 type Applications struct {
-	EnableCache   bool `json:"enable_cache,omitempty"`
-	IgnoreActions bool `json:"ignore_actions,omitempty"`
+	GeneralModule
+	Cache   bool `json:"cache,omitempty"`
+	Actions bool `json:"actions,omitempty"`
 }
 
 type ActivationMode struct {
@@ -63,34 +94,39 @@ type ActivationMode struct {
 }
 
 type Clipboard struct {
+	GeneralModule
 	ImageHeight int `json:"image_height,omitempty"`
 	MaxEntries  int `json:"max_entries,omitempty"`
 }
 
 type Runner struct {
-	Excludes []string
-	Includes []string
+	GeneralModule
+	ShellConfig string `json:"shell_config,omitempty"`
+	Excludes    []string
+	Includes    []string
 }
 
-type Module struct {
-	Prefix            string `json:"prefix,omitempty"`
-	Name              string `json:"name,omitempty"`
-	SrcOnce           string `json:"src_once,omitempty"`
-	SrcOnceRefresh    bool   `json:"src_once_refresh,omitempty"`
-	Src               string `json:"src,omitempty"`
-	Cmd               string `json:"cmd,omitempty"`
-	CmdAlt            string `json:"cmd_alt,omitempty"`
-	SpecialLabel      string `json:"special_label,omitempty"`
-	History           bool   `json:"history,omitempty"`
-	SwitcherExclusive bool   `json:"switcher_exclusive,omitempty"`
-	Terminal          bool   `json:"terminal,omitempty"`
+type Plugin struct {
+	GeneralModule
+	Name           string `json:"name,omitempty"`
+	SrcOnce        string `json:"src_once,omitempty"`
+	SrcOnceRefresh bool   `json:"src_once_refresh,omitempty"`
+	Src            string `json:"src,omitempty"`
+	Cmd            string `json:"cmd,omitempty"`
+	CmdAlt         string `json:"cmd_alt,omitempty"`
+	History        bool   `json:"history,omitempty"`
+	Terminal       bool   `json:"terminal,omitempty"`
 }
 
 type Search struct {
-	Delay         int  `json:"delay,omitempty"`
-	HideIcons     bool `json:"hide_icons,omitempty"`
-	MarginSpinner int  `json:"margin_spinner,omitempty"`
-	HideSpinner   bool `json:"hide_spinner,omitempty"`
+	Delay              int    `json:"delay,omitempty"`
+	Typeahead          bool   `json:"typeahead,omitempty"`
+	ForceKeyboardFocus bool   `json:"force_keyboard_focus,omitempty"`
+	Icons              bool   `json:"icons,omitempty"`
+	Spinner            bool   `json:"spinner,omitempty"`
+	History            bool   `json:"history,omitempty"`
+	MarginSpinner      int    `json:"margin_spinner,omitempty"`
+	Placeholder        string `json:"placeholder,omitempty"`
 }
 
 type Icons struct {
@@ -100,7 +136,10 @@ type Icons struct {
 	Theme     string `json:"theme,omitempty"`
 }
 
-type Align struct {
+type UI struct {
+	Icons           Icons   `json:"icons,omitempty"`
+	Orientation     string  `json:"orientation,omitempty"`
+	Fullscreen      bool    `json:"fullscreen,omitempty"`
 	IgnoreExclusive bool    `json:"ignore_exclusive,omitempty"`
 	Horizontal      string  `json:"horizontal,omitempty"`
 	Vertical        string  `json:"vertical,omitempty"`
@@ -125,13 +164,15 @@ type Margins struct {
 }
 
 type List struct {
-	MarginTop   int  `json:"margin_top,omitempty"`
-	Height      int  `json:"height,omitempty"`
-	Width       int  `json:"width,omitempty"`
-	AlwaysShow  bool `json:"always_show,omitempty"`
-	FixedHeight bool `json:"fixed_height,omitempty"`
-	HideSub     bool `json:"hide_sub,omitempty"`
-	MaxEntries  int  `json:"max_entries,omitempty"`
+	AlwaysShow         bool   `json:"always_show,omitempty"`
+	FixedHeight        bool   `json:"fixed_height,omitempty"`
+	Height             int    `json:"height,omitempty"`
+	HideSub            bool   `json:"hide_sub,omitempty"`
+	MarginTop          int    `json:"margin_top,omitempty"`
+	MaxEntries         int    `json:"max_entries,omitempty"`
+	ScrollbarPolicy    string `json:"scrollbar_policy,omitempty"`
+	ShowInitialEntries bool   `json:"show_initial_entries,omitempty"`
+	Width              int    `json:"width,omitempty"`
 }
 
 func Get(config string) *Config {
@@ -150,11 +191,6 @@ func Get(config string) *Config {
 	}
 
 	go setTerminal(cfg)
-
-	if len(cfg.Modules) == 0 {
-		log.Println("no modules configured")
-		os.Exit(1)
-	}
 
 	// defaults
 	if cfg.List.MaxEntries == 0 {

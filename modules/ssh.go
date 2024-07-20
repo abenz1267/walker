@@ -13,9 +13,8 @@ import (
 )
 
 type SSH struct {
-	prefix            string
-	switcherExclusive bool
-	entries           []Entry
+	general config.GeneralModule
+	entries []Entry
 }
 
 func (s SSH) Refresh() {}
@@ -37,22 +36,23 @@ func (s SSH) Entries(ctx context.Context, term string) []Entry {
 }
 
 func (s SSH) Prefix() string {
-	return s.prefix
+	return s.general.Prefix
 }
 
 func (s SSH) Name() string {
 	return "ssh"
 }
 
-func (s SSH) SwitcherExclusive() bool {
-	return s.switcherExclusive
+func (s SSH) SwitcherOnly() bool {
+	return s.general.SwitcherOnly
 }
 
-func (SSH) Setup(cfg *config.Config, module *config.Module) Workable {
+func (SSH) Setup(cfg *config.Config) Workable {
 	s := &SSH{}
 
-	s.prefix = module.Prefix
-	s.switcherExclusive = module.SwitcherExclusive
+	s.general.Prefix = cfg.Builtins.SSH.Prefix
+	s.general.SwitcherOnly = cfg.Builtins.SSH.SwitcherOnly
+	s.general.SpecialLabel = cfg.Builtins.SSH.SpecialLabel
 
 	home, err := os.UserHomeDir()
 	if err != nil {
@@ -60,8 +60,8 @@ func (SSH) Setup(cfg *config.Config, module *config.Module) Workable {
 	}
 
 	hosts := filepath.Join(home, ".ssh", "known_hosts")
-	if cfg.SSHHostFile != "" {
-		hosts = cfg.SSHHostFile
+	if cfg.Builtins.SSH.HostFile != "" {
+		hosts = cfg.Builtins.SSH.HostFile
 	}
 
 	if _, err := os.Stat(hosts); err != nil {

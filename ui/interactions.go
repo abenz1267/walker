@@ -60,37 +60,33 @@ func setupCommands() {
 func setupModules() {
 	util.FromGob(filepath.Join(util.CacheDir(), "typeahead.gob"), &tah)
 
-	var internals []modules.Workable
+	var enabledModules []modules.Workable
 
 	if appstate.Dmenu != nil {
-		internals = []modules.Workable{
+		enabledModules = []modules.Workable{
 			appstate.Dmenu,
 		}
 	} else {
-		internals = []modules.Workable{
+		enabledModules = []modules.Workable{
 			modules.Applications{},
-			modules.Runner{ShellConfig: cfg.ShellConfig},
+			modules.Runner{},
 			modules.Websearch{},
 			modules.Commands{},
 			modules.Hyprland{},
 			modules.SSH{},
 			modules.Finder{},
+			modules.Switcher{},
 			emojis.Emojis{},
 			appstate.Clipboard,
 		}
 	}
 
-	externals := make(map[string]struct{})
-
 	if appstate.Dmenu == nil {
-		for _, v := range cfg.External {
-			e := &modules.External{
-				ModuleName: v.Name,
-			}
+		for _, v := range cfg.Plugins {
+			e := &modules.Plugin{}
+			e.General = v
 
-			externals[e.Name()] = struct{}{}
-
-			internals = append(internals, e)
+			enabledModules = append(enabledModules, e)
 		}
 	}
 
@@ -98,43 +94,16 @@ func setupModules() {
 
 	procs = make(map[string][]modules.Workable)
 
-	for _, v := range internals {
-		if v == nil {
+	for _, v := range enabledModules {
+		if v == nil || slices.Contains(cfg.Disabled, v.Name()) {
 			continue
 		}
 
-		if v.Name() == "switcher" {
-			continue
-		}
+		w := v.Setup(cfg)
 
-		s := modules.Find(cfg.Modules, v.Name())
-
-		if _, ok := externals[v.Name()]; ok {
-			s = modules.Find(cfg.External, v.Name())
-		}
-
-		if s == nil && appstate.Dmenu == nil {
-			continue
-		}
-
-		w := v.Setup(cfg, s)
 		if w != nil {
 			procs[w.Prefix()] = append(procs[w.Prefix()], w)
-		}
-	}
-
-	if appstate.Dmenu == nil {
-		// setup switcher individually
-		switcher := modules.Switcher{Procs: procs}
-
-		module := modules.Find(cfg.Modules, switcher.Name())
-
-		if module != nil {
-			s := switcher.Setup(cfg, module)
-
-			if s != nil {
-				procs[s.Prefix()] = append(procs[s.Prefix()], s)
-			}
+			cfg.Enabled = append(cfg.Enabled, w.Name())
 		}
 	}
 
@@ -481,12 +450,12 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 func disableSingleProc() {
 	if singleProc != nil {
 		singleProc = nil
-		ui.search.SetObjectProperty("placeholder-text", cfg.Placeholder)
+		ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
 
 		if ui.search.Text() != "" {
 			ui.search.SetText("")
 		} else {
-			if cfg.ShowInitialEntries {
+			if cfg.List.ShowInitialEntries {
 				process()
 			}
 		}
@@ -554,7 +523,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		hstry.Save(entry.Identifier(), strings.TrimSpace(ui.search.Text()))
 	}
 
-	if !cfg.DisableUpHistory {
+	if cfg.Search.History {
 		inputhstry = inputhstry.SaveToInputHistory(ui.search.Text())
 	}
 
@@ -584,7 +553,7 @@ func setStdin(cmd *exec.Cmd, piped *modules.Piped) {
 }
 
 func closeAfterActivation(keepOpen, sn bool) {
-	if cfg.EnableTypeahead {
+	if cfg.Search.Typeahead {
 		tah = append([]string{ui.search.Text()}, tah...)
 		util.ToGob(&tah, filepath.Join(util.CacheDir(), "typeahead.gob"))
 	}
@@ -618,7 +587,7 @@ func process() {
 
 	ui.spinner.SetCSSClasses([]string{"visible"})
 
-	if cfg.EnableTypeahead && appstate.Password {
+	if cfg.Search.Typeahead && appstate.Password {
 		ui.typeahead.SetText("")
 
 		if strings.TrimSpace(ui.search.Text()) != "" {
@@ -636,7 +605,7 @@ func process() {
 
 	text := strings.TrimSpace(ui.search.Text())
 
-	if text == "" && cfg.ShowInitialEntries && singleProc == nil && len(appstate.ExplicitModules) == 0 && appstate.Dmenu == nil {
+	if text == "" && cfg.List.ShowInitialEntries && singleProc == nil && len(appstate.ExplicitModules) == 0 && appstate.Dmenu == nil {
 		setInitials()
 		return
 	}
@@ -644,7 +613,7 @@ func process() {
 	var ctx context.Context
 	ctx, cancel = context.WithCancel(context.Background())
 
-	if (ui.search.Text() != "" || singleProc != nil || appstate.Dmenu != nil) || (len(appstate.ExplicitModules) > 0 && cfg.ShowInitialEntries) {
+	if (ui.search.Text() != "" || singleProc != nil || appstate.Dmenu != nil) || (len(appstate.ExplicitModules) > 0 && cfg.List.ShowInitialEntries) {
 		go processAsync(ctx)
 	} else {
 		ui.items.Splice(0, int(ui.items.NItems()))
@@ -717,7 +686,7 @@ func processAsync(ctx context.Context) {
 
 	var hyprland *modules.Hyprland
 
-	if cfg.Hyprland.ContextAwareHistory && cfg.IsService {
+	if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService {
 		for _, v := range p {
 			if v.Name() == "hyprland" {
 				hyprland = v.(*modules.Hyprland)
@@ -744,7 +713,7 @@ func processAsync(ctx context.Context) {
 	wg.Add(len(p))
 
 	for _, proc := range p {
-		if proc.SwitcherExclusive() && !hasExplicit {
+		if proc.SwitcherOnly() && !hasExplicit {
 			if singleProc == nil || singleProc.Name() != proc.Name() {
 				wg.Done()
 				handler.receiver <- []modules.Entry{}
@@ -817,7 +786,7 @@ func setInitials() {
 
 	var hyprland *modules.Hyprland
 
-	if cfg.Hyprland.ContextAwareHistory && cfg.IsService {
+	if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService {
 		for _, v := range procs {
 			for _, proc := range v {
 				if proc.Name() == "hyprland" {
@@ -849,7 +818,7 @@ func setInitials() {
 
 				entry.ScoreFinal = float64(usageModifier(entry))
 
-				if cfg.Hyprland.ContextAwareHistory && cfg.IsService {
+				if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService {
 					entry.OpenWindows = hyprland.GetWindowAmount(entry.InitialClass)
 				}
 
@@ -900,7 +869,7 @@ func quit() {
 		go func() {
 			glib.IdleAdd(func() {
 				ui.search.SetText("")
-				ui.search.SetObjectProperty("placeholder-text", cfg.Placeholder)
+				ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
 
 				appstate.IsRunning = false
 				appstate.IsMeasured = false

@@ -878,16 +878,11 @@ func quit() {
 		singleProc = nil
 
 		ui.appwin.SetVisible(false)
+		ui.search.SetText("")
+		ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
 
-		go func() {
-			glib.IdleAdd(func() {
-				ui.search.SetText("")
-				ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
-
-				appstate.IsRunning = false
-				appstate.IsMeasured = false
-			})
-		}()
+		appstate.IsRunning = false
+		appstate.IsMeasured = false
 
 		ui.app.Hold()
 	} else {

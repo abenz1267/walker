@@ -7,10 +7,10 @@
     "vertical": "start",
     "width": 400,
     "margins": {
-      "top": 100
+      "top": 0
     },
     "anchors": {
-      "top": true
+      "top": false
     }
   },
   "list": {

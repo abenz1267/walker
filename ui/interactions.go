@@ -29,6 +29,7 @@ var (
 	keys              map[uint]uint
 	activationEnabled bool
 	amKey             uint
+	cmdAltModifier    gdk.ModifierType
 	amModifier        gdk.ModifierType
 	commands          map[string]func()
 	tah               []string
@@ -178,9 +179,12 @@ func setupInteractions(appstate *state.AppState) {
 	amKey = gdk.KEY_Control_L
 	amModifier = gdk.ControlMask
 
+	cmdAltModifier = gdk.AltMask
+
 	if cfg.ActivationMode.UseAlt {
 		amKey = gdk.KEY_Alt_L
 		amModifier = gdk.AltMask
+		cmdAltModifier = gdk.ControlMask
 	}
 }
 
@@ -373,9 +377,9 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		toggleForceTerminal()
 	case gdk.KEY_Return:
 		isShift := modifier == gdk.ShiftMask
-		isAlt := modifier == gdk.AltMask
+		isAlt := modifier == cmdAltModifier
 
-		isAltShift := modifier == (gdk.ShiftMask | gdk.AltMask)
+		isAltShift := modifier == (gdk.ShiftMask | cmdAltModifier)
 
 		if isAltShift {
 			isShift = true

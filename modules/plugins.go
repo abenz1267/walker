@@ -23,6 +23,7 @@ func (e Plugin) SwitcherOnly() bool {
 
 func (e *Plugin) Setup(cfg *config.Config) Workable {
 	if e.General.SrcOnce != "" {
+		e.General.Src = e.General.SrcOnce
 		e.cachedOutput = e.getSrcOutput(false, "")
 	}
 
@@ -48,14 +49,6 @@ func (e Plugin) Entries(ctx context.Context, term string) []Entry {
 
 	if e.General.Src == "" {
 		return entries
-	}
-
-	if e.General.Prefix != "" && len(term) == 1 {
-		return entries
-	}
-
-	if e.General.Prefix != "" {
-		term = strings.TrimPrefix(term, e.General.Prefix)
 	}
 
 	hasExplicitTerm := false

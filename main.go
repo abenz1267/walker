@@ -110,19 +110,6 @@ func main() {
 		defer os.Remove(filepath.Join(tmp, "walker.lock"))
 	}
 
-	if state.IsService && !forceNew {
-		if _, err := os.Stat(filepath.Join(tmp, "walker-service.lock")); err == nil {
-			log.Println("lockfile exists. exiting. Remove '/tmp/walker-service.lock' and try again.")
-			return
-		}
-
-		err := os.WriteFile(filepath.Join(tmp, "walker-service.lock"), []byte{}, 0o600)
-		if err != nil {
-			log.Panicln(err)
-		}
-		defer os.Remove(filepath.Join(tmp, "walker-service.lock"))
-	}
-
 	app := gtk.NewApplication(appName, gio.ApplicationHandlesCommandLine)
 
 	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
@@ -206,10 +193,6 @@ func main() {
 			<-signal_chan
 
 			os.Remove(filepath.Join(util.TmpDir(), "walker.lock"))
-
-			if state.IsService {
-				os.Remove(filepath.Join(util.TmpDir(), "walker-service.lock"))
-			}
 
 			os.Exit(0)
 		}

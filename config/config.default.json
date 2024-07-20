@@ -34,7 +34,11 @@
   "activation_mode": {},
   "builtins": {
     "applications": { "actions": true },
-    "clipboard": { "image_height": 300, "max_entries": 10 },
+    "clipboard": {
+      "image_height": 300,
+      "max_entries": 10,
+      "switcher_only": true
+    },
     "commands": { "switcher_only": true },
     "emojis": { "switcher_only": true },
     "finder": { "switcher_only": true },

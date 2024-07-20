@@ -49,6 +49,7 @@ type GeneralModule struct {
 	SpecialLabel string `mapstructure:"special_label"`
 	Prefix       string `mapstructure:"prefix"`
 	SwitcherOnly bool   `mapstructure:"switcher_only"`
+	IsSetup      bool   `mapstructure:"-"`
 }
 
 type Finder struct {

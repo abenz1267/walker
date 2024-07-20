@@ -35,11 +35,15 @@ func (a Applications) Placeholder() string {
 	return a.general.Placeholder
 }
 
+func (a Applications) IsSetup() bool {
+	return a.general.IsSetup
+}
+
 func (a Applications) SwitcherOnly() bool {
 	return a.general.SwitcherOnly
 }
 
-func (a Applications) Setup(cfg *config.Config) Workable {
+func (a *Applications) Setup(cfg *config.Config) {
 	a.general.Prefix = cfg.Builtins.Applications.Prefix
 	a.general.SwitcherOnly = cfg.Builtins.Applications.SwitcherOnly
 	a.general.SpecialLabel = cfg.Builtins.Applications.SpecialLabel
@@ -47,8 +51,10 @@ func (a Applications) Setup(cfg *config.Config) Workable {
 	a.cache = cfg.Builtins.Applications.Cache
 	a.actions = cfg.Builtins.Applications.Actions
 
-	return a
+	a.general.IsSetup = true
 }
+
+func (a Applications) SetupData(_ *config.Config) {}
 
 func (a Applications) Refresh() {}
 

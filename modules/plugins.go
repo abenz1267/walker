@@ -14,20 +14,28 @@ import (
 
 type Plugin struct {
 	General      config.Plugin
+	isSetup      bool
 	cachedOutput []byte
+}
+
+func (e Plugin) IsSetup() bool {
+	return e.General.IsSetup
 }
 
 func (e Plugin) SwitcherOnly() bool {
 	return e.General.SwitcherOnly
 }
 
-func (e *Plugin) Setup(cfg *config.Config) Workable {
+func (e *Plugin) Setup(cfg *config.Config) {
+}
+
+func (e *Plugin) SetupData(cfg *config.Config) {
 	if e.General.SrcOnce != "" {
 		e.General.Src = e.General.SrcOnce
 		e.cachedOutput = e.getSrcOutput(false, "")
 	}
 
-	return e
+	e.isSetup = true
 }
 
 func (e Plugin) Placeholder() string {
@@ -39,9 +47,7 @@ func (e Plugin) Placeholder() string {
 }
 
 func (e *Plugin) Refresh() {
-	if e.General.SrcOnceRefresh {
-		e.cachedOutput = e.getSrcOutput(false, "")
-	}
+	e.isSetup = false
 }
 
 func (e Plugin) Name() string {

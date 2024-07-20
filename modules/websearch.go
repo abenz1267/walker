@@ -32,6 +32,10 @@ type EngineInfo struct {
 	URL   string
 }
 
+func (w Websearch) IsSetup() bool {
+	return w.general.IsSetup
+}
+
 func (w Websearch) Placeholder() string {
 	if w.general.Placeholder == "" {
 		return "websearch"
@@ -44,12 +48,14 @@ func (w Websearch) SwitcherOnly() bool {
 	return w.general.SwitcherOnly
 }
 
-func (w Websearch) Setup(cfg *config.Config) Workable {
+func (w *Websearch) Setup(cfg *config.Config) {
 	w.engines = cfg.Builtins.Websearch.Engines
 	w.general.Prefix = cfg.Builtins.Websearch.Prefix
 	w.general.SwitcherOnly = cfg.Builtins.Websearch.SwitcherOnly
 	w.general.SpecialLabel = cfg.Builtins.Websearch.SpecialLabel
+}
 
+func (w *Websearch) SetupData(_ *config.Config) {
 	slices.Reverse(w.engines)
 
 	if len(w.engines) == 0 {
@@ -78,7 +84,7 @@ func (w Websearch) Setup(cfg *config.Config) Workable {
 		URL:   YandexURL,
 	}
 
-	return w
+	w.general.IsSetup = true
 }
 
 func (w Websearch) Refresh() {}

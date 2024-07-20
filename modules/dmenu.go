@@ -9,9 +9,14 @@ import (
 )
 
 type Dmenu struct {
+	isSetup     bool
 	Content     []string
 	Separator   string
 	LabelColumn int
+}
+
+func (d Dmenu) IsSetup() bool {
+	return d.isSetup
 }
 
 func (d Dmenu) Entries(ctx context.Context, term string) []Entry {
@@ -50,7 +55,7 @@ func (Dmenu) SwitcherOnly() bool {
 	return false
 }
 
-func (d *Dmenu) Setup(cfg *config.Config) Workable {
+func (d *Dmenu) Setup(cfg *config.Config) {
 	if d.Separator == "" {
 		d.Separator = "\t"
 	}
@@ -60,8 +65,10 @@ func (d *Dmenu) Setup(cfg *config.Config) Workable {
 		d.Separator = s
 	}
 
-	return d
+	d.isSetup = true
 }
+
+func (d *Dmenu) SetupData(cfg *config.Config) {}
 
 func (d Dmenu) Placeholder() string {
 	if d.Separator == "" {

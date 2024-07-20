@@ -11,6 +11,10 @@ type Commands struct {
 	entries []Entry
 }
 
+func (c Commands) IsSetup() bool {
+	return c.general.IsSetup
+}
+
 func (c Commands) Placeholder() string {
 	if c.general.Placeholder == "" {
 		return "commands"
@@ -35,15 +39,13 @@ func (c Commands) SwitcherOnly() bool {
 	return c.general.SwitcherOnly
 }
 
-func (cc Commands) Setup(cfg *config.Config) Workable {
-	c := &Commands{
-		entries: []Entry{},
-	}
-
+func (c *Commands) Setup(cfg *config.Config) {
 	c.general.Prefix = cfg.Builtins.Commands.Prefix
 	c.general.SwitcherOnly = cfg.Builtins.Commands.SwitcherOnly
 	c.general.SpecialLabel = cfg.Builtins.Commands.SpecialLabel
+}
 
+func (c *Commands) SetupData(cfg *config.Config) {
 	entries := []struct {
 		label string
 		exec  string
@@ -79,7 +81,7 @@ func (cc Commands) Setup(cfg *config.Config) Workable {
 		})
 	}
 
-	return c
+	c.general.IsSetup = true
 }
 
 func (c Commands) Refresh() {}

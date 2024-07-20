@@ -59,15 +59,15 @@ func setupCommands() {
 
 func getModules() []modules.Workable {
 	res := []modules.Workable{
-		modules.Applications{},
-		modules.Runner{},
-		modules.Websearch{},
-		modules.Commands{},
-		modules.Hyprland{},
-		modules.SSH{},
-		modules.Finder{},
-		modules.Switcher{},
-		emojis.Emojis{},
+		&modules.Applications{},
+		&modules.Runner{},
+		&modules.Websearch{},
+		&modules.Commands{},
+		&modules.Hyprland{},
+		&modules.SSH{},
+		&modules.Finder{},
+		&modules.Switcher{},
+		&emojis.Emojis{},
 		appstate.Clipboard,
 	}
 
@@ -94,10 +94,13 @@ func findModule(name string, modules []modules.Workable) modules.Workable {
 func setExplicits() {
 	explicits = []modules.Workable{}
 
-	for _, v := range getModules() {
+	modules := getModules()
+
+	for k, v := range modules {
 		if v != nil {
 			if slices.Contains(appstate.ExplicitModules, v.Name()) {
-				explicits = append(explicits, v.Setup(cfg))
+				modules[k].Setup(cfg)
+				explicits = append(explicits, modules[k])
 			}
 		}
 	}
@@ -130,17 +133,16 @@ func setupModules() {
 	if len(explicits) == 0 {
 		procs = make(map[string][]modules.Workable)
 
-		for _, v := range enabledModules {
+		for k, v := range enabledModules {
 			if v == nil || slices.Contains(cfg.Disabled, v.Name()) {
 				continue
 			}
 
-			w := v.Setup(cfg)
+			enabledModules[k].Setup(cfg)
 
-			if w != nil {
-				procs[w.Prefix()] = append(procs[w.Prefix()], w)
-				cfg.Enabled = append(cfg.Enabled, w.Name())
-			}
+			procs[v.Prefix()] = append(procs[v.Prefix()], enabledModules[k])
+
+			cfg.Enabled = append(cfg.Enabled, v.Name())
 		}
 
 		clear(ui.prefixClasses)
@@ -712,13 +714,17 @@ func processAsync(ctx context.Context, text string) {
 	var wg sync.WaitGroup
 	wg.Add(len(p))
 
-	for _, proc := range p {
-		if proc.SwitcherOnly() && !hasExplicit {
-			if singleProc == nil || singleProc.Name() != proc.Name() {
+	for k := range p {
+		if p[k].SwitcherOnly() && !hasExplicit {
+			if singleProc == nil || singleProc.Name() != p[k].Name() {
 				wg.Done()
 				handler.receiver <- []modules.Entry{}
 				continue
 			}
+		}
+
+		if !p[k].IsSetup() {
+			p[k].SetupData(cfg)
 		}
 
 		go func(ctx context.Context, wg *sync.WaitGroup, text string, w modules.Workable) {
@@ -771,7 +777,7 @@ func processAsync(ctx context.Context, text string) {
 			}
 
 			handler.receiver <- toPush
-		}(ctx, &wg, text, proc)
+		}(ctx, &wg, text, p[k])
 	}
 
 	wg.Wait()
@@ -790,7 +796,13 @@ func setInitials() {
 		for _, v := range procs {
 			for _, proc := range v {
 				if proc.Name() == "hyprland" {
-					hyprland = proc.(*modules.Hyprland)
+					if proc.IsSetup() {
+						hyprland = proc.(*modules.Hyprland)
+					} else {
+						proc.Setup(cfg)
+						hyprland = proc.(*modules.Hyprland)
+					}
+
 					break
 				}
 			}

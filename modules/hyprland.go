@@ -18,6 +18,10 @@ type Hyprland struct {
 	windows map[string]uint
 }
 
+func (h Hyprland) IsSetup() bool {
+	return h.general.IsSetup
+}
+
 func (h Hyprland) Placeholder() string {
 	if h.general.Placeholder == "" {
 		return "hyprland"
@@ -30,27 +34,27 @@ func (h Hyprland) SwitcherOnly() bool {
 	return h.general.SwitcherOnly
 }
 
-func (h Hyprland) Setup(cfg *config.Config) Workable {
-	b := &Hyprland{}
-
+func (h *Hyprland) Setup(cfg *config.Config) {
 	pth, _ := exec.LookPath("hyprctl")
 	if pth == "" {
 		log.Println("Hyprland not found. Disabling module.")
-		return nil
+		return
 	}
 
-	b.general.Prefix = cfg.Builtins.Hyprland.Prefix
-	b.general.SwitcherOnly = cfg.Builtins.Hyprland.SwitcherOnly
-	b.general.SpecialLabel = cfg.Builtins.Hyprland.SpecialLabel
+	h.general.Prefix = cfg.Builtins.Hyprland.Prefix
+	h.general.SwitcherOnly = cfg.Builtins.Hyprland.SwitcherOnly
+	h.general.SpecialLabel = cfg.Builtins.Hyprland.SpecialLabel
 
-	b.windows = make(map[string]uint)
+	h.windows = make(map[string]uint)
 
 	if cfg.IsService && cfg.Builtins.Hyprland.ContextAwareHistory {
-		go b.monitorWindows()
+		go h.monitorWindows()
 	}
 
-	return b
+	h.general.IsSetup = true
 }
+
+func (h *Hyprland) SetupData(cfg *config.Config) {}
 
 func (h Hyprland) Refresh() {}
 

@@ -17,6 +17,10 @@ type SSH struct {
 	entries []Entry
 }
 
+func (s SSH) IsSetup() bool {
+	return s.general.IsSetup
+}
+
 func (s SSH) Placeholder() string {
 	if s.general.Placeholder == "" {
 		return "ssh"
@@ -55,16 +59,17 @@ func (s SSH) SwitcherOnly() bool {
 	return s.general.SwitcherOnly
 }
 
-func (SSH) Setup(cfg *config.Config) Workable {
-	s := &SSH{}
-
+func (s *SSH) Setup(cfg *config.Config) {
 	s.general.Prefix = cfg.Builtins.SSH.Prefix
 	s.general.SwitcherOnly = cfg.Builtins.SSH.SwitcherOnly
 	s.general.SpecialLabel = cfg.Builtins.SSH.SpecialLabel
+}
 
+func (s *SSH) SetupData(cfg *config.Config) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.Panicln(err)
+		return
 	}
 
 	hosts := filepath.Join(home, ".ssh", "known_hosts")
@@ -74,12 +79,13 @@ func (SSH) Setup(cfg *config.Config) Workable {
 
 	if _, err := os.Stat(hosts); err != nil {
 		log.Println("SSH host file not found, disabling ssh module")
-		return nil
+		return
 	}
 
 	file, err := os.Open(hosts)
 	if err != nil {
 		log.Panicln(err)
+		return
 	}
 
 	defer file.Close()
@@ -111,5 +117,5 @@ func (SSH) Setup(cfg *config.Config) Workable {
 
 	s.entries = entries
 
-	return s
+	s.general.IsSetup = true
 }

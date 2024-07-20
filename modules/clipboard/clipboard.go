@@ -85,17 +85,17 @@ func (c Clipboard) Name() string {
 	return ClipboardName
 }
 
-func (c Clipboard) Setup(cfg *config.Config) modules.Workable {
+func (c *Clipboard) Setup(cfg *config.Config) {
 	pth, _ := exec.LookPath("wl-copy")
 	if pth == "" {
 		log.Println("currently wl-clipboard only.")
-		return nil
+		return
 	}
 
 	pth, _ = exec.LookPath("wl-paste")
 	if pth == "" {
 		log.Println("currently wl-clipboard only.")
-		return nil
+		return
 	}
 
 	c.general.Prefix = cfg.Builtins.Clipboard.Prefix
@@ -110,14 +110,20 @@ func (c Clipboard) Setup(cfg *config.Config) modules.Workable {
 	c.imgTypes["image/jpg"] = "jpg"
 	c.imgTypes["image/jpeg"] = "jpeg"
 
+	go c.watch()
+}
+
+func (c *Clipboard) SetupData(cfg *config.Config) {
 	current := []ClipboardItem{}
 	util.FromGob(c.file, &current)
 
 	c.entries = clean(current, c.file)
 
-	go c.watch()
+	c.general.IsSetup = true
+}
 
-	return c
+func (c Clipboard) IsSetup() bool {
+	return c.general.IsSetup
 }
 
 func (c Clipboard) Placeholder() string {

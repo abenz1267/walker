@@ -15,6 +15,10 @@ type Finder struct {
 	general config.GeneralModule
 }
 
+func (f Finder) IsSetup() bool {
+	return f.general.IsSetup
+}
+
 func (f Finder) Placeholder() string {
 	if f.general.Placeholder == "" {
 		return "finder"
@@ -78,12 +82,12 @@ func (f Finder) SwitcherOnly() bool {
 	return f.general.SwitcherOnly
 }
 
-func (Finder) Setup(cfg *config.Config) Workable {
-	f := &Finder{}
-
+func (f *Finder) Setup(cfg *config.Config) {
 	f.general.Prefix = cfg.Builtins.Finder.Prefix
 	f.general.SwitcherOnly = cfg.Builtins.Finder.SwitcherOnly
 	f.general.SpecialLabel = cfg.Builtins.Finder.SpecialLabel
 
-	return f
+	f.general.IsSetup = true
 }
+
+func (f *Finder) SetupData(cfg *config.Config) {}

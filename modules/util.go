@@ -23,7 +23,9 @@ type Workable interface {
 	Name() string
 	Placeholder() string
 	SwitcherOnly() bool
-	Setup(cfg *config.Config) Workable
+	IsSetup() bool
+	Setup(cfg *config.Config)
+	SetupData(cfg *config.Config)
 	Refresh()
 }
 

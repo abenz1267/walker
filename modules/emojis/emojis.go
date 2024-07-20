@@ -20,6 +20,10 @@ type Emojis struct {
 	entries []modules.Entry
 }
 
+func (e Emojis) IsSetup() bool {
+	return e.general.IsSetup
+}
+
 func (e Emojis) Entries(ctx context.Context, term string) []modules.Entry {
 	return e.entries
 }
@@ -36,11 +40,13 @@ func (e Emojis) SwitcherOnly() bool {
 	return e.general.SwitcherOnly
 }
 
-func (e Emojis) Setup(cfg *config.Config) modules.Workable {
+func (e *Emojis) Setup(cfg *config.Config) {
 	e.general.Prefix = cfg.Builtins.Emojis.Prefix
 	e.general.SwitcherOnly = cfg.Builtins.Emojis.SwitcherOnly
 	e.general.SpecialLabel = cfg.Builtins.Emojis.SpecialLabel
+}
 
+func (e *Emojis) SetupData(cfg *config.Config) {
 	scanner := bufio.NewScanner(strings.NewReader(list))
 
 	entries := []modules.Entry{}
@@ -68,7 +74,7 @@ func (e Emojis) Setup(cfg *config.Config) modules.Workable {
 
 	e.entries = entries
 
-	return e
+	e.general.IsSetup = true
 }
 
 func (e Emojis) Placeholder() string {

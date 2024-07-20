@@ -23,6 +23,10 @@ type Runner struct {
 	bins        []string
 }
 
+func (r Runner) IsSetup() bool {
+	return r.general.IsSetup
+}
+
 func (r Runner) Placeholder() string {
 	if r.general.Placeholder == "" {
 		return "runner"
@@ -35,13 +39,14 @@ func (r Runner) SwitcherOnly() bool {
 	return r.general.SwitcherOnly
 }
 
-func (r Runner) Setup(cfg *config.Config) Workable {
+func (r *Runner) Setup(cfg *config.Config) {
 	r.general.Prefix = cfg.Builtins.Runner.Prefix
 	r.general.SwitcherOnly = cfg.Builtins.Runner.SwitcherOnly
 	r.general.SpecialLabel = cfg.Builtins.Runner.SpecialLabel
-
 	r.shellConfig = cfg.Builtins.Runner.ShellConfig
+}
 
+func (r *Runner) SetupData(cfg *config.Config) {
 	r.parseAliases()
 
 	if len(cfg.Builtins.Runner.Includes) > 0 {
@@ -62,7 +67,7 @@ func (r Runner) Setup(cfg *config.Config) Workable {
 		r.bins = filtered
 	}
 
-	return r
+	r.general.IsSetup = true
 }
 
 func (r Runner) Refresh() {}

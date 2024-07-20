@@ -45,8 +45,6 @@
 
 ## Installation
 
-If you have problems installing `gtk4-layer-shell`, try switching your GTK4 theme to a default one. You can switch back after installing.
-
 **_Building can take quite a while, be patient_**
 
 ```
@@ -77,21 +75,13 @@ programs.walker = {
 
   # All options from the config.json can be used here.
   config = {
-    placeholder = "Example";
+    search.placeholder = "Example";
     fullscreen = true;
     list = {
       height = 200;
     };
-    modules = [
-      {
-        name = "websearch";
-        prefix = "?";
-      }
-      {
-        name = "switcher";
-        prefix = "/";
-      }
-    ];
+    websearch.prefix = "?";
+    switcher.prefix = "/";
   };
 
   # If this is not set the default styling is used.
@@ -116,27 +106,11 @@ nix.settings = {
 
 ## Config & Style
 
+The config can be written json, toml or yaml. Default values will be used, so you only have to overwrite.
+
 Default config will be put into `$HOME/.config/walker/`.
 
 See `config/config.default.json` and `ui/style.default.css`. Styling is done via GTK CSS.
-
-Definition for modules:
-
-```go
-type Module struct {
-	Prefix            string `json:"prefix,omitempty"`
-	Name              string `json:"name,omitempty"`
-	SrcOnce           string `json:"src_once,omitempty"`
-	SrcOnceRefresh    bool   `json:"src_once_refresh,omitempty"`
-	Src               string `json:"src,omitempty"`
-	Cmd               string `json:"cmd,omitempty"`
-	CmdAlt            string `json:"cmd_alt,omitempty"`
-	SpecialLabel      string `json:"special_label,omitempty"`
-	History           bool   `json:"history,omitempty"`
-	SwitcherExclusive bool   `json:"switcher_exclusive,omitempty"`
-	Terminal          bool   `json:"terminal,omitempty"`
-}
-```
 
 ## Usage SSH Module
 
@@ -180,7 +154,7 @@ If you want to extend walker with your own modules, you can do that in the confi
 
 ```json
 {
-  "external": [
+  "plugins": [
     {
       "prefix": "!",
       "name": "mymodule",
@@ -190,55 +164,7 @@ If you want to extend walker with your own modules, you can do that in the confi
 }
 ```
 
-Your plugin simply needs to return a json-array with objects of the following type (not all fields mandatory...relax):
-
-```go
-type Entry struct {
-	Label            string       `json:"label,omitempty"`
-	Sub              string       `json:"sub,omitempty"`
-	Exec             string       `json:"exec,omitempty"`
-	ExecAlt          string       `json:"exec_alt,omitempty"`
-	Terminal         bool         `json:"terminal,omitempty"`
-	Icon             string       `json:"icon,omitempty"`
-	IconIsImage      bool         `json:"icon_is_image,omitempty"`
-	Image            string       `json:"image,omitempty"`
-	HideText         bool         `json:"hide_text,omitempty"`
-	Categories       []string     `json:"categories,omitempty"`
-	Searchable       string       `json:"searchable,omitempty"`
-	MatchFields      int          `json:"match_fields,omitempty"`
-	Class            string       `json:"class,omitempty"`
-	History          bool         `json:"history,omitempty"`
-	Matching         MatchingType `json:"matching,omitempty"`
-	RecalculateScore bool         `json:"recalculate_score,omitempty"`
-	ScoreFinal       float64      `json:"score_final,omitempty"`
-	ScoreFuzzy       float64      `json:"score_fuzzy,omitempty"`
-	SpecialLabel     string       `json:"special_label,omitempty"`
-	InitialClass     string       `json:"initial_class,omitempty"`
-}
-```
-
-F.e.:
-
-```json
-[
-  {
-    "label": "First Item",
-    "exec": "remindme in 1s test",
-    "searchable": "first item"
-  }
-]
-```
-
-You can also do:
-
-```json
-{
-  "name": "filesystem",
-  "prefix": "/",
-  "src": "fd --base-directory /home/andrej/ %TERM%",
-  "cmd": "xdg-open file:///home/andrej/%RESULT%"
-}
-```
+See the wiki for more information.
 
 ### Dynamic Styling
 

@@ -1,193 +1,211 @@
 package config
 
 import (
+	"bytes"
 	_ "embed"
-	"encoding/json"
 	"log"
 	"os"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/abenz1267/walker/util"
+	"github.com/spf13/viper"
 )
 
 //go:embed config.default.json
 var defaultConfig []byte
 
 type Config struct {
-	Terminal       string            `json:"terminal,omitempty"`
-	IgnoreMouse    bool              `json:"ignore_mouse,omitempty"`
-	SpecialLabels  map[string]string `json:"special_labels,omitempty"`
-	UI             UI                `json:"ui,omitempty"`
-	List           List              `json:"list,omitempty"`
-	Search         Search            `json:"search,omitempty"`
-	ActivationMode ActivationMode    `json:"activation_mode,omitempty"`
-	Disabled       []string          `json:"disabled,omitempty"`
-	Plugins        []Plugin          `json:"plugins,omitempty"`
-	Builtins       Builtins          `json:"builtins,omitempty"`
+	Terminal       string            `mapstructure:"terminal"`
+	IgnoreMouse    bool              `mapstructure:"ignore_mouse"`
+	SpecialLabels  map[string]string `mapstructure:"special_labels"`
+	UI             UI                `mapstructure:"ui"`
+	List           List              `mapstructure:"list"`
+	Search         Search            `mapstructure:"search"`
+	ActivationMode ActivationMode    `mapstructure:"activation_mode"`
+	Disabled       []string          `mapstructure:"disabled"`
+	Plugins        []Plugin          `mapstructure:"plugins"`
+	Builtins       Builtins          `mapstructure:"builtins"`
 
 	// internal
-	IsService bool     `json:"-"`
-	Enabled   []string `json:"-"`
+	IsService bool     `mapstructure:"-"`
+	Enabled   []string `mapstructure:"-"`
 }
 
 type Builtins struct {
-	Applications Applications `json:"applications,omitempty"`
-	Clipboard    Clipboard    `json:"clipboard,omitempty"`
-	Commands     Commands     `json:"commands,omitempty"`
-	Emojis       Emojis       `json:"emojis,omitempty"`
-	Finder       Finder       `json:"finder,omitempty"`
-	Hyprland     Hyprland     `json:"hyprland,omitempty"`
-	Runner       Runner       `json:"runner,omitempty"`
-	SSH          SSH          `json:"ssh,omitempty"`
-	Switcher     Switcher     `json:"switcher,omitempty"`
-	Websearch    Websearch    `json:"websearch,omitempty"`
+	Applications Applications `mapstructure:"applications"`
+	Clipboard    Clipboard    `mapstructure:"clipboard"`
+	Commands     Commands     `mapstructure:"commands"`
+	Emojis       Emojis       `mapstructure:"emojis"`
+	Finder       Finder       `mapstructure:"finder"`
+	Hyprland     Hyprland     `mapstructure:"hyprland"`
+	Runner       Runner       `mapstructure:"runner"`
+	SSH          SSH          `mapstructure:"ssh"`
+	Switcher     Switcher     `mapstructure:"switcher"`
+	Websearch    Websearch    `mapstructure:"websearch"`
 }
 
 type GeneralModule struct {
-	SpecialLabel string `json:"special_label,omitempty"`
-	Prefix       string `json:"prefix,omitempty"`
-	SwitcherOnly bool   `json:"switcher_only,omitempty"`
+	SpecialLabel string `mapstructure:"special_label"`
+	Prefix       string `mapstructure:"prefix"`
+	SwitcherOnly bool   `mapstructure:"switcher_only"`
 }
 
 type Finder struct {
-	GeneralModule
+	GeneralModule `mapstructure:",squash"`
 }
 
 type Commands struct {
-	GeneralModule
+	GeneralModule `mapstructure:",squash"`
 }
 
 type Switcher struct {
-	GeneralModule
+	GeneralModule `mapstructure:",squash"`
 }
 
 type Emojis struct {
-	GeneralModule
+	GeneralModule `mapstructure:",squash"`
 }
 
 type SSH struct {
-	GeneralModule
-	HostFile string `json:"host_file,omitempty"`
+	GeneralModule `mapstructure:",squash"`
+	HostFile      string `mapstructure:"host_file"`
 }
 
 type Websearch struct {
-	GeneralModule
-	Engines []string `json:"engines,omitempty"`
+	GeneralModule `mapstructure:",squash"`
+	Engines       []string `mapstructure:"engines"`
 }
 
 type Hyprland struct {
-	GeneralModule
-	ContextAwareHistory bool `json:"context_aware_history,omitempty"`
+	GeneralModule       `mapstructure:",squash"`
+	ContextAwareHistory bool `mapstructure:"context_aware_history"`
 }
 
 type Applications struct {
-	GeneralModule
-	Cache   bool `json:"cache,omitempty"`
-	Actions bool `json:"actions,omitempty"`
+	GeneralModule `mapstructure:",squash"`
+	Cache         bool `mapstructure:"cache"`
+	Actions       bool `mapstructure:"actions"`
 }
 
 type ActivationMode struct {
-	UseAlt   bool `json:"use_alt,omitempty"`
-	Disabled bool `json:"disabled,omitempty"`
-	UseFKeys bool `json:"use_f_keys,omitempty"`
+	UseAlt   bool `mapstructure:"use_alt"`
+	Disabled bool `mapstructure:"disabled"`
+	UseFKeys bool `mapstructure:"use_f_keys"`
 }
 
 type Clipboard struct {
-	GeneralModule
-	ImageHeight int `json:"image_height,omitempty"`
-	MaxEntries  int `json:"max_entries,omitempty"`
+	GeneralModule `mapstructure:",squash"`
+	ImageHeight   int `mapstructure:"image_height"`
+	MaxEntries    int `mapstructure:"max_entries"`
 }
 
 type Runner struct {
-	GeneralModule
-	ShellConfig string `json:"shell_config,omitempty"`
-	Excludes    []string
-	Includes    []string
+	GeneralModule `mapstructure:",squash"`
+	ShellConfig   string   `mapstructure:"shell_config"`
+	Excludes      []string `mapstructure:"excludes"`
+	Includes      []string `mapstructure:"includes"`
 }
 
 type Plugin struct {
-	GeneralModule
-	Name           string `json:"name,omitempty"`
-	SrcOnce        string `json:"src_once,omitempty"`
-	SrcOnceRefresh bool   `json:"src_once_refresh,omitempty"`
-	Src            string `json:"src,omitempty"`
-	Cmd            string `json:"cmd,omitempty"`
-	CmdAlt         string `json:"cmd_alt,omitempty"`
-	History        bool   `json:"history,omitempty"`
-	Terminal       bool   `json:"terminal,omitempty"`
+	GeneralModule  `mapstructure:",squash"`
+	Name           string `mapstructure:"name"`
+	SrcOnce        string `mapstructure:"src_once"`
+	SrcOnceRefresh bool   `mapstructure:"src_once_refresh"`
+	Src            string `mapstructure:"src"`
+	Cmd            string `mapstructure:"cmd"`
+	CmdAlt         string `mapstructure:"cmd_alt"`
+	History        bool   `mapstructure:"history"`
+	Terminal       bool   `mapstructure:"terminal"`
 }
 
 type Search struct {
-	Delay              int    `json:"delay,omitempty"`
-	Typeahead          bool   `json:"typeahead,omitempty"`
-	ForceKeyboardFocus bool   `json:"force_keyboard_focus,omitempty"`
-	Icons              bool   `json:"icons,omitempty"`
-	Spinner            bool   `json:"spinner,omitempty"`
-	History            bool   `json:"history,omitempty"`
-	MarginSpinner      int    `json:"margin_spinner,omitempty"`
-	Placeholder        string `json:"placeholder,omitempty"`
+	Delay              int    `mapstructure:"delay"`
+	Typeahead          bool   `mapstructure:"typeahead"`
+	ForceKeyboardFocus bool   `mapstructure:"force_keyboard_focus"`
+	Icons              bool   `mapstructure:"icons"`
+	Spinner            bool   `mapstructure:"spinner"`
+	History            bool   `mapstructure:"history"`
+	MarginSpinner      int    `mapstructure:"margin_spinner"`
+	Placeholder        string `mapstructure:"placeholder"`
 }
 
 type Icons struct {
-	Hide      bool   `json:"hide,omitempty"`
-	Size      int    `json:"size,omitempty"`
-	ImageSize int    `json:"image_size,omitempty"`
-	Theme     string `json:"theme,omitempty"`
+	Hide      bool   `mapstructure:"hide"`
+	Size      int    `mapstructure:"size"`
+	ImageSize int    `mapstructure:"image_size"`
+	Theme     string `mapstructure:"theme"`
 }
 
 type UI struct {
-	Icons           Icons   `json:"icons,omitempty"`
-	Orientation     string  `json:"orientation,omitempty"`
-	Fullscreen      bool    `json:"fullscreen,omitempty"`
-	IgnoreExclusive bool    `json:"ignore_exclusive,omitempty"`
-	Horizontal      string  `json:"horizontal,omitempty"`
-	Vertical        string  `json:"vertical,omitempty"`
-	Width           int     `json:"width,omitempty"`
-	Height          int     `json:"height,omitempty"`
-	Margins         Margins `json:"margins,omitempty"`
-	Anchors         Anchors `json:"anchors,omitempty"`
+	Icons           Icons   `mapstructure:"icons"`
+	Orientation     string  `mapstructure:"orientation"`
+	Fullscreen      bool    `mapstructure:"fullscreen"`
+	IgnoreExclusive bool    `mapstructure:"ignore_exclusive"`
+	Horizontal      string  `mapstructure:"horizontal"`
+	Vertical        string  `mapstructure:"vertical"`
+	Width           int     `mapstructure:"width"`
+	Height          int     `mapstructure:"height"`
+	Margins         Margins `mapstructure:"margins"`
+	Anchors         Anchors `mapstructure:"anchors"`
 }
 
 type Anchors struct {
-	Top    bool `json:"top,omitempty"`
-	Left   bool `json:"left,omitempty"`
-	Right  bool `json:"right,omitempty"`
-	Bottom bool `json:"bottom,omitempty"`
+	Top    bool `mapstructure:"top"`
+	Left   bool `mapstructure:"left"`
+	Right  bool `mapstructure:"right"`
+	Bottom bool `mapstructure:"bottom"`
 }
 
 type Margins struct {
-	Top    int `json:"top,omitempty"`
-	Bottom int `json:"bottom,omitempty"`
-	End    int `json:"end,omitempty"`
-	Start  int `json:"start,omitempty"`
+	Top    int `mapstructure:"top"`
+	Bottom int `mapstructure:"bottom"`
+	End    int `mapstructure:"end"`
+	Start  int `mapstructure:"start"`
 }
 
 type List struct {
-	AlwaysShow         bool   `json:"always_show,omitempty"`
-	FixedHeight        bool   `json:"fixed_height,omitempty"`
-	Height             int    `json:"height,omitempty"`
-	HideSub            bool   `json:"hide_sub,omitempty"`
-	MarginTop          int    `json:"margin_top,omitempty"`
-	MaxEntries         int    `json:"max_entries,omitempty"`
-	ScrollbarPolicy    string `json:"scrollbar_policy,omitempty"`
-	ShowInitialEntries bool   `json:"show_initial_entries,omitempty"`
-	Width              int    `json:"width,omitempty"`
+	AlwaysShow         bool   `mapstructure:"always_show"`
+	FixedHeight        bool   `mapstructure:"fixed_height"`
+	Height             int    `mapstructure:"height"`
+	HideSub            bool   `mapstructure:"hide_sub"`
+	MarginTop          int    `mapstructure:"margin_top"`
+	MaxEntries         int    `mapstructure:"max_entries"`
+	ScrollbarPolicy    string `mapstructure:"scrollbar_policy"`
+	ShowInitialEntries bool   `mapstructure:"show_initial_entries"`
+	Width              int    `mapstructure:"width"`
 }
 
 func Get(config string) *Config {
-	file := filepath.Join(util.ConfigDir(), config)
+	defs := viper.New()
+	defs.SetConfigType("json")
+
+	err := defs.ReadConfig(bytes.NewBuffer(defaultConfig))
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	for k, v := range defs.AllSettings() {
+		viper.SetDefault(k, v)
+	}
+
+	viper.SetConfigName("config")
+	viper.AddConfigPath(util.ConfigDir())
+
+	// ignore error.
+	err = viper.ReadInConfig()
+	if err != nil {
+		viper.SetConfigType("json")
+		err := viper.SafeWriteConfig()
+		if err != nil {
+			log.Println(err)
+		}
+	}
 
 	cfg := &Config{}
-	ok := util.FromJson(file, cfg)
 
-	if !ok {
-		err := json.Unmarshal(defaultConfig, &cfg)
-		if err != nil {
-			log.Panicln(err)
-		}
-
-		util.ToJson(&cfg, file)
+	err = viper.Unmarshal(cfg)
+	if err != nil {
+		log.Panic(err)
 	}
 
 	go setTerminal(cfg)

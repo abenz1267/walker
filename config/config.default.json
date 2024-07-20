@@ -15,6 +15,7 @@
   },
   "list": {
     "always_show": true,
+    "fixed_height": false,
     "height": 300,
     "margin_top": 10,
     "max_entries": 50,
@@ -27,7 +28,8 @@
     "force_keyboard_focus": true,
     "icons": true,
     "history": true,
-    "placeholder": "Search..."
+    "placeholder": "Search...",
+    "delay": 0
   },
   "activation_mode": {},
   "builtins": {

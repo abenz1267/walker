@@ -79,18 +79,16 @@ func setupModules() {
 			emojis.Emojis{},
 			appstate.Clipboard,
 		}
-	}
 
-	if appstate.Dmenu == nil {
 		for _, v := range cfg.Plugins {
 			e := &modules.Plugin{}
 			e.General = v
 
 			enabledModules = append(enabledModules, e)
 		}
-	}
 
-	clear(procs)
+		clear(procs)
+	}
 
 	procs = make(map[string][]modules.Workable)
 

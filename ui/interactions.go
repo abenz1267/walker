@@ -436,8 +436,14 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	entry := gioutil.ObjectValue[modules.Entry](ui.items.Item(ui.selection.Selected()))
 
+	toRun := entry.Exec
+
+	if alt {
+		toRun = entry.ExecAlt
+	}
+
 	if appstate.Dmenu != nil {
-		fmt.Print(entry.Exec)
+		fmt.Print(toRun)
 		closeAfterActivation(keepOpen, selectNext)
 		return
 	}
@@ -465,14 +471,14 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	if cfg.Terminal != "" {
 		if entry.Terminal || forceTerminal {
-			entry.Exec = fmt.Sprintf("%s -e %s", cfg.Terminal, entry.Exec)
+			toRun = fmt.Sprintf("%s -e %s", cfg.Terminal, toRun)
 		}
 	} else {
 		log.Println("terminal is not set")
 		return
 	}
 
-	cmd := exec.Command("sh", "-c", entry.Exec)
+	cmd := exec.Command("sh", "-c", toRun)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setsid: true,
 		// Setpgid:    true,

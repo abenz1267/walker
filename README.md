@@ -244,7 +244,7 @@ Additionally you can diasble the cache completely by setting
 
 ```json
   "applications": {
-    "disable_cache": true
+    "cache": false
   },
 ```
 

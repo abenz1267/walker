@@ -520,6 +520,10 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		inputhstry = inputhstry.SaveToInputHistory(ui.search.Text())
 	}
 
+	if !keepOpen {
+		ui.appwin.SetVisible(false)
+	}
+
 	err := cmd.Start()
 	if err != nil {
 		log.Println(err)
@@ -854,7 +858,6 @@ func quit() {
 
 		singleProc = nil
 
-		ui.appwin.SetVisible(false)
 		ui.search.SetText("")
 		ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
 

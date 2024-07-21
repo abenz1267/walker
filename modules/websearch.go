@@ -16,7 +16,7 @@ import (
 
 const (
 	GoogleURL     = "https://www.google.com/search?q=%TERM%"
-	DuckDuckGoURL = "https://duckduckgo.com/?t=h_&q=%TERM%"
+	DuckDuckGoURL = "https://duckduckgo.com/?q=%TERM%"
 	EcosiaURL     = "https://www.ecosia.org/search?q=%TERM%"
 	YandexURL     = "https://yandex.com/search/?text=%TERM%"
 )

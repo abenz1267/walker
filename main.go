@@ -173,6 +173,14 @@ func main() {
 		syscall.SIGTERM,
 		syscall.SIGQUIT)
 
+	go func() {
+		for {
+			<-signal_chan
+
+			os.Exit(0)
+		}
+	}()
+
 	if code := app.Run(os.Args); code > 0 {
 		os.Exit(code)
 	}

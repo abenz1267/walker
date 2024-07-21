@@ -7,7 +7,6 @@ import (
 	"log"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -18,7 +17,6 @@ import (
 	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/state"
 	"github.com/abenz1267/walker/ui"
-	"github.com/abenz1267/walker/util"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -36,7 +34,7 @@ func main() {
 		return
 	}
 
-	withArgs := false
+	// withArgs := false
 	forceNew := false
 	appName := "dev.benz.walker"
 
@@ -80,8 +78,9 @@ func main() {
 				state.IsService = true
 			}
 
-			if slices.Contains(args, "--help") || slices.Contains(args, "-h") || slices.Contains(args, "--help-all") {
-				withArgs = true
+			if slices.Contains(args, "--version") || slices.Contains(args, "-v") || slices.Contains(args, "--help-all") {
+				fmt.Println(version)
+				return
 			}
 		}
 	}
@@ -93,21 +92,6 @@ func main() {
 	if forceNew && state.IsService {
 		log.Println("new instance is not supported with service mode")
 		return
-	}
-
-	tmp := util.TmpDir()
-
-	if !state.IsService && !withArgs && !forceNew {
-		if _, err := os.Stat(filepath.Join(tmp, "walker.lock")); err == nil {
-			log.Println("lockfile exists. exiting. Remove '/tmp/walker.lock' and try again.")
-			return
-		}
-
-		err := os.WriteFile(filepath.Join(tmp, "walker.lock"), []byte{}, 0o600)
-		if err != nil {
-			log.Panicln(err)
-		}
-		defer os.Remove(filepath.Join(tmp, "walker.lock"))
 	}
 
 	app := gtk.NewApplication(appName, gio.ApplicationHandlesCommandLine)
@@ -122,6 +106,7 @@ func main() {
 	app.AddMainOption("placeholder", 'p', glib.OptionFlagNone, glib.OptionArgString, "placeholder text", "")
 	app.AddMainOption("labelcolumn", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
 	app.AddMainOption("separator", 't', glib.OptionFlagNone, glib.OptionArgString, "column separator", "")
+	app.AddMainOption("version", 'v', glib.OptionFlagNone, glib.OptionArgNone, "print version", "")
 
 	app.Connect("activate", ui.Activate(state))
 
@@ -187,16 +172,6 @@ func main() {
 		syscall.SIGINT,
 		syscall.SIGTERM,
 		syscall.SIGQUIT)
-
-	go func() {
-		for {
-			<-signal_chan
-
-			os.Remove(filepath.Join(util.TmpDir(), "walker.lock"))
-
-			os.Exit(0)
-		}
-	}()
 
 	if code := app.Run(os.Args); code > 0 {
 		os.Exit(code)

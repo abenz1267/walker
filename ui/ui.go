@@ -39,13 +39,11 @@ var (
 	specialLabels = make(map[uint]uint)
 )
 
-type ProcMap map[string][]modules.Workable
-
 var (
 	cfg        *config.Config
 	ui         *UI
-	procs      ProcMap
 	explicits  []modules.Workable
+	activated  []modules.Workable
 	singleProc modules.Workable
 	hstry      history.History
 	inputhstry history.InputHistory
@@ -85,10 +83,8 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		if appstate.HasUI {
 			ui.appwin.SetVisible(true)
 
-			for _, v := range procs {
-				for _, proc := range v {
-					proc.Refresh()
-				}
+			for _, proc := range activated {
+				proc.Refresh()
 			}
 
 			if len(appstate.ExplicitModules) > 0 {

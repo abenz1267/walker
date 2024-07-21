@@ -116,7 +116,7 @@ func setupModules() {
 
 	if appstate.Dmenu == nil {
 		enabledModules = getModules()
-		clear(procs)
+		activated = []modules.Workable{}
 	}
 
 	if len(appstate.ExplicitModules) > 0 {
@@ -132,8 +132,6 @@ func setupModules() {
 	}
 
 	if len(explicits) == 0 {
-		procs = make(map[string][]modules.Workable)
-
 		for k, v := range enabledModules {
 			if v == nil || slices.Contains(cfg.Disabled, v.Name()) {
 				continue
@@ -141,17 +139,14 @@ func setupModules() {
 
 			enabledModules[k].Setup(cfg)
 
-			procs[v.Prefix()] = append(procs[v.Prefix()], enabledModules[k])
-
 			cfg.Enabled = append(cfg.Enabled, v.Name())
+			activated = append(activated, enabledModules[k])
 		}
 
 		clear(ui.prefixClasses)
 
-		for _, v := range procs {
-			for _, vv := range v {
-				ui.prefixClasses[vv.Prefix()] = append(ui.prefixClasses[vv.Prefix()], vv.Name())
-			}
+		for _, v := range activated {
+			ui.prefixClasses[v.Prefix()] = append(ui.prefixClasses[v.Prefix()], v.Name())
 		}
 	}
 }
@@ -500,16 +495,14 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	}
 
 	if entry.Sub == "switcher" {
-		for _, v := range procs {
-			for _, w := range v {
-				if w.Name() == entry.Label {
-					singleProc = w
-					ui.items.Splice(0, int(ui.items.NItems()))
-					ui.search.SetObjectProperty("placeholder-text", w.Placeholder())
-					ui.search.SetText("")
-					ui.search.GrabFocus()
-					return
-				}
+		for _, m := range activated {
+			if m.Name() == entry.Label {
+				singleProc = m
+				ui.items.Splice(0, int(ui.items.NItems()))
+				ui.search.SetObjectProperty("placeholder-text", m.Placeholder())
+				ui.search.SetText("")
+				ui.search.GrabFocus()
+				return
 			}
 		}
 	}
@@ -668,17 +661,14 @@ func processAsync(ctx context.Context, text string) {
 		prefix = prefix[0:1]
 	}
 
-	p := []modules.Workable{}
+	p := activated
 
 	if !hasExplicit {
 		if singleProc == nil {
-			hasPrefix := true
+			hasPrefix := false
 
-			var ok bool
-			p, ok = procs[prefix]
-			if !ok {
-				p = procs[""]
-				hasPrefix = false
+			if _, ok := ui.prefixClasses[prefix]; ok {
+				hasPrefix = true
 			}
 
 			if hasPrefix {
@@ -719,6 +709,10 @@ func processAsync(ctx context.Context, text string) {
 	wg.Add(len(p))
 
 	for k := range p {
+		if p[k].Prefix() != prefix {
+			continue
+		}
+
 		if p[k].SwitcherOnly() && !hasExplicit {
 			if singleProc == nil || singleProc.Name() != p[k].Name() {
 				wg.Done()
@@ -797,49 +791,45 @@ func setInitials() {
 	var hyprland *modules.Hyprland
 
 	if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService {
-		for _, v := range procs {
-			for _, proc := range v {
-				if proc.Name() == "hyprland" {
-					if proc.IsSetup() {
-						hyprland = proc.(*modules.Hyprland)
-					} else {
-						proc.Setup(cfg)
-						hyprland = proc.(*modules.Hyprland)
-					}
-
-					break
+		for _, proc := range activated {
+			if proc.Name() == "hyprland" {
+				if proc.IsSetup() {
+					hyprland = proc.(*modules.Hyprland)
+				} else {
+					proc.Setup(cfg)
+					hyprland = proc.(*modules.Hyprland)
 				}
+
+				break
 			}
 		}
 	}
 
-	for _, v := range procs {
-		for _, proc := range v {
-			if proc.Name() != "applications" {
-				continue
-			}
+	for _, proc := range activated {
+		if proc.Name() != "applications" {
+			continue
+		}
 
-			e := proc.Entries(nil, "")
+		e := proc.Entries(nil, "")
 
-			for _, entry := range e {
-				for _, v := range hstry {
-					if val, ok := v[entry.Identifier()]; ok {
-						if entry.LastUsed.IsZero() || val.LastUsed.After(entry.LastUsed) {
-							entry.Used = val.Used
-							entry.DaysSinceUsed = val.DaysSinceUsed
-							entry.LastUsed = val.LastUsed
-						}
+		for _, entry := range e {
+			for _, v := range hstry {
+				if val, ok := v[entry.Identifier()]; ok {
+					if entry.LastUsed.IsZero() || val.LastUsed.After(entry.LastUsed) {
+						entry.Used = val.Used
+						entry.DaysSinceUsed = val.DaysSinceUsed
+						entry.LastUsed = val.LastUsed
 					}
 				}
-
-				entry.ScoreFinal = float64(usageModifier(entry))
-
-				if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService {
-					entry.OpenWindows = hyprland.GetWindowAmount(entry.InitialClass)
-				}
-
-				entrySlice = append(entrySlice, entry)
 			}
+
+			entry.ScoreFinal = float64(usageModifier(entry))
+
+			if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService {
+				entry.OpenWindows = hyprland.GetWindowAmount(entry.InitialClass)
+			}
+
+			entrySlice = append(entrySlice, entry)
 		}
 	}
 

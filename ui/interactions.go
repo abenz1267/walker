@@ -501,9 +501,8 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	cmd := exec.Command("sh", "-c", toRun)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setsid: true,
-		// Setpgid:    true,
-		// Pgid:       0,
+		Setpgid:    true,
+		Pgid:       0,
 		Foreground: false,
 	}
 

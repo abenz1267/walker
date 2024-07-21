@@ -28,7 +28,9 @@ func (h *Handler) handle() {
 			h.mut.Lock()
 			h.entries = append(h.entries, entries...)
 
-			sortEntries(h.entries)
+			if !appstate.KeepSort {
+				sortEntries(h.entries)
+			}
 
 			if len(h.entries) > cfg.List.MaxEntries {
 				h.entries = h.entries[:cfg.List.MaxEntries]
@@ -81,10 +83,6 @@ func sortEntries(entries []modules.Entry) {
 		if a.ScoreFinal == b.ScoreFinal {
 			if !a.LastUsed.IsZero() && !b.LastUsed.IsZero() {
 				return b.LastUsed.Compare(a.LastUsed)
-			}
-
-			if appstate.KeepSort {
-				return 1
 			}
 
 			return strings.Compare(a.Label, b.Label)

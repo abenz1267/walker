@@ -37,6 +37,7 @@
 - ssh
 - finder
 - emojis
+- custom commands (for running simple commands)
 
 ## Requirements
 

@@ -32,16 +32,29 @@ type Config struct {
 }
 
 type Builtins struct {
-	Applications Applications `mapstructure:"applications"`
-	Clipboard    Clipboard    `mapstructure:"clipboard"`
-	Commands     Commands     `mapstructure:"commands"`
-	Emojis       Emojis       `mapstructure:"emojis"`
-	Finder       Finder       `mapstructure:"finder"`
-	Hyprland     Hyprland     `mapstructure:"hyprland"`
-	Runner       Runner       `mapstructure:"runner"`
-	SSH          SSH          `mapstructure:"ssh"`
-	Switcher     Switcher     `mapstructure:"switcher"`
-	Websearch    Websearch    `mapstructure:"websearch"`
+	Applications   Applications   `mapstructure:"applications"`
+	Clipboard      Clipboard      `mapstructure:"clipboard"`
+	Commands       Commands       `mapstructure:"commands"`
+	CustomCommands CustomCommands `mapstructure:"custom_commands"`
+	Emojis         Emojis         `mapstructure:"emojis"`
+	Finder         Finder         `mapstructure:"finder"`
+	Hyprland       Hyprland       `mapstructure:"hyprland"`
+	Runner         Runner         `mapstructure:"runner"`
+	SSH            SSH            `mapstructure:"ssh"`
+	Switcher       Switcher       `mapstructure:"switcher"`
+	Websearch      Websearch      `mapstructure:"websearch"`
+}
+
+type CustomCommands struct {
+	GeneralModule `mapstructure:",squash"`
+	Commands      []CustomCommand `mapstructure:"commands"`
+}
+
+type CustomCommand struct {
+	Name     string `mapstructure:"name"`
+	Cmd      string `mapstructure:"cmd"`
+	CmdAlt   string `mapstructure:"cmd_alt"`
+	Terminal bool   `mapstructure:"terminal"`
 }
 
 type GeneralModule struct {

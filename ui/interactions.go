@@ -69,6 +69,7 @@ func getModules() []modules.Workable {
 		&modules.Finder{},
 		&modules.Switcher{},
 		&emojis.Emojis{},
+		&modules.CustomCommands{},
 		appstate.Clipboard,
 	}
 

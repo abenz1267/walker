@@ -450,6 +450,8 @@ func setupUserStyle() {
 
 	ui.scroll.SetMaxContentWidth(cfg.List.Width)
 	ui.scroll.SetMaxContentHeight(cfg.List.Height)
+	ui.scroll.SetMinContentHeight(cfg.List.Height)
+	ui.scroll.SetMinContentWidth(cfg.List.Width)
 
 	if cfg.Search.Placeholder != "" {
 		ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)

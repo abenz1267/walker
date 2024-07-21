@@ -106,6 +106,8 @@ nix.settings = {
 
 ## Config & Style
 
+[Check the wiki](https://github.com/abenz1267/walker/wiki)
+
 The config can be written json, toml or yaml. Default values will be used, so you only have to overwrite.
 
 Default config will be put into `$HOME/.config/walker/`.

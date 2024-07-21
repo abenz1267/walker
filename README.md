@@ -202,18 +202,18 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 
 AM = Activation Mode
 
-| Key                                                                     | Description                                 |
-| ----------------------------------------------------------------------- | ------------------------------------------- |
-| `Enter`                                                                 | activate selection                          |
-| `Alt+Enter`                                                             | activate selection with alternative command |
-| `Shift+Enter`                                                           | activate selection without closing          |
-| `Ctrl+j` (if ActivationMode is disabled), `Down`, `Tab`                 | next entry                                  |
-| `Ctrl+k` (if ActivationMode is disabled), `Up`, `LEFT_TAB` (shift+tab?) | previous entry                              |
-| `Escape`                                                                | close                                       |
-| `Ctrl`                                                                  | start AM                                    |
-| in AM: `<label>`                                                        | activate item                               |
-| in AM: Hold `Shift+<label>`                                             | activate item (don't close)                 |
-| in AM: `Escape`                                                         | stop AM                                     |
+| Key                                                                     | Description                                                              |
+| ----------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `Enter`                                                                 | activate selection                                                       |
+| `Alt+Enter`                                                             | activate selection with alternative command. By default: run in terminal |
+| `Shift+Enter`                                                           | activate selection without closing                                       |
+| `Ctrl+j` (if ActivationMode is disabled), `Down`, `Tab`                 | next entry                                                               |
+| `Ctrl+k` (if ActivationMode is disabled), `Up`, `LEFT_TAB` (shift+tab?) | previous entry                                                           |
+| `Escape`                                                                | close                                                                    |
+| `Ctrl`                                                                  | start AM                                                                 |
+| in AM: `<label>`                                                        | activate item                                                            |
+| in AM: Hold `Shift+<label>`                                             | activate item (don't close)                                              |
+| in AM: `Escape`                                                         | stop AM                                                                  |
 
 ### Activation Mode
 

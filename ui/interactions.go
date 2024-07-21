@@ -453,6 +453,10 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	entry := gioutil.ObjectValue[modules.Entry](ui.items.Item(ui.selection.Selected()))
 
+	if !keepOpen && entry.Sub != "switcher" {
+		ui.appwin.SetVisible(false)
+	}
+
 	toRun := entry.Exec
 
 	forceTerminal := false
@@ -518,10 +522,6 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	if cfg.Search.History {
 		inputhstry = inputhstry.SaveToInputHistory(ui.search.Text())
-	}
-
-	if !keepOpen {
-		ui.appwin.SetVisible(false)
 	}
 
 	err := cmd.Start()
@@ -850,6 +850,8 @@ func usageModifier(item modules.Entry) int {
 }
 
 func quit() {
+	ui.appwin.SetVisible(false)
+
 	if appstate.IsService {
 		disabledAM()
 

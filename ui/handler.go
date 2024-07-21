@@ -14,6 +14,7 @@ type Handler struct {
 	receiver chan []modules.Entry
 	entries  []modules.Entry
 	ctx      context.Context
+	keepSort bool
 	mut      sync.Mutex
 }
 
@@ -28,7 +29,7 @@ func (h *Handler) handle() {
 			h.mut.Lock()
 			h.entries = append(h.entries, entries...)
 
-			if !appstate.KeepSort {
+			if !appstate.KeepSort && !h.keepSort {
 				sortEntries(h.entries)
 			}
 

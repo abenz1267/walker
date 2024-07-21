@@ -21,6 +21,10 @@ func (s SSH) IsSetup() bool {
 	return s.general.IsSetup
 }
 
+func (SSH) KeepSort() bool {
+	return false
+}
+
 func (s SSH) Placeholder() string {
 	if s.general.Placeholder == "" {
 		return "ssh"

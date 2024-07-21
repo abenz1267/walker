@@ -35,6 +35,10 @@ func (a Applications) Placeholder() string {
 	return a.general.Placeholder
 }
 
+func (Applications) KeepSort() bool {
+	return false
+}
+
 func (a Applications) IsSetup() bool {
 	return a.general.IsSetup
 }

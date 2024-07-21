@@ -709,6 +709,10 @@ func processAsync(ctx context.Context, text string) {
 	var wg sync.WaitGroup
 	wg.Add(len(p))
 
+	if len(p) == 1 {
+		handler.keepSort = p[0].KeepSort()
+	}
+
 	for k := range p {
 		if hasPrefix && p[k].Prefix() != prefix {
 			continue

@@ -15,6 +15,10 @@ type Finder struct {
 	general config.GeneralModule
 }
 
+func (Finder) KeepSort() bool {
+	return false
+}
+
 func (f Finder) IsSetup() bool {
 	return f.general.IsSetup
 }

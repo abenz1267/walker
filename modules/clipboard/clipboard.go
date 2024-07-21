@@ -34,6 +34,10 @@ func (c Clipboard) SwitcherOnly() bool {
 
 func (c Clipboard) Refresh() {}
 
+func (Clipboard) KeepSort() bool {
+	return false
+}
+
 type ClipboardItem struct {
 	Content string    `json:"content,omitempty"`
 	Time    time.Time `json:"time,omitempty"`

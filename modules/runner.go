@@ -23,6 +23,10 @@ type Runner struct {
 	bins        []string
 }
 
+func (Runner) KeepSort() bool {
+	return false
+}
+
 func (r Runner) IsSetup() bool {
 	return r.general.IsSetup
 }

@@ -32,6 +32,10 @@ type EngineInfo struct {
 	URL   string
 }
 
+func (Websearch) KeepSort() bool {
+	return false
+}
+
 func (w Websearch) IsSetup() bool {
 	return w.general.IsSetup
 }

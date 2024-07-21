@@ -20,6 +20,10 @@ type Emojis struct {
 	entries []modules.Entry
 }
 
+func (Emojis) KeepSort() bool {
+	return false
+}
+
 func (e Emojis) IsSetup() bool {
 	return e.general.IsSetup
 }

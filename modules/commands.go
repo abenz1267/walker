@@ -15,6 +15,10 @@ func (c Commands) IsSetup() bool {
 	return c.general.IsSetup
 }
 
+func (Commands) KeepSort() bool {
+	return false
+}
+
 func (c Commands) Placeholder() string {
 	if c.general.Placeholder == "" {
 		return "commands"

@@ -19,6 +19,10 @@ func (d Dmenu) IsSetup() bool {
 	return d.isSetup
 }
 
+func (d Dmenu) KeepSort() bool {
+	return false
+}
+
 func (d Dmenu) Entries(ctx context.Context, term string) []Entry {
 	entries := []Entry{}
 

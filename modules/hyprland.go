@@ -18,6 +18,10 @@ type Hyprland struct {
 	windows map[string]uint
 }
 
+func (Hyprland) KeepSort() bool {
+	return false
+}
+
 func (h Hyprland) IsSetup() bool {
 	return h.general.IsSetup
 }

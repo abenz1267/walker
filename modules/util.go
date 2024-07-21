@@ -27,6 +27,7 @@ type Workable interface {
 	Setup(cfg *config.Config)
 	SetupData(cfg *config.Config)
 	Refresh()
+	KeepSort() bool
 }
 
 type MatchingType int

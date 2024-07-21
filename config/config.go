@@ -117,6 +117,7 @@ type Plugin struct {
 	Cmd            string `mapstructure:"cmd"`
 	CmdAlt         string `mapstructure:"cmd_alt"`
 	Terminal       bool   `mapstructure:"terminal"`
+	KeepSort       bool   `mapstructure:"keep_sort"`
 }
 
 type Search struct {

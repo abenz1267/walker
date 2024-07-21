@@ -18,6 +18,10 @@ type Plugin struct {
 	cachedOutput []byte
 }
 
+func (p Plugin) KeepSort() bool {
+	return p.General.KeepSort
+}
+
 func (e Plugin) IsSetup() bool {
 	return e.General.IsSetup
 }

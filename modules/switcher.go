@@ -11,6 +11,10 @@ type Switcher struct {
 	cfg     *config.Config
 }
 
+func (Switcher) KeepSort() bool {
+	return false
+}
+
 func (s Switcher) Placeholder() string {
 	if s.general.Placeholder == "" {
 		return "switcher"

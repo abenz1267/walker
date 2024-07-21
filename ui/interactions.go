@@ -266,24 +266,6 @@ func disabledAM() {
 	}
 }
 
-func toggleForceTerminal() {
-	forceTerminal = !forceTerminal
-
-	c := ui.appwin.CSSClasses()
-
-	if !forceTerminal {
-		for k, v := range c {
-			if v == "forceterminal" {
-				c = slices.Delete(c, k, k+1)
-			}
-		}
-	} else {
-		c = append(c, "forceterminal")
-	}
-
-	ui.appwin.SetCSSClasses(c)
-}
-
 func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 {
 		if val == amKey {
@@ -293,8 +275,6 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 	}
 
 	switch val {
-	case gdk.KEY_Super_L:
-		toggleForceTerminal()
 	case gdk.KEY_Shift_L:
 		return true
 	case gdk.KEY_Return:
@@ -355,8 +335,6 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 	return true
 }
 
-var forceTerminal bool
-
 var historyIndex = 0
 
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
@@ -368,8 +346,6 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	}
 
 	switch val {
-	case gdk.KEY_Super_L:
-		toggleForceTerminal()
 	case gdk.KEY_Return:
 		isShift := modifier == gdk.ShiftMask
 		isAlt := modifier == cmdAltModifier
@@ -478,8 +454,14 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	toRun := entry.Exec
 
+	forceTerminal := false
+
 	if alt {
-		toRun = entry.ExecAlt
+		if entry.ExecAlt != "" {
+			toRun = entry.ExecAlt
+		} else {
+			forceTerminal = true
+		}
 	}
 
 	if appstate.Dmenu != nil {
@@ -865,10 +847,6 @@ func usageModifier(item modules.Entry) int {
 
 func quit() {
 	if appstate.IsService {
-		if forceTerminal {
-			toggleForceTerminal()
-		}
-
 		disabledAM()
 
 		appstate.ExplicitModules = []string{}

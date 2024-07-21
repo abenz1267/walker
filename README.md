@@ -19,7 +19,6 @@
 - typeahead
 - history-aware
 - labels: F<1-8> or jkl;asdf
-- toggle force-running in terminal
 - start with explicit modules, style or config
 - arrow-up history
 - drag&drop support
@@ -172,12 +171,11 @@ The window and items will have a class based on the source. Selecting an item wi
 
 F.e. search = `!somecommand` => `#window.runner`
 
-| class                   | condition                     |
-| ----------------------- | ----------------------------- |
-| `#window.activation`    | AM enabled                    |
-| `#window.forceterminal` | Force-Terminal toggle enabled |
-| `#spinner.visible`      | Processing in progress        |
-| `#item.<entryclass>`    | Always                        |
+| class                | condition              |
+| -------------------- | ---------------------- |
+| `#window.activation` | AM enabled             |
+| `#spinner.visible`   | Processing in progress |
+| `#item.<entryclass>` | Always                 |
 
 ### Starting as service
 
@@ -210,7 +208,6 @@ AM = Activation Mode
 | `Ctrl+k` (if ActivationMode is disabled), `Up`, `LEFT_TAB` (shift+tab?) | previous entry                              |
 | `Escape`                                                                | close                                       |
 | `Ctrl`                                                                  | start AM                                    |
-| `Super`                                                                 | toggle force-open in terminal               |
 | in AM: `<label>`                                                        | activate item                               |
 | in AM: Hold `Shift+<label>`                                             | activate item (don't close)                 |
 | in AM: `Escape`                                                         | stop AM                                     |

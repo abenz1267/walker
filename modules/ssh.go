@@ -110,7 +110,7 @@ func getConfigFileEntries(sshCfg string) []Entry {
 	for scanner.Scan() {
 		text := scanner.Text()
 
-		if strings.HasPrefix(text, "Host ") {
+		if strings.HasPrefix(text, "Host ") || strings.HasPrefix(text, "host ") {
 			fields := strings.Fields(text)
 
 			entries = append(entries, Entry{

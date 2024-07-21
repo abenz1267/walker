@@ -101,6 +101,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			}
 
 			ui.search.GrabFocus()
+			process()
 
 			return
 		}

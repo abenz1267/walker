@@ -663,9 +663,10 @@ func processAsync(ctx context.Context, text string) {
 
 	p := activated
 
+	hasPrefix := false
+
 	if !hasExplicit {
 		if singleProc == nil {
-			hasPrefix := false
 
 			if _, ok := ui.prefixClasses[prefix]; ok {
 				hasPrefix = true
@@ -709,7 +710,7 @@ func processAsync(ctx context.Context, text string) {
 	wg.Add(len(p))
 
 	for k := range p {
-		if p[k].Prefix() != prefix {
+		if hasPrefix && p[k].Prefix() != prefix {
 			continue
 		}
 

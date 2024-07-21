@@ -71,6 +71,7 @@ type Emojis struct {
 type SSH struct {
 	GeneralModule `mapstructure:",squash"`
 	HostFile      string `mapstructure:"host_file"`
+	ConfigFile    string `mapstructure:"config_file"`
 }
 
 type Websearch struct {

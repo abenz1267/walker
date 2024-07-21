@@ -33,7 +33,9 @@ func (s SSH) Placeholder() string {
 	return s.general.Placeholder
 }
 
-func (s SSH) Refresh() {}
+func (s *SSH) Refresh() {
+	s.general.IsSetup = false
+}
 
 func (s SSH) Entries(ctx context.Context, term string) []Entry {
 	fields := strings.Fields(term)
@@ -41,11 +43,13 @@ func (s SSH) Entries(ctx context.Context, term string) []Entry {
 	cmd := "ssh"
 
 	for k, v := range s.entries {
-		if len(fields) > 1 {
-			cmd = fmt.Sprintf("ssh %s@%s", fields[1], v.Label)
-		}
+		if v.Sub == "SSH Host" {
+			if len(fields) > 1 {
+				cmd = fmt.Sprintf("ssh %s@%s", fields[1], v.Label)
+			}
 
-		s.entries[k].Exec = cmd
+			s.entries[k].Exec = cmd
+		}
 	}
 
 	return s.entries
@@ -76,20 +80,60 @@ func (s *SSH) SetupData(cfg *config.Config) {
 		return
 	}
 
+	sshCfg := filepath.Join(home, ".ssh", "config")
+	if cfg.Builtins.SSH.ConfigFile != "" {
+		sshCfg = cfg.Builtins.SSH.ConfigFile
+	}
+
 	hosts := filepath.Join(home, ".ssh", "known_hosts")
 	if cfg.Builtins.SSH.HostFile != "" {
 		hosts = cfg.Builtins.SSH.HostFile
 	}
 
-	if _, err := os.Stat(hosts); err != nil {
-		log.Println("SSH host file not found, disabling ssh module")
-		return
+	s.entries = append(s.entries, getHostFileEntries(hosts)...)
+	s.entries = append(s.entries, getConfigFileEntries(sshCfg)...)
+
+	s.general.IsSetup = true
+}
+
+func getConfigFileEntries(sshCfg string) []Entry {
+	entries := []Entry{}
+
+	file, err := os.Open(sshCfg)
+	if err != nil {
+		return []Entry{}
 	}
 
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+
+	for scanner.Scan() {
+		text := scanner.Text()
+
+		if strings.HasPrefix(text, "Host ") {
+			fields := strings.Fields(text)
+
+			entries = append(entries, Entry{
+				Label:            fields[1],
+				Sub:              "SSH Config",
+				Exec:             fmt.Sprintf("ssh %s", fields[1]),
+				Searchable:       fields[1],
+				Terminal:         true,
+				Categories:       []string{"ssh"},
+				Class:            "ssh",
+				Matching:         Fuzzy,
+				RecalculateScore: true,
+			})
+		}
+	}
+
+	return entries
+}
+
+func getHostFileEntries(hosts string) []Entry {
 	file, err := os.Open(hosts)
 	if err != nil {
-		log.Panicln(err)
-		return
+		return []Entry{}
 	}
 
 	defer file.Close()
@@ -107,7 +151,7 @@ func (s *SSH) SetupData(cfg *config.Config) {
 	for k := range hs {
 		entries = append(entries, Entry{
 			Label:            k,
-			Sub:              "SSH",
+			Sub:              "SSH Host",
 			Exec:             "ssh",
 			MatchFields:      1,
 			Searchable:       k,
@@ -119,7 +163,5 @@ func (s *SSH) SetupData(cfg *config.Config) {
 		})
 	}
 
-	s.entries = entries
-
-	s.general.IsSetup = true
+	return entries
 }

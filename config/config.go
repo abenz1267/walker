@@ -209,10 +209,17 @@ func Get(config string) *Config {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(util.ConfigDir())
 
-	// ignore error.
+	ft := "json"
+
+	et := os.Getenv("WALKER_CONFIG_TYPE")
+
+	if et != "" {
+		ft = et
+	}
+
 	err = viper.ReadInConfig()
 	if err != nil {
-		viper.SetConfigType("json")
+		viper.SetConfigType(ft)
 		err := viper.SafeWriteConfig()
 		if err != nil {
 			log.Println(err)

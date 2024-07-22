@@ -641,29 +641,38 @@ func processAsync(ctx context.Context, text string) {
 		ui.items.Splice(0, int(ui.items.NItems()))
 	})
 
-	prefix := text
-
-	if len(prefix) > 1 {
-		prefix = prefix[0:1]
-	}
-
 	p := activated
 
 	hasPrefix := false
 
-	if !hasExplicit {
-		if singleProc == nil {
+	prefixes := []string{}
 
-			if _, ok := ui.prefixClasses[prefix]; ok {
+	for _, v := range p {
+		prefix := v.Prefix()
+
+		if len(prefix) == 1 {
+			if strings.HasPrefix(text, prefix) {
+				prefixes = append(prefixes, prefix)
 				hasPrefix = true
 			}
+		}
 
+		if len(prefix) > 1 {
+			if strings.HasPrefix(text, fmt.Sprintf("%s ", prefix)) {
+				prefixes = append(prefixes, prefix)
+				hasPrefix = true
+			}
+		}
+	}
+
+	if !hasExplicit {
+		if singleProc == nil {
 			if hasPrefix {
 				glib.IdleAdd(func() {
-					ui.appwin.SetCSSClasses(ui.prefixClasses[prefix])
+					for _, v := range prefixes {
+						ui.appwin.SetCSSClasses(ui.prefixClasses[v])
+					}
 				})
-
-				text = strings.TrimPrefix(text, prefix)
 			}
 		} else {
 			p = []modules.Workable{singleProc}
@@ -700,9 +709,21 @@ func processAsync(ctx context.Context, text string) {
 	}
 
 	for k := range p {
-		if hasPrefix && p[k].Prefix() != prefix {
+		prefix := p[k].Prefix()
+
+		if hasPrefix && prefix == "" {
 			continue
 		}
+
+		if len(prefix) > 1 {
+			prefix = fmt.Sprintf("%s ", prefix)
+		}
+
+		if hasPrefix && !strings.HasPrefix(text, prefix) {
+			continue
+		}
+
+		text = strings.TrimPrefix(text, prefix)
 
 		if p[k].SwitcherOnly() && !hasExplicit {
 			if singleProc == nil || singleProc.Name() != p[k].Name() {

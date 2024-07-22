@@ -104,14 +104,6 @@ func (Websearch) Name() string {
 func (w Websearch) Entries(ctx context.Context, term string) []Entry {
 	entries := []Entry{}
 
-	if term == "" {
-		return entries
-	}
-
-	if w.general.Prefix != "" && len(term) < 2 {
-		return entries
-	}
-
 	path, _ := exec.LookPath("xdg-open")
 	if path == "" {
 		log.Println("xdg-open not found. Disabling websearch.")

@@ -87,18 +87,6 @@ func (Runner) Name() string {
 func (r Runner) Entries(ctx context.Context, term string) []Entry {
 	entries := []Entry{}
 
-	if term == "" {
-		return entries
-	}
-
-	if r.general.Prefix != "" && len(term) < 2 {
-		return entries
-	}
-
-	if r.general.Prefix != "" {
-		term = strings.TrimPrefix(term, r.general.Prefix)
-	}
-
 	fields := strings.Fields(term)
 	matchable := fields[0]
 

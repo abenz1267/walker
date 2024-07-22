@@ -899,8 +899,14 @@ func fuzzyScore(entry modules.Entry, text string, hyprland *modules.Hyprland) fl
 		return 1
 	}
 
-	matchables := []string{entry.Label, entry.Sub, entry.Searchable}
-	matchables = append(matchables, entry.Categories...)
+	var matchables []string
+
+	if appstate.Dmenu == nil {
+		matchables := []string{entry.Label, entry.Sub, entry.Searchable}
+		matchables = append(matchables, entry.Categories...)
+	} else {
+		matchables = []string{entry.Label}
+	}
 
 	multiplier := 0
 

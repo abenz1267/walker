@@ -288,11 +288,7 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 		if activationEnabled {
 			disabledAM()
 		} else {
-			if singleProc != nil {
-				disableSingleProc()
-			} else {
-				quit()
-			}
+			quit()
 		}
 	case gdk.KEY_Tab:
 		if ui.typeahead.Text() != "" {
@@ -360,11 +356,7 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 
 		activateItem(isShift, isShift, isAlt)
 	case gdk.KEY_Escape:
-		if singleProc != nil {
-			disableSingleProc()
-		} else {
-			quit()
-		}
+		quit()
 	case gdk.KEY_Tab:
 		if ui.typeahead.Text() != "" {
 			ui.search.SetText(ui.typeahead.Text())
@@ -431,21 +423,6 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	return true
 }
 
-func disableSingleProc() {
-	if singleProc != nil {
-		singleProc = nil
-		ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
-
-		if ui.search.Text() != "" {
-			ui.search.SetText("")
-		} else {
-			if cfg.List.ShowInitialEntries {
-				process()
-			}
-		}
-	}
-}
-
 func activateItem(keepOpen, selectNext, alt bool) {
 	if ui.list.Model().NItems() == 0 {
 		return
@@ -484,7 +461,9 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	if entry.Sub == "switcher" {
 		for _, m := range activated {
 			if m.Name() == entry.Label {
-				singleProc = m
+				explicits = []modules.Workable{}
+				explicits = append(explicits, m)
+
 				ui.items.Splice(0, int(ui.items.NItems()))
 				ui.search.SetObjectProperty("placeholder-text", m.Placeholder())
 				ui.search.SetText("")
@@ -602,7 +581,7 @@ func process() {
 
 	text := strings.TrimSpace(ui.search.Text())
 
-	if text == "" && cfg.List.ShowInitialEntries && singleProc == nil && len(appstate.ExplicitModules) == 0 && appstate.Dmenu == nil {
+	if text == "" && cfg.List.ShowInitialEntries && len(explicits) == 0 && appstate.Dmenu == nil {
 		setInitials()
 		return
 	}
@@ -610,7 +589,7 @@ func process() {
 	var ctx context.Context
 	ctx, cancel = context.WithCancel(context.Background())
 
-	if (ui.search.Text() != "" || singleProc != nil || appstate.Dmenu != nil) || (len(appstate.ExplicitModules) > 0 && cfg.List.ShowInitialEntries) {
+	if (ui.search.Text() != "" || appstate.Dmenu != nil) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
 		go processAsync(ctx, text)
 	} else {
 		ui.items.Splice(0, int(ui.items.NItems()))
@@ -666,22 +645,12 @@ func processAsync(ctx context.Context, text string) {
 	}
 
 	if !hasExplicit {
-		if singleProc == nil {
-			if hasPrefix {
-				glib.IdleAdd(func() {
-					for _, v := range prefixes {
-						ui.appwin.SetCSSClasses(ui.prefixClasses[v])
-					}
-				})
-			}
-		} else {
-			p = []modules.Workable{singleProc}
-
-			if singleProc != nil {
-				glib.IdleAdd(func() {
-					ui.appwin.SetCSSClasses(ui.prefixClasses[singleProc.Prefix()])
-				})
-			}
+		if hasPrefix {
+			glib.IdleAdd(func() {
+				for _, v := range prefixes {
+					ui.appwin.SetCSSClasses(ui.prefixClasses[v])
+				}
+			})
 		}
 	} else {
 		p = explicits
@@ -731,13 +700,13 @@ func processAsync(ctx context.Context, text string) {
 			text = strings.TrimPrefix(text, prefix)
 		}
 
-		if p[k].SwitcherOnly() && !hasExplicit {
-			if singleProc == nil || singleProc.Name() != p[k].Name() {
-				wg.Done()
-				handler.receiver <- []modules.Entry{}
-				continue
-			}
-		}
+		// if p[k].SwitcherOnly() && isFromSwitcher {
+		// 	if singleProc == nil || singleProc.Name() != p[k].Name() {
+		// 		wg.Done()
+		// 		handler.receiver <- []modules.Entry{}
+		// 		continue
+		// 	}
+		// }
 
 		if !p[k].IsSetup() {
 			p[k].SetupData(cfg)
@@ -884,8 +853,6 @@ func quit() {
 
 		appstate.ExplicitModules = []string{}
 		explicits = []modules.Workable{}
-
-		singleProc = nil
 
 		ui.search.SetText("")
 		ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)

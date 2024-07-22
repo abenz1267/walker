@@ -44,7 +44,6 @@ var (
 	ui         *UI
 	explicits  []modules.Workable
 	activated  []modules.Workable
-	singleProc modules.Workable
 	hstry      history.History
 	inputhstry history.InputHistory
 	appstate   *state.AppState

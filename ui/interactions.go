@@ -709,25 +709,27 @@ func processAsync(ctx context.Context, text string) {
 	}
 
 	for k := range p {
-		prefix := p[k].Prefix()
+		if !hasExplicit {
+			prefix := p[k].Prefix()
 
-		if hasPrefix && prefix == "" {
-			continue
+			if hasPrefix && prefix == "" {
+				continue
+			}
+
+			if !hasPrefix && prefix != "" {
+				continue
+			}
+
+			if len(prefix) > 1 {
+				prefix = fmt.Sprintf("%s ", prefix)
+			}
+
+			if hasPrefix && !strings.HasPrefix(text, prefix) {
+				continue
+			}
+
+			text = strings.TrimPrefix(text, prefix)
 		}
-
-		if !hasPrefix && prefix != "" {
-			continue
-		}
-
-		if len(prefix) > 1 {
-			prefix = fmt.Sprintf("%s ", prefix)
-		}
-
-		if hasPrefix && !strings.HasPrefix(text, prefix) {
-			continue
-		}
-
-		text = strings.TrimPrefix(text, prefix)
 
 		if p[k].SwitcherOnly() && !hasExplicit {
 			if singleProc == nil || singleProc.Name() != p[k].Name() {

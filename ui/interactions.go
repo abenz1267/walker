@@ -927,7 +927,7 @@ func fuzzyScore(entry modules.Entry, text string, hyprland *modules.Hyprland) fl
 	var matchables []string
 
 	if appstate.Dmenu == nil {
-		matchables := []string{entry.Label, entry.Sub, entry.Searchable}
+		matchables = []string{entry.Label, entry.Sub, entry.Searchable}
 		matchables = append(matchables, entry.Categories...)
 	} else {
 		matchables = []string{entry.Label}
@@ -940,6 +940,7 @@ func fuzzyScore(entry modules.Entry, text string, hyprland *modules.Hyprland) fl
 	}
 
 	for k, t := range matchables {
+
 		if t == "" {
 			continue
 		}

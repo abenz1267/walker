@@ -130,10 +130,6 @@ func (r Runner) Entries(ctx context.Context, term string) []Entry {
 		return 0
 	})
 
-	if len(entries) > 5 {
-		return entries[0:5]
-	}
-
 	return entries
 }
 

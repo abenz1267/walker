@@ -192,12 +192,19 @@ func selectNext() {
 	}
 
 	current := ui.selection.Selected()
+	next := current + 1
 
-	if current+1 < items {
+	if next < items {
 		ui.selection.SetSelected(current + 1)
+		ui.list.ScrollTo(ui.selection.Selected(), gtk.ListScrollNone, nil)
+		return
 	}
 
-	ui.list.ScrollTo(ui.selection.Selected(), gtk.ListScrollNone, nil)
+	if next >= items && cfg.List.Cycle {
+		ui.selection.SetSelected(0)
+		ui.list.ScrollTo(ui.selection.Selected(), gtk.ListScrollNone, nil)
+		return
+	}
 }
 
 func selectPrev() {
@@ -211,9 +218,15 @@ func selectPrev() {
 
 	if current > 0 {
 		ui.selection.SetSelected(current - 1)
+		ui.list.ScrollTo(ui.selection.Selected(), gtk.ListScrollNone, nil)
+		return
 	}
 
-	ui.list.ScrollTo(ui.selection.Selected(), gtk.ListScrollNone, nil)
+	if current == 0 && cfg.List.Cycle {
+		ui.selection.SetSelected(items - 1)
+		ui.list.ScrollTo(ui.selection.Selected(), gtk.ListScrollNone, nil)
+		return
+	}
 }
 
 func selectActivationMode(val uint, keepOpen bool) {

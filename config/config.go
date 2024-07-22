@@ -181,6 +181,7 @@ type Margins struct {
 
 type List struct {
 	AlwaysShow         bool   `mapstructure:"always_show"`
+	Cycle              bool   `mapstructure:"cycle"`
 	FixedHeight        bool   `mapstructure:"fixed_height"`
 	Height             int    `mapstructure:"height"`
 	HideSub            bool   `mapstructure:"hide_sub"`

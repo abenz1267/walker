@@ -679,6 +679,10 @@ func processAsync(ctx context.Context, text string) {
 
 	for k := range p {
 		if !hasExplicit {
+			if p[k].SwitcherOnly() {
+				continue
+			}
+
 			prefix := p[k].Prefix()
 
 			if hasPrefix && prefix == "" {
@@ -699,14 +703,6 @@ func processAsync(ctx context.Context, text string) {
 
 			text = strings.TrimPrefix(text, prefix)
 		}
-
-		// if p[k].SwitcherOnly() && isFromSwitcher {
-		// 	if singleProc == nil || singleProc.Name() != p[k].Name() {
-		// 		wg.Done()
-		// 		handler.receiver <- []modules.Entry{}
-		// 		continue
-		// 	}
-		// }
 
 		if !p[k].IsSetup() {
 			p[k].SetupData(cfg)

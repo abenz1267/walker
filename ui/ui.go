@@ -112,6 +112,11 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			cfg.Search.Placeholder = appstate.ExplicitPlaceholder
 		}
 
+		if appstate.Dmenu != nil {
+			cfg.Search.Typeahead = false
+			cfg.Search.History = false
+		}
+
 		hstry = history.Get()
 
 		if cfg.Search.History {

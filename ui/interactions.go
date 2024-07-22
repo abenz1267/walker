@@ -164,6 +164,12 @@ func setupInteractions(appstate *state.AppState) {
 	ui.search.AddController(keycontroller)
 	ui.search.Connect("search-changed", process)
 	ui.search.Connect("activate", func() {
+		if appstate.ForcePrint && ui.list.Model().NItems() == 0 {
+			fmt.Print(ui.search.Text())
+			closeAfterActivation(false, false)
+			return
+		}
+
 		activateItem(false, false, false)
 	})
 
@@ -367,6 +373,12 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			isAlt = true
 		}
 
+		if appstate.ForcePrint && ui.list.Model().NItems() == 0 {
+			fmt.Print(ui.search.Text())
+			closeAfterActivation(isShift, false)
+			break
+		}
+
 		activateItem(isShift, isShift, isAlt)
 	case gdk.KEY_Escape:
 		quit()
@@ -541,7 +553,7 @@ func setStdin(cmd *exec.Cmd, piped *modules.Piped) {
 	}
 }
 
-func closeAfterActivation(keepOpen, sn bool) {
+func closeAfterActivation(keepOpen, next bool) {
 	if cfg.Search.Typeahead {
 		tah = append([]string{ui.search.Text()}, tah...)
 		util.ToGob(&tah, filepath.Join(util.CacheDir(), "typeahead.gob"))
@@ -552,11 +564,11 @@ func closeAfterActivation(keepOpen, sn bool) {
 		return
 	}
 
-	if !activationEnabled && !sn {
+	if !activationEnabled && !next {
 		ui.search.SetText("")
 	}
 
-	if sn {
+	if next {
 		selectNext()
 	}
 }

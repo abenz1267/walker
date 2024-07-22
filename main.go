@@ -78,6 +78,10 @@ func main() {
 				state.IsService = true
 			}
 
+			if slices.Contains(args, "--forceprint") || slices.Contains(args, "-f") {
+				state.ForcePrint = true
+			}
+
 			if slices.Contains(args, "--version") || slices.Contains(args, "-v") || slices.Contains(args, "--help-all") {
 				fmt.Println(version)
 				return
@@ -107,6 +111,7 @@ func main() {
 	app.AddMainOption("labelcolumn", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
 	app.AddMainOption("separator", 't', glib.OptionFlagNone, glib.OptionArgString, "column separator", "")
 	app.AddMainOption("version", 'v', glib.OptionFlagNone, glib.OptionArgNone, "print version", "")
+	app.AddMainOption("forceprint", 'f', glib.OptionFlagNone, glib.OptionArgNone, "forces printing input if no item is selected", "")
 
 	app.Connect("activate", ui.Activate(state))
 

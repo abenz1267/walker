@@ -9,19 +9,20 @@ import (
 )
 
 type AppState struct {
-	Started             time.Time
-	IsMeasured          bool
-	IsService           bool
-	IsRunning           bool
-	HasUI               bool
 	Clipboard           modules.Workable
 	Dmenu               modules.Workable
-	Password            bool
-	ExplicitModules     []string
 	ExplicitConfig      string
-	ExplicitStyle       string
+	ExplicitModules     []string
 	ExplicitPlaceholder string
+	ExplicitStyle       string
+	ForcePrint          bool
+	HasUI               bool
+	IsMeasured          bool
+	IsRunning           bool
+	IsService           bool
 	KeepSort            bool
+	Password            bool
+	Started             time.Time
 }
 
 func Get() *AppState {

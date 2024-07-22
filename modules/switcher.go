@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/util"
 )
 
 type Switcher struct {
@@ -41,7 +42,7 @@ func (s Switcher) Entries(ctx context.Context, term string) []Entry {
 			Exec:       "",
 			Categories: []string{"switcher"},
 			Class:      "switcher",
-			Matching:   Fuzzy,
+			Matching:   util.Fuzzy,
 		}
 
 		entries = append(entries, e)

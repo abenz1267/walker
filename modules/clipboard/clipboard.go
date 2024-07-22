@@ -60,7 +60,7 @@ func (c Clipboard) Entries(ctx context.Context, term string) []modules.Entry {
 			Piped:      modules.Piped{Content: v.Content, Type: "string"},
 			Categories: []string{"clipboard"},
 			Class:      "clipboard",
-			Matching:   modules.Fuzzy,
+			Matching:   util.Fuzzy,
 			LastUsed:   v.Time,
 		}
 

@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/util"
 )
 
 type SSH struct {
@@ -121,7 +122,7 @@ func getConfigFileEntries(sshCfg string) []Entry {
 				Terminal:         true,
 				Categories:       []string{"ssh"},
 				Class:            "ssh",
-				Matching:         Fuzzy,
+				Matching:         util.Fuzzy,
 				RecalculateScore: true,
 			})
 		}
@@ -158,7 +159,7 @@ func getHostFileEntries(hosts string) []Entry {
 			Terminal:         true,
 			Categories:       []string{"ssh"},
 			Class:            "ssh",
-			Matching:         Fuzzy,
+			Matching:         util.Fuzzy,
 			RecalculateScore: true,
 		})
 	}

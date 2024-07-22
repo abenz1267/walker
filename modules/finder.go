@@ -8,6 +8,7 @@ import (
 	"strings"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/util"
 	"github.com/boyter/gocodewalker"
 )
 
@@ -67,7 +68,7 @@ func (f Finder) Entries(ctx context.Context, term string) []Entry {
 			DragDropData: f.Location,
 			Categories:   []string{"finder", "fzf"},
 			Class:        "finder",
-			Matching:     Fuzzy,
+			Matching:     util.Fuzzy,
 		})
 	}
 

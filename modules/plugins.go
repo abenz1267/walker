@@ -113,6 +113,7 @@ func (e Plugin) Entries(ctx context.Context, term string) []Entry {
 				Terminal: e.General.Terminal,
 				Exec:     strings.ReplaceAll(e.General.Cmd, "%RESULT%", txt),
 				ExecAlt:  strings.ReplaceAll(e.General.CmdAlt, "%RESULT%", txt),
+				Matching: e.General.Matching,
 			}
 
 			if !hasExplicitResult {

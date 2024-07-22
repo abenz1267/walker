@@ -108,7 +108,7 @@ func parse(cache bool, actions bool) []Entry {
 					Generic: Entry{
 						Class:            ApplicationsName,
 						History:          true,
-						Matching:         Fuzzy,
+						Matching:         util.Fuzzy,
 						RecalculateScore: true,
 					},
 					Actions: []Entry{},

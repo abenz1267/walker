@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/util"
 )
 
 type Hyprland struct {
@@ -173,7 +174,7 @@ func (Hyprland) Entries(ctx context.Context, term string) []Entry {
 			Categories: []string{"hyprland", "windows", fmt.Sprintf("workspace %s", v.workspace), fmt.Sprintf("ws %s", v.workspace), v.initialTitle},
 			Class:      "hyprland",
 			History:    false,
-			Matching:   Fuzzy,
+			Matching:   util.Fuzzy,
 		}
 
 		entries = append(entries, n)

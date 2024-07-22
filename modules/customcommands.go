@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/util"
 )
 
 type CustomCommands struct {
@@ -53,7 +54,7 @@ func (c *CustomCommands) SetupData(cfg *config.Config) {
 			Exec:             v.Cmd,
 			ExecAlt:          v.CmdAlt,
 			Terminal:         v.Terminal,
-			Matching:         Fuzzy,
+			Matching:         util.Fuzzy,
 			RecalculateScore: true,
 		})
 	}

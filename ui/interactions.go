@@ -762,13 +762,13 @@ func processAsync(ctx context.Context, text string) {
 
 				if e[k].ScoreFinal == 0 {
 					switch e[k].Matching {
-					case modules.Fuzzy:
+					case util.Fuzzy:
 						e[k].ScoreFinal = fuzzyScore(e[k], toMatch, hyprland)
-					case modules.AlwaysTop:
+					case util.AlwaysTop:
 						if e[k].ScoreFinal == 0 {
 							e[k].ScoreFinal = 1000
 						}
-					case modules.AlwaysBottom:
+					case util.AlwaysBottom:
 						if e[k].ScoreFinal == 0 {
 							e[k].ScoreFinal = 1
 						}

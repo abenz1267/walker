@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/util"
 )
 
 const (
@@ -140,7 +141,7 @@ func (w Websearch) Entries(ctx context.Context, term string) []Entry {
 				Sub:      "Websearch",
 				Exec:     "xdg-open https://" + term,
 				Class:    "websearch",
-				Matching: AlwaysTop,
+				Matching: util.AlwaysTop,
 			})
 		}
 	}

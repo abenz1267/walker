@@ -58,11 +58,11 @@ type CustomCommand struct {
 }
 
 type GeneralModule struct {
-	Placeholder  string `mapstructure:"placeholder"`
-	SpecialLabel string `mapstructure:"special_label"`
-	Prefix       string `mapstructure:"prefix"`
-	SwitcherOnly bool   `mapstructure:"switcher_only"`
 	IsSetup      bool   `mapstructure:"-"`
+	Placeholder  string `mapstructure:"placeholder"`
+	Prefix       string `mapstructure:"prefix"`
+	SpecialLabel string `mapstructure:"special_label"`
+	SwitcherOnly bool   `mapstructure:"switcher_only"`
 }
 
 type Finder struct {
@@ -124,14 +124,15 @@ type Runner struct {
 
 type Plugin struct {
 	GeneralModule  `mapstructure:",squash"`
-	Name           string `mapstructure:"name"`
-	SrcOnce        string `mapstructure:"src_once"`
-	SrcOnceRefresh bool   `mapstructure:"src_once_refresh"`
-	Src            string `mapstructure:"src"`
-	Cmd            string `mapstructure:"cmd"`
-	CmdAlt         string `mapstructure:"cmd_alt"`
-	Terminal       bool   `mapstructure:"terminal"`
-	KeepSort       bool   `mapstructure:"keep_sort"`
+	Name           string            `mapstructure:"name"`
+	SrcOnce        string            `mapstructure:"src_once"`
+	SrcOnceRefresh bool              `mapstructure:"src_once_refresh"`
+	Src            string            `mapstructure:"src"`
+	Cmd            string            `mapstructure:"cmd"`
+	CmdAlt         string            `mapstructure:"cmd_alt"`
+	Terminal       bool              `mapstructure:"terminal"`
+	KeepSort       bool              `mapstructure:"keep_sort"`
+	Matching       util.MatchingType `mapstructure:"matching"`
 }
 
 type Search struct {

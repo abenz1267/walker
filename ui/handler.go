@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	"github.com/abenz1267/walker/modules"
+	"github.com/abenz1267/walker/util"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 )
 
@@ -53,19 +54,19 @@ func (h *Handler) handle() {
 
 func sortEntries(entries []modules.Entry) {
 	slices.SortFunc(entries, func(a, b modules.Entry) int {
-		if a.Matching == modules.AlwaysTop && b.Matching != modules.AlwaysTop {
+		if a.Matching == util.AlwaysTop && b.Matching != util.AlwaysTop {
 			return -1
 		}
 
-		if b.Matching == modules.AlwaysTop && a.Matching != modules.AlwaysTop {
+		if b.Matching == util.AlwaysTop && a.Matching != util.AlwaysTop {
 			return 1
 		}
 
-		if a.Matching == modules.AlwaysBottom && b.Matching != modules.AlwaysBottom {
+		if a.Matching == util.AlwaysBottom && b.Matching != util.AlwaysBottom {
 			return 1
 		}
 
-		if b.Matching == modules.AlwaysBottom && a.Matching != modules.AlwaysBottom {
+		if b.Matching == util.AlwaysBottom && a.Matching != util.AlwaysBottom {
 			return -1
 		}
 

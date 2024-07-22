@@ -10,6 +10,7 @@ import (
 
 	"github.com/abenz1267/walker/config"
 	"github.com/abenz1267/walker/modules"
+	"github.com/abenz1267/walker/util"
 )
 
 //go:embed list.csv
@@ -71,7 +72,7 @@ func (e *Emojis) SetupData(cfg *config.Config) {
 			Searchable:       fields[5],
 			Categories:       []string{fields[0], fields[1]},
 			Class:            "emojis",
-			Matching:         modules.Fuzzy,
+			Matching:         util.Fuzzy,
 			RecalculateScore: true,
 		})
 	}

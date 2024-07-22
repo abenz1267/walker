@@ -715,6 +715,10 @@ func processAsync(ctx context.Context, text string) {
 			continue
 		}
 
+		if !hasPrefix && prefix != "" {
+			continue
+		}
+
 		if len(prefix) > 1 {
 			prefix = fmt.Sprintf("%s ", prefix)
 		}

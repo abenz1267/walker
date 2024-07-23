@@ -33,7 +33,7 @@
   },
   "activation_mode": {},
   "builtins": {
-    "applications": { "actions": true },
+    "applications": { "actions": true, "prioritize_new": true },
     "clipboard": {
       "image_height": 300,
       "max_entries": 10,

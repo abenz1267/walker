@@ -106,6 +106,7 @@ type Applications struct {
 	GeneralModule `mapstructure:",squash"`
 	Actions       bool `mapstructure:"actions"`
 	Cache         bool `mapstructure:"cache"`
+	PrioritizeNew bool `mapstructure:"prioritize_new"`
 }
 
 type ActivationMode struct {

@@ -12,6 +12,7 @@ require (
 require (
 	github.com/charlievieth/fastwalk v1.0.7-0.20240703190418-87029d931815 // indirect
 	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
+	github.com/djherbis/times v1.6.0 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/gdamore/encoding v1.0.1 // indirect
 	github.com/gdamore/tcell/v2 v2.7.4 // indirect

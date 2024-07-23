@@ -8,18 +8,21 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/abenz1267/walker/config"
 	"github.com/abenz1267/walker/util"
 	"github.com/adrg/xdg"
+	"github.com/djherbis/times"
 )
 
 const ApplicationsName = "applications"
 
 type Applications struct {
-	general config.GeneralModule
-	cache   bool
-	actions bool
+	general       config.GeneralModule
+	cache         bool
+	actions       bool
+	prioritizeNew bool
 }
 
 type Application struct {
@@ -60,6 +63,7 @@ func (a *Applications) Setup(cfg *config.Config) bool {
 
 	a.cache = cfg.Builtins.Applications.Cache
 	a.actions = cfg.Builtins.Applications.Actions
+	a.prioritizeNew = cfg.Builtins.Applications.PrioritizeNew
 
 	a.general.IsSetup = true
 
@@ -79,10 +83,10 @@ func (a Applications) Prefix() string {
 }
 
 func (a Applications) Entries(ctx context.Context, _ string) []Entry {
-	return parse(a.cache, a.actions)
+	return parse(a.cache, a.actions, a.prioritizeNew)
 }
 
-func parse(cache bool, actions bool) []Entry {
+func parse(cache, actions, prioritizeNew bool) []Entry {
 	apps := []Application{}
 	entries := []Entry{}
 
@@ -109,6 +113,19 @@ func parse(cache bool, actions bool) []Entry {
 					return err
 				}
 
+				matching := util.Fuzzy
+
+				if prioritizeNew {
+					if info, err := times.Stat(path); err == nil {
+						target := time.Now().Add(-time.Minute * 5)
+
+						mod := info.BirthTime()
+						if mod.After(target) {
+							matching = util.AlwaysTop
+						}
+					}
+				}
+
 				defer file.Close()
 				scanner := bufio.NewScanner(file)
 
@@ -116,7 +133,7 @@ func parse(cache bool, actions bool) []Entry {
 					Generic: Entry{
 						Class:            ApplicationsName,
 						History:          true,
-						Matching:         util.Fuzzy,
+						Matching:         matching,
 						RecalculateScore: true,
 					},
 					Actions: []Entry{},

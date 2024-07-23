@@ -70,8 +70,6 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 	appstate = state
 
 	return func(app *gtk.Application) {
-		appstate.Started = time.Now()
-
 		if appstate.IsRunning {
 			return
 		}
@@ -82,7 +80,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			ui.appwin.SetVisible(true)
 
 			for _, proc := range activated {
-				proc.Refresh()
+				go proc.Refresh()
 			}
 
 			if len(appstate.ExplicitModules) > 0 {
@@ -98,12 +96,12 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 				ui.search.SetObjectProperty("placeholder-text", text)
 			}
 
-			if !appstate.IsMeasured && appstate.Dmenu == nil {
-				fmt.Printf("startup time: %s\n", time.Since(appstate.Started))
-				appstate.IsMeasured = true
+			ui.search.GrabFocus()
+
+			if appstate.Benchmark {
+				fmt.Println(time.Now().UnixNano())
 			}
 
-			ui.search.GrabFocus()
 			process()
 
 			return
@@ -172,6 +170,10 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 		ui.appwin.SetVisible(true)
 		appstate.HasUI = true
+
+		if appstate.Benchmark {
+			fmt.Println(time.Now().UnixNano())
+		}
 	}
 }
 
@@ -263,15 +265,6 @@ func setupUI(app *gtk.Application) {
 	ui.typeahead.SetFocusOnClick(false)
 	ui.typeahead.SetCanFocus(false)
 
-	fc := gtk.NewEventControllerFocus()
-	fc.Connect("enter", func() {
-		if !appstate.IsMeasured && appstate.Dmenu == nil {
-			fmt.Printf("startup time: %s\n", time.Since(appstate.Started))
-			appstate.IsMeasured = true
-		}
-	})
-
-	ui.search.AddController(fc)
 	ui.selection.SetAutoselect(true)
 
 	factory := setupFactory()

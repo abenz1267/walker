@@ -1,11 +1,10 @@
 package state
 
 import (
-	"time"
-
 	"github.com/abenz1267/walker/config"
 	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/modules/clipboard"
+	"github.com/junegunn/fzf/src/algo"
 )
 
 type AppState struct {
@@ -17,20 +16,19 @@ type AppState struct {
 	ExplicitStyle       string
 	ForcePrint          bool
 	HasUI               bool
-	IsMeasured          bool
 	IsRunning           bool
 	IsService           bool
 	KeepSort            bool
 	Password            bool
-	Started             time.Time
+	Benchmark           bool
 }
 
 func Get() *AppState {
+	algo.Init("default")
+
 	return &AppState{
-		Started:        time.Now(),
 		IsService:      false,
 		IsRunning:      false,
-		IsMeasured:     false,
 		HasUI:          false,
 		ExplicitConfig: "config.json",
 		ExplicitStyle:  "style.css",

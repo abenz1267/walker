@@ -20,7 +20,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/junegunn/fzf/src/algo"
 )
 
 //go:embed version.txt
@@ -28,13 +27,7 @@ var version string
 
 func main() {
 	state := state.Get()
-	algo.Init("default")
 
-	if state.IsRunning {
-		return
-	}
-
-	// withArgs := false
 	forceNew := false
 	appName := "dev.benz.walker"
 
@@ -82,6 +75,11 @@ func main() {
 				state.ForcePrint = true
 			}
 
+			if slices.Contains(args, "--bench") || slices.Contains(args, "-b") {
+				fmt.Println(time.Now().UnixNano())
+				state.Benchmark = true
+			}
+
 			if slices.Contains(args, "--version") || slices.Contains(args, "-v") || slices.Contains(args, "--help-all") {
 				fmt.Println(version)
 				return
@@ -112,6 +110,7 @@ func main() {
 	app.AddMainOption("separator", 't', glib.OptionFlagNone, glib.OptionArgString, "column separator", "")
 	app.AddMainOption("version", 'v', glib.OptionFlagNone, glib.OptionArgNone, "print version", "")
 	app.AddMainOption("forceprint", 'f', glib.OptionFlagNone, glib.OptionArgNone, "forces printing input if no item is selected", "")
+	app.AddMainOption("bench", 'b', glib.OptionFlagNone, glib.OptionArgNone, "prints nanoseconds for start and displaying in both service and client", "")
 
 	app.Connect("activate", ui.Activate(state))
 

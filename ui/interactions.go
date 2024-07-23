@@ -925,7 +925,6 @@ func quit() {
 		ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
 
 		appstate.IsRunning = false
-		appstate.IsMeasured = false
 
 		ui.app.Hold()
 	} else {

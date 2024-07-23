@@ -513,6 +513,11 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	}
 
 	cmd := exec.Command("sh", "-c", toRun)
+
+	if entry.Path != "" {
+		cmd.Dir = entry.Path
+	}
+
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid:    true,
 		Pgid:       0,

@@ -32,34 +32,37 @@ type Workable interface {
 }
 
 type Entry struct {
-	Label            string            `json:"label,omitempty"`
-	Sub              string            `json:"sub,omitempty"`
-	Exec             string            `json:"exec,omitempty"`
-	ExecAlt          string            `json:"exec_alt,omitempty"`
-	Terminal         bool              `json:"terminal,omitempty"`
-	Piped            Piped             `json:"-"`
-	PipedAlt         Piped             `json:"-"`
-	Icon             string            `json:"icon,omitempty"`
-	IconIsImage      bool              `json:"icon_is_image,omitempty"`
+	Categories       []string          `json:"categories,omitempty"`
+	Class            string            `json:"class,omitempty"`
 	DragDrop         bool              `json:"drag_drop,omitempty"`
 	DragDropData     string            `json:"drag_drop_data,omitempty"`
-	Image            string            `json:"image,omitempty"`
+	Exec             string            `json:"exec,omitempty"`
+	ExecAlt          string            `json:"exec_alt,omitempty"`
 	HideText         bool              `json:"hide_text,omitempty"`
-	Categories       []string          `json:"categories,omitempty"`
-	Searchable       string            `json:"searchable,omitempty"`
-	MatchFields      int               `json:"match_fields,omitempty"`
-	Class            string            `json:"class,omitempty"`
 	History          bool              `json:"history,omitempty"`
+	Icon             string            `json:"icon,omitempty"`
+	IconIsImage      bool              `json:"icon_is_image,omitempty"`
+	Image            string            `json:"image,omitempty"`
+	InitialClass     string            `json:"initial_class,omitempty"`
+	Label            string            `json:"label,omitempty"`
+	MatchFields      int               `json:"match_fields,omitempty"`
 	Matching         util.MatchingType `json:"matching,omitempty"`
+	Path             string            `json:"path,omitempty"`
 	RecalculateScore bool              `json:"recalculate_score,omitempty"`
 	ScoreFinal       float64           `json:"score_final,omitempty"`
 	ScoreFuzzy       float64           `json:"score_fuzzy,omitempty"`
-	Used             int               `json:"-"`
-	DaysSinceUsed    int               `json:"-"`
+	Searchable       string            `json:"searchable,omitempty"`
 	SpecialLabel     string            `json:"special_label,omitempty"`
-	LastUsed         time.Time         `json:"-"`
-	InitialClass     string            `json:"initial_class,omitempty"`
-	OpenWindows      uint              `json:"-"`
+	Sub              string            `json:"sub,omitempty"`
+	Terminal         bool              `json:"terminal,omitempty"`
+
+	// internal
+	DaysSinceUsed int       `json:"-"`
+	LastUsed      time.Time `json:"-"`
+	OpenWindows   uint      `json:"-"`
+	Piped         Piped     `json:"-"`
+	PipedAlt      Piped     `json:"-"`
+	Used          int       `json:"-"`
 }
 
 func (e Entry) Identifier() string {

@@ -120,8 +120,13 @@ func parse(cache bool, actions bool) []Entry {
 					line := scanner.Text()
 
 					if strings.HasPrefix(line, "[Desktop Action") {
+						if !actions {
+							break
+						}
+
 						app.Actions = append(app.Actions, Entry{
 							Sub:              app.Generic.Label,
+							Path:             app.Generic.Path,
 							Icon:             app.Generic.Icon,
 							Terminal:         app.Generic.Terminal,
 							Class:            ApplicationsName,
@@ -148,6 +153,11 @@ func parse(cache bool, actions bool) []Entry {
 					if !isAction {
 						if strings.HasPrefix(line, "Name=") {
 							app.Generic.Label = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
+							continue
+						}
+
+						if strings.HasPrefix(line, "Path=") {
+							app.Generic.Path = strings.TrimSpace(strings.TrimPrefix(line, "Path="))
 							continue
 						}
 
@@ -207,10 +217,6 @@ func parse(cache bool, actions bool) []Entry {
 							continue
 						}
 					}
-				}
-
-				if !actions {
-					app.Actions = []Entry{}
 				}
 
 				apps = append(apps, app)

@@ -33,6 +33,14 @@ type EngineInfo struct {
 	URL   string
 }
 
+func (w Websearch) History() bool {
+	return w.general.History
+}
+
+func (w Websearch) Typeahead() bool {
+	return w.general.Typeahead
+}
+
 func (Websearch) KeepSort() bool {
 	return false
 }
@@ -62,10 +70,6 @@ func (w *Websearch) Setup(cfg *config.Config) bool {
 
 func (w *Websearch) SetupData(_ *config.Config) {
 	slices.Reverse(w.engines)
-
-	if len(w.engines) == 0 {
-		w.engines = []string{"google"}
-	}
 
 	w.engineInfo = make(map[string]EngineInfo)
 

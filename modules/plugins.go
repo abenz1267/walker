@@ -18,6 +18,14 @@ type Plugin struct {
 	cachedOutput []byte
 }
 
+func (p Plugin) History() bool {
+	return p.General.History
+}
+
+func (p Plugin) Typeahead() bool {
+	return p.General.Typeahead
+}
+
 func (p Plugin) KeepSort() bool {
 	return p.General.KeepSort
 }

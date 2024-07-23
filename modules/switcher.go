@@ -12,6 +12,14 @@ type Switcher struct {
 	cfg     *config.Config
 }
 
+func (s Switcher) History() bool {
+	return s.general.History
+}
+
+func (s Switcher) Typeahead() bool {
+	return s.general.Typeahead
+}
+
 func (Switcher) KeepSort() bool {
 	return false
 }

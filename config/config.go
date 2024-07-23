@@ -18,20 +18,20 @@ var noFoundErr viper.ConfigFileNotFoundError
 var defaultConfig []byte
 
 type Config struct {
-	Terminal       string            `mapstructure:"terminal"`
-	IgnoreMouse    bool              `mapstructure:"ignore_mouse"`
-	SpecialLabels  map[string]string `mapstructure:"special_labels"`
-	UI             UI                `mapstructure:"ui"`
-	List           List              `mapstructure:"list"`
-	Search         Search            `mapstructure:"search"`
 	ActivationMode ActivationMode    `mapstructure:"activation_mode"`
-	Disabled       []string          `mapstructure:"disabled"`
-	Plugins        []Plugin          `mapstructure:"plugins"`
 	Builtins       Builtins          `mapstructure:"builtins"`
+	Disabled       []string          `mapstructure:"disabled"`
+	IgnoreMouse    bool              `mapstructure:"ignore_mouse"`
+	List           List              `mapstructure:"list"`
+	Plugins        []Plugin          `mapstructure:"plugins"`
+	Search         Search            `mapstructure:"search"`
+	SpecialLabels  map[string]string `mapstructure:"special_labels"`
+	Terminal       string            `mapstructure:"terminal"`
+	UI             UI                `mapstructure:"ui"`
 
 	// internal
-	IsService bool     `mapstructure:"-"`
 	Enabled   []string `mapstructure:"-"`
+	IsService bool     `mapstructure:"-"`
 }
 
 type Builtins struct {
@@ -54,18 +54,20 @@ type CustomCommands struct {
 }
 
 type CustomCommand struct {
-	Name     string `mapstructure:"name"`
 	Cmd      string `mapstructure:"cmd"`
 	CmdAlt   string `mapstructure:"cmd_alt"`
+	Name     string `mapstructure:"name"`
 	Terminal bool   `mapstructure:"terminal"`
 }
 
 type GeneralModule struct {
 	IsSetup      bool   `mapstructure:"-"`
+	History      bool   `mapstructure:"history"`
 	Placeholder  string `mapstructure:"placeholder"`
 	Prefix       string `mapstructure:"prefix"`
 	SpecialLabel string `mapstructure:"special_label"`
 	SwitcherOnly bool   `mapstructure:"switcher_only"`
+	Typeahead    bool   `mapstructure:"typeahead"`
 }
 
 type Finder struct {
@@ -86,8 +88,8 @@ type Emojis struct {
 
 type SSH struct {
 	GeneralModule `mapstructure:",squash"`
-	HostFile      string `mapstructure:"host_file"`
 	ConfigFile    string `mapstructure:"config_file"`
+	HostFile      string `mapstructure:"host_file"`
 }
 
 type Websearch struct {
@@ -102,13 +104,13 @@ type Hyprland struct {
 
 type Applications struct {
 	GeneralModule `mapstructure:",squash"`
-	Cache         bool `mapstructure:"cache"`
 	Actions       bool `mapstructure:"actions"`
+	Cache         bool `mapstructure:"cache"`
 }
 
 type ActivationMode struct {
-	UseAlt   bool `mapstructure:"use_alt"`
 	Disabled bool `mapstructure:"disabled"`
+	UseAlt   bool `mapstructure:"use_alt"`
 	UseFKeys bool `mapstructure:"use_f_keys"`
 }
 
@@ -120,67 +122,65 @@ type Clipboard struct {
 
 type Runner struct {
 	GeneralModule `mapstructure:",squash"`
-	ShellConfig   string   `mapstructure:"shell_config"`
 	Excludes      []string `mapstructure:"excludes"`
 	Includes      []string `mapstructure:"includes"`
+	ShellConfig   string   `mapstructure:"shell_config"`
 }
 
 type Plugin struct {
 	GeneralModule  `mapstructure:",squash"`
-	Name           string            `mapstructure:"name"`
-	SrcOnce        string            `mapstructure:"src_once"`
-	SrcOnceRefresh bool              `mapstructure:"src_once_refresh"`
-	Src            string            `mapstructure:"src"`
 	Cmd            string            `mapstructure:"cmd"`
 	CmdAlt         string            `mapstructure:"cmd_alt"`
-	Terminal       bool              `mapstructure:"terminal"`
 	KeepSort       bool              `mapstructure:"keep_sort"`
 	Matching       util.MatchingType `mapstructure:"matching"`
+	Name           string            `mapstructure:"name"`
+	Src            string            `mapstructure:"src"`
+	SrcOnce        string            `mapstructure:"src_once"`
+	SrcOnceRefresh bool              `mapstructure:"src_once_refresh"`
+	Terminal       bool              `mapstructure:"terminal"`
 }
 
 type Search struct {
 	Delay              int    `mapstructure:"delay"`
-	Typeahead          bool   `mapstructure:"typeahead"`
 	ForceKeyboardFocus bool   `mapstructure:"force_keyboard_focus"`
 	Icons              bool   `mapstructure:"icons"`
-	Spinner            bool   `mapstructure:"spinner"`
-	History            bool   `mapstructure:"history"`
 	MarginSpinner      int    `mapstructure:"margin_spinner"`
 	Placeholder        string `mapstructure:"placeholder"`
+	Spinner            bool   `mapstructure:"spinner"`
 }
 
 type Icons struct {
 	Hide      bool   `mapstructure:"hide"`
-	Size      int    `mapstructure:"size"`
 	ImageSize int    `mapstructure:"image_size"`
+	Size      int    `mapstructure:"size"`
 	Theme     string `mapstructure:"theme"`
 }
 
 type UI struct {
-	Icons           Icons   `mapstructure:"icons"`
-	Orientation     string  `mapstructure:"orientation"`
+	Anchors         Anchors `mapstructure:"anchors"`
 	Fullscreen      bool    `mapstructure:"fullscreen"`
-	IgnoreExclusive bool    `mapstructure:"ignore_exclusive"`
+	Height          int     `mapstructure:"height"`
 	Horizontal      string  `mapstructure:"horizontal"`
+	Icons           Icons   `mapstructure:"icons"`
+	IgnoreExclusive bool    `mapstructure:"ignore_exclusive"`
+	Margins         Margins `mapstructure:"margins"`
+	Orientation     string  `mapstructure:"orientation"`
 	Vertical        string  `mapstructure:"vertical"`
 	Width           int     `mapstructure:"width"`
-	Height          int     `mapstructure:"height"`
-	Margins         Margins `mapstructure:"margins"`
-	Anchors         Anchors `mapstructure:"anchors"`
 }
 
 type Anchors struct {
-	Top    bool `mapstructure:"top"`
+	Bottom bool `mapstructure:"bottom"`
 	Left   bool `mapstructure:"left"`
 	Right  bool `mapstructure:"right"`
-	Bottom bool `mapstructure:"bottom"`
+	Top    bool `mapstructure:"top"`
 }
 
 type Margins struct {
-	Top    int `mapstructure:"top"`
 	Bottom int `mapstructure:"bottom"`
 	End    int `mapstructure:"end"`
 	Start  int `mapstructure:"start"`
+	Top    int `mapstructure:"top"`
 }
 
 type List struct {

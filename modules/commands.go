@@ -11,6 +11,14 @@ type Commands struct {
 	entries []Entry
 }
 
+func (c Commands) History() bool {
+	return c.general.History
+}
+
+func (c Commands) Typeahead() bool {
+	return c.general.Typeahead
+}
+
 func (c Commands) IsSetup() bool {
 	return c.general.IsSetup
 }

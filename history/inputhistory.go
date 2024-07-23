@@ -2,36 +2,40 @@ package history
 
 import (
 	"path/filepath"
-	"slices"
 
 	"github.com/abenz1267/walker/util"
 )
 
-type InputHistory []string
+type InputHistory map[string][]string
 
-func (h InputHistory) SaveToInputHistory(input string) InputHistory {
-	i := slices.Index(h, input)
+var inputhstry InputHistory
 
-	if i != -1 {
-		h = append(h[:i], h[i+1:]...)
+func SaveInputHistory(module string, input string) {
+	if inputhstry == nil {
+		inputhstry = make(InputHistory)
 	}
 
-	h = append([]string{input}, h...)
-
-	if len(h) > 50 {
-		h = h[:50]
+	if _, ok := inputhstry[module]; !ok {
+		inputhstry[module] = []string{}
 	}
 
-	util.ToGob(&h, filepath.Join(util.CacheDir(), "inputhistory.gob"))
+	inputhstry[module] = append([]string{input}, inputhstry[module]...)
 
-	return h
+	util.ToGob(&inputhstry, filepath.Join(util.CacheDir(), "inputhistory_0.3.8.gob"))
 }
 
-func GetInputHistory() InputHistory {
-	file := filepath.Join(util.CacheDir(), "inputhistory.gob")
+func GetInputHistory(module string) []string {
+	if inputhstry != nil {
+		return inputhstry[module]
+	}
 
-	h := InputHistory{}
-	_ = util.FromGob(file, &h)
+	file := filepath.Join(util.CacheDir(), "inputhistory_0.3.8.gob")
 
-	return h
+	if inputhstry == nil {
+		inputhstry = make(InputHistory)
+	}
+
+	_ = util.FromGob(file, &inputhstry)
+
+	return inputhstry[module]
 }

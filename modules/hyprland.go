@@ -19,6 +19,14 @@ type Hyprland struct {
 	windows map[string]uint
 }
 
+func (h Hyprland) History() bool {
+	return h.general.History
+}
+
+func (h Hyprland) Typeahead() bool {
+	return h.general.Typeahead
+}
+
 func (Hyprland) KeepSort() bool {
 	return false
 }

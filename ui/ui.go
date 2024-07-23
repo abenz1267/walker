@@ -40,13 +40,12 @@ var (
 )
 
 var (
-	cfg        *config.Config
-	ui         *UI
-	explicits  []modules.Workable
-	activated  []modules.Workable
-	hstry      history.History
-	inputhstry history.InputHistory
-	appstate   *state.AppState
+	cfg       *config.Config
+	ui        *UI
+	explicits []modules.Workable
+	activated []modules.Workable
+	hstry     history.History
+	appstate  *state.AppState
 )
 
 type UI struct {
@@ -112,16 +111,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			cfg.Search.Placeholder = appstate.ExplicitPlaceholder
 		}
 
-		if appstate.Dmenu != nil {
-			cfg.Search.Typeahead = false
-			cfg.Search.History = false
-		}
-
 		hstry = history.Get()
-
-		if cfg.Search.History {
-			inputhstry = history.GetInputHistory()
-		}
 
 		if appstate.Password {
 			setupUIPassword(app)

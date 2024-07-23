@@ -29,6 +29,8 @@ type Workable interface {
 	SetupData(cfg *config.Config)
 	Refresh()
 	KeepSort() bool
+	Typeahead() bool
+	History() bool
 }
 
 type Entry struct {
@@ -39,7 +41,6 @@ type Entry struct {
 	Exec             string            `json:"exec,omitempty"`
 	ExecAlt          string            `json:"exec_alt,omitempty"`
 	HideText         bool              `json:"hide_text,omitempty"`
-	History          bool              `json:"history,omitempty"`
 	Icon             string            `json:"icon,omitempty"`
 	IconIsImage      bool              `json:"icon_is_image,omitempty"`
 	Image            string            `json:"image,omitempty"`
@@ -58,7 +59,9 @@ type Entry struct {
 
 	// internal
 	DaysSinceUsed int       `json:"-"`
+	History       bool      `json:"-"`
 	LastUsed      time.Time `json:"-"`
+	Module        string    `json:"-"`
 	OpenWindows   uint      `json:"-"`
 	Piped         Piped     `json:"-"`
 	PipedAlt      Piped     `json:"-"`

@@ -16,6 +16,14 @@ type Finder struct {
 	general config.GeneralModule
 }
 
+func (f Finder) History() bool {
+	return f.general.History
+}
+
+func (f Finder) Typeahead() bool {
+	return f.general.Typeahead
+}
+
 func (Finder) KeepSort() bool {
 	return false
 }

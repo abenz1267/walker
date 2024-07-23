@@ -76,6 +76,14 @@ func (d *Dmenu) Setup(cfg *config.Config) bool {
 
 func (d *Dmenu) SetupData(cfg *config.Config) {}
 
+func (Dmenu) Typeahead() bool {
+	return false
+}
+
+func (Dmenu) History() bool {
+	return false
+}
+
 func (d Dmenu) Placeholder() string {
 	if d.Separator == "" {
 		return "dmenu"

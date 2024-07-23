@@ -27,6 +27,14 @@ type Application struct {
 	Actions []Entry `json:"actions,omitempty"`
 }
 
+func (a Applications) History() bool {
+	return a.general.History
+}
+
+func (a Applications) Typeahead() bool {
+	return a.general.Typeahead
+}
+
 func (a Applications) Placeholder() string {
 	if a.general.Placeholder == "" {
 		return "applications"

@@ -21,6 +21,14 @@ type Emojis struct {
 	entries []modules.Entry
 }
 
+func (e Emojis) History() bool {
+	return e.general.History
+}
+
+func (e Emojis) Typeahead() bool {
+	return e.general.Typeahead
+}
+
 func (Emojis) KeepSort() bool {
 	return false
 }

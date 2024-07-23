@@ -25,7 +25,6 @@
     "width": 400
   },
   "search": {
-    "typeahead": true,
     "force_keyboard_focus": true,
     "icons": true,
     "history": true,
@@ -41,12 +40,13 @@
       "switcher_only": true
     },
     "commands": { "switcher_only": true },
-    "emojis": { "switcher_only": true },
+    "custom_commands": {},
+    "emojis": { "switcher_only": true, "history": true, "typeahead": true },
     "finder": { "switcher_only": true },
     "hyprland": { "context_aware_history": true },
-    "runner": { "Excludes": null, "Includes": null },
-    "ssh": { "switcher_only": true },
+    "runner": { "typeahead": true, "history": true },
+    "ssh": { "switcher_only": true, "history": true },
     "switcher": { "prefix": "/" },
-    "websearch": {}
+    "websearch": { "engines": ["google"] }
   }
 }

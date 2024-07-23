@@ -45,6 +45,14 @@ type ClipboardItem struct {
 	IsImg   bool      `json:"is_img,omitempty"`
 }
 
+func (c Clipboard) Typeahead() bool {
+	return false
+}
+
+func (c Clipboard) History() bool {
+	return false
+}
+
 func (c Clipboard) Entries(ctx context.Context, term string) []modules.Entry {
 	entries := []modules.Entry{}
 

@@ -23,6 +23,14 @@ type Runner struct {
 	bins        []string
 }
 
+func (r Runner) History() bool {
+	return r.general.History
+}
+
+func (r Runner) Typeahead() bool {
+	return r.general.Typeahead
+}
+
 func (Runner) KeepSort() bool {
 	return false
 }
@@ -88,6 +96,11 @@ func (r Runner) Entries(ctx context.Context, term string) []Entry {
 	entries := []Entry{}
 
 	fields := strings.Fields(term)
+
+	if len(fields) == 0 {
+		return entries
+	}
+
 	matchable := fields[0]
 
 	for _, v := range r.bins {

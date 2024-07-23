@@ -18,6 +18,14 @@ type SSH struct {
 	entries []Entry
 }
 
+func (s SSH) History() bool {
+	return s.general.History
+}
+
+func (s SSH) Typeahead() bool {
+	return s.general.Typeahead
+}
+
 func (s SSH) IsSetup() bool {
 	return s.general.IsSetup
 }

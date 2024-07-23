@@ -12,6 +12,14 @@ type CustomCommands struct {
 	entries []Entry
 }
 
+func (c CustomCommands) History() bool {
+	return c.general.History
+}
+
+func (c CustomCommands) Typeahead() bool {
+	return c.general.Typeahead
+}
+
 func (c CustomCommands) Entries(ctx context.Context, term string) (_ []Entry) {
 	return c.entries
 }

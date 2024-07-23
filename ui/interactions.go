@@ -32,7 +32,6 @@ var (
 	cmdAltModifier    gdk.ModifierType
 	amModifier        gdk.ModifierType
 	commands          map[string]func()
-	tah               []string
 )
 
 func setupCommands() {
@@ -51,10 +50,6 @@ func setupCommands() {
 	}
 	commands["clearclipboard"] = func() {
 		os.Remove(filepath.Join(util.CacheDir(), "clipboard.gob"))
-	}
-	commands["cleartypeaheadcache"] = func() {
-		os.Remove(filepath.Join(util.CacheDir(), "typeahead.gob"))
-		tah = []string{}
 	}
 }
 
@@ -83,10 +78,12 @@ func getModules() []modules.Workable {
 	return res
 }
 
-func findModule(name string, modules []modules.Workable) modules.Workable {
+func findModule(name string, modules ...[]modules.Workable) modules.Workable {
 	for _, v := range modules {
-		if v.Name() == name {
-			return v
+		for _, w := range v {
+			if w != nil && w.Name() == name {
+				return w
+			}
 		}
 	}
 
@@ -112,8 +109,6 @@ func setExplicits() {
 }
 
 func setupModules() {
-	util.FromGob(filepath.Join(util.CacheDir(), "typeahead.gob"), &tah)
-
 	enabledModules := []modules.Workable{
 		appstate.Dmenu,
 	}
@@ -154,6 +149,8 @@ func setupModules() {
 		for _, v := range activated {
 			ui.prefixClasses[v.Prefix()] = append(ui.prefixClasses[v.Prefix()], v.Name())
 		}
+	} else {
+		activated = explicits
 	}
 }
 
@@ -397,35 +394,40 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	case gdk.KEY_Down:
 		selectNext()
 	case gdk.KEY_Up:
-		if ui.selection.Selected() == 0 && len(inputhstry) > 0 {
-			currentInput := ui.search.Text()
-
-			if currentInput != "" && !slices.Contains(inputhstry, currentInput) {
+		if ui.selection.Selected() == 0 || ui.items.NItems() == 0 {
+			if len(activated) != 1 {
+				selectPrev()
 				break
 			}
 
-			if historyIndex == len(inputhstry)-1 || currentInput == "" {
-				historyIndex = 0
+			if len(explicits) != 0 && len(explicits) != 1 {
+				selectPrev()
+				break
 			}
 
-			i := inputhstry[historyIndex]
+			var inputhstry []string
 
-			for i == currentInput {
-				if historyIndex == len(inputhstry)-1 {
-					break
+			if len(explicits) == 1 {
+				inputhstry = history.GetInputHistory(explicits[0].Name())
+			} else {
+				inputhstry = history.GetInputHistory(activated[0].Name())
+			}
+
+			if len(inputhstry) > 0 {
+				historyIndex++
+
+				if historyIndex == len(inputhstry) {
+					historyIndex = 0
 				}
 
-				historyIndex++
-				i = inputhstry[historyIndex]
+				glib.IdleAdd(func() {
+					ui.search.SetText(inputhstry[historyIndex])
+					ui.search.SetPosition(-1)
+				})
 			}
-
-			glib.IdleAdd(func() {
-				ui.search.SetText(i)
-				ui.search.SetPosition(-1)
-			})
+		} else {
+			selectPrev()
 		}
-
-		selectPrev()
 	case gdk.KEY_ISO_Left_Tab:
 		selectPrev()
 	case gdk.KEY_j:
@@ -534,8 +536,10 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		hstry.Save(entry.Identifier(), strings.TrimSpace(ui.search.Text()))
 	}
 
-	if cfg.Search.History {
-		inputhstry = inputhstry.SaveToInputHistory(ui.search.Text())
+	module := findModule(entry.Module, activated, explicits)
+
+	if module != nil && (module.History() || module.Typeahead()) {
+		history.SaveInputHistory(module.Name(), ui.search.Text())
 	}
 
 	err := cmd.Start()
@@ -564,11 +568,6 @@ func setStdin(cmd *exec.Cmd, piped *modules.Piped) {
 }
 
 func closeAfterActivation(keepOpen, next bool) {
-	if cfg.Search.Typeahead {
-		tah = append([]string{ui.search.Text()}, tah...)
-		util.ToGob(&tah, filepath.Join(util.CacheDir(), "typeahead.gob"))
-	}
-
 	if !keepOpen {
 		quit()
 		return
@@ -592,23 +591,13 @@ func process() {
 		cancel()
 	}
 
+	ui.typeahead.SetText("")
+
 	if cfg.IgnoreMouse {
 		ui.list.SetCanTarget(false)
 	}
 
 	ui.spinner.SetCSSClasses([]string{"visible"})
-
-	if cfg.Search.Typeahead {
-		ui.typeahead.SetText("")
-
-		if strings.TrimSpace(ui.search.Text()) != "" {
-			for _, v := range tah {
-				if strings.HasPrefix(v, ui.search.Text()) {
-					ui.typeahead.SetText(v)
-				}
-			}
-		}
-	}
 
 	if !appstate.IsRunning {
 		return
@@ -691,6 +680,8 @@ func processAsync(ctx context.Context, text string) {
 		p = explicits
 	}
 
+	setTypeahead(p)
+
 	handler.receiver = make(chan []modules.Entry)
 	go handler.handle()
 
@@ -755,6 +746,8 @@ func processAsync(ctx context.Context, text string) {
 			toPush := []modules.Entry{}
 
 			for k := range e {
+				e[k].Module = w.Name()
+
 				if e[k].DragDrop && !ui.list.CanTarget() {
 					ui.list.SetCanTarget(true)
 				}
@@ -801,6 +794,36 @@ func processAsync(ctx context.Context, text string) {
 	}
 
 	wg.Wait()
+}
+
+func setTypeahead(modules []modules.Workable) {
+	if ui.search.Text() == "" {
+		return
+	}
+
+	toSet := ""
+
+	for _, v := range modules {
+		if v.Typeahead() {
+			tah := history.GetInputHistory(v.Name())
+
+			trimmed := strings.TrimSpace(ui.search.Text())
+
+			if trimmed != "" {
+				for _, v := range tah {
+					if strings.HasPrefix(v, trimmed) {
+						toSet = v
+					}
+				}
+
+				glib.IdleAdd(func() {
+					if trimmed != toSet {
+						ui.typeahead.SetText(toSet)
+					}
+				})
+			}
+		}
+	}
 }
 
 func setInitials() {
@@ -885,6 +908,7 @@ func usageModifier(item modules.Entry) int {
 
 func quit() {
 	ui.appwin.SetVisible(false)
+	historyIndex = 0
 
 	if appstate.IsService {
 		disabledAM()

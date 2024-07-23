@@ -53,11 +53,11 @@ func (w Websearch) SwitcherOnly() bool {
 	return w.general.SwitcherOnly
 }
 
-func (w *Websearch) Setup(cfg *config.Config) {
+func (w *Websearch) Setup(cfg *config.Config) bool {
 	w.engines = cfg.Builtins.Websearch.Engines
-	w.general.Prefix = cfg.Builtins.Websearch.Prefix
-	w.general.SwitcherOnly = cfg.Builtins.Websearch.SwitcherOnly
-	w.general.SpecialLabel = cfg.Builtins.Websearch.SpecialLabel
+	w.general = cfg.Builtins.Websearch.GeneralModule
+
+	return true
 }
 
 func (w *Websearch) SetupData(_ *config.Config) {

@@ -47,15 +47,15 @@ func (a Applications) SwitcherOnly() bool {
 	return a.general.SwitcherOnly
 }
 
-func (a *Applications) Setup(cfg *config.Config) {
-	a.general.Prefix = cfg.Builtins.Applications.Prefix
-	a.general.SwitcherOnly = cfg.Builtins.Applications.SwitcherOnly
-	a.general.SpecialLabel = cfg.Builtins.Applications.SpecialLabel
+func (a *Applications) Setup(cfg *config.Config) bool {
+	a.general = cfg.Builtins.Applications.GeneralModule
 
 	a.cache = cfg.Builtins.Applications.Cache
 	a.actions = cfg.Builtins.Applications.Actions
 
 	a.general.IsSetup = true
+
+	return true
 }
 
 func (a Applications) SetupData(_ *config.Config) {}

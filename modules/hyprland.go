@@ -39,17 +39,13 @@ func (h Hyprland) SwitcherOnly() bool {
 	return h.general.SwitcherOnly
 }
 
-func (h *Hyprland) Setup(cfg *config.Config) {
+func (h *Hyprland) Setup(cfg *config.Config) bool {
 	pth, _ := exec.LookPath("hyprctl")
 	if pth == "" {
-		log.Println("Hyprland not found. Disabling module.")
-		return
+		return false
 	}
 
-	h.general.Prefix = cfg.Builtins.Hyprland.Prefix
-	h.general.SwitcherOnly = cfg.Builtins.Hyprland.SwitcherOnly
-	h.general.SpecialLabel = cfg.Builtins.Hyprland.SpecialLabel
-
+	h.general = cfg.Builtins.Hyprland.GeneralModule
 	h.windows = make(map[string]uint)
 
 	if cfg.IsService && cfg.Builtins.Hyprland.ContextAwareHistory {
@@ -57,6 +53,8 @@ func (h *Hyprland) Setup(cfg *config.Config) {
 	}
 
 	h.general.IsSetup = true
+
+	return true
 }
 
 func (h *Hyprland) SetupData(cfg *config.Config) {}

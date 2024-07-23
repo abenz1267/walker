@@ -59,11 +59,13 @@ func (s Switcher) Name() string {
 	return "switcher"
 }
 
-func (s *Switcher) Setup(cfg *config.Config) {
-	s.general.Prefix = cfg.Builtins.Switcher.Prefix
+func (s *Switcher) Setup(cfg *config.Config) bool {
+	s.general = cfg.Builtins.Switcher.GeneralModule
 	s.cfg = cfg
 
 	s.general.IsSetup = true
+
+	return true
 }
 
 func (s *Switcher) SetupData(cfg *config.Config) {}

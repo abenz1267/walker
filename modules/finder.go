@@ -87,12 +87,11 @@ func (f Finder) SwitcherOnly() bool {
 	return f.general.SwitcherOnly
 }
 
-func (f *Finder) Setup(cfg *config.Config) {
-	f.general.Prefix = cfg.Builtins.Finder.Prefix
-	f.general.SwitcherOnly = cfg.Builtins.Finder.SwitcherOnly
-	f.general.SpecialLabel = cfg.Builtins.Finder.SpecialLabel
-
+func (f *Finder) Setup(cfg *config.Config) bool {
+	f.general = cfg.Builtins.Finder.GeneralModule
 	f.general.IsSetup = true
+
+	return true
 }
 
 func (f *Finder) SetupData(cfg *config.Config) {}

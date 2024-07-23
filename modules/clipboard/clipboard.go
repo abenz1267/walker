@@ -89,22 +89,20 @@ func (c Clipboard) Name() string {
 	return ClipboardName
 }
 
-func (c *Clipboard) Setup(cfg *config.Config) {
+func (c *Clipboard) Setup(cfg *config.Config) bool {
 	pth, _ := exec.LookPath("wl-copy")
 	if pth == "" {
 		log.Println("currently wl-clipboard only.")
-		return
+		return false
 	}
 
 	pth, _ = exec.LookPath("wl-paste")
 	if pth == "" {
 		log.Println("currently wl-clipboard only.")
-		return
+		return false
 	}
 
-	c.general.Prefix = cfg.Builtins.Clipboard.Prefix
-	c.general.SwitcherOnly = cfg.Builtins.Clipboard.SwitcherOnly
-	c.general.SpecialLabel = cfg.Builtins.Clipboard.SpecialLabel
+	c.general = cfg.Builtins.Clipboard.GeneralModule
 
 	c.file = filepath.Join(util.CacheDir(), "clipboard.gob")
 	c.max = cfg.Builtins.Clipboard.MaxEntries
@@ -115,6 +113,8 @@ func (c *Clipboard) Setup(cfg *config.Config) {
 	c.imgTypes["image/jpeg"] = "jpeg"
 
 	go c.watch()
+
+	return true
 }
 
 func (c *Clipboard) SetupData(cfg *config.Config) {

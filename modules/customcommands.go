@@ -40,8 +40,9 @@ func (c CustomCommands) IsSetup() (_ bool) {
 	return c.general.IsSetup
 }
 
-func (c *CustomCommands) Setup(cfg *config.Config) {
+func (c *CustomCommands) Setup(cfg *config.Config) bool {
 	c.general = cfg.Builtins.CustomCommands.GeneralModule
+	return true
 }
 
 func (c *CustomCommands) SetupData(cfg *config.Config) {

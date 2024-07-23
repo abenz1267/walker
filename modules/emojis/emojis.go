@@ -45,10 +45,10 @@ func (e Emojis) SwitcherOnly() bool {
 	return e.general.SwitcherOnly
 }
 
-func (e *Emojis) Setup(cfg *config.Config) {
-	e.general.Prefix = cfg.Builtins.Emojis.Prefix
-	e.general.SwitcherOnly = cfg.Builtins.Emojis.SwitcherOnly
-	e.general.SpecialLabel = cfg.Builtins.Emojis.SpecialLabel
+func (e *Emojis) Setup(cfg *config.Config) bool {
+	e.general = cfg.Builtins.Emojis.GeneralModule
+
+	return true
 }
 
 func (e *Emojis) SetupData(cfg *config.Config) {

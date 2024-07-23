@@ -43,10 +43,10 @@ func (c Commands) SwitcherOnly() bool {
 	return c.general.SwitcherOnly
 }
 
-func (c *Commands) Setup(cfg *config.Config) {
-	c.general.Prefix = cfg.Builtins.Commands.Prefix
-	c.general.SwitcherOnly = cfg.Builtins.Commands.SwitcherOnly
-	c.general.SpecialLabel = cfg.Builtins.Commands.SpecialLabel
+func (c *Commands) Setup(cfg *config.Config) bool {
+	c.general = cfg.Builtins.Commands.GeneralModule
+
+	return true
 }
 
 func (c *Commands) SetupData(cfg *config.Config) {

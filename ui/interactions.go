@@ -101,8 +101,11 @@ func setExplicits() {
 	for k, v := range modules {
 		if v != nil {
 			if slices.Contains(appstate.ExplicitModules, v.Name()) {
-				modules[k].Setup(cfg)
-				explicits = append(explicits, modules[k])
+				ok := modules[k].Setup(cfg)
+
+				if ok {
+					explicits = append(explicits, modules[k])
+				}
 			}
 		}
 	}
@@ -138,10 +141,12 @@ func setupModules() {
 				continue
 			}
 
-			enabledModules[k].Setup(cfg)
+			ok := enabledModules[k].Setup(cfg)
 
-			cfg.Enabled = append(cfg.Enabled, v.Name())
-			activated = append(activated, enabledModules[k])
+			if ok {
+				cfg.Enabled = append(cfg.Enabled, v.Name())
+				activated = append(activated, enabledModules[k])
+			}
 		}
 
 		clear(ui.prefixClasses)
@@ -703,6 +708,10 @@ func processAsync(ctx context.Context, text string) {
 	}
 
 	for k := range p {
+		if p[k] == nil {
+			continue
+		}
+
 		if !hasExplicit {
 			if p[k].SwitcherOnly() {
 				continue
@@ -804,8 +813,11 @@ func setInitials() {
 				if proc.IsSetup() {
 					hyprland = proc.(*modules.Hyprland)
 				} else {
-					proc.Setup(cfg)
-					hyprland = proc.(*modules.Hyprland)
+					ok := proc.Setup(cfg)
+
+					if ok {
+						hyprland = proc.(*modules.Hyprland)
+					}
 				}
 
 				break
@@ -833,7 +845,7 @@ func setInitials() {
 
 			entry.ScoreFinal = float64(usageModifier(entry))
 
-			if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService {
+			if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService && hyprland != nil {
 				entry.OpenWindows = hyprland.GetWindowAmount(entry.InitialClass)
 			}
 

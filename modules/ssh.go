@@ -68,10 +68,10 @@ func (s SSH) SwitcherOnly() bool {
 	return s.general.SwitcherOnly
 }
 
-func (s *SSH) Setup(cfg *config.Config) {
-	s.general.Prefix = cfg.Builtins.SSH.Prefix
-	s.general.SwitcherOnly = cfg.Builtins.SSH.SwitcherOnly
-	s.general.SpecialLabel = cfg.Builtins.SSH.SpecialLabel
+func (s *SSH) Setup(cfg *config.Config) bool {
+	s.general = cfg.Builtins.SSH.GeneralModule
+
+	return true
 }
 
 func (s *SSH) SetupData(cfg *config.Config) {

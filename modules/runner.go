@@ -43,11 +43,11 @@ func (r Runner) SwitcherOnly() bool {
 	return r.general.SwitcherOnly
 }
 
-func (r *Runner) Setup(cfg *config.Config) {
-	r.general.Prefix = cfg.Builtins.Runner.Prefix
-	r.general.SwitcherOnly = cfg.Builtins.Runner.SwitcherOnly
-	r.general.SpecialLabel = cfg.Builtins.Runner.SpecialLabel
+func (r *Runner) Setup(cfg *config.Config) bool {
+	r.general = cfg.Builtins.Runner.GeneralModule
 	r.shellConfig = cfg.Builtins.Runner.ShellConfig
+
+	return true
 }
 
 func (r *Runner) SetupData(cfg *config.Config) {

@@ -25,7 +25,7 @@ type Workable interface {
 	Placeholder() string
 	SwitcherOnly() bool
 	IsSetup() bool
-	Setup(cfg *config.Config)
+	Setup(cfg *config.Config) bool
 	SetupData(cfg *config.Config)
 	Refresh()
 	KeepSort() bool

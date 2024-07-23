@@ -59,7 +59,7 @@ func (Dmenu) SwitcherOnly() bool {
 	return false
 }
 
-func (d *Dmenu) Setup(cfg *config.Config) {
+func (d *Dmenu) Setup(cfg *config.Config) bool {
 	if d.Separator == "" {
 		d.Separator = "\t"
 	}
@@ -70,6 +70,8 @@ func (d *Dmenu) Setup(cfg *config.Config) {
 	}
 
 	d.isSetup = true
+
+	return true
 }
 
 func (d *Dmenu) SetupData(cfg *config.Config) {}

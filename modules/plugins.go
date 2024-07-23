@@ -30,7 +30,8 @@ func (e Plugin) SwitcherOnly() bool {
 	return e.General.SwitcherOnly
 }
 
-func (e *Plugin) Setup(cfg *config.Config) {
+func (e *Plugin) Setup(cfg *config.Config) bool {
+	return true
 }
 
 func (e *Plugin) SetupData(cfg *config.Config) {

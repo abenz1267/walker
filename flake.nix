@@ -37,6 +37,11 @@
           walker = import ./nix/hm-module.nix inputs.self;
           default = walker;
         };
+
+        nixConfig = {
+          extra-substituters = ["https://walker.cachix.org"];
+          extra-trusted-public-keys = ["walker.cachix.org-1:fG8q+uAaMqhsMxWjwvk0IMb4mFPFLqHjuvfwQxE4oJM="];
+        };
       };
     };
 }

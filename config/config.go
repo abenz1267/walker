@@ -3,6 +3,7 @@ package config
 import (
 	"bytes"
 	_ "embed"
+	"errors"
 	"log"
 	"os"
 	"os/exec"
@@ -10,6 +11,8 @@ import (
 	"github.com/abenz1267/walker/util"
 	"github.com/spf13/viper"
 )
+
+var noFoundErr viper.ConfigFileNotFoundError
 
 //go:embed config.default.json
 var defaultConfig []byte
@@ -219,10 +222,19 @@ func Get(config string) *Config {
 
 	err = viper.ReadInConfig()
 	if err != nil {
-		viper.SetConfigType(ft)
-		err := viper.SafeWriteConfig()
-		if err != nil {
-			log.Println(err)
+		dErr := os.MkdirAll(util.ConfigDir(), 0755)
+		if dErr != nil {
+			log.Panicln(dErr)
+		}
+
+		if errors.As(err, &noFoundErr) {
+			viper.SetConfigType(ft)
+			wErr := viper.SafeWriteConfig()
+			if wErr != nil {
+				log.Println(wErr)
+			}
+		} else {
+			log.Panicln(err)
 		}
 	}
 

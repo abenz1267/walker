@@ -163,22 +163,22 @@ func main() {
 
 	if state.IsService {
 		app.Hold()
+
+		signal_chan := make(chan os.Signal, 1)
+		signal.Notify(signal_chan,
+			syscall.SIGHUP,
+			syscall.SIGINT,
+			syscall.SIGTERM,
+			syscall.SIGQUIT)
+
+		go func() {
+			for {
+				<-signal_chan
+
+				os.Exit(0)
+			}
+		}()
 	}
-
-	signal_chan := make(chan os.Signal, 1)
-	signal.Notify(signal_chan,
-		syscall.SIGHUP,
-		syscall.SIGINT,
-		syscall.SIGTERM,
-		syscall.SIGQUIT)
-
-	go func() {
-		for {
-			<-signal_chan
-
-			os.Exit(0)
-		}
-	}()
 
 	if code := app.Run(os.Args); code > 0 {
 		os.Exit(code)

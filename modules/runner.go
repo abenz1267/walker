@@ -211,10 +211,12 @@ func (r *Runner) parseAliases() {
 
 	for scanner.Scan() {
 		text := scanner.Text()
+
 		if strings.HasPrefix(text, "alias") {
-			splits := strings.Split(text, "=")
-			aliasFields := strings.Fields(splits[0])
-			r.aliases[aliasFields[1]] = strings.TrimSuffix(strings.TrimPrefix(splits[1], "\""), "\"")
+			splits := strings.SplitN(text, "=", 2)
+			alias := strings.TrimPrefix(splits[0], "alias ")
+
+			r.aliases[alias] = strings.TrimSuffix(strings.TrimPrefix(splits[1], "\""), "\"")
 		}
 	}
 }

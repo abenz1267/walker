@@ -52,6 +52,17 @@ arch:
 yay -S walker
 ```
 
+### Building from source
+
+Make sure you have the following dependencies installed:
+
+- go
+- gtk4
+- gtk4-layer-shell
+- gobject-introspection
+
+Without these you won't be able to build.
+
 <details>
 <summary>Install using Nix</summary>
 

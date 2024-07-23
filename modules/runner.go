@@ -17,10 +17,11 @@ import (
 )
 
 type Runner struct {
-	general     config.GeneralModule
-	shellConfig string
-	aliases     map[string]string
-	bins        []string
+	general      config.GeneralModule
+	shellConfig  string
+	genericEntry bool
+	aliases      map[string]string
+	bins         []string
 }
 
 func (r Runner) History() bool {
@@ -54,6 +55,7 @@ func (r Runner) SwitcherOnly() bool {
 func (r *Runner) Setup(cfg *config.Config) bool {
 	r.general = cfg.Builtins.Runner.GeneralModule
 	r.shellConfig = cfg.Builtins.Runner.ShellConfig
+	r.genericEntry = cfg.Builtins.Runner.GenericEntry
 
 	return true
 }
@@ -101,8 +103,6 @@ func (r Runner) Entries(ctx context.Context, term string) []Entry {
 		return entries
 	}
 
-	matchable := fields[0]
-
 	for _, v := range r.bins {
 		label := v
 
@@ -119,29 +119,32 @@ func (r Runner) Entries(ctx context.Context, term string) []Entry {
 			History:          true,
 			RecalculateScore: true,
 			MatchFields:      1,
-		}
-
-		rank := util.FuzzyScore(matchable, v)
-		n.ScoreFinal = float64(rank)
-
-		if rank < 20 {
-			continue
+			Matching:         util.Fuzzy,
 		}
 
 		entries = append(entries, n)
 	}
 
-	slices.SortFunc(entries, func(a, b Entry) int {
-		if a.ScoreFinal > b.ScoreFinal {
-			return -1
+	bin := fields[0]
+
+	if val, ok := r.aliases[bin]; ok {
+		bin = val
+	}
+
+	if r.genericEntry {
+		n := Entry{
+			Label:            fmt.Sprintf("run: %s", term),
+			Sub:              "Runner",
+			Exec:             fmt.Sprintf("%s %s", bin, strings.Join(fields[1:], " ")),
+			Class:            "runner",
+			History:          true,
+			RecalculateScore: true,
+			MatchFields:      1,
+			Matching:         util.Fuzzy,
 		}
 
-		if a.ScoreFinal < b.ScoreFinal {
-			return 1
-		}
-
-		return 0
-	})
+		entries = append(entries, n)
+	}
 
 	return entries
 }

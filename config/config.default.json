@@ -44,7 +44,7 @@
     "emojis": { "switcher_only": true, "history": true, "typeahead": true },
     "finder": { "switcher_only": true },
     "hyprland": { "context_aware_history": true },
-    "runner": { "typeahead": true, "history": true },
+    "runner": { "typeahead": true, "history": true, "generic_entry": false },
     "ssh": { "switcher_only": true, "history": true },
     "switcher": { "prefix": "/" },
     "websearch": { "engines": ["google"] }

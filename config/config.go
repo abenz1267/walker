@@ -126,6 +126,7 @@ type Runner struct {
 	Excludes      []string `mapstructure:"excludes"`
 	Includes      []string `mapstructure:"includes"`
 	ShellConfig   string   `mapstructure:"shell_config"`
+	GenericEntry  bool     `mapstructure:"generic_entry"`
 }
 
 type Plugin struct {

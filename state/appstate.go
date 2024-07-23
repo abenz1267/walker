@@ -21,6 +21,7 @@ type AppState struct {
 	KeepSort            bool
 	Password            bool
 	Benchmark           bool
+	ModulesStarted      bool
 }
 
 func Get() *AppState {
@@ -37,4 +38,5 @@ func Get() *AppState {
 
 func (app *AppState) StartServiceableModules(cfg *config.Config) {
 	app.Clipboard = &clipboard.Clipboard{}
+	app.ModulesStarted = true
 }

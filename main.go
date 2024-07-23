@@ -154,7 +154,7 @@ func main() {
 			state.ExplicitStyle = styleString.String()
 		}
 
-		if state != nil && state.IsService {
+		if state != nil && state.IsService && !state.ModulesStarted {
 			state.StartServiceableModules(config.Get(state.ExplicitConfig))
 		}
 

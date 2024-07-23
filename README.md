@@ -235,7 +235,7 @@ Activation-Mode can be triggered by holding `LCtrl`. The window will get an addi
 
 System: Arch Linux, Hyprland, Amd 7950x, 32gb DDR5-6000, SSD
 
-Measured time is until the focus is in the search-bar and you can type.
+Measured time is until telling GTK to show the window.
 
 | Mode         | Startup time                                           |
 | ------------ | ------------------------------------------------------ |

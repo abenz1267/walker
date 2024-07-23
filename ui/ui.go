@@ -79,6 +79,10 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		if appstate.HasUI {
 			ui.appwin.SetVisible(true)
 
+			if appstate.Benchmark {
+				fmt.Println("Visible (re-open)", time.Now().UnixNano())
+			}
+
 			for _, proc := range activated {
 				go proc.Refresh()
 			}
@@ -97,10 +101,6 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			}
 
 			ui.search.GrabFocus()
-
-			if appstate.Benchmark {
-				fmt.Println(time.Now().UnixNano())
-			}
 
 			process()
 
@@ -172,7 +172,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		appstate.HasUI = true
 
 		if appstate.Benchmark {
-			fmt.Println(time.Now().UnixNano())
+			fmt.Println("Visible (first ui)", time.Now().UnixNano())
 		}
 	}
 }

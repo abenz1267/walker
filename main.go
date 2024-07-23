@@ -27,6 +27,7 @@ var version string
 
 func main() {
 	state := state.Get()
+	now := time.Now().UnixNano()
 
 	forceNew := false
 	appName := "dev.benz.walker"
@@ -76,7 +77,7 @@ func main() {
 			}
 
 			if slices.Contains(args, "--bench") || slices.Contains(args, "-b") {
-				fmt.Println(time.Now().UnixNano())
+				fmt.Println("Startup: ", now)
 				state.Benchmark = true
 			}
 
@@ -110,6 +111,10 @@ func main() {
 	app.Connect("activate", ui.Activate(state))
 
 	app.ConnectCommandLine(func(cmd *gio.ApplicationCommandLine) int {
+		if state.Benchmark {
+			fmt.Println("Connect Remote: ", time.Now().UnixNano())
+		}
+
 		options := cmd.OptionsDict()
 
 		modulesString := options.LookupValue("modules", glib.NewVariantString("").Type())
@@ -153,6 +158,10 @@ func main() {
 			state.StartServiceableModules(config.Get(state.ExplicitConfig))
 		}
 
+		if state.Benchmark {
+			fmt.Println("Until activate (service): ", time.Now().UnixNano())
+		}
+
 		app.Activate()
 		cmd.Done()
 
@@ -178,6 +187,10 @@ func main() {
 				os.Exit(0)
 			}
 		}()
+	}
+
+	if state.Benchmark {
+		fmt.Println("Until run: ", time.Now().UnixNano())
 	}
 
 	if code := app.Run(os.Args); code > 0 {

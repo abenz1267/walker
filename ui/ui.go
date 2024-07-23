@@ -90,7 +90,12 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			}
 
 			if len(explicits) == 1 {
-				ui.search.SetObjectProperty("placeholder-text", explicits[0].Placeholder())
+				text := explicits[0].Placeholder()
+				if appstate.ExplicitPlaceholder != "" {
+					text = appstate.ExplicitPlaceholder
+				}
+
+				ui.search.SetObjectProperty("placeholder-text", text)
 			}
 
 			if !appstate.IsMeasured && appstate.Dmenu == nil {

@@ -127,7 +127,12 @@ func setupModules() {
 	}
 
 	if len(enabledModules) == 1 {
-		ui.search.SetObjectProperty("placeholder-text", enabledModules[0].Placeholder())
+		text := enabledModules[0].Placeholder()
+		if appstate.ExplicitPlaceholder != "" {
+			text = appstate.ExplicitPlaceholder
+		}
+
+		ui.search.SetObjectProperty("placeholder-text", text)
 	}
 
 	if len(explicits) == 0 {

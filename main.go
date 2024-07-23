@@ -91,11 +91,6 @@ func main() {
 		appName = fmt.Sprintf("%s-%d", appName, time.Now().Unix())
 	}
 
-	if forceNew && state.IsService {
-		log.Println("new instance is not supported with service mode")
-		return
-	}
-
 	app := gtk.NewApplication(appName, gio.ApplicationHandlesCommandLine)
 
 	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")

@@ -87,7 +87,7 @@ programs.walker = {
   # All options from the config.json can be used here.
   config = {
     search.placeholder = "Example";
-    fullscreen = true;
+    ui.fullscreen = true;
     list = {
       height = 200;
     };

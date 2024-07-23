@@ -268,35 +268,50 @@ func setTerminal(cfg *Config) {
 		return
 	}
 
+	envVars := []string{"TERM", "TERMINAL"}
+
+	for _, v := range envVars {
+		term, ok := os.LookupEnv(v)
+		if ok {
+			path, _ := exec.LookPath(term)
+
+			if path != "" {
+				cfg.Terminal = path
+				return
+			}
+		}
+	}
+
 	t := []string{
-		"x-terminal-emulator",
-		"mate-terminal",
-		"gnome-terminal",
-		"terminator",
-		"xfce4-terminal",
-		"urxvt",
-		"rxvt",
-		"termit",
 		"Eterm",
-		"aterm",
-		"uxterm",
-		"xterm",
-		"roxterm",
-		"termite",
-		"lxterminal",
-		"terminology",
-		"st",
-		"qterminal",
-		"lilyterm",
-		"tilix",
-		"terminix",
-		"konsole",
-		"foot",
-		"kitty",
-		"guake",
-		"tilda",
 		"alacritty",
+		"aterm",
+		"foot",
+		"gnome-terminal",
+		"guake",
 		"hyper",
+		"kitty",
+		"konsole",
+		"lilyterm",
+		"lxterminal",
+		"mate-terminal",
+		"qterminal",
+		"roxterm",
+		"rxvt",
+		"st",
+		"terminator",
+		"terminix",
+		"terminology",
+		"termit",
+		"termite",
+		"tilda",
+		"tilix",
+		"urxvt",
+		"uxterm",
+		"wezterm",
+		"x-terminal-emulator",
+		"xfce4-terminal",
+		"xterm",
 	}
 
 	term, ok := os.LookupEnv("TERM")

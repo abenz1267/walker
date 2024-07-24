@@ -1,0 +1,36 @@
+name: goreleaser
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: stable
+      - name: Update
+        run: sudo apt-get update -y
+      - name: Upgrade
+        run: sudo apt-get upgrade -y
+      - name: Install Dependencies
+        run: sudo apt-get install -y libgtk-4-dev libgirepository1.0-dev gobject-introspection libwayland-dev meson ninja-build gtk-doc-tools python3 valac
+      - name: Build gtk4-layer-shell
+        run: cd /tmp && git clone https://github.com/wmww/gtk4-layer-shell && cd gtk4-layer-shell && meson setup -Dexamples=false -Ddocs=false -Dtests=false build && ninja -C build && sudo ninja -C build install && sudo ldconfig
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v6
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

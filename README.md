@@ -49,6 +49,9 @@
 
 ```
 arch:
+yay -S walker-bin
+
+// or to build from source
 yay -S walker
 ```
 

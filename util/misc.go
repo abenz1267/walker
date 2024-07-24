@@ -6,4 +6,5 @@ const (
 	Fuzzy MatchingType = iota
 	AlwaysTop
 	AlwaysBottom
+	AlwaysTopOnEmptySearch
 )

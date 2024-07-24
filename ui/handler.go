@@ -54,6 +54,18 @@ func (h *Handler) handle() {
 
 func sortEntries(entries []modules.Entry) {
 	slices.SortFunc(entries, func(a, b modules.Entry) int {
+		text := ui.search.Text()
+
+		if text == "" {
+			if a.Matching == util.AlwaysTopOnEmptySearch && b.Matching != util.AlwaysTopOnEmptySearch {
+				return -1
+			}
+
+			if b.Matching == util.AlwaysTopOnEmptySearch && a.Matching != util.AlwaysTopOnEmptySearch {
+				return 1
+			}
+		}
+
 		if a.Matching == util.AlwaysTop && b.Matching != util.AlwaysTop {
 			return -1
 		}

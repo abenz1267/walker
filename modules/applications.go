@@ -121,7 +121,7 @@ func parse(cache, actions, prioritizeNew bool) []Entry {
 
 						mod := info.BirthTime()
 						if mod.After(target) {
-							matching = util.AlwaysTop
+							matching = util.AlwaysTopOnEmptySearch
 						}
 					}
 				}

@@ -1,7 +1,6 @@
 package main
 
 import (
-	"bufio"
 	_ "embed"
 	"fmt"
 	"log"
@@ -10,6 +9,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -17,6 +17,7 @@ import (
 	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/state"
 	"github.com/abenz1267/walker/ui"
+	"github.com/abenz1267/walker/util"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -29,67 +30,56 @@ func main() {
 	state := state.Get()
 	now := time.Now().UnixNano()
 
-	forceNew := false
+	defer func() {
+		if state.IsService {
+			os.Remove(modules.DmenuSocketAddrGet)
+		}
+
+		os.Remove(modules.DmenuSocketAddrReply)
+	}()
+
 	appName := "dev.benz.walker"
 
-	var dmenu *modules.Dmenu
+	var wg sync.WaitGroup
 
 	if len(os.Args) > 1 {
 		args := os.Args[1:]
 
+		isNew := false
+
 		if len(os.Args) > 0 {
-			if slices.Contains(args, "-d") || slices.Contains(args, "--dmenu") {
-				forceNew = true
-
-				dmenu = &modules.Dmenu{
-					Content:     []string{},
-					LabelColumn: 0,
-				}
-
-				scanner := bufio.NewScanner(os.Stdin)
-
-				for scanner.Scan() {
-					dmenu.Content = append(dmenu.Content, scanner.Text())
-				}
-
-				state.Dmenu = dmenu
-			}
-
 			if slices.Contains(args, "-n") || slices.Contains(args, "--new") {
-				forceNew = true
+				appName = fmt.Sprintf("%s-%d", appName, time.Now().Unix())
+				isNew = true
 			}
 
-			if slices.Contains(args, "-k") || slices.Contains(args, "--keepsort") {
-				state.KeepSort = true
-			}
-
-			if slices.Contains(args, "-y") || slices.Contains(args, "--password") {
-				forceNew = true
-				state.Password = true
-			}
-
-			if slices.Contains(args, "--gapplication-service") {
-				state.IsService = true
-			}
-
-			if slices.Contains(args, "--forceprint") || slices.Contains(args, "-f") {
-				state.ForcePrint = true
-			}
-
-			if slices.Contains(args, "--bench") || slices.Contains(args, "-b") {
+			if slices.Contains(args, "-b") || slices.Contains(args, "--benchmark") {
 				fmt.Println("Startup: ", now)
 				state.Benchmark = true
 			}
 
-			if slices.Contains(args, "--version") || slices.Contains(args, "-v") || slices.Contains(args, "--help-all") {
-				fmt.Println(version)
-				return
+			state.IsService = slices.Contains(args, "--gapplication-service")
+
+			if state.IsService {
+				cfg := config.Get(state.ExplicitConfig)
+				cfg.IsService = true
+				state.StartServiceableModules(cfg)
+			}
+
+			if slices.Contains(args, "-d") || slices.Contains(args, "--dmenu") {
+				if !isNew && !state.IsService && util.FileExists(modules.DmenuSocketAddrGet) {
+					wg.Add(1)
+
+					dmenu := modules.Dmenu{}
+					dmenu.Send()
+
+					go func(wg *sync.WaitGroup) {
+						dmenu.ListenForReply()
+						wg.Done()
+					}(&wg)
+				}
 			}
 		}
-	}
-
-	if forceNew {
-		appName = fmt.Sprintf("%s-%d", appName, time.Now().Unix())
 	}
 
 	app := gtk.NewApplication(appName, gio.ApplicationHandlesCommandLine)
@@ -117,33 +107,60 @@ func main() {
 
 		options := cmd.OptionsDict()
 
+		if options.Contains("bench") {
+			state.Benchmark = true
+		}
+
 		modulesString := options.LookupValue("modules", glib.NewVariantString("").Type())
 		configString := options.LookupValue("config", glib.NewVariantString("").Type())
 		styleString := options.LookupValue("style", glib.NewVariantString("").Type())
 		placeholderString := options.LookupValue("placeholder", glib.NewVariantString("").Type())
-		labelColumnString := options.LookupValue("labelcolumn", glib.NewVariantString("").Type())
-		separatorString := options.LookupValue("separator", glib.NewVariantString("").Type())
 
-		if separatorString != nil && separatorString.String() != "" {
-			dmenu.Separator = separatorString.String()
-		}
+		if options.Contains("dmenu") {
+			labelColumnString := options.LookupValue("labelcolumn", glib.NewVariantString("").Type())
+			separatorString := options.LookupValue("separator", glib.NewVariantString("").Type())
 
-		if labelColumnString != nil && labelColumnString.String() != "" {
-			col, err := strconv.Atoi(labelColumnString.String())
-			if err != nil {
-				log.Panicln(err)
+			if separatorString != nil && separatorString.String() != "" {
+				if state.Dmenu != nil {
+					state.Dmenu.Separator = separatorString.String()
+				} else {
+					state.DmenuSeparator = separatorString.String()
+				}
 			}
 
-			dmenu.LabelColumn = col
+			if labelColumnString != nil && labelColumnString.String() != "" {
+				col, err := strconv.Atoi(labelColumnString.String())
+				if err != nil {
+					log.Panicln(err)
+				}
+
+				if state.Dmenu != nil {
+					state.Dmenu.LabelColumn = col
+				} else {
+					state.DmenuLabelColumn = col
+				}
+			}
+
+			state.ExplicitModules = append(state.ExplicitModules, "dmenu")
+			state.IsDmenu = true
+		} else {
+			if modulesString != nil && modulesString.String() != "" {
+				m := strings.Split(modulesString.String(), ",")
+				state.ExplicitModules = m
+			}
 		}
+
+		if options.Contains("version") {
+			fmt.Println(version)
+			return 0
+		}
+
+		state.ForcePrint = options.Contains("forceprint")
+		state.Password = options.Contains("password")
+		state.KeepSort = options.Contains("keepsort")
 
 		if placeholderString != nil && placeholderString.String() != "" {
 			state.ExplicitPlaceholder = placeholderString.String()
-		}
-
-		if modulesString != nil && modulesString.String() != "" {
-			m := strings.Split(modulesString.String(), ",")
-			state.ExplicitModules = m
 		}
 
 		if configString != nil && configString.String() != "" {
@@ -152,10 +169,6 @@ func main() {
 
 		if styleString != nil && styleString.String() != "" {
 			state.ExplicitStyle = styleString.String()
-		}
-
-		if state != nil && state.IsService && !state.ModulesStarted {
-			state.StartServiceableModules(config.Get(state.ExplicitConfig))
 		}
 
 		if state.Benchmark {
@@ -184,6 +197,9 @@ func main() {
 			for {
 				<-signal_chan
 
+				os.Remove(modules.DmenuSocketAddrGet)
+				os.Remove(modules.DmenuSocketAddrReply)
+
 				os.Exit(0)
 			}
 		}()
@@ -193,7 +209,11 @@ func main() {
 		fmt.Println("start run: ", time.Now().UnixNano())
 	}
 
-	if code := app.Run(os.Args); code > 0 {
+	code := app.Run(os.Args)
+
+	wg.Wait()
+
+	if code > 0 {
 		os.Exit(code)
 	}
 }

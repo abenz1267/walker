@@ -39,7 +39,7 @@ func (s Switcher) SwitcherOnly() bool {
 func (s Switcher) Entries(ctx context.Context, term string) []Entry {
 	entries := []Entry{}
 
-	for _, v := range s.cfg.Enabled {
+	for _, v := range s.cfg.Available {
 		if v == "switcher" {
 			continue
 		}

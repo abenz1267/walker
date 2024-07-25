@@ -68,6 +68,12 @@ func getModules() []modules.Workable {
 		appstate.Clipboard,
 	}
 
+	if appstate.Dmenu != nil {
+		res = append(res, appstate.Dmenu)
+	} else {
+		res = append(res, &modules.Dmenu{})
+	}
+
 	for _, v := range cfg.Plugins {
 		e := &modules.Plugin{}
 		e.General = v
@@ -93,15 +99,29 @@ func findModule(name string, modules ...[]modules.Workable) modules.Workable {
 func setExplicits() {
 	explicits = []modules.Workable{}
 
+	toSetup := []string{}
+
+	for _, v := range appstate.ExplicitModules {
+		if slices.Contains(cfg.Available, v) {
+			for k, m := range available {
+				if m.Name() == v {
+					explicits = append(explicits, available[k])
+				}
+			}
+		} else {
+			toSetup = append(toSetup, v)
+		}
+	}
+
 	modules := getModules()
 
 	for k, v := range modules {
 		if v != nil {
-			if slices.Contains(appstate.ExplicitModules, v.Name()) {
-				ok := modules[k].Setup(cfg)
-
-				if ok {
-					explicits = append(explicits, modules[k])
+			if slices.Contains(toSetup, v.Name()) {
+				if !v.IsSetup() {
+					if ok := v.Setup(cfg); ok {
+						explicits = append(explicits, modules[k])
+					}
 				}
 			}
 		}
@@ -109,53 +129,49 @@ func setExplicits() {
 }
 
 func setupModules() {
-	enabledModules := []modules.Workable{
-		appstate.Dmenu,
-	}
+	all := getModules()
+	toUse = []modules.Workable{}
+	available = []modules.Workable{}
 
-	if appstate.Dmenu == nil {
-		enabledModules = getModules()
-		activated = []modules.Workable{}
+	for k, v := range all {
+		if v == nil || slices.Contains(cfg.Disabled, v.Name()) {
+			continue
+		}
+
+		if !v.IsSetup() {
+			if ok := all[k].Setup(cfg); ok {
+				available = append(available, all[k])
+				cfg.Available = append(cfg.Available, v.Name())
+			}
+		} else {
+			available = append(available, all[k])
+			cfg.Available = append(cfg.Available, v.Name())
+		}
 	}
 
 	if len(appstate.ExplicitModules) > 0 {
 		setExplicits()
 	}
 
-	if len(explicits) > 0 {
-		enabledModules = explicits
+	clear(ui.prefixClasses)
+
+	for _, v := range available {
+		ui.prefixClasses[v.Prefix()] = append(ui.prefixClasses[v.Prefix()], v.Name())
 	}
 
-	if len(enabledModules) == 1 {
-		text := enabledModules[0].Placeholder()
+	if len(explicits) > 0 {
+		toUse = explicits
+	} else {
+		toUse = available
+	}
+
+	if len(toUse) == 1 {
+		text := toUse[0].Placeholder()
 		if appstate.ExplicitPlaceholder != "" {
 			text = appstate.ExplicitPlaceholder
 		}
 
 		ui.search.SetObjectProperty("placeholder-text", text)
-	}
-
-	if len(explicits) == 0 {
-		for k, v := range enabledModules {
-			if v == nil || slices.Contains(cfg.Disabled, v.Name()) {
-				continue
-			}
-
-			ok := enabledModules[k].Setup(cfg)
-
-			if ok {
-				cfg.Enabled = append(cfg.Enabled, v.Name())
-				activated = append(activated, enabledModules[k])
-			}
-		}
-
-		clear(ui.prefixClasses)
-
-		for _, v := range activated {
-			ui.prefixClasses[v.Prefix()] = append(ui.prefixClasses[v.Prefix()], v.Name())
-		}
-	} else {
-		activated = explicits
 	}
 }
 
@@ -172,7 +188,10 @@ func setupInteractions(appstate *state.AppState) {
 	ui.search.Connect("search-changed", process)
 	ui.search.Connect("activate", func() {
 		if appstate.ForcePrint && ui.list.Model().NItems() == 0 {
-			fmt.Print(ui.search.Text())
+			if appstate.IsDmenu {
+				handleDmenuResult(ui.search.Text())
+			}
+
 			closeAfterActivation(false, false)
 			return
 		}
@@ -314,7 +333,15 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 		if activationEnabled {
 			disabledAM()
 		} else {
-			quit()
+			if appstate.IsDmenu {
+				handleDmenuResult("")
+			}
+
+			if cfg.IsService {
+				quit()
+			} else {
+				exit()
+			}
 		}
 	case gdk.KEY_Tab:
 		if ui.typeahead.Text() != "" {
@@ -381,14 +408,25 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		}
 
 		if appstate.ForcePrint && ui.list.Model().NItems() == 0 {
-			fmt.Print(ui.search.Text())
+			if appstate.IsDmenu {
+				handleDmenuResult(ui.search.Text())
+			}
+
 			closeAfterActivation(isShift, false)
 			break
 		}
 
 		activateItem(isShift, isShift, isAlt)
 	case gdk.KEY_Escape:
-		quit()
+		if appstate.IsDmenu {
+			handleDmenuResult("")
+		}
+
+		if cfg.IsService {
+			quit()
+		} else {
+			exit()
+		}
 	case gdk.KEY_Tab:
 		if ui.typeahead.Text() != "" {
 			ui.search.SetText(ui.typeahead.Text())
@@ -400,7 +438,7 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		selectNext()
 	case gdk.KEY_Up:
 		if ui.selection.Selected() == 0 || ui.items.NItems() == 0 {
-			if len(activated) != 1 {
+			if len(toUse) != 1 {
 				selectPrev()
 				break
 			}
@@ -415,7 +453,7 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			if len(explicits) == 1 {
 				inputhstry = history.GetInputHistory(explicits[0].Name())
 			} else {
-				inputhstry = history.GetInputHistory(activated[0].Name())
+				inputhstry = history.GetInputHistory(toUse[0].Name())
 			}
 
 			if len(inputhstry) > 0 {
@@ -467,7 +505,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	entry := gioutil.ObjectValue[modules.Entry](ui.items.Item(ui.selection.Selected()))
 
-	if !keepOpen && entry.Sub != "switcher" {
+	if !keepOpen && entry.Sub != "switcher" && cfg.IsService {
 		go quit()
 	}
 
@@ -483,8 +521,8 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		}
 	}
 
-	if appstate.Dmenu != nil {
-		fmt.Print(toRun)
+	if appstate.IsDmenu {
+		handleDmenuResult(toRun)
 		closeAfterActivation(keepOpen, selectNext)
 		return
 	}
@@ -496,7 +534,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	}
 
 	if entry.Sub == "switcher" {
-		for _, m := range activated {
+		for _, m := range toUse {
 			if m.Name() == entry.Label {
 				explicits = []modules.Workable{}
 				explicits = append(explicits, m)
@@ -541,7 +579,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		hstry.Save(entry.Identifier(), strings.TrimSpace(ui.search.Text()))
 	}
 
-	module := findModule(entry.Module, activated, explicits)
+	module := findModule(entry.Module, toUse, explicits)
 
 	if module != nil && (module.History() || module.Typeahead()) {
 		history.SaveInputHistory(module.Name(), ui.search.Text())
@@ -553,6 +591,18 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	}
 
 	closeAfterActivation(keepOpen, selectNext)
+}
+
+func handleDmenuResult(result string) {
+	if appstate.IsService {
+		for _, v := range toUse {
+			if v.Name() == "dmenu" {
+				v.(*modules.Dmenu).Reply(result)
+			}
+		}
+	} else {
+		fmt.Print(result)
+	}
 }
 
 func setStdin(cmd *exec.Cmd, piped *modules.Piped) {
@@ -573,17 +623,23 @@ func setStdin(cmd *exec.Cmd, piped *modules.Piped) {
 }
 
 func closeAfterActivation(keepOpen, next bool) {
+	if !cfg.IsService {
+		exit()
+	}
+
 	if !keepOpen && appstate.IsRunning {
 		quit()
 		return
 	}
 
-	if !activationEnabled && !next {
-		ui.search.SetText("")
-	}
+	if appstate.IsRunning {
+		if !activationEnabled && !next {
+			ui.search.SetText("")
+		}
 
-	if next {
-		selectNext()
+		if next {
+			selectNext()
+		}
 	}
 }
 
@@ -610,7 +666,7 @@ func process() {
 
 	text := strings.TrimSpace(ui.search.Text())
 
-	if text == "" && cfg.List.ShowInitialEntries && len(explicits) == 0 && appstate.Dmenu == nil {
+	if text == "" && cfg.List.ShowInitialEntries && len(explicits) == 0 && !appstate.IsDmenu {
 		setInitials()
 		return
 	}
@@ -618,7 +674,7 @@ func process() {
 	var ctx context.Context
 	ctx, cancel = context.WithCancel(context.Background())
 
-	if (ui.search.Text() != "" || appstate.Dmenu != nil) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
+	if (ui.search.Text() != "" || appstate.IsDmenu) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
 		go processAsync(ctx, text)
 	} else {
 		ui.items.Splice(0, int(ui.items.NItems()))
@@ -649,7 +705,7 @@ func processAsync(ctx context.Context, text string) {
 		ui.items.Splice(0, int(ui.items.NItems()))
 	})
 
-	p := activated
+	p := toUse
 
 	hasPrefix := false
 
@@ -841,7 +897,7 @@ func setInitials() {
 	var hyprland *modules.Hyprland
 
 	if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService {
-		for _, proc := range activated {
+		for _, proc := range toUse {
 			if proc.Name() == "hyprland" {
 				if proc.IsSetup() {
 					hyprland = proc.(*modules.Hyprland)
@@ -858,7 +914,7 @@ func setInitials() {
 		}
 	}
 
-	for _, proc := range activated {
+	for _, proc := range toUse {
 		if proc.Name() != "applications" {
 			continue
 		}
@@ -893,6 +949,7 @@ func setInitials() {
 	sortEntries(entrySlice)
 
 	ui.items.Splice(0, int(ui.items.NItems()), entrySlice...)
+	ui.list.ScrollTo(0, gtk.ListScrollNone, nil)
 
 	ui.spinner.SetCSSClasses([]string{})
 }
@@ -915,22 +972,26 @@ func quit() {
 	appstate.IsRunning = false
 	historyIndex = 0
 
-	if appstate.IsService {
-		disabledAM()
+	disabledAM()
 
-		appstate.ExplicitModules = []string{}
-		explicits = []modules.Workable{}
+	appstate.ExplicitModules = []string{}
+	appstate.ExplicitPlaceholder = ""
+	appstate.IsDmenu = false
 
-		glib.IdleAdd(func() {
-			ui.search.SetText("")
-			ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
-			ui.appwin.SetVisible(false)
-		})
+	explicits = []modules.Workable{}
 
-		ui.app.Hold()
-	} else {
-		ui.appwin.Close()
-	}
+	glib.IdleAdd(func() {
+		ui.search.SetText("")
+		ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
+		ui.appwin.SetVisible(false)
+	})
+
+	ui.app.Hold()
+}
+
+func exit() {
+	ui.appwin.Close()
+	os.Exit(0)
 }
 
 func createActivationKeys() {
@@ -972,7 +1033,7 @@ func fuzzyScore(entry modules.Entry, text string, hyprland *modules.Hyprland) fl
 
 	var matchables []string
 
-	if appstate.Dmenu == nil {
+	if !appstate.IsDmenu {
 		matchables = []string{entry.Label, entry.Sub, entry.Searchable}
 		matchables = append(matchables, entry.Categories...)
 	} else {

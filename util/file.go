@@ -110,3 +110,8 @@ func writeFile(b []byte, dest string) {
 		log.Panicln(err)
 	}
 }
+
+func FileExists(filename string) bool {
+	_, err := os.Stat(filename)
+	return err == nil
+}

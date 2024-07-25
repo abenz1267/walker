@@ -1,0 +1,4 @@
+[D-BUS Service]
+Name=dev.benz.walker
+Exec=/usr/bin/walker --gapplication-service
+SystemdService=walker.service

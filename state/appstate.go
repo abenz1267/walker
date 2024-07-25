@@ -9,7 +9,10 @@ import (
 
 type AppState struct {
 	Clipboard           modules.Workable
-	Dmenu               modules.Workable
+	IsDmenu             bool
+	Dmenu               *modules.Dmenu
+	DmenuSeparator      string
+	DmenuLabelColumn    int
 	ExplicitConfig      string
 	ExplicitModules     []string
 	ExplicitPlaceholder string
@@ -21,7 +24,6 @@ type AppState struct {
 	KeepSort            bool
 	Password            bool
 	Benchmark           bool
-	ModulesStarted      bool
 }
 
 func Get() *AppState {
@@ -38,5 +40,6 @@ func Get() *AppState {
 
 func (app *AppState) StartServiceableModules(cfg *config.Config) {
 	app.Clipboard = &clipboard.Clipboard{}
-	app.ModulesStarted = true
+	app.Dmenu = &modules.Dmenu{}
+	app.Dmenu.Setup(cfg)
 }

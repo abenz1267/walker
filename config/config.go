@@ -30,7 +30,7 @@ type Config struct {
 	UI             UI                `mapstructure:"ui"`
 
 	// internal
-	Enabled   []string `mapstructure:"-"`
+	Available []string `mapstructure:"-"`
 	IsService bool     `mapstructure:"-"`
 }
 
@@ -39,6 +39,7 @@ type Builtins struct {
 	Clipboard      Clipboard      `mapstructure:"clipboard"`
 	Commands       Commands       `mapstructure:"commands"`
 	CustomCommands CustomCommands `mapstructure:"custom_commands"`
+	Dmenu          Dmenu          `mapstructure:"dmenu"`
 	Emojis         Emojis         `mapstructure:"emojis"`
 	Finder         Finder         `mapstructure:"finder"`
 	Hyprland       Hyprland       `mapstructure:"hyprland"`
@@ -119,6 +120,12 @@ type Clipboard struct {
 	GeneralModule `mapstructure:",squash"`
 	ImageHeight   int `mapstructure:"image_height"`
 	MaxEntries    int `mapstructure:"max_entries"`
+}
+
+type Dmenu struct {
+	GeneralModule `mapstructure:",squash"`
+	Separator     string `mapstructure:"separator"`
+	LabelColumn   int    `mapstructure:"label_column"`
 }
 
 type Runner struct {

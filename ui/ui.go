@@ -37,7 +37,8 @@ var (
 	cfg       *config.Config
 	ui        *UI
 	explicits []modules.Workable
-	activated []modules.Workable
+	toUse     []modules.Workable
+	available []modules.Workable
 	hstry     history.History
 	appstate  *state.AppState
 )
@@ -76,16 +77,20 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 				fmt.Println("Visible (re-open)", time.Now().UnixNano())
 			}
 
-			for _, proc := range activated {
+			for _, proc := range toUse {
 				go proc.Refresh()
 			}
 
 			if len(appstate.ExplicitModules) > 0 {
 				setExplicits()
+				toUse = explicits
+			} else {
+				toUse = available
 			}
 
 			if len(explicits) == 1 {
 				text := explicits[0].Placeholder()
+
 				if appstate.ExplicitPlaceholder != "" {
 					text = appstate.ExplicitPlaceholder
 				}
@@ -102,6 +107,16 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 		cfg = config.Get(appstate.ExplicitConfig)
 		cfg.IsService = appstate.IsService
+
+		if appstate.Dmenu == nil {
+			if appstate.DmenuSeparator != "" {
+				cfg.Builtins.Dmenu.Separator = appstate.DmenuSeparator
+			}
+
+			if appstate.DmenuLabelColumn != 0 {
+				cfg.Builtins.Dmenu.LabelColumn = appstate.DmenuLabelColumn
+			}
+		}
 
 		if appstate.ExplicitPlaceholder != "" {
 			cfg.Search.Placeholder = appstate.ExplicitPlaceholder
@@ -163,6 +178,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 		ui.appwin.SetVisible(true)
 		appstate.HasUI = true
+		appstate.IsRunning = true
 
 		if appstate.Benchmark {
 			fmt.Println("Visible (first ui)", time.Now().UnixNano())
@@ -182,7 +198,6 @@ func setupUIPassword(app *gtk.Application) {
 	controller.ConnectKeyPressed(func(val uint, code uint, modifier gdk.ModifierType) bool {
 		switch val {
 		case gdk.KEY_Escape:
-			fmt.Print("")
 			ui.appwin.Close()
 			return true
 		}
@@ -592,7 +607,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		wrapper.Append(top)
 
-		if val.Sub != "" && !cfg.List.HideSub && appstate.Dmenu == nil {
+		if val.Sub != "" && !cfg.List.HideSub && !appstate.IsDmenu {
 			bottom := gtk.NewLabel(val.Sub)
 			bottom.SetMaxWidthChars(0)
 

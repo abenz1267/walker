@@ -468,7 +468,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	entry := gioutil.ObjectValue[modules.Entry](ui.items.Item(ui.selection.Selected()))
 
 	if !keepOpen && entry.Sub != "switcher" {
-		ui.appwin.SetVisible(false)
+		go quit()
 	}
 
 	toRun := entry.Exec
@@ -573,7 +573,7 @@ func setStdin(cmd *exec.Cmd, piped *modules.Piped) {
 }
 
 func closeAfterActivation(keepOpen, next bool) {
-	if !keepOpen {
+	if !keepOpen && appstate.IsRunning {
 		quit()
 		return
 	}
@@ -912,7 +912,7 @@ func usageModifier(item modules.Entry) int {
 }
 
 func quit() {
-	ui.appwin.SetVisible(false)
+	appstate.IsRunning = false
 	historyIndex = 0
 
 	if appstate.IsService {
@@ -921,10 +921,11 @@ func quit() {
 		appstate.ExplicitModules = []string{}
 		explicits = []modules.Workable{}
 
-		ui.search.SetText("")
-		ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
-
-		appstate.IsRunning = false
+		glib.IdleAdd(func() {
+			ui.search.SetText("")
+			ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
+			ui.appwin.SetVisible(false)
+		})
 
 		ui.app.Hold()
 	} else {

@@ -240,10 +240,10 @@ System: Arch Linux, Hyprland, Amd 7950x, 32gb DDR5-6000, SSD
 
 Measured time is until telling GTK to show the window.
 
-| Mode         | Startup time                                           |
-| ------------ | ------------------------------------------------------ |
-| normal       | 23ms - 33ms                                            |
-| with service | ~1.5ms (~3.5 when input needs to be reset, so always?) |
+| Mode         | Startup time |
+| ------------ | ------------ |
+| normal       | 23ms - 33ms  |
+| with service | ~1.8ms       |
 
 ## FAQ
 

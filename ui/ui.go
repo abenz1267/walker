@@ -23,12 +23,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
-//go:embed layout.xml
-var layout string
-
-//go:embed layout_password.xml
-var layoutPassword string
-
 //go:embed themes/style.default.css
 var defaultStyle []byte
 
@@ -50,7 +44,6 @@ var (
 
 type UI struct {
 	app           *gtk.Application
-	builder       *gtk.Builder
 	scroll        *gtk.ScrolledWindow
 	spinner       *gtk.Spinner
 	searchwrapper *gtk.Box
@@ -182,8 +175,8 @@ func setupUIPassword(app *gtk.Application) {
 		log.Panicln("gtk-layer-shell not supported")
 	}
 
-	builder := gtk.NewBuilderFromString(layoutPassword)
-	pw := builder.GetObject("password").Cast().(*gtk.PasswordEntry)
+	pw := gtk.NewPasswordEntry()
+	pw.SetName("password")
 
 	controller := gtk.NewEventControllerKey()
 	controller.ConnectKeyPressed(func(val uint, code uint, modifier gdk.ModifierType) bool {
@@ -203,10 +196,25 @@ func setupUIPassword(app *gtk.Application) {
 		ui.appwin.Close()
 	})
 
+	appwin := gtk.NewApplicationWindow(app)
+	appwin.SetName("window")
+
+	searchwrapper := gtk.NewBox(gtk.OrientationVertical, 0)
+	searchwrapper.SetName("searchwrapper")
+
+	searchwrapper.Append(pw)
+
+	box := gtk.NewBox(gtk.OrientationVertical, 0)
+	box.SetName("box")
+
+	box.Append(searchwrapper)
+
+	appwin.SetChild(box)
+
 	ui = &UI{
-		appwin:        builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
-		box:           builder.GetObject("box").Cast().(*gtk.Box),
-		searchwrapper: builder.GetObject("searchwrapper").Cast().(*gtk.Box),
+		appwin:        appwin,
+		box:           box,
+		searchwrapper: searchwrapper,
 		password:      pw,
 	}
 
@@ -223,23 +231,66 @@ func setupUI(app *gtk.Application) {
 		usedLabels = labelF
 	}
 
-	builder := gtk.NewBuilderFromString(layout)
-
 	items := gioutil.NewListModel[modules.Entry]()
+
+	spinner := gtk.NewSpinner()
+	spinner.SetName("spinner")
+
+	searchwrapper := gtk.NewBox(gtk.OrientationVertical, 0)
+	searchwrapper.SetName("searchwrapper")
+
+	typeahead := gtk.NewSearchEntry()
+	typeahead.SetName("typeahead")
+
+	scroll := gtk.NewScrolledWindow()
+	scroll.SetName("scroll")
+	scroll.SetPropagateNaturalWidth(true)
+	scroll.SetPropagateNaturalHeight(true)
+	scroll.SetOverlayScrolling(true)
+	scroll.SetPolicy(gtk.PolicyNever, gtk.PolicyAutomatic)
+
+	box := gtk.NewBox(gtk.OrientationVertical, 0)
+	box.SetName("box")
+
+	appwin := gtk.NewApplicationWindow(app)
+	appwin.SetName("window")
+
+	search := gtk.NewSearchEntry()
+	search.SetName("search")
+
+	selection := gtk.NewSingleSelection(items.ListModel)
+	factory := setupFactory()
+
+	list := gtk.NewListView(selection, &factory.ListItemFactory)
+	list.SetName("list")
+
+	scroll.SetChild(list)
+
+	overlay := gtk.NewOverlay()
+
+	overlay.SetChild(typeahead)
+	overlay.AddOverlay(search)
+
+	searchwrapper.Append(overlay)
+	searchwrapper.Append(typeahead)
+
+	box.Append(searchwrapper)
+	box.Append(scroll)
+
+	appwin.SetChild(box)
 
 	ui = &UI{
 		app:           app,
-		builder:       builder,
-		spinner:       builder.GetObject("spinner").Cast().(*gtk.Spinner),
-		searchwrapper: builder.GetObject("searchwrapper").Cast().(*gtk.Box),
-		typeahead:     builder.GetObject("typeahead").Cast().(*gtk.SearchEntry),
-		scroll:        builder.GetObject("scroll").Cast().(*gtk.ScrolledWindow),
-		box:           builder.GetObject("box").Cast().(*gtk.Box),
-		appwin:        builder.GetObject("win").Cast().(*gtk.ApplicationWindow),
-		search:        builder.GetObject("search").Cast().(*gtk.SearchEntry),
-		list:          builder.GetObject("list").Cast().(*gtk.ListView),
+		spinner:       spinner,
+		searchwrapper: searchwrapper,
+		typeahead:     typeahead,
+		scroll:        scroll,
+		box:           box,
+		appwin:        appwin,
+		search:        search,
 		items:         items,
-		selection:     gtk.NewSingleSelection(items.ListModel),
+		list:          list,
+		selection:     selection,
 		prefixClasses: make(map[string][]string),
 	}
 
@@ -266,11 +317,6 @@ func setupUI(app *gtk.Application) {
 	ui.typeahead.SetCanFocus(false)
 
 	ui.selection.SetAutoselect(true)
-
-	factory := setupFactory()
-
-	ui.list.SetModel(ui.selection)
-	ui.list.SetFactory(&factory.ListItemFactory)
 
 	setupUserStyle()
 	handleListVisibility()

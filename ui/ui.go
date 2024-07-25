@@ -272,8 +272,6 @@ func setupUI(app *gtk.Application) {
 	overlay.AddOverlay(search)
 
 	searchwrapper.Append(overlay)
-	searchwrapper.Append(typeahead)
-
 	box.Append(searchwrapper)
 	box.Append(scroll)
 

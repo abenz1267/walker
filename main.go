@@ -112,7 +112,7 @@ func main() {
 
 	app.ConnectCommandLine(func(cmd *gio.ApplicationCommandLine) int {
 		if state.Benchmark {
-			fmt.Println("Connect Remote: ", time.Now().UnixNano())
+			fmt.Println("start handle cmd: ", time.Now().UnixNano())
 		}
 
 		options := cmd.OptionsDict()
@@ -159,7 +159,7 @@ func main() {
 		}
 
 		if state.Benchmark {
-			fmt.Println("Until activate (service): ", time.Now().UnixNano())
+			fmt.Println("run activate: ", time.Now().UnixNano())
 		}
 
 		app.Activate()
@@ -190,7 +190,7 @@ func main() {
 	}
 
 	if state.Benchmark {
-		fmt.Println("Until run: ", time.Now().UnixNano())
+		fmt.Println("start run: ", time.Now().UnixNano())
 	}
 
 	if code := app.Run(os.Args); code > 0 {

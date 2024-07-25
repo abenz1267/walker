@@ -20,7 +20,7 @@ buildGoModule {
     name = "walker-source";
     path = ./.;
   };
-  vendorHash = "sha256-SgVMMEF2An9DQt9G22zMZ0V2ogKfcszvx/SeF/KWjLI=";
+  vendorHash = "sha256-NJLLPY5U6h/pVp3HOlRywVdizuMmDKzJI1J9czNl+dI=";
 
   nativeBuildInputs = [
     gobject-introspection

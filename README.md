@@ -45,8 +45,6 @@
 
 ## Installation
 
-**_Building can take quite a while, be patient_**
-
 ```
 arch:
 yay -S walker-bin
@@ -56,6 +54,8 @@ yay -S walker
 ```
 
 ### Building from source
+
+**_Building can take quite a while, be patient_**
 
 Make sure you have the following dependencies installed:
 
@@ -127,10 +127,6 @@ The config can be written json, toml or yaml. Default values will be used, so yo
 Default config will be put into `$HOME/.config/walker/`.
 
 See `config/config.default.json` and `ui/style.default.css`. Styling is done via GTK CSS.
-
-## Usage SSH Module
-
-In the searchbar type in: `<host> <username>`. Select the host you want. Enter.
 
 ## Start Walker with explicit modules
 

@@ -14,6 +14,7 @@ import (
 
 type Finder struct {
 	general config.GeneralModule
+	entries []Entry
 }
 
 func (f Finder) History() bool {
@@ -40,10 +41,34 @@ func (f Finder) Placeholder() string {
 	return f.general.Placeholder
 }
 
-func (f Finder) Refresh() {}
+func (f Finder) Refresh() {
+	f.general.IsSetup = false
+}
 
 func (f Finder) Entries(ctx context.Context, term string) []Entry {
-	e := []Entry{}
+	return f.entries
+}
+
+func (f Finder) Prefix() string {
+	return f.general.Prefix
+}
+
+func (f Finder) Name() string {
+	return "finder"
+}
+
+func (f Finder) SwitcherOnly() bool {
+	return f.general.SwitcherOnly
+}
+
+func (f *Finder) Setup(cfg *config.Config) bool {
+	f.general = cfg.Builtins.Finder.GeneralModule
+
+	return true
+}
+
+func (f *Finder) SetupData(cfg *config.Config) {
+	f.entries = []Entry{}
 
 	homedir, err := os.UserHomeDir()
 	if err != nil {
@@ -63,39 +88,19 @@ func (f Finder) Entries(ctx context.Context, term string) []Entry {
 
 	go fileWalker.Start()
 
-	for f := range fileListQueue {
-		e = append(e, Entry{
-			Label:        strings.TrimPrefix(strings.TrimPrefix(f.Location, homedir), "/"),
-			Sub:          "fzf",
-			Exec:         fmt.Sprintf("xdg-open %s", f.Location),
-			DragDrop:     true,
-			DragDropData: f.Location,
-			Categories:   []string{"finder", "fzf"},
-			Class:        "finder",
-			Matching:     util.Fuzzy,
+	for file := range fileListQueue {
+		f.entries = append(f.entries, Entry{
+			Label:            strings.TrimPrefix(strings.TrimPrefix(file.Location, homedir), "/"),
+			Sub:              "fzf",
+			Exec:             fmt.Sprintf("xdg-open %s", file.Location),
+			RecalculateScore: true,
+			DragDrop:         true,
+			DragDropData:     file.Location,
+			Categories:       []string{"finder", "fzf"},
+			Class:            "finder",
+			Matching:         util.Fuzzy,
 		})
 	}
 
-	return e
-}
-
-func (f Finder) Prefix() string {
-	return f.general.Prefix
-}
-
-func (f Finder) Name() string {
-	return "finder"
-}
-
-func (f Finder) SwitcherOnly() bool {
-	return f.general.SwitcherOnly
-}
-
-func (f *Finder) Setup(cfg *config.Config) bool {
-	f.general = cfg.Builtins.Finder.GeneralModule
 	f.general.IsSetup = true
-
-	return true
 }
-
-func (f *Finder) SetupData(cfg *config.Config) {}

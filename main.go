@@ -26,9 +26,10 @@ import (
 //go:embed version.txt
 var version string
 
+var now = time.Now().UnixNano()
+
 func main() {
 	state := state.Get()
-	now := time.Now().UnixNano()
 
 	defer func() {
 		if state.IsService {

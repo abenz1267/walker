@@ -1,4 +1,4 @@
-# Walker - Application Runner
+# Walker - Application Runner, Dmenu Replacement and more
 
 ![Screenshot](https://github.com/abenz1267/walker/blob/master/screenshot.png?raw=true)
 
@@ -10,15 +10,12 @@
 
 ## Features
 
-- Icons
-- extend with... anything?
+- highly extensible via plugins: simple stdin/stdout (external or via configuration, see wiki)
+- icons/images
 - start as service for faster startup (see benchmarks below)
-- activation-mode: run entries via labels
-- display images
+- run entries via labels (F<1-8> or jkl;asdf)
 - non-blocking async handling of results
 - typeahead
-- history-aware
-- labels: F<1-8> or jkl;asdf
 - start with explicit modules, style or config
 - arrow-up history
 - drag&drop support
@@ -28,16 +25,38 @@
 ## Builtin Modules
 
 - runner
+  - parses your shell config for aliases
+  - exlusive list or all binaries
+  - ignore-list
+  - generic runner
+  - semi-smart: `shu now` => `shutdown now`
 - desktop applications
-- websearch (google, duckduckgo, ecosia, yandex)
-- hyprland windows, context-aware history (based on open windows)
-- clipboard with fuzzy find and images (currently "wl-clipboard" only)
+  - history-aware
+  - desktop actions (f.e. `Open a new private window` [Firefox])
+  - puts newly installed applications on top
+- websearch ()
+  - simple websearch
+  - google, duckduckgo, ecosia, yandex
+  - can open websites directly
+- hyprland
+  - focus open windows
+  - enables context-aware history for applications
+- clipboard
+  - simple clipboard history
+  - with images
 - module switcher
+  - lets you switch to specific modules
 - commands (for Walker, f.e. clear cache)
 - ssh
+  - parses your `known_hosts` and `config` files
 - finder
+  - simple fuzzy finder
+  - drag&drop support
 - emojis
 - custom commands (for running simple commands)
+  - lets you define and run simple one-off commands
+  - f.e. `toggle window floating`
+  - no need to create keybinds for commands you don't run often
 
 ## Requirements
 

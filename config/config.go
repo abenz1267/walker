@@ -72,7 +72,8 @@ type GeneralModule struct {
 }
 
 type Finder struct {
-	GeneralModule `mapstructure:",squash"`
+	GeneralModule   `mapstructure:",squash"`
+	IgnoreGitIgnore bool `mapstructure:"ignore_gitignore"`
 }
 
 type Commands struct {

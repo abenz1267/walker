@@ -42,7 +42,7 @@
     "commands": { "switcher_only": true },
     "custom_commands": {},
     "emojis": { "switcher_only": true, "history": true, "typeahead": true },
-    "finder": { "switcher_only": true },
+    "finder": { "switcher_only": true, "ignore_gitignore": true },
     "hyprland": { "context_aware_history": true },
     "runner": { "typeahead": true, "history": true, "generic_entry": false },
     "ssh": { "switcher_only": true, "history": true },

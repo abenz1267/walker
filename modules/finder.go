@@ -78,6 +78,7 @@ func (f *Finder) SetupData(cfg *config.Config) {
 	fileListQueue := make(chan *gocodewalker.File)
 
 	fileWalker := gocodewalker.NewFileWalker(homedir, fileListQueue)
+	fileWalker.IgnoreGitIgnore = cfg.Builtins.Finder.IgnoreGitIgnore
 
 	errorHandler := func(e error) bool {
 		log.Println(e)

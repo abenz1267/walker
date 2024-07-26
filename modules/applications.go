@@ -23,6 +23,7 @@ type Applications struct {
 	cache         bool
 	actions       bool
 	prioritizeNew bool
+	entries       []Entry
 }
 
 type Application struct {
@@ -65,14 +66,17 @@ func (a *Applications) Setup(cfg *config.Config) bool {
 	a.actions = cfg.Builtins.Applications.Actions
 	a.prioritizeNew = cfg.Builtins.Applications.PrioritizeNew
 
-	a.general.IsSetup = true
-
 	return true
 }
 
-func (a Applications) SetupData(_ *config.Config) {}
+func (a *Applications) SetupData(_ *config.Config) {
+	a.entries = parse(a.cache, a.actions, a.prioritizeNew)
+	a.general.IsSetup = true
+}
 
-func (a Applications) Refresh() {}
+func (a Applications) Refresh() {
+	a.general.IsSetup = false
+}
 
 func (a Applications) Name() string {
 	return ApplicationsName
@@ -83,7 +87,7 @@ func (a Applications) Prefix() string {
 }
 
 func (a Applications) Entries(ctx context.Context, _ string) []Entry {
-	return parse(a.cache, a.actions, a.prioritizeNew)
+	return a.entries
 }
 
 func parse(cache, actions, prioritizeNew bool) []Entry {

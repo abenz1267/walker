@@ -919,6 +919,10 @@ func setInitials() {
 			continue
 		}
 
+		if !proc.IsSetup() {
+			proc.SetupData(cfg)
+		}
+
 		e := proc.Entries(nil, "")
 
 		for _, entry := range e {

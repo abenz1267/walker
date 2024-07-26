@@ -45,10 +45,6 @@ func (f Finder) Refresh() {}
 func (f Finder) Entries(ctx context.Context, term string) []Entry {
 	e := []Entry{}
 
-	if len(term) < 2 {
-		return e
-	}
-
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		log.Panic(err)

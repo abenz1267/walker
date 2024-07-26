@@ -49,7 +49,10 @@ func main() {
 
 		if len(os.Args) > 0 {
 			if slices.Contains(args, "-n") || slices.Contains(args, "--new") {
-				appName = fmt.Sprintf("%s-%d", appName, time.Now().Unix())
+				isNew = true
+			}
+
+			if slices.Contains(args, "-y") || slices.Contains(args, "--password") {
 				isNew = true
 			}
 
@@ -78,6 +81,10 @@ func main() {
 						wg.Done()
 					}(&wg)
 				}
+			}
+
+			if isNew {
+				appName = fmt.Sprintf("%s-%d", appName, time.Now().Unix())
 			}
 		}
 	}

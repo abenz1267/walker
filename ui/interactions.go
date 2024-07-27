@@ -767,21 +767,25 @@ func processAsync(ctx context.Context, text string) {
 
 	for k := range p {
 		if p[k] == nil {
+			wg.Done()
 			continue
 		}
 
 		if !hasExplicit {
 			if p[k].SwitcherOnly() {
+				wg.Done()
 				continue
 			}
 
 			prefix := p[k].Prefix()
 
 			if hasPrefix && prefix == "" {
+				wg.Done()
 				continue
 			}
 
 			if !hasPrefix && prefix != "" {
+				wg.Done()
 				continue
 			}
 
@@ -790,6 +794,7 @@ func processAsync(ctx context.Context, text string) {
 			}
 
 			if hasPrefix && !strings.HasPrefix(text, prefix) {
+				wg.Done()
 				continue
 			}
 

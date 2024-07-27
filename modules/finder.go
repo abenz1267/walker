@@ -92,7 +92,7 @@ func (f *Finder) SetupData(cfg *config.Config) {
 	for file := range fileListQueue {
 		f.entries = append(f.entries, util.Entry{
 			Label:            strings.TrimPrefix(strings.TrimPrefix(file.Location, homedir), "/"),
-			Sub:              "fzf",
+			Sub:              "finder",
 			Exec:             fmt.Sprintf("xdg-open %s", file.Location),
 			RecalculateScore: true,
 			DragDrop:         true,

@@ -18,6 +18,8 @@ type SSH struct {
 	entries []util.Entry
 }
 
+func (s SSH) Cleanup() {}
+
 func (s SSH) History() bool {
 	return s.general.History
 }

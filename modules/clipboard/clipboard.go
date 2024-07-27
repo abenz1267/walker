@@ -27,6 +27,8 @@ type Clipboard struct {
 	max      int
 }
 
+func (c Clipboard) Cleanup() {}
+
 func (c Clipboard) SwitcherOnly() bool {
 	return c.general.SwitcherOnly
 }

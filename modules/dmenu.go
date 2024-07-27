@@ -21,12 +21,14 @@ var (
 )
 
 type Dmenu struct {
-	general     config.GeneralModule
-	isSetup     bool
-	Content     []string
-	Separator   string
-	LabelColumn int
-	IsService   bool
+	general            config.GeneralModule
+	isSetup            bool
+	Content            []string
+	Separator          string
+	LabelColumn        int
+	initialSeparator   string
+	initialLabelColumn int
+	IsService          bool
 }
 
 func (d Dmenu) IsSetup() bool {
@@ -124,8 +126,10 @@ func (d *Dmenu) Setup(cfg *config.Config) bool {
 	d.general = cfg.Builtins.Dmenu.GeneralModule
 
 	d.SetSeparator(cfg.Builtins.Dmenu.Separator)
-
 	d.LabelColumn = cfg.Builtins.Dmenu.LabelColumn
+
+	d.initialSeparator = d.Separator
+	d.initialLabelColumn = d.LabelColumn
 
 	if cfg.IsService {
 		go d.StartListening()
@@ -136,9 +140,14 @@ func (d *Dmenu) Setup(cfg *config.Config) bool {
 	return true
 }
 
+func (d *Dmenu) Cleanup() {
+	d.Separator = d.initialSeparator
+	d.LabelColumn = d.initialLabelColumn
+}
+
 func (d *Dmenu) SetSeparator(sep string) {
 	if sep == "" {
-		sep = "\t"
+		sep = "'\t'"
 	}
 
 	s, err := strconv.Unquote(sep)

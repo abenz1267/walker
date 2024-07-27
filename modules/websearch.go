@@ -33,6 +33,8 @@ type EngineInfo struct {
 	URL   string
 }
 
+func (w Websearch) Cleanup() {}
+
 func (w Websearch) History() bool {
 	return w.general.History
 }

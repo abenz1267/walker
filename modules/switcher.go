@@ -12,6 +12,8 @@ type Switcher struct {
 	cfg     *config.Config
 }
 
+func (s Switcher) Cleanup() {}
+
 func (s Switcher) History() bool {
 	return s.general.History
 }

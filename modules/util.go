@@ -27,6 +27,7 @@ type Workable interface {
 	KeepSort() bool
 	Typeahead() bool
 	History() bool
+	Cleanup()
 }
 
 func readCache(name string, data any) bool {

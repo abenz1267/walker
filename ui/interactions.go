@@ -978,6 +978,10 @@ func quit() {
 	appstate.IsSingle = false
 	historyIndex = 0
 
+	for _, v := range toUse {
+		go v.Cleanup()
+	}
+
 	disabledAM()
 
 	appstate.ExplicitModules = []string{}

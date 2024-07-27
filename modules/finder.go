@@ -17,6 +17,8 @@ type Finder struct {
 	entries []util.Entry
 }
 
+func (f Finder) Cleanup() {}
+
 func (f Finder) History() bool {
 	return f.general.History
 }

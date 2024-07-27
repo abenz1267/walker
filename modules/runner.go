@@ -24,6 +24,8 @@ type Runner struct {
 	bins         []string
 }
 
+func (r Runner) Cleanup() {}
+
 func (r Runner) History() bool {
 	return r.general.History
 }

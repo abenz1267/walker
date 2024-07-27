@@ -12,6 +12,8 @@ type CustomCommands struct {
 	entries []util.Entry
 }
 
+func (c CustomCommands) Cleanup() {}
+
 func (c CustomCommands) History() bool {
 	return c.general.History
 }

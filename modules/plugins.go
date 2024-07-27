@@ -43,6 +43,8 @@ func (e *Plugin) Setup(cfg *config.Config) bool {
 	return true
 }
 
+func (e Plugin) Cleanup() {}
+
 func (e *Plugin) SetupData(cfg *config.Config) {
 	if e.General.Entries != nil {
 		for k := range e.General.Entries {

@@ -31,6 +31,8 @@ type Application struct {
 	Actions []util.Entry `json:"actions,omitempty"`
 }
 
+func (a Applications) Cleanup() {}
+
 func (a Applications) History() bool {
 	return a.general.History
 }

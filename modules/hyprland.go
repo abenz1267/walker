@@ -19,6 +19,8 @@ type Hyprland struct {
 	windows map[string]uint
 }
 
+func (h Hyprland) Cleanup() {}
+
 func (h Hyprland) History() bool {
 	return h.general.History
 }

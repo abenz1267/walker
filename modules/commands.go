@@ -12,6 +12,8 @@ type Commands struct {
 	entries []util.Entry
 }
 
+func (c Commands) Cleanup() {}
+
 func (c Commands) History() bool {
 	return c.general.History
 }

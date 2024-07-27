@@ -20,6 +20,8 @@ type Emojis struct {
 	entries []util.Entry
 }
 
+func (e Emojis) Cleanup() {}
+
 func (e Emojis) History() bool {
 	return e.general.History
 }

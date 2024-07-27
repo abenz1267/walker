@@ -101,22 +101,24 @@ func (r Runner) Entries(ctx context.Context, term string) []util.Entry {
 
 	fields := strings.Fields(term)
 
-	if len(fields) == 0 {
-		return entries
-	}
-
 	for _, v := range r.bins {
-		label := v
+		bin := v
 
 		if val, ok := r.aliases[v]; ok {
-			label = val
+			bin = val
+		}
+
+		exec := term
+
+		if len(fields) > 0 {
+			exec = fmt.Sprintf("%s %s", bin, strings.Join(fields[1:], " "))
 		}
 
 		n := util.Entry{
-			Label:            label,
+			Label:            bin,
 			Searchable:       v,
 			Sub:              "Runner",
-			Exec:             fmt.Sprintf("%s %s", label, strings.Join(fields[1:], " ")),
+			Exec:             exec,
 			Class:            "runner",
 			History:          true,
 			RecalculateScore: true,
@@ -127,17 +129,23 @@ func (r Runner) Entries(ctx context.Context, term string) []util.Entry {
 		entries = append(entries, n)
 	}
 
-	bin := fields[0]
+	exec := term
 
-	if val, ok := r.aliases[bin]; ok {
-		bin = val
+	if len(fields) > 0 {
+		bin := fields[0]
+
+		if val, ok := r.aliases[bin]; ok {
+			bin = val
+		}
+
+		exec = fmt.Sprintf("%s %s", bin, strings.Join(fields[1:], " "))
 	}
 
 	if r.genericEntry {
 		n := util.Entry{
 			Label:            fmt.Sprintf("run: %s", term),
 			Sub:              "Runner",
-			Exec:             fmt.Sprintf("%s %s", bin, strings.Join(fields[1:], " ")),
+			Exec:             exec,
 			Class:            "runner",
 			History:          true,
 			RecalculateScore: true,

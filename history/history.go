@@ -12,7 +12,7 @@ type (
 	Hash   string
 )
 
-type HistoryMap map[string]map[string]HistoryEntry
+type HistoryMap map[string]map[string]*HistoryEntry
 
 type History HistoryMap
 
@@ -25,13 +25,13 @@ type HistoryEntry struct {
 func (s History) Save(hash string, prefix string) {
 	p, ok := s[prefix]
 	if !ok {
-		p = make(map[string]HistoryEntry)
+		p = make(map[string]*HistoryEntry)
 		s[prefix] = p
 	}
 
 	h, ok := p[hash]
 	if !ok {
-		h = HistoryEntry{
+		h = &HistoryEntry{
 			LastUsed: time.Now(),
 			Used:     1,
 		}

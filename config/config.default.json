@@ -1,6 +1,6 @@
 {
   "ui": {
-    "icons": { "size": 38, "image_size": 150 },
+    "icons": { "size": 38, "size_single_module": 32, "image_size": 150 },
     "orientation": "vertical",
     "ignore_exclusive": true,
     "fullscreen": false,
@@ -22,6 +22,7 @@
     "max_entries": 50,
     "scrollbar_policy": "automatic",
     "show_initial_entries": true,
+    "show_sub_single_module": false,
     "width": 400
   },
   "search": {

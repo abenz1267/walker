@@ -24,6 +24,7 @@ type AppState struct {
 	KeepSort            bool
 	Password            bool
 	Benchmark           bool
+	IsSingle            bool
 }
 
 func Get() *AppState {

@@ -582,10 +582,16 @@ func setupFactory() *gtk.SignalListItemFactory {
 				image.SetSizeRequest(cfg.UI.Icons.ImageSize, cfg.UI.Icons.ImageSize)
 				box.Append(image)
 			} else {
-				i := ui.iconTheme.LookupIcon(val.Icon, []string{}, cfg.UI.Icons.Size, 1, gtk.GetLocaleDirection(), 0)
+				size := cfg.UI.Icons.Size
+
+				if appstate.IsSingle {
+					size = cfg.UI.Icons.SizeSingleModule
+				}
+
+				i := ui.iconTheme.LookupIcon(val.Icon, []string{}, size, 1, gtk.GetLocaleDirection(), 0)
 				icon := gtk.NewImageFromPaintable(i)
 				icon.SetIconSize(gtk.IconSizeLarge)
-				icon.SetPixelSize(cfg.UI.Icons.Size)
+				icon.SetPixelSize(size)
 				icon.SetCSSClasses([]string{"icon"})
 				box.Append(icon)
 			}
@@ -607,7 +613,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		wrapper.Append(top)
 
-		if val.Sub != "" && !cfg.List.HideSub && !appstate.IsDmenu {
+		if val.Sub != "" && !cfg.List.HideSub && (!appstate.IsSingle || cfg.List.ShowSubSingleModule) {
 			bottom := gtk.NewLabel(val.Sub)
 			bottom.SetMaxWidthChars(0)
 

@@ -762,6 +762,7 @@ func processAsync(ctx context.Context, text string) {
 
 	if len(p) == 1 {
 		handler.keepSort = p[0].KeepSort()
+		appstate.IsSingle = true
 	}
 
 	for k := range p {
@@ -974,6 +975,7 @@ func usageModifier(item util.Entry) int {
 
 func quit() {
 	appstate.IsRunning = false
+	appstate.IsSingle = false
 	historyIndex = 0
 
 	disabledAM()

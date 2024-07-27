@@ -161,10 +161,11 @@ type Search struct {
 }
 
 type Icons struct {
-	Hide      bool   `mapstructure:"hide"`
-	ImageSize int    `mapstructure:"image_size"`
-	Size      int    `mapstructure:"size"`
-	Theme     string `mapstructure:"theme"`
+	Hide             bool   `mapstructure:"hide"`
+	ImageSize        int    `mapstructure:"image_size"`
+	Size             int    `mapstructure:"size"`
+	SizeSingleModule int    `mapstructure:"size_single_module"`
+	Theme            string `mapstructure:"theme"`
 }
 
 type UI struct {
@@ -195,16 +196,17 @@ type Margins struct {
 }
 
 type List struct {
-	AlwaysShow         bool   `mapstructure:"always_show"`
-	Cycle              bool   `mapstructure:"cycle"`
-	FixedHeight        bool   `mapstructure:"fixed_height"`
-	Height             int    `mapstructure:"height"`
-	HideSub            bool   `mapstructure:"hide_sub"`
-	MarginTop          int    `mapstructure:"margin_top"`
-	MaxEntries         int    `mapstructure:"max_entries"`
-	ScrollbarPolicy    string `mapstructure:"scrollbar_policy"`
-	ShowInitialEntries bool   `mapstructure:"show_initial_entries"`
-	Width              int    `mapstructure:"width"`
+	AlwaysShow          bool   `mapstructure:"always_show"`
+	Cycle               bool   `mapstructure:"cycle"`
+	FixedHeight         bool   `mapstructure:"fixed_height"`
+	Height              int    `mapstructure:"height"`
+	HideSub             bool   `mapstructure:"hide_sub"`
+	ShowSubSingleModule bool   `mapstructure:"show_sub_single_module"`
+	MarginTop           int    `mapstructure:"margin_top"`
+	MaxEntries          int    `mapstructure:"max_entries"`
+	ScrollbarPolicy     string `mapstructure:"scrollbar_policy"`
+	ShowInitialEntries  bool   `mapstructure:"show_initial_entries"`
+	Width               int    `mapstructure:"width"`
 }
 
 func Get(config string) *Config {

@@ -214,6 +214,20 @@ func setupInteractions(appstate *state.AppState) {
 		amModifier = gdk.AltMask
 		cmdAltModifier = gdk.ControlMask
 	}
+
+	if !cfg.IgnoreMouse {
+		gesture := gtk.NewGestureClick()
+		gesture.SetPropagationPhase(gtk.PropagationPhase(3))
+		gesture.Connect("pressed", func(gesture *gtk.GestureClick, n int) {
+			if appstate.IsService {
+				quit()
+			} else {
+				exit()
+			}
+		})
+
+		ui.appwin.AddController(gesture)
+	}
 }
 
 func selectNext() {

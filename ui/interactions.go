@@ -176,10 +176,9 @@ func setupModules() {
 }
 
 func setupInteractions(appstate *state.AppState) {
-	setupCommands()
-	createActivationKeys()
-
-	setupModules()
+	go setupCommands()
+	go createActivationKeys()
+	go setupModules()
 
 	keycontroller := gtk.NewEventControllerKey()
 	keycontroller.ConnectKeyPressed(handleSearchKeysPressed)
@@ -278,7 +277,7 @@ func selectPrev() {
 func selectActivationMode(val uint, keepOpen bool) {
 	var target uint
 
-	if k, ok := specialLabels[val]; ok {
+	if k, ok := appstate.SpecialLabels[val]; ok {
 		target = k
 	} else {
 		if n, ok := keys[val]; ok {
@@ -382,7 +381,7 @@ func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool 
 		uni := strings.ToLower(string(gdk.KeyvalToUnicode(val)))
 		check := gdk.UnicodeToKeyval(uint32(uni[0]))
 
-		if _, ok := specialLabels[check]; ok {
+		if _, ok := appstate.SpecialLabels[check]; ok {
 			if modifier == gdk.ShiftMask {
 				selectActivationMode(check, true)
 			} else {
@@ -674,10 +673,6 @@ func process() {
 
 	ui.spinner.SetCSSClasses([]string{"visible"})
 
-	if !appstate.IsRunning {
-		return
-	}
-
 	text := strings.TrimSpace(ui.search.Text())
 
 	if text == "" && cfg.List.ShowInitialEntries && len(explicits) == 0 && !appstate.IsDmenu {
@@ -914,11 +909,7 @@ func setTypeahead(modules []modules.Workable) {
 }
 
 func setInitials() {
-	if len(appstate.ExplicitModules) > 0 {
-		return
-	}
-
-	entrySlice := []util.Entry{}
+	entries := []util.Entry{}
 
 	var hyprland *modules.Hyprland
 
@@ -968,18 +959,17 @@ func setInitials() {
 				entry.OpenWindows = hyprland.GetWindowAmount(entry.InitialClass)
 			}
 
-			entrySlice = append(entrySlice, entry)
+			entries = append(entries, entry)
 		}
 	}
 
-	if len(entrySlice) == 0 {
+	if len(entries) == 0 {
 		return
 	}
 
-	sortEntries(entrySlice)
+	sortEntries(entries)
 
-	ui.items.Splice(0, int(ui.items.NItems()), entrySlice...)
-	ui.list.ScrollTo(0, gtk.ListScrollNone, nil)
+	ui.items.Splice(0, int(ui.items.NItems()), entries...)
 
 	ui.spinner.SetCSSClasses([]string{})
 }

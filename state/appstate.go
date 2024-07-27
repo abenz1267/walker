@@ -25,6 +25,10 @@ type AppState struct {
 	Password            bool
 	Benchmark           bool
 	IsSingle            bool
+	Labels              []string
+	LabelsF             []string
+	UsedLabels          []string
+	SpecialLabels       map[uint]uint
 }
 
 func Get() *AppState {

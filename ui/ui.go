@@ -27,13 +27,6 @@ import (
 var defaultStyle []byte
 
 var (
-	labels        = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
-	labelF        = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
-	usedLabels    []string
-	specialLabels = make(map[uint]uint)
-)
-
-var (
 	cfg       *config.Config
 	ui        *UI
 	explicits []modules.Workable
@@ -64,48 +57,23 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 	appstate = state
 
 	return func(app *gtk.Application) {
-		if appstate.IsRunning {
-			return
-		}
-
-		appstate.IsRunning = true
-
 		if appstate.HasUI {
-			ui.appwin.SetVisible(true)
-
-			if appstate.Benchmark {
-				fmt.Println("Visible (re-open)", time.Now().UnixNano())
-			}
-
-			for _, proc := range toUse {
-				go proc.Refresh()
-			}
-
-			if len(appstate.ExplicitModules) > 0 {
-				setExplicits()
-				toUse = explicits
-			} else {
-				toUse = available
-			}
-
-			if len(explicits) == 1 {
-				text := explicits[0].Placeholder()
-
-				if appstate.ExplicitPlaceholder != "" {
-					text = appstate.ExplicitPlaceholder
-				}
-
-				ui.search.SetObjectProperty("placeholder-text", text)
-			}
-
-			ui.search.GrabFocus()
-
-			process()
-
+			reopen()
 			return
 		}
 
+		hstry = history.Get()
 		cfg = config.Get(appstate.ExplicitConfig)
+
+		appstate.Labels = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
+		appstate.LabelsF = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
+		appstate.SpecialLabels = make(map[uint]uint)
+		appstate.UsedLabels = appstate.Labels
+
+		if cfg.ActivationMode.UseFKeys {
+			appstate.UsedLabels = appstate.LabelsF
+		}
+
 		cfg.IsService = appstate.IsService
 
 		if appstate.Dmenu == nil {
@@ -121,8 +89,6 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		if appstate.ExplicitPlaceholder != "" {
 			cfg.Search.Placeholder = appstate.ExplicitPlaceholder
 		}
-
-		hstry = history.Get()
 
 		if appstate.Password {
 			setupUIPassword(app)
@@ -177,6 +143,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		}
 
 		ui.appwin.SetVisible(true)
+
 		appstate.HasUI = true
 		appstate.IsRunning = true
 
@@ -239,11 +206,6 @@ func setupUIPassword(app *gtk.Application) {
 func setupUI(app *gtk.Application) {
 	if !gtk4layershell.IsSupported() {
 		log.Panicln("gtk-layer-shell not supported")
-	}
-
-	usedLabels = labels
-	if cfg.ActivationMode.UseFKeys {
-		usedLabels = labelF
 	}
 
 	items := gioutil.NewListModel[util.Entry]()
@@ -337,6 +299,7 @@ func setupUI(app *gtk.Application) {
 	ui.selection.ConnectItemsChanged(func(p, r, a uint) {
 		if ui.selection.NItems() > 0 {
 			ui.selection.SetSelected(0)
+			ui.list.ScrollTo(0, gtk.ListScrollNone, nil)
 		}
 
 		handleListVisibility()
@@ -640,13 +603,13 @@ func setupFactory() *gtk.SignalListItemFactory {
 				box.Append(l)
 
 				k := gdk.UnicodeToKeyval(uint32(val.SpecialLabel[0]))
-				specialLabels[k] = item.Position()
+				appstate.SpecialLabels[k] = item.Position()
 
 				return
 			}
 
-			if item.Position()+1 <= uint(len(labels)) {
-				l := gtk.NewLabel(usedLabels[item.Position()])
+			if item.Position()+1 <= uint(len(appstate.Labels)) {
+				l := gtk.NewLabel(appstate.UsedLabels[item.Position()])
 				l.SetCSSClasses([]string{"activationlabel"})
 				box.Append(l)
 			}
@@ -657,28 +620,53 @@ func setupFactory() *gtk.SignalListItemFactory {
 }
 
 func handleListVisibility() {
-	ui.list.SetVisible(false)
-	ui.scroll.SetVisible(false)
+	show := ui.items.NItems() != 0
 
 	if cfg.List.AlwaysShow {
-		ui.list.SetVisible(true)
-		ui.scroll.SetVisible(true)
+		show = true
+	}
+
+	ui.list.SetVisible(show)
+	ui.scroll.SetVisible(show)
+}
+
+func reopen() {
+	if appstate.IsRunning {
 		return
 	}
 
-	if ui.items.NItems() != 0 {
-		ui.list.SetVisible(true)
-		ui.scroll.SetVisible(true)
-		return
+	appstate.IsRunning = true
+
+	ui.appwin.SetVisible(true)
+
+	if appstate.Benchmark {
+		fmt.Println("Visible (re-open)", time.Now().UnixNano())
 	}
 
-	if ui.items.NItems() == 0 {
-		if cfg.List.AlwaysShow {
-			ui.list.SetVisible(true)
-			ui.scroll.SetVisible(true)
-		} else {
-			ui.list.SetVisible(false)
-			ui.scroll.SetVisible(false)
+	go func() {
+		for _, proc := range toUse {
+			proc.Refresh()
 		}
+	}()
+
+	if len(appstate.ExplicitModules) > 0 {
+		setExplicits()
+		toUse = explicits
+	} else {
+		toUse = available
 	}
+
+	if len(toUse) == 1 {
+		text := toUse[0].Placeholder()
+
+		if appstate.ExplicitPlaceholder != "" {
+			text = appstate.ExplicitPlaceholder
+		}
+
+		ui.search.SetObjectProperty("placeholder-text", text)
+	}
+
+	ui.search.GrabFocus()
+
+	process()
 }

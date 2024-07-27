@@ -76,7 +76,7 @@ func (a *Applications) SetupData(_ *config.Config) {
 	a.general.IsSetup = true
 }
 
-func (a Applications) Refresh() {
+func (a *Applications) Refresh() {
 	a.general.IsSetup = false
 }
 

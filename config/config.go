@@ -147,6 +147,7 @@ type Plugin struct {
 	Src            string            `mapstructure:"src"`
 	SrcOnce        string            `mapstructure:"src_once"`
 	SrcOnceRefresh bool              `mapstructure:"src_once_refresh"`
+	Entries        []util.Entry      `mapstructure:"entries"`
 	Terminal       bool              `mapstructure:"terminal"`
 }
 

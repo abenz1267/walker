@@ -14,7 +14,7 @@ import (
 
 type Finder struct {
 	general config.GeneralModule
-	entries []Entry
+	entries []util.Entry
 }
 
 func (f Finder) History() bool {
@@ -45,7 +45,7 @@ func (f Finder) Refresh() {
 	f.general.IsSetup = false
 }
 
-func (f Finder) Entries(ctx context.Context, term string) []Entry {
+func (f Finder) Entries(ctx context.Context, term string) []util.Entry {
 	return f.entries
 }
 
@@ -68,7 +68,7 @@ func (f *Finder) Setup(cfg *config.Config) bool {
 }
 
 func (f *Finder) SetupData(cfg *config.Config) {
-	f.entries = []Entry{}
+	f.entries = []util.Entry{}
 
 	homedir, err := os.UserHomeDir()
 	if err != nil {
@@ -90,7 +90,7 @@ func (f *Finder) SetupData(cfg *config.Config) {
 	go fileWalker.Start()
 
 	for file := range fileListQueue {
-		f.entries = append(f.entries, Entry{
+		f.entries = append(f.entries, util.Entry{
 			Label:            strings.TrimPrefix(strings.TrimPrefix(file.Location, homedir), "/"),
 			Sub:              "fzf",
 			Exec:             fmt.Sprintf("xdg-open %s", file.Location),

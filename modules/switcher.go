@@ -36,15 +36,15 @@ func (s Switcher) SwitcherOnly() bool {
 	return false
 }
 
-func (s Switcher) Entries(ctx context.Context, term string) []Entry {
-	entries := []Entry{}
+func (s Switcher) Entries(ctx context.Context, term string) []util.Entry {
+	entries := []util.Entry{}
 
 	for _, v := range s.cfg.Available {
 		if v == "switcher" {
 			continue
 		}
 
-		e := Entry{
+		e := util.Entry{
 			Label:      v,
 			Sub:        "switcher",
 			Exec:       "",

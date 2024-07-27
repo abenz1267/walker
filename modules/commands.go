@@ -4,11 +4,12 @@ import (
 	"context"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/util"
 )
 
 type Commands struct {
 	general config.GeneralModule
-	entries []Entry
+	entries []util.Entry
 }
 
 func (c Commands) History() bool {
@@ -35,7 +36,7 @@ func (c Commands) Placeholder() string {
 	return c.general.Placeholder
 }
 
-func (c Commands) Entries(ctx context.Context, term string) []Entry {
+func (c Commands) Entries(ctx context.Context, term string) []util.Entry {
 	return c.entries
 }
 
@@ -85,7 +86,7 @@ func (c *Commands) SetupData(cfg *config.Config) {
 	}
 
 	for _, v := range entries {
-		c.entries = append(c.entries, Entry{
+		c.entries = append(c.entries, util.Entry{
 			Label:            v.label,
 			Sub:              "Walker",
 			Exec:             v.exec,

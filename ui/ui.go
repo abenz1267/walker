@@ -53,7 +53,7 @@ type UI struct {
 	typeahead     *gtk.SearchEntry
 	search        *gtk.SearchEntry
 	list          *gtk.ListView
-	items         *gioutil.ListModel[modules.Entry]
+	items         *gioutil.ListModel[util.Entry]
 	selection     *gtk.SingleSelection
 	prefixClasses map[string][]string
 	iconTheme     *gtk.IconTheme
@@ -246,7 +246,7 @@ func setupUI(app *gtk.Application) {
 		usedLabels = labelF
 	}
 
-	items := gioutil.NewListModel[modules.Entry]()
+	items := gioutil.NewListModel[util.Entry]()
 
 	spinner := gtk.NewSpinner()
 	spinner.SetName("spinner")
@@ -523,7 +523,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 	factory.ConnectBind(func(object *coreglib.Object) {
 		item := object.Cast().(*gtk.ListItem)
 		valObj := ui.items.Item(item.Position())
-		val := gioutil.ObjectValue[modules.Entry](valObj)
+		val := gioutil.ObjectValue[util.Entry](valObj)
 		child := item.Child()
 
 		if child == nil {

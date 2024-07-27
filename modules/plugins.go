@@ -10,6 +10,7 @@ import (
 	"strings"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/util"
 )
 
 type Plugin struct {
@@ -43,6 +44,12 @@ func (e *Plugin) Setup(cfg *config.Config) bool {
 }
 
 func (e *Plugin) SetupData(cfg *config.Config) {
+	if e.General.Entries != nil {
+		for k := range e.General.Entries {
+			e.General.Entries[k].Sub = e.General.Name
+		}
+	}
+
 	if e.General.SrcOnce != "" {
 		e.General.Src = e.General.SrcOnce
 		e.cachedOutput = e.getSrcOutput(false, "")
@@ -71,8 +78,12 @@ func (e Plugin) Prefix() string {
 	return e.General.Prefix
 }
 
-func (e Plugin) Entries(ctx context.Context, term string) []Entry {
-	entries := []Entry{}
+func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
+	if e.General.Entries != nil {
+		return e.General.Entries
+	}
+
+	entries := []util.Entry{}
 
 	if e.General.Src == "" {
 		return entries
@@ -115,7 +126,7 @@ func (e Plugin) Entries(ctx context.Context, term string) []Entry {
 				continue
 			}
 
-			e := Entry{
+			e := util.Entry{
 				Label:    unescaped,
 				Sub:      e.General.Name,
 				Class:    e.General.Name,

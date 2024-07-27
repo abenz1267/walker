@@ -9,7 +9,7 @@ import (
 
 type CustomCommands struct {
 	general config.GeneralModule
-	entries []Entry
+	entries []util.Entry
 }
 
 func (c CustomCommands) History() bool {
@@ -20,7 +20,7 @@ func (c CustomCommands) Typeahead() bool {
 	return c.general.Typeahead
 }
 
-func (c CustomCommands) Entries(ctx context.Context, term string) (_ []Entry) {
+func (c CustomCommands) Entries(ctx context.Context, term string) (_ []util.Entry) {
 	return c.entries
 }
 
@@ -54,10 +54,10 @@ func (c *CustomCommands) Setup(cfg *config.Config) bool {
 }
 
 func (c *CustomCommands) SetupData(cfg *config.Config) {
-	c.entries = []Entry{}
+	c.entries = []util.Entry{}
 
 	for _, v := range cfg.Builtins.CustomCommands.Commands {
-		c.entries = append(c.entries, Entry{
+		c.entries = append(c.entries, util.Entry{
 			Label:            v.Name,
 			Sub:              "Commands",
 			Exec:             v.Cmd,

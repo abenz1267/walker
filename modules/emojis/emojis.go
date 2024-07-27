@@ -9,7 +9,6 @@ import (
 	_ "embed"
 
 	"github.com/abenz1267/walker/config"
-	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/util"
 )
 
@@ -18,7 +17,7 @@ var list string
 
 type Emojis struct {
 	general config.GeneralModule
-	entries []modules.Entry
+	entries []util.Entry
 }
 
 func (e Emojis) History() bool {
@@ -37,7 +36,7 @@ func (e Emojis) IsSetup() bool {
 	return e.general.IsSetup
 }
 
-func (e Emojis) Entries(ctx context.Context, term string) []modules.Entry {
+func (e Emojis) Entries(ctx context.Context, term string) []util.Entry {
 	return e.entries
 }
 
@@ -62,7 +61,7 @@ func (e *Emojis) Setup(cfg *config.Config) bool {
 func (e *Emojis) SetupData(cfg *config.Config) {
 	scanner := bufio.NewScanner(strings.NewReader(list))
 
-	entries := []modules.Entry{}
+	entries := []util.Entry{}
 
 	for scanner.Scan() {
 		text := scanner.Text()
@@ -73,7 +72,7 @@ func (e *Emojis) SetupData(cfg *config.Config) {
 
 		fields := strings.Split(text, ",")
 
-		entries = append(entries, modules.Entry{
+		entries = append(entries, util.Entry{
 			Label:            fmt.Sprintf("%s %s", fields[4], fields[5]),
 			Sub:              "Emojis",
 			Exec:             fmt.Sprintf("wl-copy %s", fields[4]),

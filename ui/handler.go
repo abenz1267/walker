@@ -6,14 +6,13 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/util"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 )
 
 type Handler struct {
-	receiver chan []modules.Entry
-	entries  []modules.Entry
+	receiver chan []util.Entry
+	entries  []util.Entry
 	ctx      context.Context
 	keepSort bool
 	mut      sync.Mutex
@@ -52,8 +51,8 @@ func (h *Handler) handle() {
 	}
 }
 
-func sortEntries(entries []modules.Entry) {
-	slices.SortFunc(entries, func(a, b modules.Entry) int {
+func sortEntries(entries []util.Entry) {
+	slices.SortFunc(entries, func(a, b util.Entry) int {
 		text := ui.search.Text()
 
 		if text == "" {

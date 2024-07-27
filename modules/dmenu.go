@@ -37,8 +37,8 @@ func (d Dmenu) KeepSort() bool {
 	return false
 }
 
-func (d Dmenu) Entries(ctx context.Context, term string) []Entry {
-	entries := []Entry{}
+func (d Dmenu) Entries(ctx context.Context, term string) []util.Entry {
+	entries := []util.Entry{}
 
 	for _, v := range d.Content {
 		label := v
@@ -51,7 +51,7 @@ func (d Dmenu) Entries(ctx context.Context, term string) []Entry {
 			}
 		}
 
-		entries = append(entries, Entry{
+		entries = append(entries, util.Entry{
 			Label: label,
 			Sub:   "Dmenu",
 			Exec:  v,

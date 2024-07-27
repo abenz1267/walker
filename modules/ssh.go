@@ -15,7 +15,7 @@ import (
 
 type SSH struct {
 	general config.GeneralModule
-	entries []Entry
+	entries []util.Entry
 }
 
 func (s SSH) History() bool {
@@ -46,7 +46,7 @@ func (s *SSH) Refresh() {
 	s.general.IsSetup = false
 }
 
-func (s SSH) Entries(ctx context.Context, term string) []Entry {
+func (s SSH) Entries(ctx context.Context, term string) []util.Entry {
 	fields := strings.Fields(term)
 
 	cmd := "ssh"
@@ -105,12 +105,12 @@ func (s *SSH) SetupData(cfg *config.Config) {
 	s.general.IsSetup = true
 }
 
-func getConfigFileEntries(sshCfg string) []Entry {
-	entries := []Entry{}
+func getConfigFileEntries(sshCfg string) []util.Entry {
+	entries := []util.Entry{}
 
 	file, err := os.Open(sshCfg)
 	if err != nil {
-		return []Entry{}
+		return []util.Entry{}
 	}
 
 	defer file.Close()
@@ -122,7 +122,7 @@ func getConfigFileEntries(sshCfg string) []Entry {
 		if strings.HasPrefix(text, "Host ") || strings.HasPrefix(text, "host ") {
 			fields := strings.Fields(text)
 
-			entries = append(entries, Entry{
+			entries = append(entries, util.Entry{
 				Label:            fields[1],
 				Sub:              "SSH Config",
 				Exec:             fmt.Sprintf("ssh %s", fields[1]),
@@ -139,10 +139,10 @@ func getConfigFileEntries(sshCfg string) []Entry {
 	return entries
 }
 
-func getHostFileEntries(hosts string) []Entry {
+func getHostFileEntries(hosts string) []util.Entry {
 	file, err := os.Open(hosts)
 	if err != nil {
-		return []Entry{}
+		return []util.Entry{}
 	}
 
 	defer file.Close()
@@ -155,10 +155,10 @@ func getHostFileEntries(hosts string) []Entry {
 		hs[host] = struct{}{}
 	}
 
-	entries := []Entry{}
+	entries := []util.Entry{}
 
 	for k := range hs {
-		entries = append(entries, Entry{
+		entries = append(entries, util.Entry{
 			Label:            k,
 			Sub:              "SSH Host",
 			Exec:             "ssh",

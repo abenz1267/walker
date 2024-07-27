@@ -14,7 +14,6 @@ import (
 	"time"
 
 	"github.com/abenz1267/walker/config"
-	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/util"
 )
 
@@ -53,19 +52,19 @@ func (c Clipboard) History() bool {
 	return false
 }
 
-func (c Clipboard) Entries(ctx context.Context, term string) []modules.Entry {
-	entries := []modules.Entry{}
+func (c Clipboard) Entries(ctx context.Context, term string) []util.Entry {
+	entries := []util.Entry{}
 
 	es := []ClipboardItem{}
 
 	util.FromGob(c.file, &es)
 
 	for _, v := range es {
-		e := modules.Entry{
+		e := util.Entry{
 			Label:      v.Content,
 			Sub:        "Text",
 			Exec:       "wl-copy",
-			Piped:      modules.Piped{Content: v.Content, Type: "string"},
+			Piped:      util.Piped{Content: v.Content, Type: "string"},
 			Categories: []string{"clipboard"},
 			Class:      "clipboard",
 			Matching:   util.Fuzzy,
@@ -76,7 +75,7 @@ func (c Clipboard) Entries(ctx context.Context, term string) []modules.Entry {
 			e.Label = "Image"
 			e.Image = v.Content
 			e.Exec = "wl-copy"
-			e.Piped = modules.Piped{
+			e.Piped = util.Piped{
 				Content: v.Content,
 				Type:    "file",
 			}

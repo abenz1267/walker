@@ -120,7 +120,7 @@ type window struct {
 	initialTitle string
 }
 
-func (Hyprland) Entries(ctx context.Context, term string) []Entry {
+func (Hyprland) Entries(ctx context.Context, term string) []util.Entry {
 	cmd := exec.Command("hyprctl", "clients")
 
 	out, err := cmd.CombinedOutput()
@@ -129,7 +129,7 @@ func (Hyprland) Entries(ctx context.Context, term string) []Entry {
 		return nil
 	}
 
-	entries := []Entry{}
+	entries := []util.Entry{}
 
 	scanner := bufio.NewScanner(bytes.NewReader(out))
 
@@ -173,7 +173,7 @@ func (Hyprland) Entries(ctx context.Context, term string) []Entry {
 			continue
 		}
 
-		n := Entry{
+		n := util.Entry{
 			Label:      v.title,
 			Sub:        fmt.Sprintf("Hyprland (Workspace %s)", v.workspace),
 			Exec:       fmt.Sprintf("hyprctl dispatch focuswindow pid:%s", v.pid),

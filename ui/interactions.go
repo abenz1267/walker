@@ -503,7 +503,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		return
 	}
 
-	entry := gioutil.ObjectValue[modules.Entry](ui.items.Item(ui.selection.Selected()))
+	entry := gioutil.ObjectValue[util.Entry](ui.items.Item(ui.selection.Selected()))
 
 	if !keepOpen && entry.Sub != "switcher" && cfg.IsService {
 		go quit()
@@ -605,7 +605,7 @@ func handleDmenuResult(result string) {
 	}
 }
 
-func setStdin(cmd *exec.Cmd, piped *modules.Piped) {
+func setStdin(cmd *exec.Cmd, piped *util.Piped) {
 	if piped.Content != "" {
 		switch piped.Type {
 		case "string":
@@ -699,7 +699,7 @@ func processAsync(ctx context.Context, text string) {
 	hasExplicit := len(explicits) > 0
 
 	handler.ctx = ctx
-	handler.entries = []modules.Entry{}
+	handler.entries = []util.Entry{}
 
 	glib.IdleAdd(func() {
 		ui.items.Splice(0, int(ui.items.NItems()))
@@ -743,7 +743,7 @@ func processAsync(ctx context.Context, text string) {
 
 	setTypeahead(p)
 
-	handler.receiver = make(chan []modules.Entry)
+	handler.receiver = make(chan []util.Entry)
 	go handler.handle()
 
 	var hyprland *modules.Hyprland
@@ -804,7 +804,7 @@ func processAsync(ctx context.Context, text string) {
 
 			e := w.Entries(ctx, text)
 
-			toPush := []modules.Entry{}
+			toPush := []util.Entry{}
 
 			for k := range e {
 				e[k].Module = w.Name()
@@ -892,7 +892,7 @@ func setInitials() {
 		return
 	}
 
-	entrySlice := []modules.Entry{}
+	entrySlice := []util.Entry{}
 
 	var hyprland *modules.Hyprland
 
@@ -958,7 +958,7 @@ func setInitials() {
 	ui.spinner.SetCSSClasses([]string{})
 }
 
-func usageModifier(item modules.Entry) int {
+func usageModifier(item util.Entry) int {
 	base := 10
 
 	if item.Used > 0 {
@@ -1028,7 +1028,7 @@ func createActivationKeys() {
 
 const modifier = 0.10
 
-func fuzzyScore(entry modules.Entry, text string, hyprland *modules.Hyprland) float64 {
+func fuzzyScore(entry util.Entry, text string, hyprland *modules.Hyprland) float64 {
 	textLength := len(text)
 
 	if textLength == 0 {

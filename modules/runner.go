@@ -94,8 +94,8 @@ func (Runner) Name() string {
 	return "runner"
 }
 
-func (r Runner) Entries(ctx context.Context, term string) []Entry {
-	entries := []Entry{}
+func (r Runner) Entries(ctx context.Context, term string) []util.Entry {
+	entries := []util.Entry{}
 
 	fields := strings.Fields(term)
 
@@ -110,7 +110,7 @@ func (r Runner) Entries(ctx context.Context, term string) []Entry {
 			label = val
 		}
 
-		n := Entry{
+		n := util.Entry{
 			Label:            label,
 			Searchable:       v,
 			Sub:              "Runner",
@@ -132,7 +132,7 @@ func (r Runner) Entries(ctx context.Context, term string) []Entry {
 	}
 
 	if r.genericEntry {
-		n := Entry{
+		n := util.Entry{
 			Label:            fmt.Sprintf("run: %s", term),
 			Sub:              "Runner",
 			Exec:             fmt.Sprintf("%s %s", bin, strings.Join(fields[1:], " ")),

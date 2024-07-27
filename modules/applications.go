@@ -23,12 +23,12 @@ type Applications struct {
 	cache         bool
 	actions       bool
 	prioritizeNew bool
-	entries       []Entry
+	entries       []util.Entry
 }
 
 type Application struct {
-	Generic Entry   `json:"generic,omitempty"`
-	Actions []Entry `json:"actions,omitempty"`
+	Generic util.Entry   `json:"generic,omitempty"`
+	Actions []util.Entry `json:"actions,omitempty"`
 }
 
 func (a Applications) History() bool {
@@ -86,13 +86,13 @@ func (a Applications) Prefix() string {
 	return a.general.Prefix
 }
 
-func (a Applications) Entries(ctx context.Context, _ string) []Entry {
+func (a Applications) Entries(ctx context.Context, _ string) []util.Entry {
 	return a.entries
 }
 
-func parse(cache, actions, prioritizeNew bool) []Entry {
+func parse(cache, actions, prioritizeNew bool) []util.Entry {
 	apps := []Application{}
-	entries := []Entry{}
+	entries := []util.Entry{}
 
 	if cache {
 		ok := readCache(ApplicationsName, &entries)
@@ -134,13 +134,13 @@ func parse(cache, actions, prioritizeNew bool) []Entry {
 				scanner := bufio.NewScanner(file)
 
 				app := Application{
-					Generic: Entry{
+					Generic: util.Entry{
 						Class:            ApplicationsName,
 						History:          true,
 						Matching:         matching,
 						RecalculateScore: true,
 					},
-					Actions: []Entry{},
+					Actions: []util.Entry{},
 				}
 
 				isAction := false
@@ -153,7 +153,7 @@ func parse(cache, actions, prioritizeNew bool) []Entry {
 							break
 						}
 
-						app.Actions = append(app.Actions, Entry{
+						app.Actions = append(app.Actions, util.Entry{
 							Sub:              app.Generic.Label,
 							Path:             app.Generic.Path,
 							Icon:             app.Generic.Icon,

@@ -106,8 +106,8 @@ func (Websearch) Name() string {
 	return "websearch"
 }
 
-func (w Websearch) Entries(ctx context.Context, term string) []Entry {
-	entries := []Entry{}
+func (w Websearch) Entries(ctx context.Context, term string) []util.Entry {
+	entries := []util.Entry{}
 
 	path, _ := exec.LookPath("xdg-open")
 	if path == "" {
@@ -121,7 +121,7 @@ func (w Websearch) Entries(ctx context.Context, term string) []Entry {
 		if val, ok := w.engineInfo[strings.ToLower(v)]; ok {
 			url := strings.ReplaceAll(val.URL, "%TERM%", url.QueryEscape(term))
 
-			n := Entry{
+			n := util.Entry{
 				Label:      fmt.Sprintf("Search with %s", val.Label),
 				Sub:        "Websearch",
 				Exec:       fmt.Sprintf("xdg-open %s", url),
@@ -140,7 +140,7 @@ func (w Websearch) Entries(ctx context.Context, term string) []Entry {
 	if strings.ContainsAny(term, ".") && !strings.HasSuffix(term, ".") {
 		_, err := url.ParseRequestURI(fmt.Sprintf("https://%s", term))
 		if err == nil {
-			entries = append(entries, Entry{
+			entries = append(entries, util.Entry{
 				Label:    fmt.Sprintf("Visit https://%s", term),
 				Sub:      "Websearch",
 				Exec:     "xdg-open https://" + term,

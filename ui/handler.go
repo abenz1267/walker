@@ -81,15 +81,13 @@ func sortEntries(entries []util.Entry) {
 			return -1
 		}
 
-		if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService {
-			if !a.LastUsed.IsZero() && !b.LastUsed.IsZero() {
-				if a.OpenWindows > b.OpenWindows {
-					return 1
-				}
+		if !a.LastUsed.IsZero() && !b.LastUsed.IsZero() {
+			if a.OpenWindows > b.OpenWindows {
+				return 1
+			}
 
-				if a.OpenWindows < b.OpenWindows {
-					return -1
-				}
+			if a.OpenWindows < b.OpenWindows {
+				return -1
 			}
 		}
 

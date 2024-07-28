@@ -59,7 +59,6 @@ func getModules() []modules.Workable {
 		&modules.Runner{},
 		&modules.Websearch{},
 		&modules.Commands{},
-		&modules.Hyprland{},
 		&modules.SSH{},
 		&modules.Finder{},
 		&modules.Switcher{},
@@ -755,17 +754,6 @@ func processAsync(ctx context.Context, text string) {
 	handler.receiver = make(chan []util.Entry)
 	go handler.handle()
 
-	var hyprland *modules.Hyprland
-
-	if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService {
-		for _, v := range p {
-			if v.Name() == "hyprland" {
-				hyprland = v.(*modules.Hyprland)
-				break
-			}
-		}
-	}
-
 	var wg sync.WaitGroup
 	wg.Add(len(p))
 
@@ -847,12 +835,12 @@ func processAsync(ctx context.Context, text string) {
 					switch e[k].Matching {
 					case util.AlwaysTopOnEmptySearch:
 						if text != "" {
-							e[k].ScoreFinal = fuzzyScore(e[k], toMatch, hyprland)
+							e[k].ScoreFinal = fuzzyScore(e[k], toMatch)
 						} else {
 							e[k].ScoreFinal = 1000
 						}
 					case util.Fuzzy:
-						e[k].ScoreFinal = fuzzyScore(e[k], toMatch, hyprland)
+						e[k].ScoreFinal = fuzzyScore(e[k], toMatch)
 					case util.AlwaysTop:
 						if e[k].ScoreFinal == 0 {
 							e[k].ScoreFinal = 1000
@@ -911,26 +899,6 @@ func setTypeahead(modules []modules.Workable) {
 func setInitials() {
 	entries := []util.Entry{}
 
-	var hyprland *modules.Hyprland
-
-	if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService {
-		for _, proc := range toUse {
-			if proc.Name() == "hyprland" {
-				if proc.IsSetup() {
-					hyprland = proc.(*modules.Hyprland)
-				} else {
-					ok := proc.Setup(cfg)
-
-					if ok {
-						hyprland = proc.(*modules.Hyprland)
-					}
-				}
-
-				break
-			}
-		}
-	}
-
 	for _, proc := range toUse {
 		if proc.Name() != "applications" {
 			continue
@@ -954,10 +922,6 @@ func setInitials() {
 			}
 
 			entry.ScoreFinal = float64(usageModifier(entry))
-
-			if cfg.Builtins.Hyprland.ContextAwareHistory && cfg.IsService && hyprland != nil {
-				entry.OpenWindows = hyprland.GetWindowAmount(entry.InitialClass)
-			}
 
 			entries = append(entries, entry)
 		}
@@ -1049,7 +1013,7 @@ func createActivationKeys() {
 
 const modifier = 0.10
 
-func fuzzyScore(entry util.Entry, text string, hyprland *modules.Hyprland) float64 {
+func fuzzyScore(entry util.Entry, text string) float64 {
 	textLength := len(text)
 
 	if textLength == 0 {
@@ -1066,10 +1030,6 @@ func fuzzyScore(entry util.Entry, text string, hyprland *modules.Hyprland) float
 	}
 
 	multiplier := 0
-
-	if hyprland != nil {
-		entry.OpenWindows = hyprland.GetWindowAmount(entry.InitialClass)
-	}
 
 	for k, t := range matchables {
 

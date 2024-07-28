@@ -52,7 +52,7 @@ func (w *Windows) Setup(cfg *config.Config) bool {
 }
 
 func (w *Windows) SetupData(cfg *config.Config) {
-	go wlr.StartWM()
+	// go wlr.StartWM()
 
 	w.general.IsSetup = true
 }
@@ -68,14 +68,12 @@ func (w Windows) Entries(ctx context.Context, term string) []util.Entry {
 
 	for _, v := range res {
 		entries = append(entries, util.Entry{
-			Label:          v.Title,
-			Sub:            fmt.Sprintf("Windows: %s", v.AppId),
-			UseSpecialFunc: true,
-			Args:           []interface{}{v.Toplevel.Id()},
-			Searchable:     v.AppId,
-			Categories:     []string{"windows"},
-			Class:          "windows",
-			Matching:       util.Fuzzy,
+			Label:      v.Title,
+			Sub:        fmt.Sprintf("Windows: %s", v.AppId),
+			Searchable: v.AppId,
+			Categories: []string{"windows"},
+			Class:      "windows",
+			Matching:   util.Fuzzy,
 		})
 	}
 

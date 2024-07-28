@@ -34,13 +34,11 @@
   - history-aware
   - desktop actions (f.e. `Open a new private window` [Firefox])
   - puts newly installed applications on top
+  - context-aware (depending on open windows)
 - websearch ()
   - simple websearch
   - google, duckduckgo, ecosia, yandex
   - can open websites directly
-- hyprland
-  - focus open windows
-  - enables context-aware history for applications
 - clipboard
   - simple clipboard history
   - with images

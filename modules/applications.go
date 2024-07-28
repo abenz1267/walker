@@ -8,9 +8,11 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/abenz1267/walker/config"
+	"github.com/abenz1267/walker/modules/windows/wlr"
 	"github.com/abenz1267/walker/util"
 	"github.com/adrg/xdg"
 	"github.com/djherbis/times"
@@ -19,11 +21,15 @@ import (
 const ApplicationsName = "applications"
 
 type Applications struct {
-	general       config.GeneralModule
-	cache         bool
-	actions       bool
-	prioritizeNew bool
-	entries       []util.Entry
+	general        config.GeneralModule
+	mu             sync.Mutex
+	cache          bool
+	actions        bool
+	prioritizeNew  bool
+	entries        []util.Entry
+	isContextAware bool
+	openWindows    map[string]uint
+	wmRunning      bool
 }
 
 type Application struct {
@@ -31,17 +37,17 @@ type Application struct {
 	Actions []util.Entry `json:"actions,omitempty"`
 }
 
-func (a Applications) Cleanup() {}
+func (a *Applications) Cleanup() {}
 
-func (a Applications) History() bool {
+func (a *Applications) History() bool {
 	return a.general.History
 }
 
-func (a Applications) Typeahead() bool {
+func (a *Applications) Typeahead() bool {
 	return a.general.Typeahead
 }
 
-func (a Applications) Placeholder() string {
+func (a *Applications) Placeholder() string {
 	if a.general.Placeholder == "" {
 		return "applications"
 	}
@@ -49,15 +55,15 @@ func (a Applications) Placeholder() string {
 	return a.general.Placeholder
 }
 
-func (Applications) KeepSort() bool {
+func (*Applications) KeepSort() bool {
 	return false
 }
 
-func (a Applications) IsSetup() bool {
+func (a *Applications) IsSetup() bool {
 	return a.general.IsSetup
 }
 
-func (a Applications) SwitcherOnly() bool {
+func (a *Applications) SwitcherOnly() bool {
 	return a.general.SwitcherOnly
 }
 
@@ -67,32 +73,82 @@ func (a *Applications) Setup(cfg *config.Config) bool {
 	a.cache = cfg.Builtins.Applications.Cache
 	a.actions = cfg.Builtins.Applications.Actions
 	a.prioritizeNew = cfg.Builtins.Applications.PrioritizeNew
+	a.isContextAware = cfg.Builtins.Applications.ContextAware
+	a.openWindows = make(map[string]uint)
 
 	return true
 }
 
 func (a *Applications) SetupData(_ *config.Config) {
-	a.entries = parse(a.cache, a.actions, a.prioritizeNew)
+	a.entries = parse(a.cache, a.actions, a.prioritizeNew, a.openWindows)
+
+	if !a.wmRunning && a.isContextAware {
+		go a.RunWm()
+	}
+
 	a.general.IsSetup = true
+}
+
+func (a *Applications) RunWm() {
+	addChan := make(chan string)
+	deleteChan := make(chan string)
+
+	a.wmRunning = true
+
+	go wlr.StartWM(addChan, deleteChan)
+
+	for {
+		select {
+		case appId := <-addChan:
+			a.mu.Lock()
+			val, ok := a.openWindows[appId]
+
+			if ok {
+				a.openWindows[appId] = val + 1
+			} else {
+				a.openWindows[appId] = 1
+			}
+
+			for k := range a.entries {
+				if _, ok := a.openWindows[a.entries[k].InitialClass]; ok {
+					a.entries[k].OpenWindows = a.openWindows[a.entries[k].InitialClass]
+				}
+			}
+
+			a.mu.Unlock()
+		case appId := <-deleteChan:
+			a.mu.Lock()
+
+			if val, ok := a.openWindows[appId]; ok {
+				if val == 1 {
+					delete(a.openWindows, appId)
+				} else {
+					a.openWindows[appId] = val - 1
+				}
+			}
+
+			a.mu.Unlock()
+		}
+	}
 }
 
 func (a *Applications) Refresh() {
 	a.general.IsSetup = false
 }
 
-func (a Applications) Name() string {
+func (a *Applications) Name() string {
 	return ApplicationsName
 }
 
-func (a Applications) Prefix() string {
+func (a *Applications) Prefix() string {
 	return a.general.Prefix
 }
 
-func (a Applications) Entries(ctx context.Context, _ string) []util.Entry {
+func (a *Applications) Entries(ctx context.Context, _ string) []util.Entry {
 	return a.entries
 }
 
-func parse(cache, actions, prioritizeNew bool) []util.Entry {
+func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint) []util.Entry {
 	apps := []Application{}
 	entries := []util.Entry{}
 
@@ -172,6 +228,7 @@ func parse(cache, actions, prioritizeNew bool) []util.Entry {
 							Categories:       app.Generic.Categories,
 							History:          app.Generic.History,
 							InitialClass:     app.Generic.InitialClass,
+							OpenWindows:      app.Generic.OpenWindows,
 							RecalculateScore: true,
 						})
 
@@ -223,6 +280,11 @@ func parse(cache, actions, prioritizeNew bool) []util.Entry {
 
 						if strings.HasPrefix(line, "StartupWMClass=") {
 							app.Generic.InitialClass = strings.ToLower(strings.TrimSpace(strings.TrimPrefix(line, "StartupWMClass=")))
+
+							if val, ok := openWindows[app.Generic.InitialClass]; ok {
+								app.Generic.OpenWindows = val
+							}
+
 							continue
 						}
 

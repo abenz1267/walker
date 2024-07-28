@@ -42,7 +42,6 @@ type Builtins struct {
 	Dmenu          Dmenu          `mapstructure:"dmenu"`
 	Emojis         Emojis         `mapstructure:"emojis"`
 	Finder         Finder         `mapstructure:"finder"`
-	Hyprland       Hyprland       `mapstructure:"hyprland"`
 	Runner         Runner         `mapstructure:"runner"`
 	SSH            SSH            `mapstructure:"ssh"`
 	Switcher       Switcher       `mapstructure:"switcher"`
@@ -99,16 +98,12 @@ type Websearch struct {
 	Engines       []string `mapstructure:"engines"`
 }
 
-type Hyprland struct {
-	GeneralModule       `mapstructure:",squash"`
-	ContextAwareHistory bool `mapstructure:"context_aware_history"`
-}
-
 type Applications struct {
 	GeneralModule `mapstructure:",squash"`
 	Actions       bool `mapstructure:"actions"`
 	Cache         bool `mapstructure:"cache"`
 	PrioritizeNew bool `mapstructure:"prioritize_new"`
+	ContextAware  bool `mapstructure:"context_aware"`
 }
 
 type ActivationMode struct {

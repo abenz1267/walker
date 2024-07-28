@@ -29,7 +29,15 @@ func Activate(id wl.ProxyId) {
 	}
 }
 
-func StartWM() {
+var (
+	addChan    chan string
+	deleteChan chan string
+)
+
+func StartWM(ac chan string, dc chan string) {
+	addChan = ac
+	deleteChan = dc
+
 	var err error
 
 	display, err = wl.Connect("")
@@ -86,15 +94,19 @@ func (registryGlobalHander) HandleRegistryGlobal(e wl.RegistryGlobalEvent) {
 }
 
 type Window struct {
-	mutex    sync.Mutex
-	Toplevel *ZwlrForeignToplevelHandleV1
-	AppId    string
-	Title    string
+	mutex      sync.Mutex
+	Toplevel   *ZwlrForeignToplevelHandleV1
+	AppId      string
+	Title      string
+	AddChan    chan string
+	DeleteChan chan string
 }
 
 func (*Window) HandleZwlrForeignToplevelManagerV1Toplevel(e ZwlrForeignToplevelManagerV1ToplevelEvent) {
 	handler := &Window{
-		Toplevel: e.Toplevel,
+		Toplevel:   e.Toplevel,
+		AddChan:    addChan,
+		DeleteChan: deleteChan,
 	}
 
 	e.Toplevel.AddTitleHandler(handler)
@@ -107,17 +119,23 @@ func (*Window) HandleZwlrForeignToplevelManagerV1Toplevel(e ZwlrForeignToplevelM
 }
 
 func (h *Window) HandleZwlrForeignToplevelHandleV1Closed(e ZwlrForeignToplevelHandleV1ClosedEvent) {
-	delete(windows, h.Toplevel.Id())
+	h.DeleteChan <- h.AppId
+
+	// h.mutex.Lock()
+	// defer h.mutex.Unlock()
+	// delete(windows, h.Toplevel.Id())
 }
 
 func (h *Window) HandleZwlrForeignToplevelHandleV1AppId(e ZwlrForeignToplevelHandleV1AppIdEvent) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-	windows[h.Toplevel.Id()].AppId = e.AppId
+	// h.mutex.Lock()
+	// defer h.mutex.Unlock()
+	// windows[h.Toplevel.Id()].AppId = e.AppId
+	h.AppId = e.AppId
+	h.AddChan <- e.AppId
 }
 
 func (h *Window) HandleZwlrForeignToplevelHandleV1Title(e ZwlrForeignToplevelHandleV1TitleEvent) {
-	h.mutex.Lock()
-	defer h.mutex.Unlock()
-	windows[h.Toplevel.Id()].Title = e.Title
+	// h.mutex.Lock()
+	// defer h.mutex.Unlock()
+	// windows[h.Toplevel.Id()].Title = e.Title
 }

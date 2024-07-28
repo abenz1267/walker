@@ -34,7 +34,11 @@
   },
   "activation_mode": {},
   "builtins": {
-    "applications": { "actions": true, "prioritize_new": true },
+    "applications": {
+      "actions": true,
+      "prioritize_new": true,
+      "context_aware": true
+    },
     "clipboard": {
       "image_height": 300,
       "max_entries": 10,
@@ -44,7 +48,6 @@
     "custom_commands": {},
     "emojis": { "switcher_only": true, "history": true, "typeahead": true },
     "finder": { "switcher_only": true, "ignore_gitignore": true },
-    "hyprland": { "context_aware_history": true },
     "runner": { "typeahead": true, "history": true, "generic_entry": false },
     "ssh": { "switcher_only": true, "history": true },
     "switcher": { "prefix": "/" },

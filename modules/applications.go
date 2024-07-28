@@ -107,12 +107,19 @@ func parse(cache, actions, prioritizeNew bool) []util.Entry {
 
 	flags := []string{"%f", "%F", "%u", "%U", "%d", "%D", "%n", "%N", "%i", "%c", "%k", "%v", "%m"}
 
+	done := make(map[string]struct{})
+
 	for _, d := range dirs {
 		if _, err := os.Stat(d); err != nil {
 			continue
 		}
 
 		filepath.Walk(d, func(path string, info fs.FileInfo, err error) error {
+			if _, ok := done[info.Name()]; ok {
+				fmt.Println("done")
+				return nil
+			}
+
 			if !info.IsDir() && filepath.Ext(path) == ".desktop" {
 				file, err := os.Open(path)
 				if err != nil {
@@ -251,6 +258,8 @@ func parse(cache, actions, prioritizeNew bool) []util.Entry {
 				}
 
 				apps = append(apps, app)
+
+				done[info.Name()] = struct{}{}
 			}
 
 			return nil

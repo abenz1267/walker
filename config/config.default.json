@@ -1,6 +1,6 @@
 {
   "ui": {
-    "icons": { "size": 38, "size_single_module": 32, "image_size": 150 },
+    "icons": { "size": -1, "size_single_module": -1, "image_size": 150 },
     "orientation": "vertical",
     "ignore_exclusive": true,
     "fullscreen": false,

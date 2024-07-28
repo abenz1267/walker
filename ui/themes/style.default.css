@@ -68,6 +68,14 @@ row:selected {
   border-radius: 2px;
 }
 
+.image {
+  padding-right: 8px;
+}
+
+.image.standalone {
+  padding-right: 0px;
+}
+
 .icon {
   padding-right: 5px;
 }

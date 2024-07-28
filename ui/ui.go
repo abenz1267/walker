@@ -540,31 +540,41 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		if val.Image != "" {
 			image := gtk.NewImageFromFile(val.Image)
-			image.SetHExpand(true)
-			image.SetSizeRequest(-1, cfg.Builtins.Clipboard.ImageHeight)
+			image.SetPixelSize(cfg.UI.Icons.ImageSize)
+			image.SetCSSClasses([]string{"image"})
+
+			if val.HideText {
+				image.SetHExpand(true)
+				image.SetHExpandSet(true)
+				image.SetCSSClasses([]string{"image", "standalone"})
+			}
+
 			box.Append(image)
 		}
 
 		if !cfg.UI.Icons.Hide && val.Icon != "" {
-			if val.IconIsImage {
-				image := gtk.NewImageFromFile(val.Icon)
-				image.SetMarginEnd(10)
-				image.SetSizeRequest(cfg.UI.Icons.ImageSize, cfg.UI.Icons.ImageSize)
-				box.Append(image)
-			} else {
-				size := cfg.UI.Icons.Size
+			var icon *gtk.Image
 
-				if appstate.IsSingle {
-					size = cfg.UI.Icons.SizeSingleModule
-				}
+			size := cfg.UI.Icons.Size
 
-				i := ui.iconTheme.LookupIcon(val.Icon, []string{}, size, 1, gtk.GetLocaleDirection(), 0)
-				icon := gtk.NewImageFromPaintable(i)
-				icon.SetIconSize(gtk.IconSizeLarge)
-				icon.SetPixelSize(size)
-				icon.SetCSSClasses([]string{"icon"})
-				box.Append(icon)
+			if appstate.IsSingle {
+				size = cfg.UI.Icons.SizeSingleModule
 			}
+
+			if filepath.IsAbs(val.Icon) {
+				icon = gtk.NewImageFromFile(val.Icon)
+			} else {
+				i := ui.iconTheme.LookupIcon(val.Icon, []string{}, size, 1, gtk.GetLocaleDirection(), 0)
+
+				icon = gtk.NewImageFromPaintable(i)
+			}
+
+			icon.SetIconSize(gtk.IconSizeLarge)
+			icon.SetPixelSize(size)
+
+			icon.SetCSSClasses([]string{"icon"})
+
+			box.Append(icon)
 		}
 
 		if !val.HideText {

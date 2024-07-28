@@ -26,7 +26,6 @@ type Entry struct {
 	ExecAlt          string       `mapstructure:"exec_alt,omitempty"`
 	HideText         bool         `mapstructure:"hide_text,omitempty"`
 	Icon             string       `mapstructure:"icon,omitempty"`
-	IconIsImage      bool         `mapstructure:"icon_is_image,omitempty"`
 	Image            string       `mapstructure:"image,omitempty"`
 	InitialClass     string       `mapstructure:"initial_class,omitempty"`
 	Label            string       `mapstructure:"label,omitempty"`

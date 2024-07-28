@@ -225,6 +225,7 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 | `--labelcolumn`, `-l` | Column to use for the label                  |
 | `--password`, `-y`    | Launch in password mode                      |
 | `--forceprint`, `-f`  | Forces printing input if no item is selected |
+| `--query`, `-q`       | To set initial query                         |
 
 ## Keybinds
 

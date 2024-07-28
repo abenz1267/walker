@@ -296,6 +296,13 @@ func setupUI(app *gtk.Application) {
 	setupUserStyle()
 	handleListVisibility()
 
+	if appstate.InitialQuery != "" {
+		ui.search.SetText(appstate.InitialQuery)
+		glib.IdleAdd(func() {
+			ui.search.SetPosition(-1)
+		})
+	}
+
 	ui.selection.ConnectItemsChanged(func(p, r, a uint) {
 		if ui.selection.NItems() > 0 {
 			ui.selection.SetSelected(0)
@@ -664,6 +671,13 @@ func reopen() {
 		}
 
 		ui.search.SetObjectProperty("placeholder-text", text)
+	}
+
+	if appstate.InitialQuery != "" {
+		ui.search.SetText(appstate.InitialQuery)
+		glib.IdleAdd(func() {
+			ui.search.SetPosition(-1)
+		})
 	}
 
 	ui.search.GrabFocus()

@@ -29,6 +29,7 @@ type AppState struct {
 	LabelsF             []string
 	UsedLabels          []string
 	SpecialLabels       map[uint]uint
+	InitialQuery        string
 }
 
 func Get() *AppState {

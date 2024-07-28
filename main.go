@@ -100,6 +100,7 @@ func main() {
 	app.AddMainOption("config", 'c', glib.OptionFlagNone, glib.OptionArgString, "config file to use", "")
 	app.AddMainOption("style", 's', glib.OptionFlagNone, glib.OptionArgString, "style file to use", "")
 	app.AddMainOption("placeholder", 'p', glib.OptionFlagNone, glib.OptionArgString, "placeholder text", "")
+	app.AddMainOption("query", 'q', glib.OptionFlagNone, glib.OptionArgString, "initial query", "")
 	app.AddMainOption("labelcolumn", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
 	app.AddMainOption("separator", 't', glib.OptionFlagNone, glib.OptionArgString, "column separator", "")
 	app.AddMainOption("version", 'v', glib.OptionFlagNone, glib.OptionArgNone, "print version", "")
@@ -123,6 +124,7 @@ func main() {
 		configString := options.LookupValue("config", glib.NewVariantString("").Type())
 		styleString := options.LookupValue("style", glib.NewVariantString("").Type())
 		placeholderString := options.LookupValue("placeholder", glib.NewVariantString("").Type())
+		initialQueryString := options.LookupValue("query", glib.NewVariantString("").Type())
 
 		if options.Contains("dmenu") {
 			labelColumnString := options.LookupValue("labelcolumn", glib.NewVariantString("").Type())
@@ -169,6 +171,10 @@ func main() {
 
 		if placeholderString != nil && placeholderString.String() != "" {
 			state.ExplicitPlaceholder = placeholderString.String()
+		}
+
+		if initialQueryString != nil && initialQueryString.String() != "" {
+			state.InitialQuery = initialQueryString.String()
 		}
 
 		if configString != nil && configString.String() != "" {

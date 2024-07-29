@@ -229,6 +229,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint) []ut
 							History:          app.Generic.History,
 							InitialClass:     app.Generic.InitialClass,
 							OpenWindows:      app.Generic.OpenWindows,
+							Prefer:           true,
 							RecalculateScore: true,
 						})
 

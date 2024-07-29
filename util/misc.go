@@ -39,6 +39,7 @@ type Entry struct {
 	SpecialLabel     string       `mapstructure:"special_label,omitempty" json:"special_label,omitempty"`
 	Sub              string       `mapstructure:"sub,omitempty" json:"sub,omitempty"`
 	Terminal         bool         `mapstructure:"terminal,omitempty" json:"terminal,omitempty"`
+	Prefer           bool         `mapstructure:"prefer,omitempty" json:"prefer,omitempty"`
 
 	// internal
 	DaysSinceUsed int       `mapstructure:"-"`

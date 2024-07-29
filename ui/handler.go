@@ -91,6 +91,19 @@ func sortEntries(entries []util.Entry) {
 			}
 		}
 
+		min := a.ScoreFinal - 50
+		max := a.ScoreFinal + 50
+
+		if min < b.ScoreFinal && b.ScoreFinal < max {
+			if a.Prefer && !b.Prefer {
+				return -1
+			}
+
+			if !a.Prefer && b.Prefer {
+				return 1
+			}
+		}
+
 		if a.ScoreFinal == b.ScoreFinal {
 			if !a.LastUsed.IsZero() && !b.LastUsed.IsZero() {
 				return b.LastUsed.Compare(a.LastUsed)

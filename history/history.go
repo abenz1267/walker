@@ -22,6 +22,18 @@ type HistoryEntry struct {
 	DaysSinceUsed int       `json:"-"`
 }
 
+func (s *History) Delete(hash string) {
+	for _, v := range *s {
+		for h := range v {
+			if h == hash {
+				delete(v, h)
+			}
+		}
+	}
+
+	util.ToGob(&s, filepath.Join(util.CacheDir(), "history.gob"))
+}
+
 func (s History) Save(hash string, prefix string) {
 	p, ok := s[prefix]
 	if !ok {

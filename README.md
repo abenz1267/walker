@@ -242,6 +242,7 @@ AM = Activation Mode
 | `Ctrl+k` (if ActivationMode is disabled), `Up`, `LEFT_TAB` (shift+tab?) | previous entry                                                           |
 | `Escape`                                                                | close                                                                    |
 | `Ctrl`                                                                  | start AM                                                                 |
+| `Shift+Backspace`                                                       | delete entry from history                                                |
 | in AM: `<label>`                                                        | activate item                                                            |
 | in AM: Hold `Shift+<label>`                                             | activate item (don't close)                                              |
 | in AM: `Escape`                                                         | stop AM                                                                  |

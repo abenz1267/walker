@@ -213,6 +213,12 @@ func setupInteractions(appstate *state.AppState) {
 		cmdAltModifier = gdk.ControlMask
 	}
 
+	globalKeyController := gtk.NewEventControllerKey()
+	globalKeyController.ConnectKeyPressed(handleGlobalKeysPressed)
+	globalKeyController.SetPropagationPhase(gtk.PropagationPhase(1))
+
+	ui.appwin.AddController(globalKeyController)
+
 	if !cfg.IgnoreMouse {
 		gesture := gtk.NewGestureClick()
 		gesture.SetPropagationPhase(gtk.PropagationPhase(3))
@@ -322,6 +328,20 @@ func disabledAM() {
 		ui.appwin.SetCSSClasses(c)
 		ui.search.GrabFocus()
 	}
+}
+
+func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
+	switch val {
+	case gdk.KEY_BackSpace:
+		if modifier == gdk.ShiftMask {
+			entry := gioutil.ObjectValue[util.Entry](ui.items.Item(ui.selection.Selected()))
+			hstry.Delete(entry.Identifier())
+
+			return true
+		}
+	}
+
+	return false
 }
 
 func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {

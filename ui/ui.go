@@ -276,7 +276,10 @@ func setupUI(app *gtk.Application) {
 		ui.iconTheme = gtk.IconThemeGetForDisplay(gdk.DisplayGetDefault())
 	}
 
-	ui.list.SetSingleClickActivate(true)
+	if cfg.List.SingleClick {
+		ui.list.SetSingleClickActivate(true)
+	}
+
 	ui.list.ConnectActivate(func(pos uint) {
 		activateItem(false, false, false)
 	})

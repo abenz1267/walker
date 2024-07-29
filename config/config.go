@@ -196,11 +196,12 @@ type List struct {
 	FixedHeight         bool   `mapstructure:"fixed_height"`
 	Height              int    `mapstructure:"height"`
 	HideSub             bool   `mapstructure:"hide_sub"`
-	ShowSubSingleModule bool   `mapstructure:"show_sub_single_module"`
 	MarginTop           int    `mapstructure:"margin_top"`
 	MaxEntries          int    `mapstructure:"max_entries"`
 	ScrollbarPolicy     string `mapstructure:"scrollbar_policy"`
 	ShowInitialEntries  bool   `mapstructure:"show_initial_entries"`
+	ShowSubSingleModule bool   `mapstructure:"show_sub_single_module"`
+	SingleClick         bool   `mapstructure:"single_click"`
 	Width               int    `mapstructure:"width"`
 }
 

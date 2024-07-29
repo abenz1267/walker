@@ -18,27 +18,27 @@ const (
 )
 
 type Entry struct {
-	Categories       []string     `mapstructure:"categories,omitempty"`
-	Class            string       `mapstructure:"class,omitempty"`
-	DragDrop         bool         `mapstructure:"drag_drop,omitempty"`
-	DragDropData     string       `mapstructure:"drag_drop_data,omitempty"`
-	Exec             string       `mapstructure:"exec,omitempty"`
-	ExecAlt          string       `mapstructure:"exec_alt,omitempty"`
-	HideText         bool         `mapstructure:"hide_text,omitempty"`
-	Icon             string       `mapstructure:"icon,omitempty"`
-	Image            string       `mapstructure:"image,omitempty"`
-	InitialClass     string       `mapstructure:"initial_class,omitempty"`
-	Label            string       `mapstructure:"label,omitempty"`
-	MatchFields      int          `mapstructure:"match_fields,omitempty"`
-	Matching         MatchingType `mapstructure:"matching,omitempty"`
-	Path             string       `mapstructure:"path,omitempty"`
-	RecalculateScore bool         `mapstructure:"recalculate_score,omitempty"`
-	ScoreFinal       float64      `mapstructure:"score_final,omitempty"`
-	ScoreFuzzy       float64      `mapstructure:"score_fuzzy,omitempty"`
-	Searchable       string       `mapstructure:"searchable,omitempty"`
-	SpecialLabel     string       `mapstructure:"special_label,omitempty"`
-	Sub              string       `mapstructure:"sub,omitempty"`
-	Terminal         bool         `mapstructure:"terminal,omitempty"`
+	Categories       []string     `mapstructure:"categories,omitempty" json:"categories,omitempty"`
+	Class            string       `mapstructure:"class,omitempty" json:"class,omitempty"`
+	DragDrop         bool         `mapstructure:"drag_drop,omitempty" json:"drag_drop,omitempty"`
+	DragDropData     string       `mapstructure:"drag_drop_data,omitempty" json:"drag_drop_data,omitempty"`
+	Exec             string       `mapstructure:"exec,omitempty" json:"exec,omitempty"`
+	ExecAlt          string       `mapstructure:"exec_alt,omitempty" json:"exec_alt,omitempty"`
+	HideText         bool         `mapstructure:"hide_text,omitempty" json:"hide_text,omitempty"`
+	Icon             string       `mapstructure:"icon,omitempty" json:"icon,omitempty"`
+	Image            string       `mapstructure:"image,omitempty" json:"image,omitempty"`
+	InitialClass     string       `mapstructure:"initial_class,omitempty" json:"initial_class,omitempty"`
+	Label            string       `mapstructure:"label,omitempty" json:"label,omitempty"`
+	MatchFields      int          `mapstructure:"match_fields,omitempty" json:"match_fields,omitempty"`
+	Matching         MatchingType `mapstructure:"matching,omitempty" json:"matching,omitempty"`
+	Path             string       `mapstructure:"path,omitempty" json:"path,omitempty"`
+	RecalculateScore bool         `mapstructure:"recalculate_score,omitempty" json:"recalculate_score,omitempty"`
+	ScoreFinal       float64      `mapstructure:"score_final,omitempty" json:"score_final,omitempty"`
+	ScoreFuzzy       float64      `mapstructure:"score_fuzzy,omitempty" json:"score_fuzzy,omitempty"`
+	Searchable       string       `mapstructure:"searchable,omitempty" json:"searchable,omitempty"`
+	SpecialLabel     string       `mapstructure:"special_label,omitempty" json:"special_label,omitempty"`
+	Sub              string       `mapstructure:"sub,omitempty" json:"sub,omitempty"`
+	Terminal         bool         `mapstructure:"terminal,omitempty" json:"terminal,omitempty"`
 
 	// internal
 	DaysSinceUsed int       `mapstructure:"-"`

@@ -1,4 +1,6 @@
-# Walker - Application Runner, Dmenu Replacement and more
+# Walker - Application launcher
+
+Walker is a highly extendable application launcher that doesn't hold back on features and usability. Fast. Unclutters your brain. Improves your workflow.
 
 ![Screenshot](https://github.com/abenz1267/walker/blob/master/screenshot.png?raw=true)
 
@@ -10,7 +12,7 @@
 
 ## Features
 
-- highly extensible via plugins: simple stdin/stdout (external or via configuration, see wiki)
+- plugin support: simple stdin/stdout (external or via configuration, see wiki)
 - icons/images
 - start as service for faster startup (see benchmarks below)
 - run entries via labels (F<1-8> or jkl;asdf)
@@ -34,7 +36,7 @@
   - history-aware
   - desktop actions (f.e. `Open a new private window` [Firefox])
   - puts newly installed applications on top
-  - context-aware (depending on open windows)
+  - context-aware (context = open windows)
 - websearch ()
   - simple websearch
   - google, duckduckgo, ecosia, yandex

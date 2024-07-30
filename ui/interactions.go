@@ -690,8 +690,6 @@ func process() {
 		ui.list.SetCanTarget(false)
 	}
 
-	ui.spinner.SetCSSClasses([]string{"visible"})
-
 	text := strings.TrimSpace(ui.search.Text())
 
 	if text == "" && cfg.List.ShowInitialEntries && len(explicits) == 0 && !appstate.IsDmenu {
@@ -703,10 +701,17 @@ func process() {
 	ctx, cancel = context.WithCancel(context.Background())
 
 	if (ui.search.Text() != "" || appstate.IsDmenu) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
+		if cfg.Search.Spinner {
+			ui.spinner.SetVisible(true)
+		}
+
 		go processAsync(ctx, text)
 	} else {
 		ui.items.Splice(0, int(ui.items.NItems()))
-		ui.spinner.SetCSSClasses([]string{})
+
+		if cfg.Search.Spinner {
+			ui.spinner.SetVisible(false)
+		}
 	}
 }
 
@@ -720,8 +725,11 @@ func processAsync(ctx context.Context, text string) {
 	handler := handlerPool.Get().(*Handler)
 	defer func() {
 		handlerPool.Put(handler)
-		ui.spinner.SetCSSClasses([]string{})
 		cancel()
+
+		if cfg.Search.Spinner {
+			ui.spinner.SetVisible(false)
+		}
 	}()
 
 	hasExplicit := len(explicits) > 0
@@ -954,8 +962,6 @@ func setInitials() {
 	sortEntries(entries)
 
 	ui.items.Splice(0, int(ui.items.NItems()), entries...)
-
-	ui.spinner.SetCSSClasses([]string{})
 }
 
 func usageModifier(item util.Entry) int {

@@ -211,9 +211,10 @@ func setupUI(app *gtk.Application) {
 	items := gioutil.NewListModel[util.Entry]()
 
 	spinner := gtk.NewSpinner()
+	spinner.SetVisible(false)
 	spinner.SetName("spinner")
 
-	searchwrapper := gtk.NewBox(gtk.OrientationVertical, 0)
+	searchwrapper := gtk.NewBox(gtk.OrientationHorizontal, 0)
 	searchwrapper.SetName("searchwrapper")
 
 	typeahead := gtk.NewSearchEntry()
@@ -249,6 +250,7 @@ func setupUI(app *gtk.Application) {
 	overlay.AddOverlay(search)
 
 	searchwrapper.Append(overlay)
+
 	box.Append(searchwrapper)
 	box.Append(scroll)
 
@@ -267,6 +269,10 @@ func setupUI(app *gtk.Application) {
 		list:          list,
 		selection:     selection,
 		prefixClasses: make(map[string][]string),
+	}
+
+	if cfg.Search.Spinner {
+		searchwrapper.Append(spinner)
 	}
 
 	if cfg.UI.Icons.Theme != "" {
@@ -399,10 +405,6 @@ func setupUserStyle() {
 
 	if cfg.List.MarginTop != 0 {
 		ui.list.SetMarginTop(cfg.List.MarginTop)
-	}
-
-	if !cfg.Search.Spinner {
-		ui.spinner.SetVisible(false)
 	}
 
 	if !cfg.Search.Icons {

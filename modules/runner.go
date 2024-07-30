@@ -26,32 +26,8 @@ type Runner struct {
 
 func (r Runner) Cleanup() {}
 
-func (r Runner) History() bool {
-	return r.general.History
-}
-
-func (r Runner) Typeahead() bool {
-	return r.general.Typeahead
-}
-
-func (Runner) KeepSort() bool {
-	return false
-}
-
-func (r Runner) IsSetup() bool {
-	return r.general.IsSetup
-}
-
-func (r Runner) Placeholder() string {
-	if r.general.Placeholder == "" {
-		return "runner"
-	}
-
-	return r.general.Placeholder
-}
-
-func (r Runner) SwitcherOnly() bool {
-	return r.general.SwitcherOnly
+func (r *Runner) General() *config.GeneralModule {
+	return &r.general
 }
 
 func (r *Runner) Setup(cfg *config.Config) bool {
@@ -62,7 +38,7 @@ func (r *Runner) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (r *Runner) SetupData(cfg *config.Config) {
+func (r *Runner) SetupData(cfg *config.Config, ctx context.Context) {
 	r.parseAliases()
 
 	if len(cfg.Builtins.Runner.Includes) > 0 {
@@ -86,14 +62,8 @@ func (r *Runner) SetupData(cfg *config.Config) {
 	r.general.IsSetup = true
 }
 
-func (r Runner) Refresh() {}
-
-func (r Runner) Prefix() string {
-	return r.general.Prefix
-}
-
-func (Runner) Name() string {
-	return "runner"
+func (r *Runner) Refresh() {
+	r.general.IsSetup = !r.general.Refresh
 }
 
 func (r Runner) Entries(ctx context.Context, term string) []util.Entry {

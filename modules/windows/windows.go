@@ -51,7 +51,7 @@ func (w *Windows) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (w *Windows) SetupData(cfg *config.Config) {
+func (w *Windows) SetupData(cfg *config.Config, ctx context.Context) {
 	// go wlr.StartWM()
 
 	w.general.IsSetup = true

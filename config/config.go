@@ -61,18 +61,26 @@ type CustomCommand struct {
 }
 
 type GeneralModule struct {
-	IsSetup      bool   `mapstructure:"-"`
+	Delay        int    `mapstructure:"delay"`
+	EagerLoading bool   `mapstructure:"eager_loading"`
 	History      bool   `mapstructure:"history"`
+	KeepSort     bool   `mapstructure:"keep_sort"`
+	Name         string `mapstructure:"name"`
 	Placeholder  string `mapstructure:"placeholder"`
 	Prefix       string `mapstructure:"prefix"`
+	Refresh      bool   `mapstructure:"refresh"`
 	SpecialLabel string `mapstructure:"special_label"`
 	SwitcherOnly bool   `mapstructure:"switcher_only"`
 	Typeahead    bool   `mapstructure:"typeahead"`
+
+	// internal
+	IsSetup bool `mapstructure:"-"`
 }
 
 type Finder struct {
 	GeneralModule   `mapstructure:",squash"`
 	IgnoreGitIgnore bool `mapstructure:"ignore_gitignore"`
+	Concurrency     int  `mapstructure:"concurrency"`
 }
 
 type Commands struct {
@@ -136,9 +144,7 @@ type Plugin struct {
 	GeneralModule  `mapstructure:",squash"`
 	Cmd            string            `mapstructure:"cmd"`
 	CmdAlt         string            `mapstructure:"cmd_alt"`
-	KeepSort       bool              `mapstructure:"keep_sort"`
 	Matching       util.MatchingType `mapstructure:"matching"`
-	Name           string            `mapstructure:"name"`
 	Src            string            `mapstructure:"src"`
 	SrcOnce        string            `mapstructure:"src_once"`
 	SrcOnceRefresh bool              `mapstructure:"src_once_refresh"`
@@ -255,11 +261,6 @@ func Get(config string) *Config {
 	}
 
 	go setTerminal(cfg)
-
-	// defaults
-	if cfg.List.MaxEntries == 0 {
-		cfg.List.MaxEntries = 50
-	}
 
 	return cfg
 }

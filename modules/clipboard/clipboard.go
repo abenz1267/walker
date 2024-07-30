@@ -27,18 +27,6 @@ type Clipboard struct {
 	max      int
 }
 
-func (c Clipboard) Cleanup() {}
-
-func (c Clipboard) SwitcherOnly() bool {
-	return c.general.SwitcherOnly
-}
-
-func (c Clipboard) Refresh() {}
-
-func (Clipboard) KeepSort() bool {
-	return false
-}
-
 type ClipboardItem struct {
 	Content string    `json:"content,omitempty"`
 	Time    time.Time `json:"time,omitempty"`
@@ -46,13 +34,15 @@ type ClipboardItem struct {
 	IsImg   bool      `json:"is_img,omitempty"`
 }
 
-func (c Clipboard) Typeahead() bool {
-	return false
+func (c *Clipboard) General() *config.GeneralModule {
+	return &c.general
 }
 
-func (c Clipboard) History() bool {
-	return false
+func (c *Clipboard) Refresh() {
+	c.general.IsSetup = !c.general.Refresh
 }
+
+func (c Clipboard) Cleanup() {}
 
 func (c Clipboard) Entries(ctx context.Context, term string) []util.Entry {
 	entries := []util.Entry{}
@@ -90,14 +80,6 @@ func (c Clipboard) Entries(ctx context.Context, term string) []util.Entry {
 	return entries
 }
 
-func (c Clipboard) Prefix() string {
-	return c.general.Prefix
-}
-
-func (c Clipboard) Name() string {
-	return ClipboardName
-}
-
 func (c *Clipboard) Setup(cfg *config.Config) bool {
 	pth, _ := exec.LookPath("wl-copy")
 	if pth == "" {
@@ -126,25 +108,13 @@ func (c *Clipboard) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (c *Clipboard) SetupData(cfg *config.Config) {
+func (c *Clipboard) SetupData(cfg *config.Config, ctx context.Context) {
 	current := []ClipboardItem{}
 	util.FromGob(c.file, &current)
 
 	c.entries = clean(current, c.file)
 
 	c.general.IsSetup = true
-}
-
-func (c Clipboard) IsSetup() bool {
-	return c.general.IsSetup
-}
-
-func (c Clipboard) Placeholder() string {
-	if c.general.Placeholder == "" {
-		return "clipboard"
-	}
-
-	return c.general.Placeholder
 }
 
 func clean(entries []ClipboardItem, file string) []ClipboardItem {

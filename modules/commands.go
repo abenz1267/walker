@@ -12,46 +12,14 @@ type Commands struct {
 	entries []util.Entry
 }
 
+func (c *Commands) General() *config.GeneralModule {
+	return &c.general
+}
+
 func (c Commands) Cleanup() {}
-
-func (c Commands) History() bool {
-	return c.general.History
-}
-
-func (c Commands) Typeahead() bool {
-	return c.general.Typeahead
-}
-
-func (c Commands) IsSetup() bool {
-	return c.general.IsSetup
-}
-
-func (Commands) KeepSort() bool {
-	return false
-}
-
-func (c Commands) Placeholder() string {
-	if c.general.Placeholder == "" {
-		return "commands"
-	}
-
-	return c.general.Placeholder
-}
 
 func (c Commands) Entries(ctx context.Context, term string) []util.Entry {
 	return c.entries
-}
-
-func (c Commands) Prefix() string {
-	return c.general.Prefix
-}
-
-func (c Commands) Name() string {
-	return "commands"
-}
-
-func (c Commands) SwitcherOnly() bool {
-	return c.general.SwitcherOnly
 }
 
 func (c *Commands) Setup(cfg *config.Config) bool {
@@ -60,7 +28,7 @@ func (c *Commands) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (c *Commands) SetupData(cfg *config.Config) {
+func (c *Commands) SetupData(cfg *config.Config, ctx context.Context) {
 	entries := []struct {
 		label string
 		exec  string
@@ -99,4 +67,6 @@ func (c *Commands) SetupData(cfg *config.Config) {
 	c.general.IsSetup = true
 }
 
-func (c Commands) Refresh() {}
+func (c *Commands) Refresh() {
+	c.general.IsSetup = !c.general.Refresh
+}

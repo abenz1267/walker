@@ -36,23 +36,73 @@
   "activation_mode": {},
   "builtins": {
     "applications": {
+      "name": "applications",
+      "placeholder": "Applications",
       "actions": true,
       "prioritize_new": true,
-      "context_aware": true
+      "context_aware": true,
+      "refresh": true
     },
     "clipboard": {
+      "name": "clipboard",
+      "placeholder": "Clipboard",
       "image_height": 300,
       "max_entries": 10,
       "switcher_only": true
     },
-    "commands": { "switcher_only": true },
-    "custom_commands": {},
-    "emojis": { "switcher_only": true, "history": true, "typeahead": true },
-    "finder": { "switcher_only": true, "ignore_gitignore": true },
-    "runner": { "typeahead": true, "history": true, "generic_entry": false },
-    "ssh": { "switcher_only": true, "history": true },
-    "switcher": { "prefix": "/" },
-    "websearch": { "engines": ["google"] },
-    "dmenu": {}
+    "commands": {
+      "switcher_only": true,
+      "name": "commands",
+      "placeholder": "Commands"
+    },
+    "custom_commands": {
+      "name": "custom_commands",
+      "placeholder": "Custom Commands"
+    },
+    "emojis": {
+      "name": "emojis",
+      "placeholder": "Emojis",
+      "switcher_only": true,
+      "history": true,
+      "typeahead": true
+    },
+    "finder": {
+      "name": "finder",
+      "placeholder": "Finder",
+      "switcher_only": true,
+      "ignore_gitignore": true,
+      "refresh": true,
+      "concurrency": 8
+    },
+    "runner": {
+      "name": "runner",
+      "placeholder": "Runner",
+      "typeahead": true,
+      "history": true,
+      "generic_entry": false,
+      "refresh": true
+    },
+    "ssh": {
+      "name": "ssh",
+      "placeholder": "SSH",
+      "switcher_only": true,
+      "history": true,
+      "refresh": true
+    },
+    "switcher": {
+      "name": "switcher",
+      "placeholder": "Switcher",
+      "prefix": "/"
+    },
+    "websearch": {
+      "name": "websearch",
+      "placeholder": "Websearch",
+      "engines": ["google"]
+    },
+    "dmenu": {
+      "name": "dmenu",
+      "placeholder": "Dmenu",
+      "switcher_only": true
+    }
   }
 }

@@ -31,12 +31,8 @@ type Dmenu struct {
 	IsService          bool
 }
 
-func (d Dmenu) IsSetup() bool {
-	return d.isSetup
-}
-
-func (d Dmenu) KeepSort() bool {
-	return false
+func (d *Dmenu) General() *config.GeneralModule {
+	return &d.general
 }
 
 func (d Dmenu) Entries(ctx context.Context, term string) []util.Entry {
@@ -61,18 +57,6 @@ func (d Dmenu) Entries(ctx context.Context, term string) []util.Entry {
 	}
 
 	return entries
-}
-
-func (Dmenu) Prefix() string {
-	return ""
-}
-
-func (Dmenu) Name() string {
-	return "dmenu"
-}
-
-func (Dmenu) SwitcherOnly() bool {
-	return true
 }
 
 func (Dmenu) Reply(res string) {
@@ -136,6 +120,8 @@ func (d *Dmenu) Setup(cfg *config.Config) bool {
 		d.isSetup = true
 		d.IsService = true
 	}
+
+	d.general.SwitcherOnly = true
 
 	return true
 }
@@ -210,7 +196,7 @@ func (d Dmenu) Send() {
 	}
 }
 
-func (d *Dmenu) SetupData(cfg *config.Config) {
+func (d *Dmenu) SetupData(cfg *config.Config, ctx context.Context) {
 	d.isSetup = true
 
 	if !d.IsService {
@@ -222,16 +208,6 @@ func (d *Dmenu) SetupData(cfg *config.Config) {
 	}
 }
 
-func (Dmenu) Typeahead() bool {
-	return false
+func (d *Dmenu) Refresh() {
+	d.general.IsSetup = !d.general.Refresh
 }
-
-func (Dmenu) History() bool {
-	return false
-}
-
-func (d Dmenu) Placeholder() string {
-	return "dmenu"
-}
-
-func (Dmenu) Refresh() {}

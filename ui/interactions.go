@@ -75,7 +75,7 @@ func getModules() []modules.Workable {
 
 	for _, v := range cfg.Plugins {
 		e := &modules.Plugin{}
-		e.General = v
+		e.PluginCfg = v
 
 		res = append(res, e)
 	}
@@ -86,7 +86,7 @@ func getModules() []modules.Workable {
 func findModule(name string, modules ...[]modules.Workable) modules.Workable {
 	for _, v := range modules {
 		for _, w := range v {
-			if w != nil && w.Name() == name {
+			if w != nil && w.General().Name == name {
 				return w
 			}
 		}
@@ -103,7 +103,7 @@ func setExplicits() {
 	for _, v := range appstate.ExplicitModules {
 		if slices.Contains(cfg.Available, v) {
 			for k, m := range available {
-				if m.Name() == v {
+				if m.General().Name == v {
 					explicits = append(explicits, available[k])
 				}
 			}
@@ -116,8 +116,8 @@ func setExplicits() {
 
 	for k, v := range modules {
 		if v != nil {
-			if slices.Contains(toSetup, v.Name()) {
-				if !v.IsSetup() {
+			if slices.Contains(toSetup, v.General().Name) {
+				if !v.General().IsSetup {
 					if ok := v.Setup(cfg); ok {
 						explicits = append(explicits, modules[k])
 					}
@@ -133,18 +133,18 @@ func setupModules() {
 	available = []modules.Workable{}
 
 	for k, v := range all {
-		if v == nil || slices.Contains(cfg.Disabled, v.Name()) {
+		if v == nil || slices.Contains(cfg.Disabled, v.General().Name) {
 			continue
 		}
 
-		if !v.IsSetup() {
+		if !v.General().IsSetup {
 			if ok := all[k].Setup(cfg); ok {
 				available = append(available, all[k])
-				cfg.Available = append(cfg.Available, v.Name())
+				cfg.Available = append(cfg.Available, v.General().Name)
 			}
 		} else {
 			available = append(available, all[k])
-			cfg.Available = append(cfg.Available, v.Name())
+			cfg.Available = append(cfg.Available, v.General().Name)
 		}
 	}
 
@@ -155,7 +155,7 @@ func setupModules() {
 	clear(ui.prefixClasses)
 
 	for _, v := range available {
-		ui.prefixClasses[v.Prefix()] = append(ui.prefixClasses[v.Prefix()], v.Name())
+		ui.prefixClasses[v.General().Prefix] = append(ui.prefixClasses[v.General().Prefix], v.General().Name)
 	}
 
 	if len(explicits) > 0 {
@@ -165,13 +165,15 @@ func setupModules() {
 	}
 
 	if len(toUse) == 1 {
-		text := toUse[0].Placeholder()
+		text := toUse[0].General().Placeholder
 		if appstate.ExplicitPlaceholder != "" {
 			text = appstate.ExplicitPlaceholder
 		}
 
 		ui.search.SetObjectProperty("placeholder-text", text)
 	}
+
+	setupSingleModule()
 }
 
 func setupInteractions(appstate *state.AppState) {
@@ -483,9 +485,9 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			var inputhstry []string
 
 			if len(explicits) == 1 {
-				inputhstry = history.GetInputHistory(explicits[0].Name())
+				inputhstry = history.GetInputHistory(explicits[0].General().Name)
 			} else {
-				inputhstry = history.GetInputHistory(toUse[0].Name())
+				inputhstry = history.GetInputHistory(toUse[0].General().Name)
 			}
 
 			if len(inputhstry) > 0 {
@@ -567,12 +569,13 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	if entry.Sub == "switcher" {
 		for _, m := range toUse {
-			if m.Name() == entry.Label {
+			if m.General().Name == entry.Label {
 				explicits = []modules.Workable{}
 				explicits = append(explicits, m)
 
 				ui.items.Splice(0, int(ui.items.NItems()))
-				ui.search.SetObjectProperty("placeholder-text", m.Placeholder())
+				ui.search.SetObjectProperty("placeholder-text", m.General().Placeholder)
+				setupSingleModule()
 				ui.search.SetText("")
 				ui.search.GrabFocus()
 				return
@@ -613,8 +616,8 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	module := findModule(entry.Module, toUse, explicits)
 
-	if module != nil && (module.History() || module.Typeahead()) {
-		history.SaveInputHistory(module.Name(), ui.search.Text())
+	if module != nil && (module.General().History || module.General().Typeahead) {
+		history.SaveInputHistory(module.General().Name, ui.search.Text())
 	}
 
 	err := cmd.Start()
@@ -628,7 +631,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 func handleDmenuResult(result string) {
 	if appstate.IsService {
 		for _, v := range toUse {
-			if v.Name() == "dmenu" {
+			if v.General().Name == "dmenu" {
 				v.(*modules.Dmenu).Reply(result)
 			}
 		}
@@ -748,7 +751,7 @@ func processAsync(ctx context.Context, text string) {
 	prefixes := []string{}
 
 	for _, v := range p {
-		prefix := v.Prefix()
+		prefix := v.General().Prefix
 
 		if len(prefix) == 1 {
 			if strings.HasPrefix(text, prefix) {
@@ -786,7 +789,7 @@ func processAsync(ctx context.Context, text string) {
 	wg.Add(len(p))
 
 	if len(p) == 1 {
-		handler.keepSort = p[0].KeepSort()
+		handler.keepSort = p[0].General().KeepSort
 		appstate.IsSingle = true
 	}
 
@@ -797,12 +800,12 @@ func processAsync(ctx context.Context, text string) {
 		}
 
 		if !hasExplicit {
-			if p[k].SwitcherOnly() {
+			if p[k].General().SwitcherOnly {
 				wg.Done()
 				continue
 			}
 
-			prefix := p[k].Prefix()
+			prefix := p[k].General().Prefix
 
 			if hasPrefix && prefix == "" {
 				wg.Done()
@@ -826,8 +829,8 @@ func processAsync(ctx context.Context, text string) {
 			text = strings.TrimPrefix(text, prefix)
 		}
 
-		if !p[k].IsSetup() {
-			p[k].SetupData(cfg)
+		if !p[k].General().IsSetup {
+			p[k].SetupData(cfg, ctx)
 		}
 
 		go func(ctx context.Context, wg *sync.WaitGroup, text string, w modules.Workable) {
@@ -838,7 +841,7 @@ func processAsync(ctx context.Context, text string) {
 			toPush := []util.Entry{}
 
 			for k := range e {
-				e[k].Module = w.Name()
+				e[k].Module = w.General().Name
 
 				if e[k].DragDrop && !ui.list.CanTarget() {
 					ui.list.SetCanTarget(true)
@@ -892,6 +895,10 @@ func processAsync(ctx context.Context, text string) {
 	}
 
 	wg.Wait()
+
+	if cfg.Search.Spinner {
+		ui.spinner.SetVisible(false)
+	}
 }
 
 func setTypeahead(modules []modules.Workable) {
@@ -902,8 +909,8 @@ func setTypeahead(modules []modules.Workable) {
 	toSet := ""
 
 	for _, v := range modules {
-		if v.Typeahead() {
-			tah := history.GetInputHistory(v.Name())
+		if v.General().Typeahead {
+			tah := history.GetInputHistory(v.General().Name)
 
 			trimmed := strings.TrimSpace(ui.search.Text())
 
@@ -928,12 +935,12 @@ func setInitials() {
 	entries := []util.Entry{}
 
 	for _, proc := range toUse {
-		if proc.Name() != "applications" {
+		if proc.General().Name != "applications" {
 			continue
 		}
 
-		if !proc.IsSetup() {
-			proc.SetupData(cfg)
+		if !proc.General().IsSetup {
+			proc.SetupData(cfg, nil)
 		}
 
 		e := proc.Entries(nil, "")
@@ -995,7 +1002,13 @@ func quit() {
 
 	explicits = []modules.Workable{}
 
+	resetSingleModule()
+
 	glib.IdleAdd(func() {
+		if cfg.Search.Spinner {
+			ui.spinner.SetVisible(false)
+		}
+
 		ui.search.SetText("")
 		ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
 		ui.appwin.SetVisible(false)
@@ -1108,4 +1121,22 @@ func fuzzyScore(entry util.Entry, text string) float64 {
 	tm := 1.0 / float64(textLength)
 
 	return float64(usageScore)*tm + float64(entry.ScoreFuzzy)/tm
+}
+
+func setupSingleModule() {
+	if len(explicits) == 1 || len(toUse) == 1 {
+		var module modules.Workable
+
+		if len(explicits) == 1 {
+			module = explicits[0]
+		} else {
+			module = toUse[0]
+		}
+
+		ui.search.SetObjectProperty("search-delay", module.General().Delay)
+	}
+}
+
+func resetSingleModule() {
+	ui.search.SetObjectProperty("search-delay", cfg.Search.Delay)
 }

@@ -37,35 +37,11 @@ type Application struct {
 	Actions []util.Entry `json:"actions,omitempty"`
 }
 
+func (a *Applications) General() *config.GeneralModule {
+	return &a.general
+}
+
 func (a *Applications) Cleanup() {}
-
-func (a *Applications) History() bool {
-	return a.general.History
-}
-
-func (a *Applications) Typeahead() bool {
-	return a.general.Typeahead
-}
-
-func (a *Applications) Placeholder() string {
-	if a.general.Placeholder == "" {
-		return "applications"
-	}
-
-	return a.general.Placeholder
-}
-
-func (*Applications) KeepSort() bool {
-	return false
-}
-
-func (a *Applications) IsSetup() bool {
-	return a.general.IsSetup
-}
-
-func (a *Applications) SwitcherOnly() bool {
-	return a.general.SwitcherOnly
-}
 
 func (a *Applications) Setup(cfg *config.Config) bool {
 	a.general = cfg.Builtins.Applications.GeneralModule
@@ -79,7 +55,7 @@ func (a *Applications) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (a *Applications) SetupData(_ *config.Config) {
+func (a *Applications) SetupData(_ *config.Config, ctx context.Context) {
 	a.entries = parse(a.cache, a.actions, a.prioritizeNew, a.openWindows)
 
 	if !a.wmRunning && a.isContextAware {
@@ -133,15 +109,7 @@ func (a *Applications) RunWm() {
 }
 
 func (a *Applications) Refresh() {
-	a.general.IsSetup = false
-}
-
-func (a *Applications) Name() string {
-	return ApplicationsName
-}
-
-func (a *Applications) Prefix() string {
-	return a.general.Prefix
+	a.general.IsSetup = !a.general.Refresh
 }
 
 func (a *Applications) Entries(ctx context.Context, _ string) []util.Entry {

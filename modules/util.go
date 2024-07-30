@@ -15,19 +15,12 @@ import (
 )
 
 type Workable interface {
-	Entries(ctx context.Context, term string) []util.Entry
-	Prefix() string
-	Name() string
-	Placeholder() string
-	SwitcherOnly() bool
-	IsSetup() bool
-	Setup(cfg *config.Config) bool
-	SetupData(cfg *config.Config)
-	Refresh()
-	KeepSort() bool
-	Typeahead() bool
-	History() bool
 	Cleanup()
+	Entries(ctx context.Context, term string) []util.Entry
+	General() *config.GeneralModule
+	Refresh()
+	Setup(cfg *config.Config) bool
+	SetupData(cfg *config.Config, ctx context.Context)
 }
 
 func readCache(name string, data any) bool {

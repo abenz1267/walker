@@ -18,34 +18,14 @@ type SSH struct {
 	entries []util.Entry
 }
 
+func (s *SSH) General() *config.GeneralModule {
+	return &s.general
+}
+
 func (s SSH) Cleanup() {}
 
-func (s SSH) History() bool {
-	return s.general.History
-}
-
-func (s SSH) Typeahead() bool {
-	return s.general.Typeahead
-}
-
-func (s SSH) IsSetup() bool {
-	return s.general.IsSetup
-}
-
-func (SSH) KeepSort() bool {
-	return false
-}
-
-func (s SSH) Placeholder() string {
-	if s.general.Placeholder == "" {
-		return "ssh"
-	}
-
-	return s.general.Placeholder
-}
-
 func (s *SSH) Refresh() {
-	s.general.IsSetup = false
+	s.general.IsSetup = !s.general.Refresh
 }
 
 func (s SSH) Entries(ctx context.Context, term string) []util.Entry {
@@ -66,25 +46,13 @@ func (s SSH) Entries(ctx context.Context, term string) []util.Entry {
 	return s.entries
 }
 
-func (s SSH) Prefix() string {
-	return s.general.Prefix
-}
-
-func (s SSH) Name() string {
-	return "ssh"
-}
-
-func (s SSH) SwitcherOnly() bool {
-	return s.general.SwitcherOnly
-}
-
 func (s *SSH) Setup(cfg *config.Config) bool {
 	s.general = cfg.Builtins.SSH.GeneralModule
 
 	return true
 }
 
-func (s *SSH) SetupData(cfg *config.Config) {
+func (s *SSH) SetupData(cfg *config.Config, ctx context.Context) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.Panicln(err)

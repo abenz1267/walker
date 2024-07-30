@@ -679,7 +679,7 @@ func reopen() {
 	}
 
 	if len(toUse) == 1 {
-		text := toUse[0].Placeholder()
+		text := toUse[0].General().Placeholder
 
 		if appstate.ExplicitPlaceholder != "" {
 			text = appstate.ExplicitPlaceholder
@@ -694,6 +694,8 @@ func reopen() {
 			ui.search.SetPosition(-1)
 		})
 	}
+
+	setupSingleModule()
 
 	ui.search.GrabFocus()
 

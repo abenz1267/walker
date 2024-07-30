@@ -12,31 +12,11 @@ type Switcher struct {
 	cfg     *config.Config
 }
 
+func (s *Switcher) General() *config.GeneralModule {
+	return &s.general
+}
+
 func (s Switcher) Cleanup() {}
-
-func (s Switcher) History() bool {
-	return s.general.History
-}
-
-func (s Switcher) Typeahead() bool {
-	return s.general.Typeahead
-}
-
-func (Switcher) KeepSort() bool {
-	return false
-}
-
-func (s Switcher) Placeholder() string {
-	if s.general.Placeholder == "" {
-		return "switcher"
-	}
-
-	return s.general.Placeholder
-}
-
-func (s Switcher) SwitcherOnly() bool {
-	return false
-}
 
 func (s Switcher) Entries(ctx context.Context, term string) []util.Entry {
 	entries := []util.Entry{}
@@ -61,16 +41,9 @@ func (s Switcher) Entries(ctx context.Context, term string) []util.Entry {
 	return entries
 }
 
-func (s Switcher) Prefix() string {
-	return s.general.Prefix
-}
-
-func (s Switcher) Name() string {
-	return "switcher"
-}
-
 func (s *Switcher) Setup(cfg *config.Config) bool {
 	s.general = cfg.Builtins.Switcher.GeneralModule
+
 	s.cfg = cfg
 
 	s.general.IsSetup = true
@@ -78,10 +51,8 @@ func (s *Switcher) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (s *Switcher) SetupData(cfg *config.Config) {}
+func (s *Switcher) SetupData(cfg *config.Config, ctx context.Context) {}
 
-func (s Switcher) IsSetup() bool {
-	return s.general.IsSetup
+func (s *Switcher) Refresh() {
+	s.general.IsSetup = !s.general.Refresh
 }
-
-func (s Switcher) Refresh() {}

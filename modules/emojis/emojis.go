@@ -20,38 +20,14 @@ type Emojis struct {
 	entries []util.Entry
 }
 
+func (e *Emojis) General() *config.GeneralModule {
+	return &e.general
+}
+
 func (e Emojis) Cleanup() {}
-
-func (e Emojis) History() bool {
-	return e.general.History
-}
-
-func (e Emojis) Typeahead() bool {
-	return e.general.Typeahead
-}
-
-func (Emojis) KeepSort() bool {
-	return false
-}
-
-func (e Emojis) IsSetup() bool {
-	return e.general.IsSetup
-}
 
 func (e Emojis) Entries(ctx context.Context, term string) []util.Entry {
 	return e.entries
-}
-
-func (e Emojis) Prefix() string {
-	return e.general.Prefix
-}
-
-func (Emojis) Name() string {
-	return "emojis"
-}
-
-func (e Emojis) SwitcherOnly() bool {
-	return e.general.SwitcherOnly
 }
 
 func (e *Emojis) Setup(cfg *config.Config) bool {
@@ -60,7 +36,7 @@ func (e *Emojis) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (e *Emojis) SetupData(cfg *config.Config) {
+func (e *Emojis) SetupData(cfg *config.Config, ctx context.Context) {
 	scanner := bufio.NewScanner(strings.NewReader(list))
 
 	entries := []util.Entry{}
@@ -91,12 +67,6 @@ func (e *Emojis) SetupData(cfg *config.Config) {
 	e.general.IsSetup = true
 }
 
-func (e Emojis) Placeholder() string {
-	if e.general.Placeholder == "" {
-		return "emojis"
-	}
-
-	return e.general.Placeholder
+func (e *Emojis) Refresh() {
+	e.general.IsSetup = !e.general.Refresh
 }
-
-func (Emojis) Refresh() {}

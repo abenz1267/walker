@@ -33,35 +33,11 @@ type EngineInfo struct {
 	URL   string
 }
 
+func (w *Websearch) General() *config.GeneralModule {
+	return &w.general
+}
+
 func (w Websearch) Cleanup() {}
-
-func (w Websearch) History() bool {
-	return w.general.History
-}
-
-func (w Websearch) Typeahead() bool {
-	return w.general.Typeahead
-}
-
-func (Websearch) KeepSort() bool {
-	return false
-}
-
-func (w Websearch) IsSetup() bool {
-	return w.general.IsSetup
-}
-
-func (w Websearch) Placeholder() string {
-	if w.general.Placeholder == "" {
-		return "websearch"
-	}
-
-	return w.general.Placeholder
-}
-
-func (w Websearch) SwitcherOnly() bool {
-	return w.general.SwitcherOnly
-}
 
 func (w *Websearch) Setup(cfg *config.Config) bool {
 	w.engines = cfg.Builtins.Websearch.Engines
@@ -70,7 +46,7 @@ func (w *Websearch) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (w *Websearch) SetupData(_ *config.Config) {
+func (w *Websearch) SetupData(_ *config.Config, ctx context.Context) {
 	slices.Reverse(w.engines)
 
 	w.engineInfo = make(map[string]EngineInfo)
@@ -98,14 +74,8 @@ func (w *Websearch) SetupData(_ *config.Config) {
 	w.general.IsSetup = true
 }
 
-func (w Websearch) Refresh() {}
-
-func (w Websearch) Prefix() string {
-	return w.general.Prefix
-}
-
-func (Websearch) Name() string {
-	return "websearch"
+func (w *Websearch) Refresh() {
+	w.general.IsSetup = !w.general.Refresh
 }
 
 func (w Websearch) Entries(ctx context.Context, term string) []util.Entry {

@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"sync"
 
 	"github.com/abenz1267/walker/config"
 	"github.com/abenz1267/walker/util"
@@ -13,63 +14,38 @@ import (
 )
 
 type Finder struct {
-	general config.GeneralModule
-	entries []util.Entry
+	mutex       sync.Mutex
+	general     config.GeneralModule
+	concurrency int
+	entries     []util.Entry
 }
 
-func (f Finder) Cleanup() {}
-
-func (f Finder) History() bool {
-	return f.general.History
+func (f *Finder) General() *config.GeneralModule {
+	return &f.general
 }
 
-func (f Finder) Typeahead() bool {
-	return f.general.Typeahead
+func (f *Finder) Cleanup() {}
+
+func (f *Finder) Refresh() {
+	f.general.IsSetup = !f.general.Refresh
 }
 
-func (Finder) KeepSort() bool {
-	return false
-}
-
-func (f Finder) IsSetup() bool {
-	return f.general.IsSetup
-}
-
-func (f Finder) Placeholder() string {
-	if f.general.Placeholder == "" {
-		return "finder"
-	}
-
-	return f.general.Placeholder
-}
-
-func (f Finder) Refresh() {
-	f.general.IsSetup = false
-}
-
-func (f Finder) Entries(ctx context.Context, term string) []util.Entry {
+func (f *Finder) Entries(ctx context.Context, term string) []util.Entry {
 	return f.entries
-}
-
-func (f Finder) Prefix() string {
-	return f.general.Prefix
-}
-
-func (f Finder) Name() string {
-	return "finder"
-}
-
-func (f Finder) SwitcherOnly() bool {
-	return f.general.SwitcherOnly
 }
 
 func (f *Finder) Setup(cfg *config.Config) bool {
 	f.general = cfg.Builtins.Finder.GeneralModule
+	f.concurrency = cfg.Builtins.Finder.Concurrency
+
+	if cfg.Builtins.Finder.EagerLoading {
+		go f.SetupData(cfg, context.Background())
+	}
 
 	return true
 }
 
-func (f *Finder) SetupData(cfg *config.Config) {
+func (f *Finder) SetupData(cfg *config.Config, ctx context.Context) {
 	f.entries = []util.Entry{}
 
 	homedir, err := os.UserHomeDir()
@@ -83,27 +59,48 @@ func (f *Finder) SetupData(cfg *config.Config) {
 	fileWalker.IgnoreGitIgnore = cfg.Builtins.Finder.IgnoreGitIgnore
 
 	errorHandler := func(e error) bool {
-		log.Println(e)
 		return true
 	}
 
+	fileWalker.SetConcurrency(f.concurrency)
+
 	fileWalker.SetErrorHandler(errorHandler)
 
-	go fileWalker.Start()
+	isWalking := make(chan bool)
 
-	for file := range fileListQueue {
-		f.entries = append(f.entries, util.Entry{
-			Label:            strings.TrimPrefix(strings.TrimPrefix(file.Location, homedir), "/"),
-			Sub:              "finder",
-			Exec:             fmt.Sprintf("xdg-open %s", file.Location),
-			RecalculateScore: true,
-			DragDrop:         true,
-			DragDropData:     file.Location,
-			Categories:       []string{"finder", "fzf"},
-			Class:            "finder",
-			Matching:         util.Fuzzy,
-		})
+	go func(isWalking chan bool) {
+		err := fileWalker.Start()
+		if err == nil {
+			isWalking <- false
+		}
+	}(isWalking)
+
+	for {
+		select {
+		case <-isWalking:
+			fileWalker.Terminate()
+			f.general.IsSetup = true
+			return
+		case <-ctx.Done():
+			fileWalker.Terminate()
+			f.general.IsSetup = true
+			return
+		case file := <-fileListQueue:
+			if file == nil {
+				continue
+			}
+
+			f.entries = append(f.entries, util.Entry{
+				Label:            strings.TrimPrefix(strings.TrimPrefix(file.Location, homedir), "/"),
+				Sub:              "finder",
+				Exec:             fmt.Sprintf("xdg-open %s", file.Location),
+				RecalculateScore: true,
+				DragDrop:         true,
+				DragDropData:     file.Location,
+				Categories:       []string{"finder", "fzf"},
+				Class:            "finder",
+				Matching:         util.Fuzzy,
+			})
+		}
 	}
-
-	f.general.IsSetup = true
 }

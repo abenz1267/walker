@@ -14,29 +14,17 @@ import (
 )
 
 type Plugin struct {
-	General      config.Plugin
+	PluginCfg    config.Plugin
 	isSetup      bool
 	cachedOutput []byte
 }
 
-func (p Plugin) History() bool {
-	return p.General.History
+func (e *Plugin) General() *config.GeneralModule {
+	return &e.PluginCfg.GeneralModule
 }
 
-func (p Plugin) Typeahead() bool {
-	return p.General.Typeahead
-}
-
-func (p Plugin) KeepSort() bool {
-	return p.General.KeepSort
-}
-
-func (e Plugin) IsSetup() bool {
-	return e.General.IsSetup
-}
-
-func (e Plugin) SwitcherOnly() bool {
-	return e.General.SwitcherOnly
+func (e *Plugin) Refresh() {
+	e.PluginCfg.IsSetup = !e.PluginCfg.Refresh
 }
 
 func (e *Plugin) Setup(cfg *config.Config) bool {
@@ -45,49 +33,29 @@ func (e *Plugin) Setup(cfg *config.Config) bool {
 
 func (e Plugin) Cleanup() {}
 
-func (e *Plugin) SetupData(cfg *config.Config) {
-	if e.General.Entries != nil {
-		for k := range e.General.Entries {
-			e.General.Entries[k].Sub = e.General.Name
+func (e *Plugin) SetupData(cfg *config.Config, ctx context.Context) {
+	if e.PluginCfg.Entries != nil {
+		for k := range e.PluginCfg.Entries {
+			e.PluginCfg.Entries[k].Sub = e.PluginCfg.Name
 		}
 	}
 
-	if e.General.SrcOnce != "" {
-		e.General.Src = e.General.SrcOnce
+	if e.PluginCfg.SrcOnce != "" {
+		e.PluginCfg.Src = e.PluginCfg.SrcOnce
 		e.cachedOutput = e.getSrcOutput(false, "")
 	}
 
 	e.isSetup = true
 }
 
-func (e Plugin) Placeholder() string {
-	if e.General.Placeholder == "" {
-		return e.General.Name
-	}
-
-	return e.General.Placeholder
-}
-
-func (e *Plugin) Refresh() {
-	e.isSetup = false
-}
-
-func (e Plugin) Name() string {
-	return e.General.Name
-}
-
-func (e Plugin) Prefix() string {
-	return e.General.Prefix
-}
-
 func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
-	if e.General.Entries != nil {
-		return e.General.Entries
+	if e.PluginCfg.Entries != nil {
+		return e.PluginCfg.Entries
 	}
 
 	entries := []util.Entry{}
 
-	if e.General.Src == "" {
+	if e.PluginCfg.Src == "" {
 		return entries
 	}
 
@@ -95,20 +63,20 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 	hasExplicitResult := false
 	hasExplicitResultAlt := false
 
-	if strings.Contains(e.General.Src, "%TERM%") {
+	if strings.Contains(e.PluginCfg.Src, "%TERM%") {
 		hasExplicitTerm = true
-		e.General.Src = strings.ReplaceAll(e.General.Src, "%TERM%", term)
+		e.PluginCfg.Src = strings.ReplaceAll(e.PluginCfg.Src, "%TERM%", term)
 	}
 
-	if strings.Contains(e.General.Cmd, "%RESULT%") {
+	if strings.Contains(e.PluginCfg.Cmd, "%RESULT%") {
 		hasExplicitResult = true
 	}
 
-	if strings.Contains(e.General.CmdAlt, "%RESULT%") {
+	if strings.Contains(e.PluginCfg.CmdAlt, "%RESULT%") {
 		hasExplicitResultAlt = true
 	}
 
-	if e.General.Cmd != "" {
+	if e.PluginCfg.Cmd != "" {
 		var out []byte
 
 		if e.cachedOutput != nil {
@@ -130,12 +98,12 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 
 			e := util.Entry{
 				Label:    unescaped,
-				Sub:      e.General.Name,
-				Class:    e.General.Name,
-				Terminal: e.General.Terminal,
-				Exec:     strings.ReplaceAll(e.General.Cmd, "%RESULT%", txt),
-				ExecAlt:  strings.ReplaceAll(e.General.CmdAlt, "%RESULT%", txt),
-				Matching: e.General.Matching,
+				Sub:      e.PluginCfg.Name,
+				Class:    e.PluginCfg.Name,
+				Terminal: e.PluginCfg.Terminal,
+				Exec:     strings.ReplaceAll(e.PluginCfg.Cmd, "%RESULT%", txt),
+				ExecAlt:  strings.ReplaceAll(e.PluginCfg.CmdAlt, "%RESULT%", txt),
+				Matching: e.PluginCfg.Matching,
 			}
 
 			if !hasExplicitResult {
@@ -154,7 +122,7 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 		return entries
 	}
 
-	cmd := exec.Command("sh", "-c", e.General.Src)
+	cmd := exec.Command("sh", "-c", e.PluginCfg.Src)
 
 	if !hasExplicitTerm {
 		cmd.Stdin = strings.NewReader(term)
@@ -173,14 +141,14 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 	}
 
 	for k := range entries {
-		entries[k].Class = e.General.Name
+		entries[k].Class = e.PluginCfg.Name
 	}
 
 	return entries
 }
 
 func (e Plugin) getSrcOutput(hasExplicitTerm bool, term string) []byte {
-	cmd := exec.Command("sh", "-c", e.General.Src)
+	cmd := exec.Command("sh", "-c", e.PluginCfg.Src)
 
 	if !hasExplicitTerm && term != "" {
 		cmd.Stdin = strings.NewReader(term)

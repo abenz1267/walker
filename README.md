@@ -83,6 +83,13 @@ Make sure you have the following dependencies installed:
 - gtk4-layer-shell
 - gobject-introspection
 
+```bash
+git clone https://github.com/abenz1267/walker /tmp/walker
+cd /tmp/walker
+go build -x // the '-x' is for debug output
+sudo cp walker /usr/bin/
+```
+
 Without these you won't be able to build.
 
 <details>
@@ -136,6 +143,16 @@ nix.settings = {
 ```
 
 </details>
+
+## Running as a service
+
+This depends on your system. You simply need to autostart Walker with `walker --gapplication-service` and it will run in the background. Then just run `walker` to bring it up.
+
+Example for Hyprland:
+
+```bash
+exec-once=walker --gapplication-service
+```
 
 ## Config & Style
 

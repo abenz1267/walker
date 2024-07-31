@@ -258,15 +258,13 @@ AM = Activation Mode
 | `Ctrl+j` (if ActivationMode is disabled), `Down`, `Tab`                 | next entry                                                               |
 | `Ctrl+k` (if ActivationMode is disabled), `Up`, `LEFT_TAB` (shift+tab?) | previous entry                                                           |
 | `Escape`                                                                | close                                                                    |
-| `Ctrl`                                                                  | start AM                                                                 |
+| `Ctrl + Label`                                                          | Activate item by label                                                   |
+| `Ctrl + Shift + Label`                                                  | Activate item by label without closing                                   |
 | `Shift+Backspace`                                                       | delete entry from history                                                |
-| in AM: `<label>`                                                        | activate item                                                            |
-| in AM: Hold `Shift+<label>`                                             | activate item (don't close)                                              |
-| in AM: `Escape`                                                         | stop AM                                                                  |
 
 ### Activation Mode
 
-Activation-Mode can be triggered by holding `LCtrl`. The window will get an additional class `activation` you can use for styling. While activated, you can run items by pressing their respective label. This only works for the top 8 items.
+Activation-Mode can be triggered by holding `LCtrl` ( or `LAlt`). The window will get an additional class `activation` you can use for styling. While activated, you can run items by pressing their respective label. This only works for the top 8 items.
 
 ## Startup "Benchmarks"
 

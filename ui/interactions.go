@@ -183,26 +183,10 @@ func setupInteractions(appstate *state.AppState) {
 
 	keycontroller := gtk.NewEventControllerKey()
 	keycontroller.ConnectKeyPressed(handleSearchKeysPressed)
+	keycontroller.SetPropagationPhase(gtk.PropagationPhase(1))
 
 	ui.search.AddController(keycontroller)
 	ui.search.Connect("search-changed", process)
-	ui.search.Connect("activate", func() {
-		if appstate.ForcePrint && ui.list.Model().NItems() == 0 {
-			if appstate.IsDmenu {
-				handleDmenuResult(ui.search.Text())
-			}
-
-			closeAfterActivation(false, false)
-			return
-		}
-
-		activateItem(false, false, false)
-	})
-
-	listkc := gtk.NewEventControllerKey()
-	listkc.ConnectKeyPressed(handleListKeysPressed)
-
-	ui.list.AddController(listkc)
 
 	amKey = gdk.KEY_Control_L
 	amModifier = gdk.ControlMask
@@ -215,11 +199,16 @@ func setupInteractions(appstate *state.AppState) {
 		cmdAltModifier = gdk.ControlMask
 	}
 
+	globalKeyReleasedController := gtk.NewEventControllerKey()
+	globalKeyReleasedController.ConnectKeyReleased(handleGlobalKeysReleased)
+	globalKeyReleasedController.SetPropagationPhase(gtk.PropagationPhase(1))
+
 	globalKeyController := gtk.NewEventControllerKey()
 	globalKeyController.ConnectKeyPressed(handleGlobalKeysPressed)
 	globalKeyController.SetPropagationPhase(gtk.PropagationPhase(1))
 
 	ui.appwin.AddController(globalKeyController)
+	ui.appwin.AddController(globalKeyReleasedController)
 
 	if !cfg.IgnoreMouse {
 		gesture := gtk.NewGestureClick()
@@ -314,7 +303,7 @@ func enableAM() {
 	activationEnabled = true
 }
 
-func disabledAM() {
+func disableAM() {
 	if !cfg.ActivationMode.Disabled && activationEnabled {
 		activationEnabled = false
 		ui.search.SetFocusable(false)
@@ -332,103 +321,81 @@ func disabledAM() {
 	}
 }
 
+func handleGlobalKeysReleased(val, code uint, state gdk.ModifierType) {
+	switch val {
+	case amKey:
+		disableAM()
+	}
+}
+
 func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	switch val {
+	case amKey:
+		if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 {
+			if val == amKey {
+				enableAM()
+				return true
+			}
+		}
 	case gdk.KEY_BackSpace:
 		if modifier == gdk.ShiftMask {
 			entry := gioutil.ObjectValue[util.Entry](ui.items.Item(ui.selection.Selected()))
 			hstry.Delete(entry.Identifier())
-
 			return true
+		}
+	case gdk.KEY_Escape:
+		if appstate.IsDmenu {
+			handleDmenuResult("")
+			return true
+		}
+
+		if cfg.IsService {
+			quit()
+			return true
+		} else {
+			exit()
+			return true
+		}
+	case gdk.KEY_J, gdk.KEY_K, gdk.KEY_L, gdk.KEY_colon, gdk.KEY_A, gdk.KEY_S, gdk.KEY_D, gdk.KEY_F:
+		fallthrough
+	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_semicolon, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
+		if !cfg.ActivationMode.Disabled && activationEnabled {
+			isAmShift := modifier == (gdk.ShiftMask | amModifier)
+
+			selectActivationMode(val, isAmShift)
+			return true
+		} else {
+			ui.search.GrabFocus()
+			return false
+		}
+	case gdk.KEY_F1, gdk.KEY_F2, gdk.KEY_F3, gdk.KEY_F4, gdk.KEY_F5, gdk.KEY_F6, gdk.KEY_F7, gdk.KEY_F8:
+		isShift := modifier == gdk.ShiftMask
+		selectActivationMode(val, isShift)
+		return true
+	default:
+		if activationEnabled {
+			uni := strings.ToLower(string(gdk.KeyvalToUnicode(val)))
+			check := gdk.UnicodeToKeyval(uint32(uni[0]))
+
+			if _, ok := appstate.SpecialLabels[check]; ok {
+				isAmShift := modifier == (gdk.ShiftMask | amModifier)
+
+				selectActivationMode(check, isAmShift)
+				return true
+			}
+
+		} else {
+			ui.search.GrabFocus()
+			return false
 		}
 	}
 
 	return false
 }
 
-func handleListKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
-	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 {
-		if val == amKey {
-			enableAM()
-			return true
-		}
-	}
-
-	switch val {
-	case gdk.KEY_Shift_L:
-		return true
-	case gdk.KEY_Return:
-		if modifier == gdk.ShiftMask {
-			activateItem(true, true, false)
-		} else {
-			return false
-		}
-	case gdk.KEY_Escape:
-		if activationEnabled {
-			disabledAM()
-		} else {
-			if appstate.IsDmenu {
-				handleDmenuResult("")
-			}
-
-			if cfg.IsService {
-				quit()
-			} else {
-				exit()
-			}
-		}
-	case gdk.KEY_Tab:
-		if ui.typeahead.Text() != "" {
-			ui.search.SetText(ui.typeahead.Text())
-			ui.search.SetPosition(-1)
-		} else {
-			selectNext()
-		}
-	case gdk.KEY_ISO_Left_Tab:
-		selectPrev()
-	case gdk.KEY_J, gdk.KEY_K, gdk.KEY_L, gdk.KEY_colon, gdk.KEY_A, gdk.KEY_S, gdk.KEY_D, gdk.KEY_F:
-		fallthrough
-	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_semicolon, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
-		if !cfg.ActivationMode.Disabled && activationEnabled {
-			if modifier == gdk.ShiftMask {
-				selectActivationMode(val, true)
-			} else {
-				selectActivationMode(val, false)
-			}
-		} else {
-			ui.search.GrabFocus()
-		}
-	default:
-		uni := strings.ToLower(string(gdk.KeyvalToUnicode(val)))
-		check := gdk.UnicodeToKeyval(uint32(uni[0]))
-
-		if _, ok := appstate.SpecialLabels[check]; ok {
-			if modifier == gdk.ShiftMask {
-				selectActivationMode(check, true)
-			} else {
-				selectActivationMode(check, false)
-			}
-		} else {
-			if !activationEnabled {
-				ui.search.GrabFocus()
-				return false
-			}
-		}
-	}
-
-	return true
-}
-
 var historyIndex = 0
 
 func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
-	if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 && !cfg.ActivationMode.UseFKeys {
-		if val == amKey {
-			enableAM()
-			return true
-		}
-	}
-
 	switch val {
 	case gdk.KEY_Return:
 		isShift := modifier == gdk.ShiftMask
@@ -444,42 +411,39 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		if appstate.ForcePrint && ui.list.Model().NItems() == 0 {
 			if appstate.IsDmenu {
 				handleDmenuResult(ui.search.Text())
+				return true
 			}
 
 			closeAfterActivation(isShift, false)
-			break
+			return true
 		}
 
 		activateItem(isShift, isShift, isAlt)
-	case gdk.KEY_Escape:
-		if appstate.IsDmenu {
-			handleDmenuResult("")
-		}
-
-		if cfg.IsService {
-			quit()
-		} else {
-			exit()
-		}
+		return true
 	case gdk.KEY_Tab:
 		if ui.typeahead.Text() != "" {
 			ui.search.SetText(ui.typeahead.Text())
 			ui.search.SetPosition(-1)
+
+			return true
 		} else {
 			selectNext()
+
+			return true
 		}
 	case gdk.KEY_Down:
 		selectNext()
+		return true
 	case gdk.KEY_Up:
 		if ui.selection.Selected() == 0 || ui.items.NItems() == 0 {
 			if len(toUse) != 1 {
 				selectPrev()
-				break
+				return true
 			}
 
 			if len(explicits) != 0 && len(explicits) != 1 {
 				selectPrev()
-				break
+				return true
 			}
 
 			var inputhstry []string
@@ -504,32 +468,28 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			}
 		} else {
 			selectPrev()
+			return true
 		}
 	case gdk.KEY_ISO_Left_Tab:
 		selectPrev()
+		return true
 	case gdk.KEY_j:
 		if cfg.ActivationMode.Disabled {
-			selectNext()
+			if modifier == gdk.ControlMask {
+				selectNext()
+				return true
+			}
 		}
 	case gdk.KEY_k:
 		if cfg.ActivationMode.Disabled {
-			selectPrev()
+			if modifier == gdk.ControlMask {
+				selectPrev()
+				return true
+			}
 		}
-	case gdk.KEY_F1, gdk.KEY_F2, gdk.KEY_F3, gdk.KEY_F4, gdk.KEY_F5, gdk.KEY_F6, gdk.KEY_F7, gdk.KEY_F8:
-		if modifier == gdk.ShiftMask {
-			selectActivationMode(val, true)
-		} else {
-			selectActivationMode(val, false)
-		}
-	default:
-		if modifier == amModifier {
-			return true
-		}
-
-		return false
 	}
 
-	return true
+	return false
 }
 
 func activateItem(keepOpen, selectNext, alt bool) {
@@ -658,7 +618,7 @@ func setStdin(cmd *exec.Cmd, piped *util.Piped) {
 }
 
 func closeAfterActivation(keepOpen, next bool) {
-	if !cfg.IsService {
+	if !cfg.IsService && !keepOpen {
 		exit()
 	}
 
@@ -994,7 +954,7 @@ func quit() {
 		go v.Cleanup()
 	}
 
-	disabledAM()
+	disableAM()
 
 	appstate.ExplicitModules = []string{}
 	appstate.ExplicitPlaceholder = ""

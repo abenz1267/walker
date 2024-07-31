@@ -1,34 +1,13 @@
 {
-  "ui": {
-    "icons": { "size": -1, "size_single_module": -1, "image_size": 150 },
-    "orientation": "vertical",
-    "ignore_exclusive": true,
-    "fullscreen": false,
-    "horizontal": "center",
-    "vertical": "start",
-    "width": 400,
-    "margins": {
-      "top": 100
-    },
-    "anchors": {
-      "top": true
-    }
-  },
+  "theme": "kanagawa",
   "list": {
-    "always_show": true,
-    "fixed_height": false,
-    "height": 300,
-    "margin_top": 10,
     "max_entries": 50,
-    "scrollbar_policy": "automatic",
     "show_initial_entries": true,
     "single_click": true,
-    "show_sub_single_module": false,
-    "width": 400
+    "show_sub_single_module": false
   },
   "search": {
     "force_keyboard_focus": true,
-    "icons": true,
     "history": true,
     "placeholder": "Search...",
     "delay": 0

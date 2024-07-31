@@ -1,0 +1,94 @@
+{
+  "ui": {
+    "fullscreen": true,
+    "ignore_exclusive": true,
+    "anchors": {
+      "top": true
+    },
+    "window": {
+      "name": "window",
+      "v_align": "start",
+      "box": {
+        "margins": {
+          "top": 200
+        },
+        "name": "box",
+        "v_align": "start",
+        "h_align": "center",
+        "orientation": "vertical",
+        "spacing": 0,
+        "revert": false,
+        "search": {
+          "name": "search",
+          "h_align": "fill",
+          "h_expand": true,
+          "revert": false,
+          "width": 400,
+          "spacing": 10,
+          "input": {
+            "h_align": "fill",
+            "h_expand": true,
+            "name": "input",
+            "icons": true
+          },
+          "spinner": {
+            "hide": true,
+            "v_align": "fill",
+            "name": "spinner"
+          }
+        },
+        "scroll": {
+          "overlay_scrolling": true,
+          "h_scrollbar_policy": "automatic",
+          "v_scrollbar_policy": "automatic",
+          "list": {
+            "always_show": false,
+            "name": "list",
+            "orientation": "vertical",
+            "h_align": "fill",
+            "h_expand": true,
+            "width": 400,
+            "max_height": 300,
+            "min_width": 400,
+            "max_width": 400,
+            "item": {
+              "h_align": "fill",
+              "name": "item",
+              "revert": false,
+              "orientation": "horizontal",
+              "spacing": 5,
+              "activation_label": {
+                "x_align": 1.0,
+                "width": 20,
+                "name": "activationlabel"
+              },
+              "icon": {
+                "theme": "Kanagawa",
+                "v_align": "center",
+                "name": "icon",
+                "icon_size": "large",
+                "pixel_size": -1
+              },
+              "text": {
+                "revert": false,
+                "h_align": "start",
+                "h_expand": true,
+                "name": "text",
+                "orientation": "vertical",
+                "label": {
+                  "h_align": "start",
+                  "h_expand": true,
+                  "name": "label"
+                },
+                "sub": {
+                  "h_align": "start",
+                  "name": "sub"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

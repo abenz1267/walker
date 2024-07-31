@@ -80,6 +80,10 @@ func TmpDir() string {
 	return filepath.Join(os.TempDir())
 }
 
+func ThemeDir() string {
+	return filepath.Join(ConfigDir(), "themes")
+}
+
 func ConfigDir() string {
 	dir, err := os.UserConfigDir()
 	if err != nil {

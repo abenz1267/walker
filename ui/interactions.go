@@ -38,8 +38,8 @@ var (
 func setupCommands() {
 	commands = make(map[string]func())
 	commands["reloadconfig"] = func() {
-		cfg = config.Get(appstate.ExplicitConfig)
-		setupUserStyle()
+		cfg = config.Get(appstate.ExplicitConfig, appstate.ExplicitTheme)
+		setupTheme()
 		setupModules()
 	}
 	commands["resethistory"] = func() {
@@ -180,7 +180,7 @@ func setupModules() {
 			text = appstate.ExplicitPlaceholder
 		}
 
-		ui.search.SetObjectProperty("placeholder-text", text)
+		ui.input.SetObjectProperty("placeholder-text", text)
 	}
 
 	setupSingleModule()
@@ -192,11 +192,10 @@ func setupInteractions(appstate *state.AppState) {
 	go setupModules()
 
 	keycontroller := gtk.NewEventControllerKey()
-	keycontroller.ConnectKeyPressed(handleSearchKeysPressed)
 	keycontroller.SetPropagationPhase(gtk.PropagationPhase(1))
 
-	ui.search.AddController(keycontroller)
-	ui.search.Connect("search-changed", process)
+	ui.input.AddController(keycontroller)
+	ui.input.Connect("search-changed", process)
 
 	amKey = gdk.KEY_Control_L
 	amModifier = gdk.ControlMask
@@ -283,12 +282,8 @@ func selectPrev() {
 func selectActivationMode(val uint, keepOpen bool) {
 	var target uint
 
-	if k, ok := appstate.SpecialLabels[val]; ok {
-		target = k
-	} else {
-		if n, ok := keys[val]; ok {
-			target = n
-		}
+	if n, ok := keys[val]; ok {
+		target = n
 	}
 
 	if target < ui.selection.NItems() {
@@ -316,7 +311,7 @@ func enableAM() {
 func disableAM() {
 	if !cfg.ActivationMode.Disabled && activationEnabled {
 		activationEnabled = false
-		ui.search.SetFocusable(false)
+		ui.input.SetFocusable(false)
 
 		c := ui.appwin.CSSClasses()
 
@@ -327,7 +322,7 @@ func disableAM() {
 		}
 
 		ui.appwin.SetCSSClasses(c)
-		ui.search.GrabFocus()
+		ui.input.GrabFocus()
 	}
 }
 
@@ -369,44 +364,35 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	case gdk.KEY_J, gdk.KEY_K, gdk.KEY_L, gdk.KEY_colon, gdk.KEY_A, gdk.KEY_S, gdk.KEY_D, gdk.KEY_F:
 		fallthrough
 	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_semicolon, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
+		if val == gdk.KEY_j {
+			if cfg.ActivationMode.Disabled {
+				if modifier == gdk.ControlMask {
+					selectNext()
+					return true
+				}
+			}
+		} else if val == gdk.KEY_k {
+			if cfg.ActivationMode.Disabled {
+				if modifier == gdk.ControlMask {
+					selectPrev()
+					return true
+				}
+			}
+		}
+
 		if !cfg.ActivationMode.Disabled && activationEnabled {
 			isAmShift := modifier == (gdk.ShiftMask | amModifier)
 
 			selectActivationMode(val, isAmShift)
 			return true
 		} else {
-			ui.search.GrabFocus()
+			ui.input.GrabFocus()
 			return false
 		}
 	case gdk.KEY_F1, gdk.KEY_F2, gdk.KEY_F3, gdk.KEY_F4, gdk.KEY_F5, gdk.KEY_F6, gdk.KEY_F7, gdk.KEY_F8:
 		isShift := modifier == gdk.ShiftMask
 		selectActivationMode(val, isShift)
 		return true
-	default:
-		if activationEnabled {
-			uni := strings.ToLower(string(gdk.KeyvalToUnicode(val)))
-			check := gdk.UnicodeToKeyval(uint32(uni[0]))
-
-			if _, ok := appstate.SpecialLabels[check]; ok {
-				isAmShift := modifier == (gdk.ShiftMask | amModifier)
-
-				selectActivationMode(check, isAmShift)
-				return true
-			}
-
-		} else {
-			ui.search.GrabFocus()
-			return false
-		}
-	}
-
-	return false
-}
-
-var historyIndex = 0
-
-func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
-	switch val {
 	case gdk.KEY_Return:
 		isShift := modifier == gdk.ShiftMask
 		isAlt := modifier == cmdAltModifier
@@ -420,7 +406,7 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 
 		if appstate.ForcePrint && ui.list.Model().NItems() == 0 {
 			if appstate.IsDmenu {
-				handleDmenuResult(ui.search.Text())
+				handleDmenuResult(ui.input.Text())
 				return true
 			}
 
@@ -432,8 +418,8 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		return true
 	case gdk.KEY_Tab:
 		if ui.typeahead.Text() != "" {
-			ui.search.SetText(ui.typeahead.Text())
-			ui.search.SetPosition(-1)
+			ui.input.SetText(ui.typeahead.Text())
+			ui.input.SetPosition(-1)
 
 			return true
 		} else {
@@ -472,8 +458,8 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				}
 
 				glib.IdleAdd(func() {
-					ui.search.SetText(inputhstry[historyIndex])
-					ui.search.SetPosition(-1)
+					ui.input.SetText(inputhstry[historyIndex])
+					ui.input.SetPosition(-1)
 				})
 			}
 		} else {
@@ -483,24 +469,14 @@ func handleSearchKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	case gdk.KEY_ISO_Left_Tab:
 		selectPrev()
 		return true
-	case gdk.KEY_j:
-		if cfg.ActivationMode.Disabled {
-			if modifier == gdk.ControlMask {
-				selectNext()
-				return true
-			}
-		}
-	case gdk.KEY_k:
-		if cfg.ActivationMode.Disabled {
-			if modifier == gdk.ControlMask {
-				selectPrev()
-				return true
-			}
-		}
+	default:
+		ui.input.GrabFocus()
 	}
 
 	return false
 }
+
+var historyIndex = 0
 
 func activateItem(keepOpen, selectNext, alt bool) {
 	if ui.list.Model().NItems() == 0 {
@@ -550,10 +526,10 @@ func activateItem(keepOpen, selectNext, alt bool) {
 				explicits = append(explicits, m)
 
 				ui.items.Splice(0, int(ui.items.NItems()))
-				ui.search.SetObjectProperty("placeholder-text", m.General().Placeholder)
+				ui.input.SetObjectProperty("placeholder-text", m.General().Placeholder)
 				setupSingleModule()
-				ui.search.SetText("")
-				ui.search.GrabFocus()
+				ui.input.SetText("")
+				ui.input.GrabFocus()
 				return
 			}
 		}
@@ -587,13 +563,13 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	}
 
 	if entry.History {
-		hstry.Save(entry.Identifier(), strings.TrimSpace(ui.search.Text()))
+		hstry.Save(entry.Identifier(), strings.TrimSpace(ui.input.Text()))
 	}
 
 	module := findModule(entry.Module, toUse, explicits)
 
 	if module != nil && (module.General().History || module.General().Typeahead) {
-		history.SaveInputHistory(module.General().Name, ui.search.Text())
+		history.SaveInputHistory(module.General().Name, ui.input.Text())
 	}
 
 	err := cmd.Start()
@@ -645,7 +621,7 @@ func closeAfterActivation(keepOpen, next bool) {
 
 	if appstate.IsRunning {
 		if !activationEnabled && !next {
-			ui.search.SetText("")
+			ui.input.SetText("")
 		}
 
 		if next {
@@ -669,7 +645,7 @@ func process() {
 		ui.list.SetCanTarget(false)
 	}
 
-	text := strings.TrimSpace(ui.search.Text())
+	text := strings.TrimSpace(ui.input.Text())
 
 	if text == "" && cfg.List.ShowInitialEntries && len(explicits) == 0 && !appstate.IsDmenu {
 		setInitials()
@@ -679,8 +655,8 @@ func process() {
 	var ctx context.Context
 	ctx, cancel = context.WithCancel(context.Background())
 
-	if (ui.search.Text() != "" || appstate.IsDmenu) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
-		if cfg.Search.Spinner {
+	if (ui.input.Text() != "" || appstate.IsDmenu) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
+		if cfg.UI.Window.Box.Search.Spinner.Hide != nil && !*cfg.UI.Window.Box.Search.Spinner.Hide {
 			ui.spinner.SetVisible(true)
 		}
 
@@ -688,7 +664,7 @@ func process() {
 	} else {
 		ui.items.Splice(0, int(ui.items.NItems()))
 
-		if cfg.Search.Spinner {
+		if cfg.UI.Window.Box.Search.Spinner.Hide != nil && !*cfg.UI.Window.Box.Search.Spinner.Hide {
 			ui.spinner.SetVisible(false)
 		}
 	}
@@ -706,7 +682,7 @@ func processAsync(ctx context.Context, text string) {
 		handlerPool.Put(handler)
 		cancel()
 
-		if cfg.Search.Spinner {
+		if cfg.UI.Window.Box.Search.Spinner.Hide != nil && !*cfg.UI.Window.Box.Search.Spinner.Hide {
 			ui.spinner.SetVisible(false)
 		}
 	}()
@@ -872,13 +848,13 @@ func processAsync(ctx context.Context, text string) {
 
 	wg.Wait()
 
-	if cfg.Search.Spinner {
+	if cfg.UI.Window.Box.Search.Spinner.Hide != nil && !*cfg.UI.Window.Box.Search.Spinner.Hide {
 		ui.spinner.SetVisible(false)
 	}
 }
 
 func setTypeahead(modules []modules.Workable) {
-	if ui.search.Text() == "" {
+	if ui.input.Text() == "" {
 		return
 	}
 
@@ -888,7 +864,7 @@ func setTypeahead(modules []modules.Workable) {
 		if v.General().Typeahead {
 			tah := history.GetInputHistory(v.General().Name)
 
-			trimmed := strings.TrimSpace(ui.search.Text())
+			trimmed := strings.TrimSpace(ui.input.Text())
 
 			if trimmed != "" {
 				for _, v := range tah {
@@ -981,12 +957,12 @@ func quit() {
 	resetSingleModule()
 
 	glib.IdleAdd(func() {
-		if cfg.Search.Spinner {
+		if cfg.UI.Window.Box.Search.Spinner.Hide != nil && !*cfg.UI.Window.Box.Search.Spinner.Hide {
 			ui.spinner.SetVisible(false)
 		}
 
-		ui.search.SetText("")
-		ui.search.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
+		ui.input.SetText("")
+		ui.input.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
 		ui.appwin.SetVisible(false)
 	})
 
@@ -1109,10 +1085,10 @@ func setupSingleModule() {
 			module = toUse[0]
 		}
 
-		ui.search.SetObjectProperty("search-delay", module.General().Delay)
+		ui.input.SetObjectProperty("search-delay", module.General().Delay)
 	}
 }
 
 func resetSingleModule() {
-	ui.search.SetObjectProperty("search-delay", cfg.Search.Delay)
+	ui.input.SetObjectProperty("search-delay", cfg.Search.Delay)
 }

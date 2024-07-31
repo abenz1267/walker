@@ -53,7 +53,7 @@ func (h *Handler) handle() {
 
 func sortEntries(entries []util.Entry) {
 	slices.SortFunc(entries, func(a, b util.Entry) int {
-		text := ui.search.Text()
+		text := ui.input.Text()
 
 		if text == "" {
 			if a.Matching == util.AlwaysTopOnEmptySearch && b.Matching != util.AlwaysTopOnEmptySearch {

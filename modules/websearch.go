@@ -101,10 +101,6 @@ func (w Websearch) Entries(ctx context.Context, term string) []util.Entry {
 				ScoreFinal: float64(k + 1),
 			}
 
-			if len(w.engines) == 1 {
-				n.SpecialLabel = w.general.SpecialLabel
-			}
-
 			entries = append(entries, n)
 		}
 	}

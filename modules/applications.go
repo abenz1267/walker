@@ -138,7 +138,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint) []ut
 			continue
 		}
 
-		filepath.Walk(d, func(path string, info fs.FileInfo, err error) error {
+		filepath.WalkDir(d, func(path string, info fs.DirEntry, err error) error {
 			if _, ok := done[info.Name()]; ok {
 				return nil
 			}

@@ -2,11 +2,15 @@ package config
 
 import (
 	"bytes"
+	"embed"
 	_ "embed"
 	"errors"
+	"fmt"
+	"io/fs"
 	"log"
 	"os"
 	"os/exec"
+	"path/filepath"
 
 	"github.com/abenz1267/walker/util"
 	"github.com/spf13/viper"
@@ -17,17 +21,20 @@ var noFoundErr viper.ConfigFileNotFoundError
 //go:embed config.default.json
 var defaultConfig []byte
 
+//go:embed themes/*
+var themes embed.FS
+
 type Config struct {
-	ActivationMode ActivationMode    `mapstructure:"activation_mode"`
-	Builtins       Builtins          `mapstructure:"builtins"`
-	Disabled       []string          `mapstructure:"disabled"`
-	IgnoreMouse    bool              `mapstructure:"ignore_mouse"`
-	List           List              `mapstructure:"list"`
-	Plugins        []Plugin          `mapstructure:"plugins"`
-	Search         Search            `mapstructure:"search"`
-	SpecialLabels  map[string]string `mapstructure:"special_labels"`
-	Terminal       string            `mapstructure:"terminal"`
-	UI             UI                `mapstructure:"ui"`
+	ActivationMode ActivationMode `mapstructure:"activation_mode"`
+	Builtins       Builtins       `mapstructure:"builtins"`
+	Disabled       []string       `mapstructure:"disabled"`
+	IgnoreMouse    bool           `mapstructure:"ignore_mouse"`
+	List           List           `mapstructure:"list"`
+	Plugins        []Plugin       `mapstructure:"plugins"`
+	Search         Search         `mapstructure:"search"`
+	Theme          string         `mapstructure:"theme"`
+	Terminal       string         `mapstructure:"terminal"`
+	UI             *UI            `mapstructure:"ui"`
 
 	// internal
 	Available []string `mapstructure:"-"`
@@ -70,7 +77,6 @@ type GeneralModule struct {
 	Placeholder  string `mapstructure:"placeholder"`
 	Prefix       string `mapstructure:"prefix"`
 	Refresh      bool   `mapstructure:"refresh"`
-	SpecialLabel string `mapstructure:"special_label"`
 	SwitcherOnly bool   `mapstructure:"switcher_only"`
 	Typeahead    bool   `mapstructure:"typeahead"`
 
@@ -160,63 +166,19 @@ type Plugin struct {
 type Search struct {
 	Delay              int    `mapstructure:"delay"`
 	ForceKeyboardFocus bool   `mapstructure:"force_keyboard_focus"`
-	Icons              bool   `mapstructure:"icons"`
-	MarginSpinner      int    `mapstructure:"margin_spinner"`
 	Placeholder        string `mapstructure:"placeholder"`
-	Spinner            bool   `mapstructure:"spinner"`
-}
-
-type Icons struct {
-	Hide             bool   `mapstructure:"hide"`
-	ImageSize        int    `mapstructure:"image_size"`
-	Size             int    `mapstructure:"size"`
-	SizeSingleModule int    `mapstructure:"size_single_module"`
-	Theme            string `mapstructure:"theme"`
-}
-
-type UI struct {
-	Anchors         Anchors `mapstructure:"anchors"`
-	Fullscreen      bool    `mapstructure:"fullscreen"`
-	Height          int     `mapstructure:"height"`
-	Horizontal      string  `mapstructure:"horizontal"`
-	Icons           Icons   `mapstructure:"icons"`
-	IgnoreExclusive bool    `mapstructure:"ignore_exclusive"`
-	Margins         Margins `mapstructure:"margins"`
-	Orientation     string  `mapstructure:"orientation"`
-	Vertical        string  `mapstructure:"vertical"`
-	Width           int     `mapstructure:"width"`
-}
-
-type Anchors struct {
-	Bottom bool `mapstructure:"bottom"`
-	Left   bool `mapstructure:"left"`
-	Right  bool `mapstructure:"right"`
-	Top    bool `mapstructure:"top"`
-}
-
-type Margins struct {
-	Bottom int `mapstructure:"bottom"`
-	End    int `mapstructure:"end"`
-	Start  int `mapstructure:"start"`
-	Top    int `mapstructure:"top"`
 }
 
 type List struct {
-	AlwaysShow          bool   `mapstructure:"always_show"`
-	Cycle               bool   `mapstructure:"cycle"`
-	FixedHeight         bool   `mapstructure:"fixed_height"`
-	Height              int    `mapstructure:"height"`
-	HideSub             bool   `mapstructure:"hide_sub"`
-	MarginTop           int    `mapstructure:"margin_top"`
-	MaxEntries          int    `mapstructure:"max_entries"`
-	ScrollbarPolicy     string `mapstructure:"scrollbar_policy"`
-	ShowInitialEntries  bool   `mapstructure:"show_initial_entries"`
-	ShowSubSingleModule bool   `mapstructure:"show_sub_single_module"`
-	SingleClick         bool   `mapstructure:"single_click"`
-	Width               int    `mapstructure:"width"`
+	Cycle              bool `mapstructure:"cycle"`
+	MaxEntries         int  `mapstructure:"max_entries"`
+	ShowInitialEntries bool `mapstructure:"show_initial_entries"`
+	SingleClick        bool `mapstructure:"single_click"`
 }
 
-func Get(config string) *Config {
+func Get(config string, explicitTheme string) *Config {
+	os.MkdirAll(util.ThemeDir(), 0755)
+
 	defs := viper.New()
 	defs.SetConfigType("json")
 
@@ -232,14 +194,6 @@ func Get(config string) *Config {
 	viper.SetConfigName("config")
 	viper.AddConfigPath(util.ConfigDir())
 
-	ft := "json"
-
-	et := os.Getenv("WALKER_CONFIG_TYPE")
-
-	if et != "" {
-		ft = et
-	}
-
 	err = viper.ReadInConfig()
 	if err != nil {
 		dErr := os.MkdirAll(util.ConfigDir(), 0755)
@@ -248,6 +202,14 @@ func Get(config string) *Config {
 		}
 
 		if errors.As(err, &noFoundErr) {
+			ft := "json"
+
+			et := os.Getenv("WALKER_CONFIG_TYPE")
+
+			if et != "" {
+				ft = et
+			}
+
 			viper.SetConfigType(ft)
 			wErr := viper.SafeWriteConfig()
 			if wErr != nil {
@@ -258,12 +220,91 @@ func Get(config string) *Config {
 		}
 	}
 
+	var layout []byte
+
+	theme := viper.GetString("theme")
+
+	if explicitTheme != "" {
+		theme = explicitTheme
+	}
+
+	layoutFt := "json"
+
+	file := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.json", theme))
+
+	path := fmt.Sprintf("%s/", util.ThemeDir())
+
+	filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+
+		switch d.Name() {
+		case fmt.Sprintf("%s.json", theme):
+			layoutFt = "json"
+			file = path
+		case fmt.Sprintf("%s.toml", theme):
+			layoutFt = "toml"
+			file = path
+		case fmt.Sprintf("%s.yaml", theme):
+			layoutFt = "yaml"
+			file = path
+		}
+
+		return nil
+	})
+
+	if _, err := os.Stat(file); err == nil {
+		layout, err = os.ReadFile(file)
+		if err != nil {
+			log.Panicln(err)
+		}
+	} else {
+		layoutFt = "json"
+
+		switch theme {
+		case "kanagawa":
+			layout, err = themes.ReadFile("themes/kanagawa.json")
+			if err != nil {
+				log.Panicln(err)
+			}
+
+			createLayoutFile(layout)
+		case "catppuccin":
+			layout, err = themes.ReadFile("themes/catppuccin.json")
+			if err != nil {
+				log.Panicln(err)
+			}
+
+			createLayoutFile(layout)
+		default:
+			log.Printf("layout file for theme '%s' not found\n", theme)
+			os.Exit(1)
+		}
+	}
+
 	cfg := &Config{}
 
 	err = viper.Unmarshal(cfg)
 	if err != nil {
 		log.Panic(err)
 	}
+
+	layoutCfg := viper.New()
+	layoutCfg.SetConfigType(layoutFt)
+
+	err = layoutCfg.ReadConfig(bytes.NewBuffer(layout))
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	ui := &UICfg{}
+	err = layoutCfg.Unmarshal(ui)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	cfg.UI = ui.UI
 
 	go setTerminal(cfg)
 
@@ -344,5 +385,33 @@ func setTerminal(cfg *Config) {
 			cfg.Terminal = path
 			break
 		}
+	}
+}
+
+func createLayoutFile(data []byte) {
+	ft := "json"
+
+	et := os.Getenv("WALKER_CONFIG_TYPE")
+
+	if et != "" {
+		ft = et
+	}
+
+	layout := viper.New()
+	layout.SetConfigType("json")
+
+	err := layout.ReadConfig(bytes.NewBuffer(data))
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	layout.AddConfigPath(util.ThemeDir())
+
+	layout.SetConfigType(ft)
+	layout.SetConfigName(viper.GetString("theme"))
+
+	wErr := layout.SafeWriteConfig()
+	if wErr != nil {
+		log.Println(wErr)
 	}
 }

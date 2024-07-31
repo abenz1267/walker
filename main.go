@@ -65,8 +65,7 @@ func main() {
 			state.IsService = slices.Contains(args, "--gapplication-service")
 
 			if state.IsService {
-				cfg := config.Get(state.ExplicitConfig)
-				cfg.IsService = true
+				cfg := config.Get(state.ExplicitConfig, state.ExplicitTheme)
 				state.StartServiceableModules(cfg)
 			}
 
@@ -98,7 +97,7 @@ func main() {
 	app.AddMainOption("password", 'y', glib.OptionFlagNone, glib.OptionArgNone, "launch in password mode", "")
 	app.AddMainOption("dmenu", 'd', glib.OptionFlagNone, glib.OptionArgNone, "run in dmenu mode", "")
 	app.AddMainOption("config", 'c', glib.OptionFlagNone, glib.OptionArgString, "config file to use", "")
-	app.AddMainOption("style", 's', glib.OptionFlagNone, glib.OptionArgString, "style file to use", "")
+	app.AddMainOption("theme", 's', glib.OptionFlagNone, glib.OptionArgString, "theme to use", "")
 	app.AddMainOption("placeholder", 'p', glib.OptionFlagNone, glib.OptionArgString, "placeholder text", "")
 	app.AddMainOption("query", 'q', glib.OptionFlagNone, glib.OptionArgString, "initial query", "")
 	app.AddMainOption("labelcolumn", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
@@ -122,7 +121,7 @@ func main() {
 
 		modulesString := options.LookupValue("modules", glib.NewVariantString("").Type())
 		configString := options.LookupValue("config", glib.NewVariantString("").Type())
-		styleString := options.LookupValue("style", glib.NewVariantString("").Type())
+		themeString := options.LookupValue("theme", glib.NewVariantString("").Type())
 		placeholderString := options.LookupValue("placeholder", glib.NewVariantString("").Type())
 		initialQueryString := options.LookupValue("query", glib.NewVariantString("").Type())
 
@@ -181,8 +180,8 @@ func main() {
 			state.ExplicitConfig = configString.String()
 		}
 
-		if styleString != nil && styleString.String() != "" {
-			state.ExplicitStyle = styleString.String()
+		if themeString != nil && themeString.String() != "" {
+			state.ExplicitTheme = themeString.String()
 		}
 
 		if state.Benchmark {

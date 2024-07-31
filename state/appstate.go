@@ -16,7 +16,7 @@ type AppState struct {
 	ExplicitConfig      string
 	ExplicitModules     []string
 	ExplicitPlaceholder string
-	ExplicitStyle       string
+	ExplicitTheme       string
 	ForcePrint          bool
 	HasUI               bool
 	IsRunning           bool
@@ -28,7 +28,6 @@ type AppState struct {
 	Labels              []string
 	LabelsF             []string
 	UsedLabels          []string
-	SpecialLabels       map[uint]uint
 	InitialQuery        string
 }
 
@@ -40,7 +39,6 @@ func Get() *AppState {
 		IsRunning:      false,
 		HasUI:          false,
 		ExplicitConfig: "config.json",
-		ExplicitStyle:  "style.css",
 	}
 }
 

@@ -23,6 +23,7 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
 - drag&drop support
 - dmenu-mode
 - run as password input
+- theming support
 
 ## Builtin Modules
 
@@ -59,6 +60,11 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
   - lets you define and run simple one-off commands
   - f.e. `toggle window floating`
   - no need to create keybinds for commands you don't run often
+
+## Themes
+
+- catppuccin
+- kanagawa
 
 ## Requirements
 
@@ -160,12 +166,6 @@ exec-once=walker --gapplication-service
 
 [Check the wiki](https://github.com/abenz1267/walker/wiki)
 
-The config can be written json, toml or yaml. Default values will be used, so you only have to overwrite.
-
-Default config will be put into `$HOME/.config/walker/`.
-
-See `config/config.default.json` and `ui/style.default.css`. Styling is done via GTK CSS.
-
 ## Start Walker with explicit modules
 
 You can start walker with explicit modules by using the `--modules` flag. F.e:
@@ -175,24 +175,6 @@ walker --modules applications,ssh
 ```
 
 Will tell Walker to only use the applications and ssh module.
-
-## Special Labels
-
-Modules can define a `special_label` which is used for AM. It only really makes sense, if a module returns one entry. This could be used to f.e. always have the websearch result have the same label, so you can activate it with the same label every time, even if you don't see it.
-
-### Custom Special Labels
-
-Format for custom special labels is: `"<entry label>;<entry sub>": "<special label>"`.
-
-Example:
-
-```json
-{
-  "special_labels": {
-    "discord;internet messenger": "1"
-  }
-}
-```
 
 ## Styling with typeahead enabled
 
@@ -239,7 +221,7 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 | `--modules`, `-m`     | Run with explicit modules                    |
 | `--new`, `-n`         | Start new instance ignoring service          |
 | `--config`, `-c`      | Config file to use                           |
-| `--style`, `-s`       | Style file to use                            |
+| `--theme`, `-s`       | Theme to use                                 |
 | `--dmenu`, `-d`       | Start in dmenu mode                          |
 | `--keepsort`, `-k`    | Don't sort alphabetically                    |
 | `--placeholder`, `-p` | Placeholder text                             |

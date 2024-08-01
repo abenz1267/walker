@@ -133,16 +133,24 @@ func setupModules() {
 	available = []modules.Workable{}
 
 	for k, v := range all {
-		if v == nil || slices.Contains(cfg.Disabled, v.General().Name) {
+		if v == nil {
 			continue
 		}
 
 		if !v.General().IsSetup {
 			if ok := all[k].Setup(cfg); ok {
+				if slices.Contains(cfg.Disabled, v.General().Name) {
+					continue
+				}
+
 				available = append(available, all[k])
 				cfg.Available = append(cfg.Available, v.General().Name)
 			}
 		} else {
+			if slices.Contains(cfg.Disabled, v.General().Name) {
+				continue
+			}
+
 			available = append(available, all[k])
 			cfg.Available = append(cfg.Available, v.General().Name)
 		}

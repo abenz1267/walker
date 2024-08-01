@@ -32,6 +32,8 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
   - ignore-list
   - generic runner
   - semi-smart: `shu now` => `shutdown now`
+- windows
+  - simple window switcher
 - desktop applications
   - history-aware
   - desktop actions (f.e. `Open a new private window` [Firefox])

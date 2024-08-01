@@ -11,19 +11,21 @@ import (
 var (
 	registry *wl.Registry
 	display  *wl.Display
-	seat     *wl.Seat
+	seat     []*wl.Seat
 )
 
 type windowmap map[wl.ProxyId]*Window
 
 var windows = make(windowmap)
 
+var IsRunning = false
+
 func GetWindows() windowmap {
 	return windows
 }
 
 func Activate(id wl.ProxyId) {
-	err := windows[id].Toplevel.Activate(seat)
+	err := windows[id].Toplevel.Activate(seat[len(seat)-1])
 	if err != nil {
 		log.Fatalf("unable to activate toplevel: %v", err)
 	}
@@ -56,6 +58,8 @@ func StartWM(ac chan string, dc chan string) {
 
 	_ = wlclient.DisplayRoundtrip(display)
 
+	IsRunning = true
+
 	for {
 		err = display.Context().Run()
 		if err != nil {
@@ -84,9 +88,9 @@ func (registryGlobalHander) HandleRegistryGlobal(e wl.RegistryGlobalEvent) {
 
 		manager.AddToplevelHandler(&Window{})
 	case "wl_seat":
-		seat = wl.NewSeat(display.Context())
+		seat = append(seat, wl.NewSeat(display.Context()))
 
-		err := registry.Bind(e.Name, e.Interface, e.Version, seat)
+		err := registry.Bind(e.Name, e.Interface, e.Version, seat[len(seat)-1])
 		if err != nil {
 			log.Fatalf("unable to bind wl_seat interface: %v", err)
 		}
@@ -114,28 +118,31 @@ func (*Window) HandleZwlrForeignToplevelManagerV1Toplevel(e ZwlrForeignToplevelM
 	e.Toplevel.AddClosedHandler(handler)
 
 	windows[e.Toplevel.Id()] = &Window{Toplevel: e.Toplevel}
-	// time.Sleep(1000 * time.Millisecond)
-	// Activate(e.Toplevel.Id())
 }
 
 func (h *Window) HandleZwlrForeignToplevelHandleV1Closed(e ZwlrForeignToplevelHandleV1ClosedEvent) {
-	h.DeleteChan <- h.AppId
+	if h.DeleteChan != nil {
+		h.DeleteChan <- h.AppId
+	}
 
-	// h.mutex.Lock()
-	// defer h.mutex.Unlock()
-	// delete(windows, h.Toplevel.Id())
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+	delete(windows, h.Toplevel.Id())
 }
 
 func (h *Window) HandleZwlrForeignToplevelHandleV1AppId(e ZwlrForeignToplevelHandleV1AppIdEvent) {
-	// h.mutex.Lock()
-	// defer h.mutex.Unlock()
-	// windows[h.Toplevel.Id()].AppId = e.AppId
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+	windows[h.Toplevel.Id()].AppId = e.AppId
 	h.AppId = e.AppId
-	h.AddChan <- e.AppId
+
+	if h.AddChan != nil {
+		h.AddChan <- e.AppId
+	}
 }
 
 func (h *Window) HandleZwlrForeignToplevelHandleV1Title(e ZwlrForeignToplevelHandleV1TitleEvent) {
-	// h.mutex.Lock()
-	// defer h.mutex.Unlock()
-	// windows[h.Toplevel.Id()].Title = e.Title
+	h.mutex.Lock()
+	defer h.mutex.Unlock()
+	windows[h.Toplevel.Id()].Title = e.Title
 }

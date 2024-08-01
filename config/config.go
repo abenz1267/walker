@@ -46,6 +46,7 @@ type Builtins struct {
 	SSH            SSH            `mapstructure:"ssh"`
 	Switcher       Switcher       `mapstructure:"switcher"`
 	Websearch      Websearch      `mapstructure:"websearch"`
+	Windows        Windows        `mapstructure:"windows"`
 }
 
 type CustomCommands struct {
@@ -112,6 +113,10 @@ type Applications struct {
 	Cache         bool `mapstructure:"cache"`
 	PrioritizeNew bool `mapstructure:"prioritize_new"`
 	ContextAware  bool `mapstructure:"context_aware"`
+}
+
+type Windows struct {
+	GeneralModule `mapstructure:",squash"`
 }
 
 type ActivationMode struct {

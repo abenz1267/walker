@@ -43,6 +43,10 @@
       "context_aware": true,
       "refresh": true
     },
+    "windows": {
+      "name": "windows",
+      "placeholder": "Windows"
+    },
     "clipboard": {
       "name": "clipboard",
       "placeholder": "Clipboard",

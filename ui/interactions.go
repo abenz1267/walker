@@ -17,6 +17,7 @@ import (
 	"github.com/abenz1267/walker/history"
 	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/modules/emojis"
+	"github.com/abenz1267/walker/modules/windows"
 	"github.com/abenz1267/walker/state"
 	"github.com/abenz1267/walker/util"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
@@ -64,6 +65,7 @@ func getModules() []modules.Workable {
 		&modules.Switcher{},
 		&emojis.Emojis{},
 		&modules.CustomCommands{},
+		&windows.Windows{},
 		appstate.Clipboard,
 	}
 
@@ -509,6 +511,12 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	if !keepOpen && entry.Sub != "switcher" && cfg.IsService {
 		go quit()
+	}
+
+	if entry.SpecialFunc != nil {
+		entry.SpecialFunc(entry.SpecialFuncArgs...)
+		closeAfterActivation(keepOpen, selectNext)
+		return
 	}
 
 	toRun := entry.Exec

@@ -16,49 +16,25 @@ type Windows struct {
 	functions []func()
 }
 
+func (w Windows) General() *config.GeneralModule {
+	return &w.general
+}
+
 func (w Windows) Cleanup() {
 }
 
-func (w Windows) History() bool {
-	return w.general.History
-}
-
-func (w Windows) Typeahead() bool {
-	return w.general.Typeahead
-}
-
-func (Windows) KeepSort() bool {
-	return false
-}
-
-func (w Windows) IsSetup() bool {
-	return w.general.IsSetup
-}
-
-func (w Windows) Placeholder() string {
-	if w.general.Placeholder == "" {
-		return "Windows"
-	}
-
-	return w.general.Placeholder
-}
-
-func (w Windows) SwitcherOnly() bool {
-	return w.general.SwitcherOnly
-}
-
 func (w *Windows) Setup(cfg *config.Config) bool {
+	w.general = cfg.Builtins.Windows.GeneralModule
+
 	return true
 }
 
 func (w *Windows) SetupData(cfg *config.Config, ctx context.Context) {
-	// go wlr.StartWM()
+	if !wlr.IsRunning {
+		go wlr.StartWM(nil, nil)
+	}
 
 	w.general.IsSetup = true
-}
-
-func (Windows) Name() string {
-	return "windows"
 }
 
 func (w Windows) Entries(ctx context.Context, term string) []util.Entry {
@@ -68,24 +44,21 @@ func (w Windows) Entries(ctx context.Context, term string) []util.Entry {
 
 	for _, v := range res {
 		entries = append(entries, util.Entry{
-			Label:      v.Title,
-			Sub:        fmt.Sprintf("Windows: %s", v.AppId),
-			Searchable: v.AppId,
-			Categories: []string{"windows"},
-			Class:      "windows",
-			Matching:   util.Fuzzy,
+			Label:           v.Title,
+			Sub:             fmt.Sprintf("Windows: %s", v.AppId),
+			Searchable:      v.AppId,
+			Categories:      []string{"windows"},
+			Class:           "windows",
+			Matching:        util.Fuzzy,
+			SpecialFunc:     w.SpecialFunc,
+			SpecialFuncArgs: []interface{}{v.Toplevel.Id()},
 		})
 	}
 
 	return entries
 }
 
-func (w Windows) Prefix() string {
-	return w.general.Prefix
-}
-
 func (w *Windows) Refresh() {
-	// w.general.IsSetup = false
 }
 
 func (w Windows) SpecialFunc(args ...interface{}) {
@@ -93,7 +66,7 @@ func (w Windows) SpecialFunc(args ...interface{}) {
 		return
 	}
 
-	index := args[0].(wl.ProxyId)
+	id := args[0].(wl.ProxyId)
 
-	wlr.Activate(index)
+	wlr.Activate(id)
 }

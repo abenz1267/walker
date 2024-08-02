@@ -140,7 +140,6 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint) []ut
 
 		filepath.Walk(d, func(path string, info fs.FileInfo, err error) error {
 			if _, ok := done[info.Name()]; ok {
-				fmt.Println("done")
 				return nil
 			}
 

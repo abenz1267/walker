@@ -33,6 +33,7 @@ var (
 	cmdAltModifier    gdk.ModifierType
 	amModifier        gdk.ModifierType
 	commands          map[string]func()
+	singleModule      modules.Workable
 )
 
 func setupCommands() {
@@ -1077,18 +1078,17 @@ func fuzzyScore(entry util.Entry, text string) float64 {
 
 func setupSingleModule() {
 	if len(explicits) == 1 || len(toUse) == 1 {
-		var module modules.Workable
-
 		if len(explicits) == 1 {
-			module = explicits[0]
+			singleModule = explicits[0]
 		} else {
-			module = toUse[0]
+			singleModule = toUse[0]
 		}
 
-		ui.input.SetObjectProperty("search-delay", module.General().Delay)
+		ui.input.SetObjectProperty("search-delay", singleModule.General().Delay)
 	}
 }
 
 func resetSingleModule() {
 	ui.input.SetObjectProperty("search-delay", cfg.Search.Delay)
+	singleModule = nil
 }

@@ -380,10 +380,6 @@ func setupFactory() *gtk.SignalListItemFactory {
 		label := gtk.NewLabel(val.Label)
 		sub := gtk.NewLabel(val.Sub)
 
-		if appstate.IsSingle || (cfg.UI.Window.Box.Scroll.List.ShowSubSingleModule != nil && !*cfg.UI.Window.Box.Scroll.List.ShowSubSingleModule) {
-			sub.SetVisible(false)
-		}
-
 		var activationLabel *gtk.Label
 
 		if !cfg.ActivationMode.Disabled {
@@ -426,7 +422,9 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		if cfg.UI.Window.Box.Scroll.List.Item.Text.Revert != nil && *cfg.UI.Window.Box.Scroll.List.Item.Text.Revert {
 			if sub != nil && val.Sub != "" {
-				text.Append(sub)
+				if !appstate.IsSingle || (singleModule != nil && singleModule.General().ShowSubWhenSingle) {
+					text.Append(sub)
+				}
 			}
 
 			if label != nil {
@@ -438,7 +436,9 @@ func setupFactory() *gtk.SignalListItemFactory {
 			}
 
 			if sub != nil && val.Sub != "" {
-				text.Append(sub)
+				if !appstate.IsSingle || (singleModule != nil && singleModule.General().ShowSubWhenSingle) {
+					text.Append(sub)
+				}
 			}
 		}
 

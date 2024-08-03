@@ -143,15 +143,14 @@ type SpinnerWidget struct {
 }
 
 type ListWrapper struct {
-	Widget              `mapstructure:",squash"`
-	Item                *ListItemWidget `mapstructure:"item"`
-	Orientation         *string         `mapstructure:"orientation"`
-	MinHeight           *int            `mapstructure:"min_height"`
-	MinWidth            *int            `mapstructure:"min_width"`
-	MaxHeight           *int            `mapstructure:"max_height"`
-	MaxWidth            *int            `mapstructure:"max_width"`
-	ShowSubSingleModule *bool           `mapstructure:"show_sub_single_module"`
-	AlwaysShow          *bool           `mapstructure:"always_show"`
+	Widget      `mapstructure:",squash"`
+	Item        *ListItemWidget `mapstructure:"item"`
+	Orientation *string         `mapstructure:"orientation"`
+	MinHeight   *int            `mapstructure:"min_height"`
+	MinWidth    *int            `mapstructure:"min_width"`
+	MaxHeight   *int            `mapstructure:"max_height"`
+	MaxWidth    *int            `mapstructure:"max_width"`
+	AlwaysShow  *bool           `mapstructure:"always_show"`
 }
 
 type ListItemWidget struct {

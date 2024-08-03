@@ -34,9 +34,9 @@ type Config struct {
 	Search         Search         `mapstructure:"search"`
 	Theme          string         `mapstructure:"theme"`
 	Terminal       string         `mapstructure:"terminal"`
-	UI             *UI            `mapstructure:"ui"`
 
 	// internal
+	UI        *UI      `mapstructure:"-"`
 	Available []string `mapstructure:"-"`
 	IsService bool     `mapstructure:"-"`
 }

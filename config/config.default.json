@@ -15,7 +15,6 @@
   "builtins": {
     "applications": {
       "name": "applications",
-      "theme": "catppuccin",
       "placeholder": "Applications",
       "actions": true,
       "prioritize_new": true,

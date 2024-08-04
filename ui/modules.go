@@ -168,19 +168,6 @@ func setupSingleModule() {
 	glib.IdleAdd(func() {
 		elements.input.SetObjectProperty("search-delay", singleModule.General().Delay)
 	})
-
-	theme := cfg.Theme
-
-	if val, ok := layouts[singleModule.General().Name]; ok {
-		startupLayout = layout
-		layout = val
-		theme = singleModule.General().Theme
-	}
-
-	setupTheme(theme)
-	setupCss(theme)
-
-	setupLayerShellAnchors()
 }
 
 func resetSingleModule() {

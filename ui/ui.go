@@ -27,19 +27,17 @@ import (
 var themes embed.FS
 
 var (
-	hasAnchors    bool
-	cfg           *config.Config
-	elements      *Elements
-	startupLayout *config.UI
-	startupTheme  string
-	layout        *config.UI
-	layouts       map[string]*config.UI
-	common        *Common
-	explicits     []modules.Workable
-	toUse         []modules.Workable
-	available     []modules.Workable
-	hstry         history.History
-	appstate      *state.AppState
+	cfg          *config.Config
+	elements     *Elements
+	startupTheme string
+	layout       *config.UI
+	layouts      map[string]*config.UI
+	common       *Common
+	explicits    []modules.Workable
+	toUse        []modules.Workable
+	available    []modules.Workable
+	hstry        history.History
+	appstate     *state.AppState
 )
 
 type Common struct {
@@ -130,9 +128,12 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		}
 
 		if singleModule == nil {
-			setupTheme(theme)
-			setupCss(theme)
-			setupLayerShellAnchors()
+			setupLayout(theme)
+		} else {
+			if val, ok := layouts[singleModule.General().Name]; ok {
+				layout = val
+				setupLayout(singleModule.General().Theme)
+			}
 		}
 
 		elements.appwin.SetVisible(true)
@@ -494,12 +495,6 @@ func reopen() {
 
 	appstate.IsRunning = true
 
-	elements.appwin.SetVisible(true)
-
-	if appstate.Benchmark {
-		fmt.Println("Visible (re-open)", time.Now().UnixNano())
-	}
-
 	go func() {
 		for _, proc := range toUse {
 			proc.Refresh()
@@ -514,6 +509,19 @@ func reopen() {
 	}
 
 	setupSingleModule()
+
+	if singleModule != nil {
+		if val, ok := layouts[singleModule.General().Name]; ok {
+			layout = val
+			setupLayout(singleModule.General().Theme)
+		}
+	}
+
+	elements.appwin.SetVisible(true)
+
+	if appstate.Benchmark {
+		fmt.Println("Visible (re-open)", time.Now().UnixNano())
+	}
 
 	if len(toUse) == 1 {
 		text := toUse[0].General().Placeholder
@@ -592,14 +600,6 @@ func setupLayerShell() {
 }
 
 func setupLayerShellAnchors() {
-	// BROKEN: changing layer-shell anchors breaks the window: https://github.com/diamondburned/gotk4-layer-shell/issues/2
-	// remove if fixed
-	if hasAnchors {
-		return
-	}
-
-	hasAnchors = true
-
 	if layout != nil {
 		top := layout.Anchors != nil
 		bottom := layout.Anchors != nil
@@ -613,7 +613,6 @@ func setupLayerShellAnchors() {
 			right = layout.Anchors.Right != nil && *layout.Anchors.Right
 		}
 
-		// crashes when setting to something else
 		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeTop, top)
 		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeBottom, bottom)
 		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeLeft, left)
@@ -621,12 +620,8 @@ func setupLayerShellAnchors() {
 	}
 }
 
-func resetLayout() {
-	if startupLayout != nil {
-		layout = startupLayout
-		startupLayout = nil
-		setupTheme(cfg.Theme)
-		setupCss(cfg.Theme)
-		setupLayerShellAnchors()
-	}
+func setupLayout(theme string) {
+	setupTheme(theme)
+	setupCss(theme)
+	setupLayerShellAnchors()
 }

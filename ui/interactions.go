@@ -13,6 +13,7 @@ import (
 	"sync"
 	"syscall"
 
+	"github.com/abenz1267/walker/config"
 	"github.com/abenz1267/walker/history"
 	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/state"
@@ -388,6 +389,14 @@ func activateItem(keepOpen, selectNext, alt bool) {
 				common.items.Splice(0, int(common.items.NItems()))
 				elements.input.SetObjectProperty("placeholder-text", m.General().Placeholder)
 				setupSingleModule()
+
+				if val, ok := layouts[singleModule.General().Name]; ok {
+					glib.IdleAdd(func() {
+						layout = val
+						setupLayout(singleModule.General().Theme)
+					})
+				}
+
 				elements.input.SetText("")
 				elements.input.GrabFocus()
 				return
@@ -799,6 +808,13 @@ func usageModifier(item util.Entry) int {
 
 func quit() {
 	if singleModule != nil {
+		if _, ok := layouts[singleModule.General().Name]; ok {
+			glib.IdleAdd(func() {
+				layout = config.GetLayout(cfg.Theme)
+				setupLayout(cfg.Theme)
+			})
+		}
+
 		resetSingleModule()
 	}
 
@@ -836,8 +852,6 @@ func quit() {
 		elements.input.SetText("")
 		elements.input.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
 		elements.appwin.SetVisible(false)
-
-		resetLayout()
 	})
 
 	common.app.Hold()

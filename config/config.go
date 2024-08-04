@@ -19,7 +19,7 @@ var noFoundErr viper.ConfigFileNotFoundError
 var defaultConfig []byte
 
 //go:embed themes/*
-var themes embed.FS
+var Themes embed.FS
 
 type Config struct {
 	ActivationMode ActivationMode `mapstructure:"activation_mode"`

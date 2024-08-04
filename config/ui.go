@@ -218,14 +218,14 @@ func GetLayout(theme string) *UI {
 
 		switch theme {
 		case "kanagawa":
-			layout, err = themes.ReadFile("themes/kanagawa.json")
+			layout, err = Themes.ReadFile("themes/kanagawa.json")
 			if err != nil {
 				log.Panicln(err)
 			}
 
 			createLayoutFile(layout)
 		case "catppuccin":
-			layout, err = themes.ReadFile("themes/catppuccin.json")
+			layout, err = Themes.ReadFile("themes/catppuccin.json")
 			if err != nil {
 				log.Panicln(err)
 			}

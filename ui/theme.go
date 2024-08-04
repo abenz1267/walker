@@ -26,14 +26,14 @@ func setupCss(theme string) {
 	} else {
 		switch cfg.Theme {
 		case "kanagawa":
-			css, err = themes.ReadFile("themes/kanagawa.css")
+			css, err = config.Themes.ReadFile("themes/kanagawa.css")
 			if err != nil {
 				log.Panicln(err)
 			}
 
 			createThemeFile(css)
 		case "catppuccin":
-			css, err = themes.ReadFile("themes/catppuccin.css")
+			css, err = config.Themes.ReadFile("themes/catppuccin.css")
 			if err != nil {
 				log.Panicln(err)
 			}

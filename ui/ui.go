@@ -1,7 +1,6 @@
 package ui
 
 import (
-	"embed"
 	_ "embed"
 	"fmt"
 	"log"
@@ -22,9 +21,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
-
-//go:embed themes/*
-var themes embed.FS
 
 var (
 	cfg          *config.Config

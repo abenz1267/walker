@@ -28,11 +28,6 @@ in {
         default = builtins.fromJSON (builtins.readFile ../config/config.default.json);
         description = "Configuration";
       };
-      style = mkOption {
-        type = types.str;
-        default = builtins.readFile ../ui/themes/style.default.css;
-        description = "Theming";
-      };
     };
   };
 

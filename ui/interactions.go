@@ -13,11 +13,8 @@ import (
 	"sync"
 	"syscall"
 
-	"github.com/abenz1267/walker/config"
 	"github.com/abenz1267/walker/history"
 	"github.com/abenz1267/walker/modules"
-	"github.com/abenz1267/walker/modules/emojis"
-	"github.com/abenz1267/walker/modules/windows"
 	"github.com/abenz1267/walker/state"
 	"github.com/abenz1267/walker/util"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
@@ -38,11 +35,6 @@ var (
 
 func setupCommands() {
 	commands = make(map[string]func())
-	commands["reloadconfig"] = func() {
-		cfg = config.Get(appstate.ExplicitConfig, appstate.ExplicitTheme)
-		setupTheme()
-		setupModules()
-	}
 	commands["resethistory"] = func() {
 		os.Remove(filepath.Join(util.CacheDir(), "history.gob"))
 		hstry = history.Get()
@@ -55,148 +47,15 @@ func setupCommands() {
 	}
 }
 
-func getModules() []modules.Workable {
-	res := []modules.Workable{
-		&modules.Applications{},
-		&modules.Runner{},
-		&modules.Websearch{},
-		&modules.Commands{},
-		&modules.SSH{},
-		&modules.Finder{},
-		&modules.Switcher{},
-		&emojis.Emojis{},
-		&modules.CustomCommands{},
-		&windows.Windows{},
-		appstate.Clipboard,
-	}
-
-	if appstate.Dmenu != nil {
-		res = append(res, appstate.Dmenu)
-	} else {
-		res = append(res, &modules.Dmenu{})
-	}
-
-	for _, v := range cfg.Plugins {
-		e := &modules.Plugin{}
-		e.PluginCfg = v
-
-		res = append(res, e)
-	}
-
-	return res
-}
-
-func findModule(name string, modules ...[]modules.Workable) modules.Workable {
-	for _, v := range modules {
-		for _, w := range v {
-			if w != nil && w.General().Name == name {
-				return w
-			}
-		}
-	}
-
-	return nil
-}
-
-func setExplicits() {
-	explicits = []modules.Workable{}
-
-	toSetup := []string{}
-
-	for _, v := range appstate.ExplicitModules {
-		if slices.Contains(cfg.Available, v) {
-			for k, m := range available {
-				if m.General().Name == v {
-					explicits = append(explicits, available[k])
-				}
-			}
-		} else {
-			toSetup = append(toSetup, v)
-		}
-	}
-
-	modules := getModules()
-
-	for k, v := range modules {
-		if v != nil {
-			if slices.Contains(toSetup, v.General().Name) {
-				if !v.General().IsSetup {
-					if ok := v.Setup(cfg); ok {
-						explicits = append(explicits, modules[k])
-					}
-				}
-			}
-		}
-	}
-}
-
-func setupModules() {
-	all := getModules()
-	toUse = []modules.Workable{}
-	available = []modules.Workable{}
-
-	for k, v := range all {
-		if v == nil {
-			continue
-		}
-
-		if !v.General().IsSetup {
-			if ok := all[k].Setup(cfg); ok {
-				if slices.Contains(cfg.Disabled, v.General().Name) {
-					continue
-				}
-
-				available = append(available, all[k])
-				cfg.Available = append(cfg.Available, v.General().Name)
-			}
-		} else {
-			if slices.Contains(cfg.Disabled, v.General().Name) {
-				continue
-			}
-
-			available = append(available, all[k])
-			cfg.Available = append(cfg.Available, v.General().Name)
-		}
-	}
-
-	if len(appstate.ExplicitModules) > 0 {
-		setExplicits()
-	}
-
-	clear(ui.prefixClasses)
-
-	for _, v := range available {
-		ui.prefixClasses[v.General().Prefix] = append(ui.prefixClasses[v.General().Prefix], v.General().Name)
-	}
-
-	if len(explicits) > 0 {
-		toUse = explicits
-	} else {
-		toUse = available
-	}
-
-	if len(toUse) == 1 {
-		text := toUse[0].General().Placeholder
-		if appstate.ExplicitPlaceholder != "" {
-			text = appstate.ExplicitPlaceholder
-		}
-
-		ui.input.SetObjectProperty("placeholder-text", text)
-	}
-
-	setupSingleModule()
-}
-
 func setupInteractions(appstate *state.AppState) {
 	go setupCommands()
 	go createActivationKeys()
-	go setupModules()
 
 	keycontroller := gtk.NewEventControllerKey()
 	keycontroller.SetPropagationPhase(gtk.PropagationPhase(1))
 
-	ui.input.AddController(keycontroller)
-	ui.input.Connect("search-changed", process)
+	elements.input.AddController(keycontroller)
+	elements.input.Connect("search-changed", process)
 
 	amKey = gdk.KEY_Control_L
 	amModifier = gdk.ControlMask
@@ -217,8 +76,8 @@ func setupInteractions(appstate *state.AppState) {
 	globalKeyController.ConnectKeyPressed(handleGlobalKeysPressed)
 	globalKeyController.SetPropagationPhase(gtk.PropagationPhase(1))
 
-	ui.appwin.AddController(globalKeyController)
-	ui.appwin.AddController(globalKeyReleasedController)
+	elements.appwin.AddController(globalKeyController)
+	elements.appwin.AddController(globalKeyReleasedController)
 
 	if !cfg.IgnoreMouse {
 		gesture := gtk.NewGestureClick()
@@ -231,51 +90,51 @@ func setupInteractions(appstate *state.AppState) {
 			}
 		})
 
-		ui.appwin.AddController(gesture)
+		elements.appwin.AddController(gesture)
 	}
 }
 
 func selectNext() {
-	items := ui.selection.NItems()
+	items := common.selection.NItems()
 
 	if items == 0 {
 		return
 	}
 
-	current := ui.selection.Selected()
+	current := common.selection.Selected()
 	next := current + 1
 
 	if next < items {
-		ui.selection.SetSelected(current + 1)
-		ui.list.ScrollTo(ui.selection.Selected(), gtk.ListScrollNone, nil)
+		common.selection.SetSelected(current + 1)
+		elements.list.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
 		return
 	}
 
 	if next >= items && cfg.List.Cycle {
-		ui.selection.SetSelected(0)
-		ui.list.ScrollTo(ui.selection.Selected(), gtk.ListScrollNone, nil)
+		common.selection.SetSelected(0)
+		elements.list.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
 		return
 	}
 }
 
 func selectPrev() {
-	items := ui.selection.NItems()
+	items := common.selection.NItems()
 
 	if items == 0 {
 		return
 	}
 
-	current := ui.selection.Selected()
+	current := common.selection.Selected()
 
 	if current > 0 {
-		ui.selection.SetSelected(current - 1)
-		ui.list.ScrollTo(ui.selection.Selected(), gtk.ListScrollNone, nil)
+		common.selection.SetSelected(current - 1)
+		elements.list.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
 		return
 	}
 
 	if current == 0 && cfg.List.Cycle {
-		ui.selection.SetSelected(items - 1)
-		ui.list.ScrollTo(ui.selection.Selected(), gtk.ListScrollNone, nil)
+		common.selection.SetSelected(items - 1)
+		elements.list.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
 		return
 	}
 }
@@ -287,8 +146,8 @@ func selectActivationMode(val uint, keepOpen bool) {
 		target = n
 	}
 
-	if target < ui.selection.NItems() {
-		ui.selection.SetSelected(target)
+	if target < common.selection.NItems() {
+		common.selection.SetSelected(target)
 	}
 
 	if keepOpen {
@@ -300,11 +159,11 @@ func selectActivationMode(val uint, keepOpen bool) {
 }
 
 func enableAM() {
-	c := ui.appwin.CSSClasses()
+	c := elements.appwin.CSSClasses()
 	c = append(c, "activation")
 
-	ui.appwin.SetCSSClasses(c)
-	ui.list.GrabFocus()
+	elements.appwin.SetCSSClasses(c)
+	elements.list.GrabFocus()
 
 	activationEnabled = true
 }
@@ -312,9 +171,9 @@ func enableAM() {
 func disableAM() {
 	if !cfg.ActivationMode.Disabled && activationEnabled {
 		activationEnabled = false
-		ui.input.SetFocusable(false)
+		elements.input.SetFocusable(false)
 
-		c := ui.appwin.CSSClasses()
+		c := elements.appwin.CSSClasses()
 
 		for k, v := range c {
 			if v == "activation" {
@@ -322,8 +181,8 @@ func disableAM() {
 			}
 		}
 
-		ui.appwin.SetCSSClasses(c)
-		ui.input.GrabFocus()
+		elements.appwin.SetCSSClasses(c)
+		elements.input.GrabFocus()
 	}
 }
 
@@ -337,7 +196,7 @@ func handleGlobalKeysReleased(val, code uint, state gdk.ModifierType) {
 func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	switch val {
 	case amKey:
-		if !cfg.ActivationMode.Disabled && ui.selection.NItems() != 0 {
+		if !cfg.ActivationMode.Disabled && common.selection.NItems() != 0 {
 			if val == amKey {
 				enableAM()
 				return true
@@ -345,7 +204,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		}
 	case gdk.KEY_BackSpace:
 		if modifier == gdk.ShiftMask {
-			entry := gioutil.ObjectValue[util.Entry](ui.items.Item(ui.selection.Selected()))
+			entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
 			hstry.Delete(entry.Identifier())
 			return true
 		}
@@ -387,7 +246,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			selectActivationMode(val, isAmShift)
 			return true
 		} else {
-			ui.input.GrabFocus()
+			elements.input.GrabFocus()
 			return false
 		}
 	case gdk.KEY_F1, gdk.KEY_F2, gdk.KEY_F3, gdk.KEY_F4, gdk.KEY_F5, gdk.KEY_F6, gdk.KEY_F7, gdk.KEY_F8:
@@ -405,9 +264,9 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			isAlt = true
 		}
 
-		if appstate.ForcePrint && ui.list.Model().NItems() == 0 {
+		if appstate.ForcePrint && elements.list.Model().NItems() == 0 {
 			if appstate.IsDmenu {
-				handleDmenuResult(ui.input.Text())
+				handleDmenuResult(elements.input.Text())
 				return true
 			}
 
@@ -418,9 +277,9 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		activateItem(isShift, isShift, isAlt)
 		return true
 	case gdk.KEY_Tab:
-		if ui.typeahead.Text() != "" {
-			ui.input.SetText(ui.typeahead.Text())
-			ui.input.SetPosition(-1)
+		if elements.typeahead.Text() != "" {
+			elements.input.SetText(elements.typeahead.Text())
+			elements.input.SetPosition(-1)
 
 			return true
 		} else {
@@ -432,7 +291,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		selectNext()
 		return true
 	case gdk.KEY_Up:
-		if ui.selection.Selected() == 0 || ui.items.NItems() == 0 {
+		if common.selection.Selected() == 0 || common.items.NItems() == 0 {
 			if len(toUse) != 1 {
 				selectPrev()
 				return true
@@ -459,8 +318,8 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				}
 
 				glib.IdleAdd(func() {
-					ui.input.SetText(inputhstry[historyIndex])
-					ui.input.SetPosition(-1)
+					elements.input.SetText(inputhstry[historyIndex])
+					elements.input.SetPosition(-1)
 				})
 			}
 		} else {
@@ -471,7 +330,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		selectPrev()
 		return true
 	default:
-		ui.input.GrabFocus()
+		elements.input.GrabFocus()
 	}
 
 	return false
@@ -480,11 +339,11 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 var historyIndex = 0
 
 func activateItem(keepOpen, selectNext, alt bool) {
-	if ui.list.Model().NItems() == 0 {
+	if elements.list.Model().NItems() == 0 {
 		return
 	}
 
-	entry := gioutil.ObjectValue[util.Entry](ui.items.Item(ui.selection.Selected()))
+	entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
 
 	if !keepOpen && entry.Sub != "switcher" && cfg.IsService {
 		go quit()
@@ -526,11 +385,11 @@ func activateItem(keepOpen, selectNext, alt bool) {
 				explicits = []modules.Workable{}
 				explicits = append(explicits, m)
 
-				ui.items.Splice(0, int(ui.items.NItems()))
-				ui.input.SetObjectProperty("placeholder-text", m.General().Placeholder)
+				common.items.Splice(0, int(common.items.NItems()))
+				elements.input.SetObjectProperty("placeholder-text", m.General().Placeholder)
 				setupSingleModule()
-				ui.input.SetText("")
-				ui.input.GrabFocus()
+				elements.input.SetText("")
+				elements.input.GrabFocus()
 				return
 			}
 		}
@@ -564,13 +423,13 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	}
 
 	if entry.History {
-		hstry.Save(entry.Identifier(), strings.TrimSpace(ui.input.Text()))
+		hstry.Save(entry.Identifier(), strings.TrimSpace(elements.input.Text()))
 	}
 
 	module := findModule(entry.Module, toUse, explicits)
 
 	if module != nil && (module.General().History || module.General().Typeahead) {
-		history.SaveInputHistory(module.General().Name, ui.input.Text())
+		history.SaveInputHistory(module.General().Name, elements.input.Text())
 	}
 
 	err := cmd.Start()
@@ -622,7 +481,7 @@ func closeAfterActivation(keepOpen, next bool) {
 
 	if appstate.IsRunning {
 		if !activationEnabled && !next {
-			ui.input.SetText("")
+			elements.input.SetText("")
 		}
 
 		if next {
@@ -640,13 +499,13 @@ func process() {
 		cancel()
 	}
 
-	ui.typeahead.SetText("")
+	elements.typeahead.SetText("")
 
 	if cfg.IgnoreMouse {
-		ui.list.SetCanTarget(false)
+		elements.list.SetCanTarget(false)
 	}
 
-	text := strings.TrimSpace(ui.input.Text())
+	text := strings.TrimSpace(elements.input.Text())
 
 	if text == "" && cfg.List.ShowInitialEntries && len(explicits) == 0 && !appstate.IsDmenu {
 		setInitials()
@@ -656,17 +515,17 @@ func process() {
 	var ctx context.Context
 	ctx, cancel = context.WithCancel(context.Background())
 
-	if (ui.input.Text() != "" || appstate.IsDmenu) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
-		if cfg.UI.Window.Box.Search.Spinner.Hide != nil && !*cfg.UI.Window.Box.Search.Spinner.Hide {
-			ui.spinner.SetVisible(true)
+	if (elements.input.Text() != "" || appstate.IsDmenu) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
+		if layout.Window.Box.Search.Spinner.Hide != nil && !*layout.Window.Box.Search.Spinner.Hide {
+			elements.spinner.SetVisible(true)
 		}
 
 		go processAsync(ctx, text)
 	} else {
-		ui.items.Splice(0, int(ui.items.NItems()))
+		common.items.Splice(0, int(common.items.NItems()))
 
-		if cfg.UI.Window.Box.Search.Spinner.Hide != nil && !*cfg.UI.Window.Box.Search.Spinner.Hide {
-			ui.spinner.SetVisible(false)
+		if layout.Window.Box.Search.Spinner.Hide != nil && !*layout.Window.Box.Search.Spinner.Hide {
+			elements.spinner.SetVisible(false)
 		}
 	}
 }
@@ -683,8 +542,8 @@ func processAsync(ctx context.Context, text string) {
 		handlerPool.Put(handler)
 		cancel()
 
-		if cfg.UI.Window.Box.Search.Spinner.Hide != nil && !*cfg.UI.Window.Box.Search.Spinner.Hide {
-			ui.spinner.SetVisible(false)
+		if layout.Window.Box.Search.Spinner.Hide != nil && !*layout.Window.Box.Search.Spinner.Hide {
+			elements.spinner.SetVisible(false)
 		}
 	}()
 
@@ -694,7 +553,7 @@ func processAsync(ctx context.Context, text string) {
 	handler.entries = []util.Entry{}
 
 	glib.IdleAdd(func() {
-		ui.items.Splice(0, int(ui.items.NItems()))
+		common.items.Splice(0, int(common.items.NItems()))
 	})
 
 	p := toUse
@@ -725,7 +584,7 @@ func processAsync(ctx context.Context, text string) {
 		if hasPrefix {
 			glib.IdleAdd(func() {
 				for _, v := range prefixes {
-					ui.appwin.SetCSSClasses(ui.prefixClasses[v])
+					elements.appwin.SetCSSClasses(elements.prefixClasses[v])
 				}
 			})
 		}
@@ -796,8 +655,8 @@ func processAsync(ctx context.Context, text string) {
 			for k := range e {
 				e[k].Module = w.General().Name
 
-				if e[k].DragDrop && !ui.list.CanTarget() {
-					ui.list.SetCanTarget(true)
+				if e[k].DragDrop && !elements.list.CanTarget() {
+					elements.list.SetCanTarget(true)
 				}
 
 				toMatch := text
@@ -849,13 +708,13 @@ func processAsync(ctx context.Context, text string) {
 
 	wg.Wait()
 
-	if cfg.UI.Window.Box.Search.Spinner.Hide != nil && !*cfg.UI.Window.Box.Search.Spinner.Hide {
-		ui.spinner.SetVisible(false)
+	if layout.Window.Box.Search.Spinner.Hide != nil && !*layout.Window.Box.Search.Spinner.Hide {
+		elements.spinner.SetVisible(false)
 	}
 }
 
 func setTypeahead(modules []modules.Workable) {
-	if ui.input.Text() == "" {
+	if elements.input.Text() == "" {
 		return
 	}
 
@@ -865,7 +724,7 @@ func setTypeahead(modules []modules.Workable) {
 		if v.General().Typeahead {
 			tah := history.GetInputHistory(v.General().Name)
 
-			trimmed := strings.TrimSpace(ui.input.Text())
+			trimmed := strings.TrimSpace(elements.input.Text())
 
 			if trimmed != "" {
 				for _, v := range tah {
@@ -876,7 +735,7 @@ func setTypeahead(modules []modules.Workable) {
 
 				glib.IdleAdd(func() {
 					if trimmed != toSet {
-						ui.typeahead.SetText(toSet)
+						elements.typeahead.SetText(toSet)
 					}
 				})
 			}
@@ -921,7 +780,7 @@ func setInitials() {
 
 	sortEntries(entries)
 
-	ui.items.Splice(0, int(ui.items.NItems()), entries...)
+	common.items.Splice(0, int(common.items.NItems()), entries...)
 }
 
 func usageModifier(item util.Entry) int {
@@ -939,6 +798,10 @@ func usageModifier(item util.Entry) int {
 }
 
 func quit() {
+	if singleModule != nil {
+		resetSingleModule()
+	}
+
 	appstate.IsRunning = false
 	appstate.IsSingle = false
 	historyIndex = 0
@@ -955,23 +818,33 @@ func quit() {
 
 	explicits = []modules.Workable{}
 
-	resetSingleModule()
-
 	glib.IdleAdd(func() {
-		if cfg.UI.Window.Box.Search.Spinner.Hide != nil && !*cfg.UI.Window.Box.Search.Spinner.Hide {
-			ui.spinner.SetVisible(false)
+		if layout != nil {
+			if layout.Window != nil {
+				if layout.Window.Box != nil {
+					if layout.Window.Box.Search != nil {
+						if layout.Window.Box.Search.Spinner != nil {
+							if layout.Window.Box.Search.Spinner.Hide != nil && !*layout.Window.Box.Search.Spinner.Hide {
+								elements.spinner.SetVisible(false)
+							}
+						}
+					}
+				}
+			}
 		}
 
-		ui.input.SetText("")
-		ui.input.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
-		ui.appwin.SetVisible(false)
+		elements.input.SetText("")
+		elements.input.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
+		elements.appwin.SetVisible(false)
+
+		resetLayout()
 	})
 
-	ui.app.Hold()
+	common.app.Hold()
 }
 
 func exit() {
-	ui.appwin.Close()
+	elements.appwin.Close()
 	os.Exit(0)
 }
 
@@ -1074,21 +947,4 @@ func fuzzyScore(entry util.Entry, text string) float64 {
 	tm := 1.0 / float64(textLength)
 
 	return float64(usageScore)*tm + float64(entry.ScoreFuzzy)/tm
-}
-
-func setupSingleModule() {
-	if len(explicits) == 1 || len(toUse) == 1 {
-		if len(explicits) == 1 {
-			singleModule = explicits[0]
-		} else {
-			singleModule = toUse[0]
-		}
-
-		ui.input.SetObjectProperty("search-delay", singleModule.General().Delay)
-	}
-}
-
-func resetSingleModule() {
-	ui.input.SetObjectProperty("search-delay", cfg.Search.Delay)
-	singleModule = nil
 }

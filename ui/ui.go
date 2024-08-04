@@ -14,7 +14,7 @@ import (
 	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/state"
 	"github.com/abenz1267/walker/util"
-	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
+	ls "github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	coreglib "github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
@@ -27,17 +27,30 @@ import (
 var themes embed.FS
 
 var (
-	cfg       *config.Config
-	ui        *UI
-	explicits []modules.Workable
-	toUse     []modules.Workable
-	available []modules.Workable
-	hstry     history.History
-	appstate  *state.AppState
+	hasAnchors    bool
+	cfg           *config.Config
+	elements      *Elements
+	startupLayout *config.UI
+	startupTheme  string
+	layout        *config.UI
+	layouts       map[string]*config.UI
+	common        *Common
+	explicits     []modules.Workable
+	toUse         []modules.Workable
+	available     []modules.Workable
+	hstry         history.History
+	appstate      *state.AppState
 )
 
-type UI struct {
-	app           *gtk.Application
+type Common struct {
+	items       *gioutil.ListModel[util.Entry]
+	selection   *gtk.SingleSelection
+	factory     *gtk.SignalListItemFactory
+	cssProvider *gtk.CSSProvider
+	app         *gtk.Application
+}
+
+type Elements struct {
 	scroll        *gtk.ScrolledWindow
 	overlay       *gtk.Overlay
 	spinner       *gtk.Spinner
@@ -47,8 +60,6 @@ type UI struct {
 	typeahead     *gtk.SearchEntry
 	input         *gtk.SearchEntry
 	list          *gtk.ListView
-	items         *gioutil.ListModel[util.Entry]
-	selection     *gtk.SingleSelection
 	prefixClasses map[string][]string
 	iconTheme     *gtk.IconTheme
 	password      *gtk.PasswordEntry
@@ -63,8 +74,18 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			return
 		}
 
+		layouts = make(map[string]*config.UI)
+
 		hstry = history.Get()
-		cfg = config.Get(appstate.ExplicitConfig, appstate.ExplicitTheme)
+		cfg = config.Get(appstate.ExplicitConfig)
+
+		theme := cfg.Theme
+
+		if appstate.ExplicitTheme != "" {
+			theme = appstate.ExplicitTheme
+		}
+
+		layout = config.GetLayout(theme)
 
 		appstate.Labels = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
 		appstate.LabelsF = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
@@ -91,80 +112,35 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		}
 
 		if appstate.Password {
-			setupUIPassword(app)
+			elements = setupElementsPassword(app)
+
+			setupLayerShell()
 		} else {
-			setupUI(app)
+			setupCommon(app)
+
+			elements = setupElements(app)
+
+			setupLayerShell()
+
+			setupModules()
+
+			afterUI()
+
 			setupInteractions(appstate)
 		}
 
-		ui.appwin.SetApplication(app)
-
-		gtk4layershell.InitForWindow(&ui.appwin.Window)
-		gtk4layershell.SetNamespace(&ui.appwin.Window, "walker")
-
-		if cfg.Search.ForceKeyboardFocus {
-			gtk4layershell.SetKeyboardMode(&ui.appwin.Window, gtk4layershell.LayerShellKeyboardModeExclusive)
-		} else {
-			gtk4layershell.SetKeyboardMode(&ui.appwin.Window, gtk4layershell.LayerShellKeyboardModeOnDemand)
+		if singleModule == nil {
+			setupTheme(theme)
+			setupCss(theme)
+			setupLayerShellAnchors()
 		}
 
-		if cfg.UI != nil && cfg.UI.Fullscreen != nil && !*cfg.UI.Fullscreen {
-			gtk4layershell.SetLayer(&ui.appwin.Window, gtk4layershell.LayerShellLayerTop)
-
-			if cfg.UI.Anchors.Top != nil && *cfg.UI.Anchors.Top {
-				gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeTop, true)
-			}
-
-			if cfg.UI.Anchors.Bottom != nil && *cfg.UI.Anchors.Bottom {
-				gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeBottom, true)
-			}
-
-			if cfg.UI.Anchors.Left != nil && *cfg.UI.Anchors.Left {
-				gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeLeft, true)
-			}
-
-			if cfg.UI.Anchors.Right != nil && *cfg.UI.Anchors.Right {
-				gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeRight, true)
-			}
-
-			if cfg.UI.IgnoreExclusive != nil && *cfg.UI.IgnoreExclusive {
-				gtk4layershell.SetExclusiveZone(&ui.appwin.Window, -1)
-			}
-		} else {
-			gtk4layershell.SetLayer(&ui.appwin.Window, gtk4layershell.LayerShellLayerOverlay)
-
-			if cfg.UI != nil {
-				if cfg.UI.Anchors != nil {
-					if cfg.UI.Anchors.Top != nil && *cfg.UI.Anchors.Top {
-						gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeTop, true)
-					}
-
-					if cfg.UI.Anchors.Bottom != nil && *cfg.UI.Anchors.Bottom {
-						gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeBottom, true)
-					}
-
-					if cfg.UI.Anchors.Left != nil && *cfg.UI.Anchors.Left {
-						gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeLeft, true)
-					}
-
-					if cfg.UI.Anchors.Right != nil && *cfg.UI.Anchors.Right {
-						gtk4layershell.SetAnchor(&ui.appwin.Window, gtk4layershell.LayerShellEdgeRight, true)
-					}
-
-				}
-
-				if cfg.UI.IgnoreExclusive != nil && *cfg.UI.IgnoreExclusive {
-					gtk4layershell.SetExclusiveZone(&ui.appwin.Window, -1)
-				}
-			}
-		}
-
-		ui.appwin.SetVisible(true)
+		elements.appwin.SetVisible(true)
 
 		if appstate.Password {
-			ui.password.GrabFocus()
+			elements.password.GrabFocus()
 		} else {
-			ui.input.GrabFocus()
+			elements.input.GrabFocus()
 		}
 
 		appstate.HasUI = true
@@ -176,18 +152,14 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 	}
 }
 
-func setupUIPassword(app *gtk.Application) {
-	if !gtk4layershell.IsSupported() {
-		log.Panicln("gtk-layer-shell not supported")
-	}
-
+func setupElementsPassword(app *gtk.Application) *Elements {
 	pw := gtk.NewPasswordEntry()
 
 	controller := gtk.NewEventControllerKey()
 	controller.ConnectKeyPressed(func(val uint, code uint, modifier gdk.ModifierType) bool {
 		switch val {
 		case gdk.KEY_Escape:
-			ui.appwin.Close()
+			elements.appwin.Close()
 			return true
 		}
 
@@ -197,10 +169,11 @@ func setupUIPassword(app *gtk.Application) {
 	pw.AddController(controller)
 	pw.Connect("activate", func() {
 		fmt.Print(pw.Text())
-		ui.appwin.Close()
+		elements.appwin.Close()
 	})
 
 	appwin := gtk.NewApplicationWindow(app)
+	appwin.SetApplication(app)
 
 	search := gtk.NewBox(gtk.OrientationVertical, 0)
 	search.Append(pw)
@@ -210,22 +183,36 @@ func setupUIPassword(app *gtk.Application) {
 
 	appwin.SetChild(box)
 
-	ui = &UI{
+	ui := &Elements{
 		appwin:   appwin,
 		box:      box,
 		search:   search,
 		password: pw,
 	}
 
-	setupTheme()
+	return ui
 }
 
-func setupUI(app *gtk.Application) {
-	if !gtk4layershell.IsSupported() {
-		log.Panicln("gtk-layer-shell not supported")
-	}
-
+func setupCommon(app *gtk.Application) {
 	items := gioutil.NewListModel[util.Entry]()
+	selection := gtk.NewSingleSelection(items.ListModel)
+	selection.SetAutoselect(true)
+
+	factory := setupFactory()
+
+	cssProvider := gtk.NewCSSProvider()
+	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
+
+	common = &Common{
+		items:       items,
+		selection:   selection,
+		factory:     factory,
+		cssProvider: cssProvider,
+		app:         app,
+	}
+}
+
+func setupElements(app *gtk.Application) *Elements {
 	spinner := gtk.NewSpinner()
 	search := gtk.NewBox(gtk.OrientationHorizontal, 0)
 	typeahead := gtk.NewSearchEntry()
@@ -239,12 +226,13 @@ func setupUI(app *gtk.Application) {
 	scroll.SetPropagateNaturalHeight(true)
 
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
-	appwin := gtk.NewApplicationWindow(app)
-	input := gtk.NewSearchEntry()
-	selection := gtk.NewSingleSelection(items.ListModel)
-	factory := setupFactory()
 
-	list := gtk.NewListView(selection, &factory.ListItemFactory)
+	appwin := gtk.NewApplicationWindow(app)
+	appwin.SetApplication(app)
+
+	input := gtk.NewSearchEntry()
+
+	list := gtk.NewListView(common.selection, &common.factory.ListItemFactory)
 	scroll.SetChild(list)
 
 	overlay := gtk.NewOverlay()
@@ -254,9 +242,8 @@ func setupUI(app *gtk.Application) {
 
 	appwin.SetChild(box)
 
-	ui = &UI{
+	ui := &Elements{
 		overlay:       overlay,
-		app:           app,
 		spinner:       spinner,
 		search:        search,
 		typeahead:     typeahead,
@@ -264,9 +251,7 @@ func setupUI(app *gtk.Application) {
 		box:           box,
 		appwin:        appwin,
 		input:         input,
-		items:         items,
 		list:          list,
-		selection:     selection,
 		prefixClasses: make(map[string][]string),
 	}
 
@@ -280,32 +265,13 @@ func setupUI(app *gtk.Application) {
 
 	ui.spinner.SetSpinning(true)
 
-	ui.selection.SetAutoselect(true)
-
 	ui.input.SetObjectProperty("search-delay", cfg.Search.Delay)
 
 	if cfg.Search.Placeholder != "" {
 		ui.input.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
 	}
 
-	setupTheme()
-	handleListVisibility()
-
-	if appstate.InitialQuery != "" {
-		ui.input.SetText(appstate.InitialQuery)
-		glib.IdleAdd(func() {
-			ui.input.SetPosition(-1)
-		})
-	}
-
-	ui.selection.ConnectItemsChanged(func(p, r, a uint) {
-		if ui.selection.NItems() > 0 {
-			ui.selection.SetSelected(0)
-			ui.list.ScrollTo(0, gtk.ListScrollNone, nil)
-		}
-
-		handleListVisibility()
-	})
+	return ui
 }
 
 func setupFactory() *gtk.SignalListItemFactory {
@@ -319,7 +285,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 	factory.ConnectBind(func(object *coreglib.Object) {
 		item := object.Cast().(*gtk.ListItem)
-		valObj := ui.items.Item(item.Position())
+		valObj := common.items.Item(item.Position())
 		val := gioutil.ObjectValue[util.Entry](valObj)
 		child := item.Child()
 
@@ -349,7 +315,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 			})
 
 			dd.ConnectDragBegin(func(_ gdk.Dragger) {
-				ui.appwin.SetVisible(false)
+				elements.appwin.SetVisible(false)
 			})
 
 			dd.ConnectDragEnd(func(_ gdk.Dragger, _ bool) {
@@ -367,11 +333,11 @@ func setupFactory() *gtk.SignalListItemFactory {
 			icon = gtk.NewImageFromFile(val.Image)
 		}
 
-		if (cfg.UI.Window.Box.Scroll.List.Item.Icon.Hide == nil || !*cfg.UI.Window.Box.Scroll.List.Item.Icon.Hide) && val.Icon != "" {
+		if (layout.Window.Box.Scroll.List.Item.Icon.Hide == nil || !*layout.Window.Box.Scroll.List.Item.Icon.Hide) && val.Icon != "" {
 			if filepath.IsAbs(val.Icon) {
 				icon = gtk.NewImageFromFile(val.Icon)
 			} else {
-				i := ui.iconTheme.LookupIcon(val.Icon, []string{}, cfg.UI.IconSizeIntMap[*cfg.UI.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
+				i := elements.iconTheme.LookupIcon(val.Icon, []string{}, layout.IconSizeIntMap[*layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
 
 				icon = gtk.NewImageFromPaintable(i)
 			}
@@ -390,9 +356,9 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		text := gtk.NewBox(gtk.OrientationVertical, 0)
 
-		setupBoxWidgetStyle(box, &cfg.UI.Window.Box.Scroll.List.Item.BoxWidget)
+		setupBoxWidgetStyle(box, &layout.Window.Box.Scroll.List.Item.BoxWidget)
 
-		if cfg.UI.Window.Box.Scroll.List.Item.Revert != nil && *cfg.UI.Window.Box.Scroll.List.Item.Revert {
+		if layout.Window.Box.Scroll.List.Item.Revert != nil && *layout.Window.Box.Scroll.List.Item.Revert {
 			if activationLabel != nil {
 				box.Append(activationLabel)
 			}
@@ -418,9 +384,9 @@ func setupFactory() *gtk.SignalListItemFactory {
 			}
 		}
 
-		setupBoxWidgetStyle(text, &cfg.UI.Window.Box.Scroll.List.Item.Text.BoxWidget)
+		setupBoxWidgetStyle(text, &layout.Window.Box.Scroll.List.Item.Text.BoxWidget)
 
-		if cfg.UI.Window.Box.Scroll.List.Item.Text.Revert != nil && *cfg.UI.Window.Box.Scroll.List.Item.Text.Revert {
+		if layout.Window.Box.Scroll.List.Item.Text.Revert != nil && *layout.Window.Box.Scroll.List.Item.Text.Revert {
 			if sub != nil && val.Sub != "" {
 				if !appstate.IsSingle || (singleModule != nil && singleModule.General().ShowSubWhenSingle) {
 					text.Append(sub)
@@ -443,19 +409,19 @@ func setupFactory() *gtk.SignalListItemFactory {
 		}
 
 		if label != nil {
-			setupLabelWidgetStyle(label, cfg.UI.Window.Box.Scroll.List.Item.Text.Label)
+			setupLabelWidgetStyle(label, layout.Window.Box.Scroll.List.Item.Text.Label)
 		}
 
 		if sub != nil {
-			setupLabelWidgetStyle(sub, cfg.UI.Window.Box.Scroll.List.Item.Text.Sub)
+			setupLabelWidgetStyle(sub, layout.Window.Box.Scroll.List.Item.Text.Sub)
 		}
 
 		if activationLabel != nil {
-			setupLabelWidgetStyle(activationLabel, cfg.UI.Window.Box.Scroll.List.Item.ActivationLabel)
+			setupLabelWidgetStyle(activationLabel, layout.Window.Box.Scroll.List.Item.ActivationLabel)
 		}
 
 		if icon != nil {
-			setupIconWidgetStyle(icon, cfg.UI.Window.Box.Scroll.List.Item.Icon)
+			setupIconWidgetStyle(icon, layout.Window.Box.Scroll.List.Item.Icon)
 		}
 	})
 
@@ -466,7 +432,7 @@ func setupIconWidgetStyle(icon *gtk.Image, style *config.ImageWidget) {
 	setupWidgetStyle(&icon.Widget, &style.Widget, false)
 
 	if style.IconSize != nil {
-		icon.SetIconSize(cfg.UI.IconSizeMap[*style.IconSize])
+		icon.SetIconSize(layout.IconSizeMap[*style.IconSize])
 	}
 
 	if style.PixelSize != nil {
@@ -488,7 +454,7 @@ func setupLabelWidgetStyle(label *gtk.Label, style *config.LabelWidget) {
 	label.SetWrap(true)
 
 	if style.Justify != nil {
-		label.SetJustify(cfg.UI.JustifyMap[*style.Justify])
+		label.SetJustify(layout.JustifyMap[*style.Justify])
 	}
 
 	if style.XAlign != nil {
@@ -501,14 +467,14 @@ func setupLabelWidgetStyle(label *gtk.Label, style *config.LabelWidget) {
 }
 
 func handleListVisibility() {
-	show := ui.items.NItems() != 0
+	show := common.items.NItems() != 0
 
-	if cfg.UI != nil {
-		if cfg.UI.Window != nil {
-			if cfg.UI.Window.Box != nil {
-				if cfg.UI.Window.Box.Scroll != nil {
-					if cfg.UI.Window.Box.Scroll.List != nil {
-						if cfg.UI.Window.Box.Scroll.List.AlwaysShow != nil && *cfg.UI.Window.Box.Scroll.List.AlwaysShow {
+	if layout != nil {
+		if layout.Window != nil {
+			if layout.Window.Box != nil {
+				if layout.Window.Box.Scroll != nil {
+					if layout.Window.Box.Scroll.List != nil {
+						if layout.Window.Box.Scroll.List.AlwaysShow != nil && *layout.Window.Box.Scroll.List.AlwaysShow {
 							show = true
 						}
 					}
@@ -517,8 +483,8 @@ func handleListVisibility() {
 		}
 	}
 
-	ui.list.SetVisible(show)
-	ui.scroll.SetVisible(show)
+	elements.list.SetVisible(show)
+	elements.scroll.SetVisible(show)
 }
 
 func reopen() {
@@ -528,7 +494,7 @@ func reopen() {
 
 	appstate.IsRunning = true
 
-	ui.appwin.SetVisible(true)
+	elements.appwin.SetVisible(true)
 
 	if appstate.Benchmark {
 		fmt.Println("Visible (re-open)", time.Now().UnixNano())
@@ -547,6 +513,8 @@ func reopen() {
 		toUse = available
 	}
 
+	setupSingleModule()
+
 	if len(toUse) == 1 {
 		text := toUse[0].General().Placeholder
 
@@ -554,19 +522,17 @@ func reopen() {
 			text = appstate.ExplicitPlaceholder
 		}
 
-		ui.input.SetObjectProperty("placeholder-text", text)
+		elements.input.SetObjectProperty("placeholder-text", text)
 	}
 
 	if appstate.InitialQuery != "" {
-		ui.input.SetText(appstate.InitialQuery)
+		elements.input.SetText(appstate.InitialQuery)
 		glib.IdleAdd(func() {
-			ui.input.SetPosition(-1)
+			elements.input.SetPosition(-1)
 		})
 	}
 
-	setupSingleModule()
-
-	ui.input.GrabFocus()
+	elements.input.GrabFocus()
 
 	process()
 }
@@ -575,5 +541,92 @@ func createThemeFile(data []byte) {
 	err := os.WriteFile(filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.css", cfg.Theme)), data, 0o600)
 	if err != nil {
 		log.Panicln(err)
+	}
+}
+
+func afterUI() {
+	handleListVisibility()
+
+	if appstate.InitialQuery != "" {
+		elements.input.SetText(appstate.InitialQuery)
+		glib.IdleAdd(func() {
+			elements.input.SetPosition(-1)
+		})
+	}
+
+	common.selection.ConnectItemsChanged(func(p, r, a uint) {
+		if common.selection.NItems() > 0 {
+			common.selection.SetSelected(0)
+			elements.list.ScrollTo(0, gtk.ListScrollNone, nil)
+		}
+
+		handleListVisibility()
+	})
+}
+
+func setupLayerShell() {
+	if !ls.IsSupported() {
+		log.Panicln("gtk-layer-shell not supported")
+	}
+
+	ls.InitForWindow(&elements.appwin.Window)
+	ls.SetNamespace(&elements.appwin.Window, "walker")
+
+	if cfg.Search.ForceKeyboardFocus {
+		ls.SetKeyboardMode(&elements.appwin.Window, ls.LayerShellKeyboardModeExclusive)
+	} else {
+		ls.SetKeyboardMode(&elements.appwin.Window, ls.LayerShellKeyboardModeOnDemand)
+	}
+
+	if layout != nil {
+		if layout.IgnoreExclusive != nil && *layout.IgnoreExclusive {
+			ls.SetExclusiveZone(&elements.appwin.Window, -1)
+		}
+
+		if layout.Fullscreen != nil && !*layout.Fullscreen {
+			ls.SetLayer(&elements.appwin.Window, ls.LayerShellLayerTop)
+		} else {
+			ls.SetLayer(&elements.appwin.Window, ls.LayerShellLayerOverlay)
+		}
+	}
+}
+
+func setupLayerShellAnchors() {
+	// BROKEN: changing layer-shell anchors breaks the window: https://github.com/diamondburned/gotk4-layer-shell/issues/2
+	// remove if fixed
+	if hasAnchors {
+		return
+	}
+
+	hasAnchors = true
+
+	if layout != nil {
+		top := layout.Anchors != nil
+		bottom := layout.Anchors != nil
+		left := layout.Anchors != nil
+		right := layout.Anchors != nil
+
+		if layout.Anchors != nil {
+			top = layout.Anchors.Top != nil && *layout.Anchors.Top
+			bottom = layout.Anchors.Bottom != nil && *layout.Anchors.Bottom
+			left = layout.Anchors.Left != nil && *layout.Anchors.Left
+			right = layout.Anchors.Right != nil && *layout.Anchors.Right
+		}
+
+		// crashes when setting to something else
+		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeTop, top)
+		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeBottom, bottom)
+		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeLeft, left)
+		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeRight, right)
+	}
+}
+
+func resetLayout() {
+	if startupLayout != nil {
+		layout = startupLayout
+		startupLayout = nil
+		setupTheme(cfg.Theme)
+		setupCss(cfg.Theme)
+		setupLayerShellAnchors()
 	}
 }

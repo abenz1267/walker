@@ -1,6 +1,17 @@
 package config
 
-import "github.com/diamondburned/gotk4/pkg/gtk/v4"
+import (
+	"bytes"
+	"fmt"
+	"io/fs"
+	"log"
+	"os"
+	"path/filepath"
+
+	"github.com/abenz1267/walker/util"
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/spf13/viper"
+)
 
 type UICfg struct {
 	UI *UI `mapstructure:"ui"`
@@ -166,4 +177,107 @@ type TextWrapper struct {
 	Label     *LabelWidget `mapstructure:"label"`
 	Revert    *bool        `mapstructure:"revert"`
 	Sub       *LabelWidget `mapstructure:"sub"`
+}
+
+func GetLayout(theme string) *UI {
+	var layout []byte
+
+	layoutFt := "json"
+
+	file := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.json", theme))
+
+	path := fmt.Sprintf("%s/", util.ThemeDir())
+
+	filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+
+		switch d.Name() {
+		case fmt.Sprintf("%s.json", theme):
+			layoutFt = "json"
+			file = path
+		case fmt.Sprintf("%s.toml", theme):
+			layoutFt = "toml"
+			file = path
+		case fmt.Sprintf("%s.yaml", theme):
+			layoutFt = "yaml"
+			file = path
+		}
+
+		return nil
+	})
+
+	if _, err := os.Stat(file); err == nil {
+		layout, err = os.ReadFile(file)
+		if err != nil {
+			log.Panicln(err)
+		}
+	} else {
+		layoutFt = "json"
+
+		switch theme {
+		case "kanagawa":
+			layout, err = themes.ReadFile("themes/kanagawa.json")
+			if err != nil {
+				log.Panicln(err)
+			}
+
+			createLayoutFile(layout)
+		case "catppuccin":
+			layout, err = themes.ReadFile("themes/catppuccin.json")
+			if err != nil {
+				log.Panicln(err)
+			}
+
+			createLayoutFile(layout)
+		default:
+			log.Printf("layout file for theme '%s' not found\n", theme)
+			os.Exit(1)
+		}
+	}
+
+	layoutCfg := viper.New()
+	layoutCfg.SetConfigType(layoutFt)
+
+	err := layoutCfg.ReadConfig(bytes.NewBuffer(layout))
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	ui := &UICfg{}
+	err = layoutCfg.Unmarshal(ui)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return ui.UI
+}
+
+func createLayoutFile(data []byte) {
+	ft := "json"
+
+	et := os.Getenv("WALKER_CONFIG_TYPE")
+
+	if et != "" {
+		ft = et
+	}
+
+	layout := viper.New()
+	layout.SetConfigType("json")
+
+	err := layout.ReadConfig(bytes.NewBuffer(data))
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	layout.AddConfigPath(util.ThemeDir())
+
+	layout.SetConfigType(ft)
+	layout.SetConfigName(viper.GetString("theme"))
+
+	wErr := layout.SafeWriteConfig()
+	if wErr != nil {
+		log.Println(wErr)
+	}
 }

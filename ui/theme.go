@@ -13,14 +13,10 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
-func setupCss() {
+func setupCss(theme string) {
 	var css []byte
 
-	if appstate.ExplicitTheme != "" {
-		cfg.Theme = appstate.ExplicitTheme
-	}
-
-	file := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.css", cfg.Theme))
+	file := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.css", theme))
 
 	if _, err := os.Stat(file); err == nil {
 		css, err = os.ReadFile(file)
@@ -49,43 +45,37 @@ func setupCss() {
 		}
 	}
 
-	cssProvider := gtk.NewCSSProvider()
-	cssProvider.LoadFromBytes(glib.NewBytes(css))
-
-	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
+	common.cssProvider.LoadFromBytes(glib.NewBytes(css))
 }
 
-func setupTheme() {
-	if cfg.UI == nil {
+func setupTheme(theme string) {
+	if layout == nil || elements == nil {
 		return
 	}
 
-	cfg.UI.InitUnitMaps()
-	setupCss()
-
-	if cfg.UI == nil {
-		return
+	if layout.AlignMap == nil {
+		layout.InitUnitMaps()
 	}
 
-	if cfg.UI.Window != nil {
-		setupWidgetStyle(&ui.appwin.Widget, &cfg.UI.Window.Widget, true)
+	if layout.Window != nil {
+		setupWidgetStyle(&elements.appwin.Widget, &layout.Window.Widget, true)
 
-		if cfg.UI.Window.Box != nil {
+		if layout.Window.Box != nil {
 			setupBoxTheme()
 
-			if !appstate.Password && cfg.UI.Window.Box.Scroll != nil {
+			if !appstate.Password && layout.Window.Box.Scroll != nil {
 				setupScrollTheme()
 
-				if cfg.UI.Window.Box.Scroll.List != nil {
+				if layout.Window.Box.Scroll.List != nil {
 					setupListTheme()
 
-					if cfg.UI.Window.Box.Scroll.List.Item != nil {
-						if cfg.UI.Window.Box.Scroll.List.Item.Icon != nil {
-							if cfg.UI.Window.Box.Scroll.List.Item.Icon.Theme != nil && *cfg.UI.Window.Box.Scroll.List.Item.Icon.Theme != "" {
-								ui.iconTheme = gtk.NewIconTheme()
-								ui.iconTheme.SetThemeName(*cfg.UI.Window.Box.Scroll.List.Item.Icon.Theme)
+					if layout.Window.Box.Scroll.List.Item != nil {
+						if layout.Window.Box.Scroll.List.Item.Icon != nil {
+							if layout.Window.Box.Scroll.List.Item.Icon.Theme != nil && *layout.Window.Box.Scroll.List.Item.Icon.Theme != "" {
+								elements.iconTheme = gtk.NewIconTheme()
+								elements.iconTheme.SetThemeName(*layout.Window.Box.Scroll.List.Item.Icon.Theme)
 							} else {
-								ui.iconTheme = gtk.IconThemeGetForDisplay(gdk.DisplayGetDefault())
+								elements.iconTheme = gtk.IconThemeGetForDisplay(gdk.DisplayGetDefault())
 							}
 						}
 					}
@@ -93,19 +83,19 @@ func setupTheme() {
 				}
 			}
 
-			if cfg.UI.Window.Box.Search != nil {
-				setupBoxWidgetStyle(ui.search, &cfg.UI.Window.Box.Search.BoxWidget)
+			if layout.Window.Box.Search != nil {
+				setupBoxWidgetStyle(elements.search, &layout.Window.Box.Search.BoxWidget)
 
 				if !appstate.Password {
-					if cfg.UI.Window.Box.Search.Input != nil {
+					if layout.Window.Box.Search.Input != nil {
 						setupInputTheme()
 					}
 
-					if cfg.UI.Window.Box.Search.Spinner != nil {
-						setupWidgetStyle(&ui.spinner.Widget, &cfg.UI.Window.Box.Search.Spinner.Widget, false)
+					if layout.Window.Box.Search.Spinner != nil {
+						setupWidgetStyle(&elements.spinner.Widget, &layout.Window.Box.Search.Spinner.Widget, false)
 					}
 				} else {
-					if cfg.UI.Window.Box.Search.Input != nil {
+					if layout.Window.Box.Search.Input != nil {
 						setupPasswordTheme()
 					}
 				}
@@ -114,31 +104,55 @@ func setupTheme() {
 	}
 
 	if !appstate.Password {
-		ui.spinner.SetVisible(false)
+		elements.spinner.SetVisible(false)
 	}
 }
 
 func setupListTheme() {
-	setupWidgetStyle(&ui.list.Widget, &cfg.UI.Window.Box.Scroll.List.Widget, false)
+	setupWidgetStyle(&elements.list.Widget, &layout.Window.Box.Scroll.List.Widget, false)
 
-	if cfg.UI.Window.Box.Scroll.List.Orientation != nil {
-		ui.list.SetOrientation(cfg.UI.OrientationMap[*cfg.UI.Window.Box.Scroll.List.Orientation])
+	if layout.Window.Box.Scroll.List.Orientation != nil {
+		elements.list.SetOrientation(layout.OrientationMap[*layout.Window.Box.Scroll.List.Orientation])
 	}
 }
 
 func setupBoxTheme() {
-	setupBoxWidgetStyle(ui.box, &cfg.UI.Window.Box.BoxWidget)
+	setupBoxWidgetStyle(elements.box, &layout.Window.Box.BoxWidget)
 
 	if appstate.Password {
 		return
 	}
 
-	if cfg.UI.Window.Box.Revert != nil && *cfg.UI.Window.Box.Revert {
-		ui.box.Append(ui.scroll)
-		ui.box.Append(ui.search)
+	first := elements.box.FirstChild()
+	last := elements.box.LastChild()
+
+	var scrolledIsFirst bool
+
+	if first != nil && last != nil {
+		_, scrolledIsFirst = first.(*gtk.ScrolledWindow)
+	}
+
+	if first != nil && last != nil {
+
+		if layout.Window.Box.Revert != nil && *layout.Window.Box.Revert {
+			if !scrolledIsFirst {
+				elements.box.ReorderChildAfter(last, first)
+			}
+		} else {
+			if scrolledIsFirst {
+				elements.box.ReorderChildAfter(first, last)
+			}
+		}
+
+		return
+	}
+
+	if layout.Window.Box.Revert != nil && *layout.Window.Box.Revert {
+		elements.box.Append(elements.scroll)
+		elements.box.Append(elements.search)
 	} else {
-		ui.box.Append(ui.search)
-		ui.box.Append(ui.scroll)
+		elements.box.Append(elements.search)
+		elements.box.Append(elements.scroll)
 	}
 }
 
@@ -146,62 +160,83 @@ func setupScrollTheme() {
 	vScrollbarPolicy := gtk.PolicyAutomatic
 	hScrollbarPolicy := gtk.PolicyAutomatic
 
-	setupWidgetStyle(&ui.scroll.Widget, &cfg.UI.Window.Box.Scroll.Widget, false)
+	setupWidgetStyle(&elements.scroll.Widget, &layout.Window.Box.Scroll.Widget, false)
 
-	if cfg.UI.Window.Box.Scroll.VScrollbarPolicy != nil {
-		vScrollbarPolicy = cfg.UI.ScrollPolicyMap[*cfg.UI.Window.Box.Scroll.VScrollbarPolicy]
+	if layout.Window.Box.Scroll.VScrollbarPolicy != nil {
+		vScrollbarPolicy = layout.ScrollPolicyMap[*layout.Window.Box.Scroll.VScrollbarPolicy]
 	}
 
-	if cfg.UI.Window.Box.Scroll.HScrollbarPolicy != nil {
-		hScrollbarPolicy = cfg.UI.ScrollPolicyMap[*cfg.UI.Window.Box.Scroll.HScrollbarPolicy]
+	if layout.Window.Box.Scroll.HScrollbarPolicy != nil {
+		hScrollbarPolicy = layout.ScrollPolicyMap[*layout.Window.Box.Scroll.HScrollbarPolicy]
 	}
 
-	ui.scroll.SetOverlayScrolling(cfg.UI.Window.Box.Scroll.OverlayScrolling != nil && *cfg.UI.Window.Box.Scroll.OverlayScrolling)
-	ui.scroll.SetPolicy(vScrollbarPolicy, hScrollbarPolicy)
+	elements.scroll.SetOverlayScrolling(layout.Window.Box.Scroll.OverlayScrolling != nil && *layout.Window.Box.Scroll.OverlayScrolling)
+	elements.scroll.SetPolicy(vScrollbarPolicy, hScrollbarPolicy)
 
-	if cfg.UI.Window.Box.Scroll.List.MaxWidth != nil {
-		ui.scroll.SetMaxContentWidth(*cfg.UI.Window.Box.Scroll.List.MaxWidth)
+	if layout.Window.Box.Scroll.List.MaxWidth != nil {
+		elements.scroll.SetMaxContentWidth(*layout.Window.Box.Scroll.List.MaxWidth)
 	}
 
-	if cfg.UI.Window.Box.Scroll.List.MinWidth != nil {
-		ui.scroll.SetMinContentWidth(*cfg.UI.Window.Box.Scroll.List.MinWidth)
+	if layout.Window.Box.Scroll.List.MinWidth != nil {
+		elements.scroll.SetMinContentWidth(*layout.Window.Box.Scroll.List.MinWidth)
 	}
 
-	if cfg.UI.Window.Box.Scroll.List.MaxHeight != nil {
-		ui.scroll.SetMaxContentHeight(*cfg.UI.Window.Box.Scroll.List.MaxHeight)
+	if layout.Window.Box.Scroll.List.MaxHeight != nil {
+		elements.scroll.SetMaxContentHeight(*layout.Window.Box.Scroll.List.MaxHeight)
 	}
 
-	if cfg.UI.Window.Box.Scroll.List.MinHeight != nil {
-		ui.scroll.SetMinContentHeight(*cfg.UI.Window.Box.Scroll.List.MinHeight)
+	if layout.Window.Box.Scroll.List.MinHeight != nil {
+		elements.scroll.SetMinContentHeight(*layout.Window.Box.Scroll.List.MinHeight)
 	}
 }
 
 func setupPasswordTheme() {
-	setupWidgetStyle(&ui.password.Widget, &cfg.UI.Window.Box.Search.Input.Widget, false)
-	ui.password.SetName("password")
+	setupWidgetStyle(&elements.password.Widget, &layout.Window.Box.Search.Input.Widget, false)
+	elements.password.SetName("password")
 }
 
 func setupInputTheme() {
-	if cfg.UI.Window.Box.Search.Revert != nil && *cfg.UI.Window.Box.Search.Revert {
-		ui.search.Append(ui.spinner)
-		ui.search.Append(ui.overlay)
-	} else {
-		ui.search.Append(ui.overlay)
-		ui.search.Append(ui.spinner)
+	first := elements.search.FirstChild()
+	last := elements.search.LastChild()
+
+	var spinnerIsFirst bool
+
+	if first != nil && last != nil {
+		_, spinnerIsFirst = first.(*gtk.Spinner)
 	}
 
-	setupWidgetStyle(&ui.input.Widget, &cfg.UI.Window.Box.Search.Input.Widget, false)
-	setupWidgetStyle(&ui.typeahead.Widget, &cfg.UI.Window.Box.Search.Input.Widget, false)
-
-	ui.typeahead.SetName("typeahead")
-
-	if cfg.UI.Window.Box.Search.Input != nil {
-		if cfg.UI.Window.Box.Search.Input.Icons != nil && !*cfg.UI.Window.Box.Search.Input.Icons {
-			ui.input.FirstChild().(*gtk.Image).SetVisible(false)
-			ui.input.LastChild().(*gtk.Image).SetVisible(false)
-			ui.typeahead.FirstChild().(*gtk.Image).SetVisible(false)
-			ui.typeahead.LastChild().(*gtk.Image).SetVisible(false)
+	if first != nil && last != nil {
+		if layout.Window.Box.Search.Revert != nil && *layout.Window.Box.Search.Revert {
+			if !spinnerIsFirst {
+				elements.box.ReorderChildAfter(last, first)
+			}
+		} else {
+			if spinnerIsFirst {
+				elements.box.ReorderChildAfter(first, last)
+			}
 		}
+	} else {
+		if layout.Window.Box.Search.Revert != nil && *layout.Window.Box.Search.Revert {
+			elements.search.Append(elements.spinner)
+			elements.search.Append(elements.overlay)
+		} else {
+			elements.search.Append(elements.overlay)
+			elements.search.Append(elements.spinner)
+		}
+	}
+
+	setupWidgetStyle(&elements.input.Widget, &layout.Window.Box.Search.Input.Widget, false)
+	setupWidgetStyle(&elements.typeahead.Widget, &layout.Window.Box.Search.Input.Widget, false)
+
+	elements.typeahead.SetName("typeahead")
+
+	if layout.Window.Box.Search.Input != nil {
+		show := layout.Window.Box.Search.Input.Icons != nil && *layout.Window.Box.Search.Input.Icons
+
+		elements.input.FirstChild().(*gtk.Image).SetVisible(show)
+		elements.input.LastChild().(*gtk.Image).SetVisible(show)
+		elements.typeahead.FirstChild().(*gtk.Image).SetVisible(show)
+		elements.typeahead.LastChild().(*gtk.Image).SetVisible(show)
 	}
 }
 
@@ -211,7 +246,7 @@ func setupBoxWidgetStyle(box *gtk.Box, style *config.BoxWidget) {
 	}
 
 	if style.Orientation != nil {
-		box.SetOrientation(cfg.UI.OrientationMap[*style.Orientation])
+		box.SetOrientation(layout.OrientationMap[*style.Orientation])
 	}
 
 	if style.Spacing != nil {
@@ -251,7 +286,7 @@ func setupWidgetStyle(
 	}
 
 	if style.HAlign != nil {
-		widget.SetHAlign(cfg.UI.AlignMap[*style.HAlign])
+		widget.SetHAlign(layout.AlignMap[*style.HAlign])
 	}
 
 	if style.HExpand != nil {
@@ -259,7 +294,7 @@ func setupWidgetStyle(
 	}
 
 	if style.VAlign != nil {
-		widget.SetVAlign(cfg.UI.AlignMap[*style.VAlign])
+		widget.SetVAlign(layout.AlignMap[*style.VAlign])
 	}
 
 	if style.VExpand != nil {

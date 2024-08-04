@@ -39,7 +39,7 @@ func (h *Handler) handle() {
 
 			if len(h.entries) > 0 {
 				glib.IdleAdd(func() {
-					ui.items.Splice(0, int(ui.items.NItems()), h.entries...)
+					common.items.Splice(0, int(common.items.NItems()), h.entries...)
 				})
 			}
 
@@ -53,7 +53,7 @@ func (h *Handler) handle() {
 
 func sortEntries(entries []util.Entry) {
 	slices.SortFunc(entries, func(a, b util.Entry) int {
-		text := ui.input.Text()
+		text := elements.input.Text()
 
 		if text == "" {
 			if a.Matching == util.AlwaysTopOnEmptySearch && b.Matching != util.AlwaysTopOnEmptySearch {

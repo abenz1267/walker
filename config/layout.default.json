@@ -200,8 +200,8 @@
               },
               "text": {
                 "name": "text",
-                "v_align": "start",
-                "v_expand": false,
+                "v_align": "fill",
+                "v_expand": true,
                 "h_expand": true,
                 "h_align": "fill",
                 "height": -1,
@@ -219,9 +219,9 @@
                 "revert": false,
                 "label": {
                   "name": "label",
-                  "v_align": "start",
-                  "v_expand": false,
-                  "h_expand": false,
+                  "v_align": "fill",
+                  "v_expand": true,
+                  "h_expand": true,
                   "h_align": "start",
                   "height": -1,
                   "width": -1,
@@ -235,7 +235,7 @@
                   },
                   "justify": "start",
                   "x_align": 0,
-                  "y_align": 0
+                  "y_align": 0.5
                 },
                 "sub": {
                   "name": "sub",

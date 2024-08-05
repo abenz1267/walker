@@ -106,6 +106,14 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		}
 
 		if appstate.Password {
+
+			cssProvider := gtk.NewCSSProvider()
+			gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
+
+			common = &Common{
+				cssProvider: cssProvider,
+			}
+
 			elements = setupElementsPassword(app)
 
 			setupLayerShell()

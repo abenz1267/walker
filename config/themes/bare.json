@@ -1,0 +1,48 @@
+{
+  "ui": {
+    "anchors": {
+      "top": true,
+      "bottom": true,
+      "left": true,
+      "right": true
+    },
+    "window": {
+      "v_align": "fill",
+      "h_align": "fill",
+      "box": {
+        "h_align": "center",
+        "width": 400,
+        "margins": {
+          "top": 400
+        },
+        "scroll": {
+          "list": {
+            "item": {
+              "activation_label": {
+                "width": 20,
+                "x_align": 1
+              },
+              "icon": {
+                "hide": true
+              }
+            },
+            "max_height": 300,
+            "max_width": 400,
+            "min_width": 400,
+            "width": 400
+          }
+        },
+        "search": {
+          "input": {
+            "h_align": "fill",
+            "h_expand": true,
+            "icons": false
+          },
+          "spinner": {
+            "hide": true
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,85 @@
+#window {
+  background: none;
+  font-family: monospace;
+}
+
+#box {
+  background: #000000;
+}
+
+#search {
+}
+
+#password,
+#input,
+#typeahead {
+  background: none;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+  color: #ffffff;
+}
+
+#password {
+}
+
+#spinner {
+}
+
+#typeahead {
+}
+
+#input placeholder {
+  opacity: 0.5;
+}
+
+#list {
+}
+
+row {
+}
+
+row:selected,
+row:selected label,
+row:hover label,
+row:hover {
+  color: #ffffff;
+  box-shadow: none;
+  background: #222222;
+}
+
+#item {
+  padding: 4px;
+}
+
+#icon {
+}
+
+#text {
+  color: #ffffff;
+  background: none;
+}
+
+#label {
+  background: none;
+}
+
+#sub {
+  opacity: 0.5;
+  background: none;
+}
+
+#activationlabel {
+  background: none;
+}
+
+.activation #activationlabel {
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.activation #text,
+.activation #icon,
+.activation #input {
+  opacity: 0.5;
+}

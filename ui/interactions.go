@@ -267,7 +267,6 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		if appstate.ForcePrint && elements.list.Model().NItems() == 0 {
 			if appstate.IsDmenu {
 				handleDmenuResult(elements.input.Text())
-				return true
 			}
 
 			closeAfterActivation(isShift, false)

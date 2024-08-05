@@ -107,9 +107,15 @@ func setupTheme(theme string) {
 }
 
 func setupListTheme() {
-	setupWidgetStyle(&elements.list.Widget, &layout.Window.Box.Scroll.List.Widget, false)
+	setupWidgetStyle(&elements.grid.Widget, &layout.Window.Box.Scroll.List.Widget, false)
 
-	elements.list.SetOrientation(layout.OrientationMap[layout.Window.Box.Scroll.List.Orientation])
+	elements.grid.SetOrientation(layout.OrientationMap[layout.Window.Box.Scroll.List.Orientation])
+
+	if !layout.Window.Box.Scroll.List.Grid {
+		elements.grid.SetMaxColumns(1)
+	} else {
+		elements.grid.SetMaxColumns(1000)
+	}
 }
 
 func setupBoxTheme() {

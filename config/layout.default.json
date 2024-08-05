@@ -138,6 +138,7 @@
             "max_height": 400,
             "max_width": 500,
             "width": 500,
+            "grid": false,
             "always_show": false,
             "item": {
               "name": "item",

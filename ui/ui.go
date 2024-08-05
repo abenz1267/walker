@@ -53,7 +53,7 @@ type Elements struct {
 	appwin        *gtk.ApplicationWindow
 	typeahead     *gtk.SearchEntry
 	input         *gtk.SearchEntry
-	list          *gtk.ListView
+	grid          *gtk.GridView
 	prefixClasses map[string][]string
 	iconTheme     *gtk.IconTheme
 	password      *gtk.PasswordEntry
@@ -238,8 +238,8 @@ func setupElements(app *gtk.Application) *Elements {
 
 	input := gtk.NewSearchEntry()
 
-	list := gtk.NewListView(common.selection, &common.factory.ListItemFactory)
-	scroll.SetChild(list)
+	grid := gtk.NewGridView(common.selection, &common.factory.ListItemFactory)
+	scroll.SetChild(grid)
 
 	overlay := gtk.NewOverlay()
 
@@ -257,15 +257,15 @@ func setupElements(app *gtk.Application) *Elements {
 		box:           box,
 		appwin:        appwin,
 		input:         input,
-		list:          list,
+		grid:          grid,
 		prefixClasses: make(map[string][]string),
 	}
 
 	if cfg.List.SingleClick {
-		ui.list.SetSingleClickActivate(true)
+		ui.grid.SetSingleClickActivate(true)
 	}
 
-	ui.list.ConnectActivate(func(pos uint) {
+	ui.grid.ConnectActivate(func(pos uint) {
 		activateItem(false, false, false)
 	})
 
@@ -464,7 +464,7 @@ func handleListVisibility() {
 		show = layout.Window.Box.Scroll.List.AlwaysShow
 	}
 
-	elements.list.SetVisible(show)
+	elements.grid.SetVisible(show)
 	elements.scroll.SetVisible(show)
 }
 
@@ -547,7 +547,7 @@ func afterUI() {
 	common.selection.ConnectItemsChanged(func(p, r, a uint) {
 		if common.selection.NItems() > 0 {
 			common.selection.SetSelected(0)
-			elements.list.ScrollTo(0, gtk.ListScrollNone, nil)
+			elements.grid.ScrollTo(0, gtk.ListScrollNone, nil)
 		}
 
 		handleListVisibility()

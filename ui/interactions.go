@@ -107,13 +107,13 @@ func selectNext() {
 
 	if next < items {
 		common.selection.SetSelected(current + 1)
-		elements.list.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
+		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
 		return
 	}
 
 	if next >= items && cfg.List.Cycle {
 		common.selection.SetSelected(0)
-		elements.list.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
+		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
 		return
 	}
 }
@@ -129,13 +129,13 @@ func selectPrev() {
 
 	if current > 0 {
 		common.selection.SetSelected(current - 1)
-		elements.list.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
+		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
 		return
 	}
 
 	if current == 0 && cfg.List.Cycle {
 		common.selection.SetSelected(items - 1)
-		elements.list.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
+		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
 		return
 	}
 }
@@ -164,7 +164,7 @@ func enableAM() {
 	c = append(c, "activation")
 
 	elements.appwin.SetCSSClasses(c)
-	elements.list.GrabFocus()
+	elements.grid.GrabFocus()
 
 	activationEnabled = true
 }
@@ -264,7 +264,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			isAlt = true
 		}
 
-		if appstate.ForcePrint && elements.list.Model().NItems() == 0 {
+		if appstate.ForcePrint && elements.grid.Model().NItems() == 0 {
 			if appstate.IsDmenu {
 				handleDmenuResult(elements.input.Text())
 			}
@@ -287,9 +287,17 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			return true
 		}
 	case gdk.KEY_Down:
+		if layout.Window.Box.Scroll.List.Grid {
+			return false
+		}
+
 		selectNext()
 		return true
 	case gdk.KEY_Up:
+		if layout.Window.Box.Scroll.List.Grid {
+			return false
+		}
+
 		if common.selection.Selected() == 0 || common.items.NItems() == 0 {
 			if len(toUse) != 1 {
 				selectPrev()
@@ -338,7 +346,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 var historyIndex = 0
 
 func activateItem(keepOpen, selectNext, alt bool) {
-	if elements.list.Model().NItems() == 0 {
+	if elements.grid.Model().NItems() == 0 {
 		return
 	}
 
@@ -509,7 +517,7 @@ func process() {
 	elements.typeahead.SetText("")
 
 	if cfg.IgnoreMouse {
-		elements.list.SetCanTarget(false)
+		elements.grid.SetCanTarget(false)
 	}
 
 	text := strings.TrimSpace(elements.input.Text())
@@ -662,8 +670,8 @@ func processAsync(ctx context.Context, text string) {
 			for k := range e {
 				e[k].Module = w.General().Name
 
-				if e[k].DragDrop && !elements.list.CanTarget() {
-					elements.list.SetCanTarget(true)
+				if e[k].DragDrop && !elements.grid.CanTarget() {
+					elements.grid.SetCanTarget(true)
 				}
 
 				toMatch := text

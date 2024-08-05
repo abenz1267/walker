@@ -160,11 +160,12 @@ type SpinnerWidget struct {
 type ListWrapper struct {
 	Widget      `mapstructure:",squash"`
 	Item        ListItemWidget `mapstructure:"item"`
+	Grid        bool           `mapstructure:"grid"`
 	Orientation string         `mapstructure:"orientation"`
 	MinHeight   int            `mapstructure:"min_height"`
-	MinWidth    int            `mapstructure:"min_width"`
 	MaxHeight   int            `mapstructure:"max_height"`
 	MaxWidth    int            `mapstructure:"max_width"`
+	MinWidth    int            `mapstructure:"min_width"`
 	AlwaysShow  bool           `mapstructure:"always_show"`
 }
 

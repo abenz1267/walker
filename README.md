@@ -61,6 +61,7 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
 
 - catppuccin
 - kanagawa
+- bare
 
 ## Requirements
 

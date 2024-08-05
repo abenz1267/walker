@@ -525,7 +525,7 @@ func process() {
 	ctx, cancel = context.WithCancel(context.Background())
 
 	if (elements.input.Text() != "" || appstate.IsDmenu) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
-		if layout.Window.Box.Search.Spinner.Hide != nil && !*layout.Window.Box.Search.Spinner.Hide {
+		if !layout.Window.Box.Search.Spinner.Hide {
 			elements.spinner.SetVisible(true)
 		}
 
@@ -533,7 +533,7 @@ func process() {
 	} else {
 		common.items.Splice(0, int(common.items.NItems()))
 
-		if layout.Window.Box.Search.Spinner.Hide != nil && !*layout.Window.Box.Search.Spinner.Hide {
+		if !layout.Window.Box.Search.Spinner.Hide {
 			elements.spinner.SetVisible(false)
 		}
 	}
@@ -551,7 +551,7 @@ func processAsync(ctx context.Context, text string) {
 		handlerPool.Put(handler)
 		cancel()
 
-		if layout.Window.Box.Search.Spinner.Hide != nil && !*layout.Window.Box.Search.Spinner.Hide {
+		if !layout.Window.Box.Search.Spinner.Hide {
 			elements.spinner.SetVisible(false)
 		}
 	}()
@@ -717,7 +717,7 @@ func processAsync(ctx context.Context, text string) {
 
 	wg.Wait()
 
-	if layout.Window.Box.Search.Spinner.Hide != nil && !*layout.Window.Box.Search.Spinner.Hide {
+	if !layout.Window.Box.Search.Spinner.Hide {
 		elements.spinner.SetVisible(false)
 	}
 }
@@ -836,16 +836,8 @@ func quit() {
 
 	glib.IdleAdd(func() {
 		if layout != nil {
-			if layout.Window != nil {
-				if layout.Window.Box != nil {
-					if layout.Window.Box.Search != nil {
-						if layout.Window.Box.Search.Spinner != nil {
-							if layout.Window.Box.Search.Spinner.Hide != nil && !*layout.Window.Box.Search.Spinner.Hide {
-								elements.spinner.SetVisible(false)
-							}
-						}
-					}
-				}
+			if !layout.Window.Box.Search.Spinner.Hide {
+				elements.spinner.SetVisible(false)
 			}
 		}
 

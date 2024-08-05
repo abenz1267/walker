@@ -57,50 +57,28 @@ func setupTheme(theme string) {
 		layout.InitUnitMaps()
 	}
 
-	if layout.Window != nil {
-		setupWidgetStyle(&elements.appwin.Widget, &layout.Window.Widget, true)
+	setupWidgetStyle(&elements.appwin.Widget, &layout.Window.Widget, true)
+	setupBoxTheme()
 
-		if layout.Window.Box != nil {
-			setupBoxTheme()
+	if !appstate.Password {
+		setupScrollTheme()
+		setupListTheme()
 
-			if !appstate.Password && layout.Window.Box.Scroll != nil {
-				setupScrollTheme()
-
-				if layout.Window.Box.Scroll.List != nil {
-					setupListTheme()
-
-					if layout.Window.Box.Scroll.List.Item != nil {
-						if layout.Window.Box.Scroll.List.Item.Icon != nil {
-							if layout.Window.Box.Scroll.List.Item.Icon.Theme != nil && *layout.Window.Box.Scroll.List.Item.Icon.Theme != "" {
-								elements.iconTheme = gtk.NewIconTheme()
-								elements.iconTheme.SetThemeName(*layout.Window.Box.Scroll.List.Item.Icon.Theme)
-							} else {
-								elements.iconTheme = gtk.IconThemeGetForDisplay(gdk.DisplayGetDefault())
-							}
-						}
-					}
-
-				}
-			}
-
-			if layout.Window.Box.Search != nil {
-				setupBoxWidgetStyle(elements.search, &layout.Window.Box.Search.BoxWidget)
-
-				if !appstate.Password {
-					if layout.Window.Box.Search.Input != nil {
-						setupInputTheme()
-					}
-
-					if layout.Window.Box.Search.Spinner != nil {
-						setupWidgetStyle(&elements.spinner.Widget, &layout.Window.Box.Search.Spinner.Widget, false)
-					}
-				} else {
-					if layout.Window.Box.Search.Input != nil {
-						setupPasswordTheme()
-					}
-				}
-			}
+		if layout.Window.Box.Scroll.List.Item.Icon.Theme != "" {
+			elements.iconTheme = gtk.NewIconTheme()
+			elements.iconTheme.SetThemeName(layout.Window.Box.Scroll.List.Item.Icon.Theme)
+		} else {
+			elements.iconTheme = gtk.IconThemeGetForDisplay(gdk.DisplayGetDefault())
 		}
+	}
+
+	setupBoxWidgetStyle(elements.search, &layout.Window.Box.Search.BoxWidget)
+
+	if !appstate.Password {
+		setupInputTheme()
+		setupWidgetStyle(&elements.spinner.Widget, &layout.Window.Box.Search.Spinner.Widget, false)
+	} else {
+		setupPasswordTheme()
 	}
 
 	if !appstate.Password {
@@ -111,9 +89,7 @@ func setupTheme(theme string) {
 func setupListTheme() {
 	setupWidgetStyle(&elements.list.Widget, &layout.Window.Box.Scroll.List.Widget, false)
 
-	if layout.Window.Box.Scroll.List.Orientation != nil {
-		elements.list.SetOrientation(layout.OrientationMap[*layout.Window.Box.Scroll.List.Orientation])
-	}
+	elements.list.SetOrientation(layout.OrientationMap[layout.Window.Box.Scroll.List.Orientation])
 }
 
 func setupBoxTheme() {
@@ -134,7 +110,7 @@ func setupBoxTheme() {
 
 	if first != nil && last != nil {
 
-		if layout.Window.Box.Revert != nil && *layout.Window.Box.Revert {
+		if layout.Window.Box.Revert {
 			if !scrolledIsFirst {
 				elements.box.ReorderChildAfter(last, first)
 			}
@@ -147,7 +123,7 @@ func setupBoxTheme() {
 		return
 	}
 
-	if layout.Window.Box.Revert != nil && *layout.Window.Box.Revert {
+	if layout.Window.Box.Revert {
 		elements.box.Append(elements.scroll)
 		elements.box.Append(elements.search)
 	} else {
@@ -162,32 +138,17 @@ func setupScrollTheme() {
 
 	setupWidgetStyle(&elements.scroll.Widget, &layout.Window.Box.Scroll.Widget, false)
 
-	if layout.Window.Box.Scroll.VScrollbarPolicy != nil {
-		vScrollbarPolicy = layout.ScrollPolicyMap[*layout.Window.Box.Scroll.VScrollbarPolicy]
-	}
+	vScrollbarPolicy = layout.ScrollPolicyMap[layout.Window.Box.Scroll.VScrollbarPolicy]
 
-	if layout.Window.Box.Scroll.HScrollbarPolicy != nil {
-		hScrollbarPolicy = layout.ScrollPolicyMap[*layout.Window.Box.Scroll.HScrollbarPolicy]
-	}
+	hScrollbarPolicy = layout.ScrollPolicyMap[layout.Window.Box.Scroll.HScrollbarPolicy]
 
-	elements.scroll.SetOverlayScrolling(layout.Window.Box.Scroll.OverlayScrolling != nil && *layout.Window.Box.Scroll.OverlayScrolling)
+	elements.scroll.SetOverlayScrolling(layout.Window.Box.Scroll.OverlayScrolling)
 	elements.scroll.SetPolicy(vScrollbarPolicy, hScrollbarPolicy)
 
-	if layout.Window.Box.Scroll.List.MaxWidth != nil {
-		elements.scroll.SetMaxContentWidth(*layout.Window.Box.Scroll.List.MaxWidth)
-	}
-
-	if layout.Window.Box.Scroll.List.MinWidth != nil {
-		elements.scroll.SetMinContentWidth(*layout.Window.Box.Scroll.List.MinWidth)
-	}
-
-	if layout.Window.Box.Scroll.List.MaxHeight != nil {
-		elements.scroll.SetMaxContentHeight(*layout.Window.Box.Scroll.List.MaxHeight)
-	}
-
-	if layout.Window.Box.Scroll.List.MinHeight != nil {
-		elements.scroll.SetMinContentHeight(*layout.Window.Box.Scroll.List.MinHeight)
-	}
+	elements.scroll.SetMaxContentWidth(layout.Window.Box.Scroll.List.MaxWidth)
+	elements.scroll.SetMinContentWidth(layout.Window.Box.Scroll.List.MinWidth)
+	elements.scroll.SetMaxContentHeight(layout.Window.Box.Scroll.List.MaxHeight)
+	elements.scroll.SetMinContentHeight(layout.Window.Box.Scroll.List.MinHeight)
 }
 
 func setupPasswordTheme() {
@@ -206,7 +167,7 @@ func setupInputTheme() {
 	}
 
 	if first != nil && last != nil {
-		if layout.Window.Box.Search.Revert != nil && *layout.Window.Box.Search.Revert {
+		if layout.Window.Box.Search.Revert {
 			if !spinnerIsFirst {
 				elements.box.ReorderChildAfter(last, first)
 			}
@@ -216,7 +177,7 @@ func setupInputTheme() {
 			}
 		}
 	} else {
-		if layout.Window.Box.Search.Revert != nil && *layout.Window.Box.Search.Revert {
+		if layout.Window.Box.Search.Revert {
 			elements.search.Append(elements.spinner)
 			elements.search.Append(elements.overlay)
 		} else {
@@ -230,14 +191,10 @@ func setupInputTheme() {
 
 	elements.typeahead.SetName("typeahead")
 
-	if layout.Window.Box.Search.Input != nil {
-		show := layout.Window.Box.Search.Input.Icons != nil && *layout.Window.Box.Search.Input.Icons
-
-		elements.input.FirstChild().(*gtk.Image).SetVisible(show)
-		elements.input.LastChild().(*gtk.Image).SetVisible(show)
-		elements.typeahead.FirstChild().(*gtk.Image).SetVisible(show)
-		elements.typeahead.LastChild().(*gtk.Image).SetVisible(show)
-	}
+	elements.input.FirstChild().(*gtk.Image).SetVisible(layout.Window.Box.Search.Input.Icons)
+	elements.input.LastChild().(*gtk.Image).SetVisible(layout.Window.Box.Search.Input.Icons)
+	elements.typeahead.FirstChild().(*gtk.Image).SetVisible(layout.Window.Box.Search.Input.Icons)
+	elements.typeahead.LastChild().(*gtk.Image).SetVisible(layout.Window.Box.Search.Input.Icons)
 }
 
 func setupBoxWidgetStyle(box *gtk.Box, style *config.BoxWidget) {
@@ -245,13 +202,8 @@ func setupBoxWidgetStyle(box *gtk.Box, style *config.BoxWidget) {
 		return
 	}
 
-	if style.Orientation != nil {
-		box.SetOrientation(layout.OrientationMap[*style.Orientation])
-	}
-
-	if style.Spacing != nil {
-		box.SetSpacing(*style.Spacing)
-	}
+	box.SetOrientation(layout.OrientationMap[style.Orientation])
+	box.SetSpacing(style.Spacing)
 
 	setupWidgetStyle(&box.Widget, &style.Widget, false)
 }
@@ -266,7 +218,7 @@ func setupWidgetStyle(
 	}
 
 	if !isAppWin {
-		if style.Hide != nil && *style.Hide {
+		if style.Hide {
 			widget.SetVisible(false)
 			return
 		}
@@ -277,58 +229,18 @@ func setupWidgetStyle(
 	widget.SetHExpandSet(true)
 	widget.SetVExpandSet(true)
 
-	if style.CssClasses != nil && len(*style.CssClasses) > 0 {
-		widget.SetCSSClasses(*style.CssClasses)
+	if style.CssClasses != nil && len(style.CssClasses) > 0 {
+		widget.SetCSSClasses(style.CssClasses)
 	}
 
-	if style.Name != nil {
-		widget.SetName(*style.Name)
-	}
-
-	if style.HAlign != nil {
-		widget.SetHAlign(layout.AlignMap[*style.HAlign])
-	}
-
-	if style.HExpand != nil {
-		widget.SetHExpand(*style.HExpand)
-	}
-
-	if style.VAlign != nil {
-		widget.SetVAlign(layout.AlignMap[*style.VAlign])
-	}
-
-	if style.VExpand != nil {
-		widget.SetVExpand(*style.VExpand)
-	}
-
-	if style.Margins != nil {
-		if style.Margins.Bottom != nil {
-			widget.SetMarginBottom(*style.Margins.Bottom)
-		}
-
-		if style.Margins.Top != nil {
-			widget.SetMarginTop(*style.Margins.Top)
-		}
-
-		if style.Margins.Start != nil {
-			widget.SetMarginStart(*style.Margins.Start)
-		}
-
-		if style.Margins.End != nil {
-			widget.SetMarginEnd(*style.Margins.End)
-		}
-	}
-
-	height := -1
-	width := -1
-
-	if style.Width != nil {
-		width = *style.Width
-	}
-
-	if style.Height != nil {
-		height = *style.Height
-	}
-
-	widget.SetSizeRequest(width, height)
+	widget.SetName(style.Name)
+	widget.SetHAlign(layout.AlignMap[style.HAlign])
+	widget.SetHExpand(style.HExpand)
+	widget.SetVAlign(layout.AlignMap[style.VAlign])
+	widget.SetVExpand(style.VExpand)
+	widget.SetMarginBottom(style.Margins.Bottom)
+	widget.SetMarginTop(style.Margins.Top)
+	widget.SetMarginStart(style.Margins.Start)
+	widget.SetMarginEnd(style.Margins.End)
+	widget.SetSizeRequest(style.Width, style.Height)
 }

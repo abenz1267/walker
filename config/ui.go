@@ -18,14 +18,14 @@ import (
 var defaultLayout []byte
 
 type UICfg struct {
-	UI *UI `mapstructure:"ui"`
+	UI UI `mapstructure:"ui"`
 }
 
 type UI struct {
-	Anchors         *Anchors `mapstructure:"anchors"`
-	Fullscreen      *bool    `mapstructure:"fullscreen"`
-	IgnoreExclusive *bool    `mapstructure:"ignore_exclusive"`
-	Window          *Window  `mapstructure:"window"`
+	Anchors         Anchors `mapstructure:"anchors"`
+	Fullscreen      bool    `mapstructure:"fullscreen"`
+	IgnoreExclusive bool    `mapstructure:"ignore_exclusive"`
+	Window          Window  `mapstructure:"window"`
 
 	// internal
 	AlignMap        map[string]gtk.Align         `mapstructure:"-"`
@@ -74,83 +74,83 @@ func (u *UI) InitUnitMaps() {
 }
 
 type Widget struct {
-	CssClasses *[]string `mapstructure:"css_classes"`
-	HAlign     *string   `mapstructure:"h_align"`
-	HExpand    *bool     `mapstructure:"h_expand"`
-	Height     *int      `mapstructure:"height"`
-	Hide       *bool     `mapstructure:"hide"`
-	Margins    *Margins  `mapstructure:"margins"`
-	Name       *string   `mapstructure:"name"`
-	Opacity    *float64  `mapstructure:"opacity"`
-	VAlign     *string   `mapstructure:"v_align"`
-	VExpand    *bool     `mapstructure:"h_expand"`
-	Width      *int      `mapstructure:"width"`
+	CssClasses []string `mapstructure:"css_classes"`
+	HAlign     string   `mapstructure:"h_align"`
+	HExpand    bool     `mapstructure:"h_expand"`
+	Height     int      `mapstructure:"height"`
+	Hide       bool     `mapstructure:"hide"`
+	Margins    Margins  `mapstructure:"margins"`
+	Name       string   `mapstructure:"name"`
+	Opacity    float64  `mapstructure:"opacity"`
+	VAlign     string   `mapstructure:"v_align"`
+	VExpand    bool     `mapstructure:"h_expand"`
+	Width      int      `mapstructure:"width"`
 }
 
 type BoxWidget struct {
 	Widget      `mapstructure:",squash"`
-	Orientation *string `mapstructure:"orientation"`
-	Spacing     *int    `mapstructure:"spacing"`
+	Orientation string `mapstructure:"orientation"`
+	Spacing     int    `mapstructure:"spacing"`
 }
 
 type LabelWidget struct {
 	Widget  `mapstructure:",squash"`
-	Justify *string  `mapstructure:"justify"`
-	XAlign  *float32 `mapstructure:"x_align"`
-	YAlign  *float32 `mapstructure:"y_align"`
+	Justify string  `mapstructure:"justify"`
+	XAlign  float32 `mapstructure:"x_align"`
+	YAlign  float32 `mapstructure:"y_align"`
 }
 
 type ImageWidget struct {
 	Widget    `mapstructure:",squash"`
-	IconSize  *string `mapstructure:"icon_size"`
-	PixelSize *int    `mapstructure:"pixel_size"`
-	Theme     *string `mapstructure:"theme"`
+	IconSize  string `mapstructure:"icon_size"`
+	PixelSize int    `mapstructure:"pixel_size"`
+	Theme     string `mapstructure:"theme"`
 }
 
 type Anchors struct {
-	Bottom *bool `mapstructure:"bottom"`
-	Left   *bool `mapstructure:"left"`
-	Right  *bool `mapstructure:"right"`
-	Top    *bool `mapstructure:"top"`
+	Bottom bool `mapstructure:"bottom"`
+	Left   bool `mapstructure:"left"`
+	Right  bool `mapstructure:"right"`
+	Top    bool `mapstructure:"top"`
 }
 
 type Margins struct {
-	Bottom *int `mapstructure:"bottom"`
-	End    *int `mapstructure:"end"`
-	Start  *int `mapstructure:"start"`
-	Top    *int `mapstructure:"top"`
+	Bottom int `mapstructure:"bottom"`
+	End    int `mapstructure:"end"`
+	Start  int `mapstructure:"start"`
+	Top    int `mapstructure:"top"`
 }
 
 type Window struct {
 	Widget `mapstructure:",squash"`
-	Box    *Box `mapstructure:"box"`
+	Box    Box `mapstructure:"box"`
 }
 
 type Box struct {
 	BoxWidget `mapstructure:",squash"`
-	Scroll    *Scroll        `mapstructure:"scroll"`
-	Revert    *bool          `mapstructure:"revert"`
-	Search    *SearchWrapper `mapstructure:"search"`
+	Scroll    Scroll        `mapstructure:"scroll"`
+	Revert    bool          `mapstructure:"revert"`
+	Search    SearchWrapper `mapstructure:"search"`
 }
 
 type Scroll struct {
 	Widget           `mapstructure:",squash"`
-	List             *ListWrapper `mapstructure:"list"`
-	OverlayScrolling *bool        `mapstructure:"overlay_scrolling"`
-	HScrollbarPolicy *string      `mapstructure:"h_scrollbar_policy"`
-	VScrollbarPolicy *string      `mapstructure:"v_scrollbar_policy"`
+	List             ListWrapper `mapstructure:"list"`
+	OverlayScrolling bool        `mapstructure:"overlay_scrolling"`
+	HScrollbarPolicy string      `mapstructure:"h_scrollbar_policy"`
+	VScrollbarPolicy string      `mapstructure:"v_scrollbar_policy"`
 }
 
 type SearchWrapper struct {
 	BoxWidget `mapstructure:",squash"`
-	Revert    *bool          `mapstructure:"revert"`
-	Input     *SearchWidget  `mapstructure:"input"`
-	Spinner   *SpinnerWidget `mapstructure:"spinner"`
+	Revert    bool          `mapstructure:"revert"`
+	Input     SearchWidget  `mapstructure:"input"`
+	Spinner   SpinnerWidget `mapstructure:"spinner"`
 }
 
 type SearchWidget struct {
 	Widget `mapstructure:",squash"`
-	Icons  *bool `mapstructure:"icons"`
+	Icons  bool `mapstructure:"icons"`
 }
 
 type SpinnerWidget struct {
@@ -159,28 +159,28 @@ type SpinnerWidget struct {
 
 type ListWrapper struct {
 	Widget      `mapstructure:",squash"`
-	Item        *ListItemWidget `mapstructure:"item"`
-	Orientation *string         `mapstructure:"orientation"`
-	MinHeight   *int            `mapstructure:"min_height"`
-	MinWidth    *int            `mapstructure:"min_width"`
-	MaxHeight   *int            `mapstructure:"max_height"`
-	MaxWidth    *int            `mapstructure:"max_width"`
-	AlwaysShow  *bool           `mapstructure:"always_show"`
+	Item        ListItemWidget `mapstructure:"item"`
+	Orientation string         `mapstructure:"orientation"`
+	MinHeight   int            `mapstructure:"min_height"`
+	MinWidth    int            `mapstructure:"min_width"`
+	MaxHeight   int            `mapstructure:"max_height"`
+	MaxWidth    int            `mapstructure:"max_width"`
+	AlwaysShow  bool           `mapstructure:"always_show"`
 }
 
 type ListItemWidget struct {
 	BoxWidget       `mapstructure:",squash"`
-	Revert          *bool        `mapstructure:"revert"`
-	ActivationLabel *LabelWidget `mapstructure:"activation_label"`
-	Icon            *ImageWidget `mapstructure:"icon"`
-	Text            *TextWrapper `mapstructure:"text"`
+	Revert          bool        `mapstructure:"revert"`
+	ActivationLabel LabelWidget `mapstructure:"activation_label"`
+	Icon            ImageWidget `mapstructure:"icon"`
+	Text            TextWrapper `mapstructure:"text"`
 }
 
 type TextWrapper struct {
 	BoxWidget `mapstructure:",squash"`
-	Label     *LabelWidget `mapstructure:"label"`
-	Revert    *bool        `mapstructure:"revert"`
-	Sub       *LabelWidget `mapstructure:"sub"`
+	Label     LabelWidget `mapstructure:"label"`
+	Revert    bool        `mapstructure:"revert"`
+	Sub       LabelWidget `mapstructure:"sub"`
 }
 
 func GetLayout(theme string) *UI {
@@ -268,7 +268,7 @@ func GetLayout(theme string) *UI {
 		log.Panic(err)
 	}
 
-	return ui.UI
+	return &ui.UI
 }
 
 func createLayoutFile(data []byte) {

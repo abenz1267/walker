@@ -330,11 +330,11 @@ func setupFactory() *gtk.SignalListItemFactory {
 			icon = gtk.NewImageFromFile(val.Image)
 		}
 
-		if (layout.Window.Box.Scroll.List.Item.Icon.Hide == nil || !*layout.Window.Box.Scroll.List.Item.Icon.Hide) && val.Icon != "" {
+		if (!layout.Window.Box.Scroll.List.Item.Icon.Hide) && val.Icon != "" {
 			if filepath.IsAbs(val.Icon) {
 				icon = gtk.NewImageFromFile(val.Icon)
 			} else {
-				i := elements.iconTheme.LookupIcon(val.Icon, []string{}, layout.IconSizeIntMap[*layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
+				i := elements.iconTheme.LookupIcon(val.Icon, []string{}, layout.IconSizeIntMap[layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
 
 				icon = gtk.NewImageFromPaintable(i)
 			}
@@ -355,7 +355,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		setupBoxWidgetStyle(box, &layout.Window.Box.Scroll.List.Item.BoxWidget)
 
-		if layout.Window.Box.Scroll.List.Item.Revert != nil && *layout.Window.Box.Scroll.List.Item.Revert {
+		if layout.Window.Box.Scroll.List.Item.Revert {
 			if activationLabel != nil {
 				box.Append(activationLabel)
 			}
@@ -383,7 +383,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		setupBoxWidgetStyle(text, &layout.Window.Box.Scroll.List.Item.Text.BoxWidget)
 
-		if layout.Window.Box.Scroll.List.Item.Text.Revert != nil && *layout.Window.Box.Scroll.List.Item.Text.Revert {
+		if layout.Window.Box.Scroll.List.Item.Text.Revert {
 			if sub != nil && val.Sub != "" {
 				if !appstate.IsSingle || (singleModule != nil && singleModule.General().ShowSubWhenSingle) {
 					text.Append(sub)
@@ -406,19 +406,19 @@ func setupFactory() *gtk.SignalListItemFactory {
 		}
 
 		if label != nil {
-			setupLabelWidgetStyle(label, layout.Window.Box.Scroll.List.Item.Text.Label)
+			setupLabelWidgetStyle(label, &layout.Window.Box.Scroll.List.Item.Text.Label)
 		}
 
 		if sub != nil {
-			setupLabelWidgetStyle(sub, layout.Window.Box.Scroll.List.Item.Text.Sub)
+			setupLabelWidgetStyle(sub, &layout.Window.Box.Scroll.List.Item.Text.Sub)
 		}
 
 		if activationLabel != nil {
-			setupLabelWidgetStyle(activationLabel, layout.Window.Box.Scroll.List.Item.ActivationLabel)
+			setupLabelWidgetStyle(activationLabel, &layout.Window.Box.Scroll.List.Item.ActivationLabel)
 		}
 
 		if icon != nil {
-			setupIconWidgetStyle(icon, layout.Window.Box.Scroll.List.Item.Icon)
+			setupIconWidgetStyle(icon, &layout.Window.Box.Scroll.List.Item.Icon)
 		}
 	})
 
@@ -428,56 +428,31 @@ func setupFactory() *gtk.SignalListItemFactory {
 func setupIconWidgetStyle(icon *gtk.Image, style *config.ImageWidget) {
 	setupWidgetStyle(&icon.Widget, &style.Widget, false)
 
-	if style.IconSize != nil {
-		icon.SetIconSize(layout.IconSizeMap[*style.IconSize])
+	icon.SetIconSize(layout.IconSizeMap[style.IconSize])
+
+	icon.SetPixelSize(style.PixelSize)
+
+	if style.CssClasses != nil && len(style.CssClasses) > 0 {
+		icon.SetCSSClasses(style.CssClasses)
 	}
 
-	if style.PixelSize != nil {
-		icon.SetPixelSize(*style.PixelSize)
-	}
-
-	if style.CssClasses != nil && len(*style.CssClasses) > 0 {
-		icon.SetCSSClasses(*style.CssClasses)
-	}
-
-	if style.Name != nil {
-		icon.SetName(*style.Name)
-	}
+	icon.SetName(style.Name)
 }
 
 func setupLabelWidgetStyle(label *gtk.Label, style *config.LabelWidget) {
 	setupWidgetStyle(&label.Widget, &style.Widget, false)
 
 	label.SetWrap(true)
-
-	if style.Justify != nil {
-		label.SetJustify(layout.JustifyMap[*style.Justify])
-	}
-
-	if style.XAlign != nil {
-		label.SetXAlign(*style.XAlign)
-	}
-
-	if style.YAlign != nil {
-		label.SetYAlign(*style.YAlign)
-	}
+	label.SetJustify(layout.JustifyMap[style.Justify])
+	label.SetXAlign(style.XAlign)
+	label.SetYAlign(style.YAlign)
 }
 
 func handleListVisibility() {
 	show := common.items.NItems() != 0
 
-	if layout != nil {
-		if layout.Window != nil {
-			if layout.Window.Box != nil {
-				if layout.Window.Box.Scroll != nil {
-					if layout.Window.Box.Scroll.List != nil {
-						if layout.Window.Box.Scroll.List.AlwaysShow != nil && *layout.Window.Box.Scroll.List.AlwaysShow {
-							show = true
-						}
-					}
-				}
-			}
-		}
+	if layout.Window.Box.Scroll.List.AlwaysShow {
+		show = layout.Window.Box.Scroll.List.AlwaysShow
 	}
 
 	elements.list.SetVisible(show)
@@ -583,11 +558,11 @@ func setupLayerShell() {
 	}
 
 	if layout != nil {
-		if layout.IgnoreExclusive != nil && *layout.IgnoreExclusive {
+		if layout.IgnoreExclusive {
 			ls.SetExclusiveZone(&elements.appwin.Window, -1)
 		}
 
-		if layout.Fullscreen != nil && !*layout.Fullscreen {
+		if !layout.Fullscreen {
 			ls.SetLayer(&elements.appwin.Window, ls.LayerShellLayerTop)
 		} else {
 			ls.SetLayer(&elements.appwin.Window, ls.LayerShellLayerOverlay)
@@ -597,22 +572,10 @@ func setupLayerShell() {
 
 func setupLayerShellAnchors() {
 	if layout != nil {
-		top := layout.Anchors != nil
-		bottom := layout.Anchors != nil
-		left := layout.Anchors != nil
-		right := layout.Anchors != nil
-
-		if layout.Anchors != nil {
-			top = layout.Anchors.Top != nil && *layout.Anchors.Top
-			bottom = layout.Anchors.Bottom != nil && *layout.Anchors.Bottom
-			left = layout.Anchors.Left != nil && *layout.Anchors.Left
-			right = layout.Anchors.Right != nil && *layout.Anchors.Right
-		}
-
-		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeTop, top)
-		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeBottom, bottom)
-		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeLeft, left)
-		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeRight, right)
+		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeTop, layout.Anchors.Top)
+		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeBottom, layout.Anchors.Bottom)
+		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeLeft, layout.Anchors.Left)
+		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeRight, layout.Anchors.Right)
 	}
 }
 

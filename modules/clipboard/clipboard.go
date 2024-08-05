@@ -103,14 +103,14 @@ func (c *Clipboard) Setup(cfg *config.Config) bool {
 	c.imgTypes["image/jpg"] = "jpg"
 	c.imgTypes["image/jpeg"] = "jpeg"
 
-	go c.watch()
-
 	return true
 }
 
 func (c *Clipboard) SetupData(cfg *config.Config, ctx context.Context) {
 	current := []ClipboardItem{}
 	util.FromGob(c.file, &current)
+
+	go c.watch()
 
 	c.entries = clean(current, c.file)
 

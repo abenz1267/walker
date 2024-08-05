@@ -1,6 +1,9 @@
 package state
 
 import (
+	"context"
+	"slices"
+
 	"github.com/abenz1267/walker/config"
 	"github.com/abenz1267/walker/modules"
 	"github.com/abenz1267/walker/modules/clipboard"
@@ -43,7 +46,19 @@ func Get() *AppState {
 }
 
 func (app *AppState) StartServiceableModules(cfg *config.Config) {
+	cfg.IsService = true
+
 	app.Clipboard = &clipboard.Clipboard{}
 	app.Dmenu = &modules.Dmenu{}
+
+	app.Clipboard.Setup(cfg)
 	app.Dmenu.Setup(cfg)
+
+	if !slices.Contains(cfg.Disabled, app.Clipboard.General().Name) {
+		app.Clipboard.SetupData(cfg, context.Background())
+	}
+
+	if !slices.Contains(cfg.Disabled, app.Dmenu.General().Name) {
+		app.Dmenu.SetupData(cfg, context.Background())
+	}
 }

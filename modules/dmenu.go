@@ -115,12 +115,6 @@ func (d *Dmenu) Setup(cfg *config.Config) bool {
 	d.initialSeparator = d.Separator
 	d.initialLabelColumn = d.LabelColumn
 
-	if cfg.IsService {
-		go d.StartListening()
-		d.isSetup = true
-		d.IsService = true
-	}
-
 	d.general.SwitcherOnly = true
 
 	return true
@@ -197,6 +191,11 @@ func (d Dmenu) Send() {
 }
 
 func (d *Dmenu) SetupData(cfg *config.Config, ctx context.Context) {
+	if cfg.IsService {
+		go d.StartListening()
+		d.IsService = true
+	}
+
 	d.isSetup = true
 	d.general.HasInitialSetup = true
 

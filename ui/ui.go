@@ -79,7 +79,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			theme = appstate.ExplicitTheme
 		}
 
-		layout = config.GetLayout(theme)
+		layout = config.GetLayout(theme, nil)
 
 		appstate.Labels = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
 		appstate.LabelsF = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
@@ -124,11 +124,11 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		}
 
 		if singleModule == nil {
-			setupLayout(theme)
+			setupLayout(theme, nil)
 		} else {
 			if val, ok := layouts[singleModule.General().Name]; ok {
 				layout = val
-				setupLayout(singleModule.General().Theme)
+				setupLayout(singleModule.General().Theme, singleModule.General().ThemeBase)
 			}
 		}
 
@@ -484,7 +484,7 @@ func reopen() {
 	if singleModule != nil {
 		if val, ok := layouts[singleModule.General().Name]; ok {
 			layout = val
-			setupLayout(singleModule.General().Theme)
+			setupLayout(singleModule.General().Theme, singleModule.General().ThemeBase)
 		}
 	}
 
@@ -579,8 +579,8 @@ func setupLayerShellAnchors() {
 	}
 }
 
-func setupLayout(theme string) {
+func setupLayout(theme string, base []string) {
 	setupTheme(theme)
-	setupCss(theme)
+	setupCss(theme, base)
 	setupLayerShellAnchors()
 }

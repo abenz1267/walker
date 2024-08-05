@@ -183,9 +183,89 @@ type TextWrapper struct {
 	Sub       LabelWidget `mapstructure:"sub"`
 }
 
-func GetLayout(theme string) *UI {
-	var layout []byte
+func GetLayout(theme string, base []string) *UI {
+	layout, layoutFt := getLayout(theme)
 
+	layoutCfg := viper.New()
+
+	defs := viper.New()
+	defs.SetConfigType("json")
+
+	err := defs.ReadConfig(bytes.NewBuffer(defaultLayout))
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	if base != nil && len(base) > 0 {
+		inherit(base, defs)
+	}
+
+	for k, v := range defs.AllSettings() {
+		layoutCfg.SetDefault(k, v)
+	}
+
+	layoutCfg.SetConfigType(layoutFt)
+
+	err = layoutCfg.ReadConfig(bytes.NewBuffer(layout))
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	ui := &UICfg{}
+	err = layoutCfg.Unmarshal(ui)
+	if err != nil {
+		log.Panic(err)
+	}
+
+	return &ui.UI
+}
+
+func inherit(themes []string, cfg *viper.Viper) {
+	for _, v := range themes {
+		layout, layoutFt := getLayout(v)
+
+		defs := viper.New()
+		defs.SetConfigType(layoutFt)
+
+		err := defs.ReadConfig(bytes.NewBuffer(layout))
+		if err != nil {
+			log.Panicln(err)
+		}
+
+		cfg.MergeConfig(bytes.NewBuffer(layout))
+	}
+}
+
+func createLayoutFile(data []byte) {
+	ft := "json"
+
+	et := os.Getenv("WALKER_CONFIG_TYPE")
+
+	if et != "" {
+		ft = et
+	}
+
+	layout := viper.New()
+	layout.SetConfigType("json")
+
+	err := layout.ReadConfig(bytes.NewBuffer(data))
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	layout.AddConfigPath(util.ThemeDir())
+
+	layout.SetConfigType(ft)
+	layout.SetConfigName(viper.GetString("theme"))
+
+	wErr := layout.SafeWriteConfig()
+	if wErr != nil {
+		log.Println(wErr)
+	}
+}
+
+func getLayout(theme string) ([]byte, string) {
+	var layout []byte
 	layoutFt := "json"
 
 	file := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.json", theme))
@@ -241,60 +321,5 @@ func GetLayout(theme string) *UI {
 		}
 	}
 
-	layoutCfg := viper.New()
-
-	defs := viper.New()
-	defs.SetConfigType("json")
-
-	err := defs.ReadConfig(bytes.NewBuffer(defaultLayout))
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	for k, v := range defs.AllSettings() {
-		layoutCfg.SetDefault(k, v)
-	}
-
-	layoutCfg.SetConfigType(layoutFt)
-
-	err = layoutCfg.ReadConfig(bytes.NewBuffer(layout))
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	ui := &UICfg{}
-	err = layoutCfg.Unmarshal(ui)
-	if err != nil {
-		log.Panic(err)
-	}
-
-	return &ui.UI
-}
-
-func createLayoutFile(data []byte) {
-	ft := "json"
-
-	et := os.Getenv("WALKER_CONFIG_TYPE")
-
-	if et != "" {
-		ft = et
-	}
-
-	layout := viper.New()
-	layout.SetConfigType("json")
-
-	err := layout.ReadConfig(bytes.NewBuffer(data))
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	layout.AddConfigPath(util.ThemeDir())
-
-	layout.SetConfigType(ft)
-	layout.SetConfigName(viper.GetString("theme"))
-
-	wErr := layout.SafeWriteConfig()
-	if wErr != nil {
-		log.Println(wErr)
-	}
+	return layout, layoutFt
 }

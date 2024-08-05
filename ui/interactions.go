@@ -393,7 +393,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 				if val, ok := layouts[singleModule.General().Name]; ok {
 					glib.IdleAdd(func() {
 						layout = val
-						setupLayout(singleModule.General().Theme)
+						setupLayout(singleModule.General().Theme, singleModule.General().ThemeBase)
 					})
 				}
 
@@ -810,8 +810,8 @@ func quit() {
 	if singleModule != nil {
 		if _, ok := layouts[singleModule.General().Name]; ok {
 			glib.IdleAdd(func() {
-				layout = config.GetLayout(cfg.Theme)
-				setupLayout(cfg.Theme)
+				layout = config.GetLayout(cfg.Theme, nil)
+				setupLayout(cfg.Theme, nil)
 			})
 		}
 

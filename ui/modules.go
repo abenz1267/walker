@@ -72,7 +72,7 @@ func setupModules() {
 
 	for _, v := range toCheck {
 		if v != nil && v.General().Theme != "" && v.General().Theme != cfg.Theme {
-			layouts[v.General().Name] = config.GetLayout(v.General().Theme)
+			layouts[v.General().Name] = config.GetLayout(v.General().Theme, v.General().ThemeBase)
 		}
 	}
 

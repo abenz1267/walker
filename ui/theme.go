@@ -13,7 +13,23 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
-func setupCss(theme string) {
+func setupCss(theme string, base []string) {
+	var css []byte
+
+	if base != nil && len(base) > 0 {
+		for _, v := range base {
+			css = append(css, '\n')
+			css = append(css, getCSS(v)...)
+		}
+	}
+
+	css = append(css, '\n')
+	css = append(css, getCSS(theme)...)
+
+	common.cssProvider.LoadFromBytes(glib.NewBytes(css))
+}
+
+func getCSS(theme string) []byte {
 	var css []byte
 
 	file := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.css", theme))
@@ -24,7 +40,7 @@ func setupCss(theme string) {
 			log.Panicln(err)
 		}
 	} else {
-		switch cfg.Theme {
+		switch theme {
 		case "kanagawa":
 			css, err = config.Themes.ReadFile("themes/kanagawa.css")
 			if err != nil {
@@ -39,13 +55,10 @@ func setupCss(theme string) {
 			}
 
 			createThemeFile(css)
-		default:
-			log.Printf("css file for theme '%s' not found\n", cfg.Theme)
-			os.Exit(1)
 		}
 	}
 
-	common.cssProvider.LoadFromBytes(glib.NewBytes(css))
+	return css
 }
 
 func setupTheme(theme string) {

@@ -18,7 +18,7 @@
       systems = ["x86_64-linux" "aarch64-linux"];
 
       perSystem = {pkgs, ...}: let
-        walker = pkgs.callPackage ./nix/package.nix;
+        walker = pkgs.callPackage ./nix/package.nix {};
       in {
         formatter = pkgs.alejandra;
 

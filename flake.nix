@@ -9,16 +9,16 @@
     };
   };
 
-  outputs = inputs @ {flake-parts, ...}:
+  outputs = inputs @ {
+    flake-parts,
+    self,
+    ...
+  }:
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["x86_64-linux" "aarch64-linux"];
 
-      perSystem = {
-        pkgs,
-        system,
-        ...
-      }: let
-        walker = pkgs.callPackage ./. {};
+      perSystem = {pkgs, ...}: let
+        walker = pkgs.callPackage ./nix/package.nix;
       in {
         formatter = pkgs.alejandra;
 
@@ -34,7 +34,7 @@
 
       flake = {
         homeManagerModules = rec {
-          walker = import ./nix/hm-module.nix inputs.self;
+          walker = import ./nix/hm-module.nix self;
           default = walker;
         };
 

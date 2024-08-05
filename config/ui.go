@@ -306,19 +306,22 @@ func getLayout(theme string) ([]byte, string) {
 			if err != nil {
 				log.Panicln(err)
 			}
-
-			createLayoutFile(layout)
+		case "bare":
+			layout, err = Themes.ReadFile("themes/bare.json")
+			if err != nil {
+				log.Panicln(err)
+			}
 		case "catppuccin":
 			layout, err = Themes.ReadFile("themes/catppuccin.json")
 			if err != nil {
 				log.Panicln(err)
 			}
-
-			createLayoutFile(layout)
 		default:
 			log.Printf("layout file for theme '%s' not found\n", theme)
 			os.Exit(1)
 		}
+
+		createLayoutFile(layout)
 	}
 
 	return layout, layoutFt

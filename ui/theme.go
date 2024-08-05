@@ -48,6 +48,13 @@ func getCSS(theme string) []byte {
 			}
 
 			createThemeFile(css)
+		case "bare":
+			css, err = config.Themes.ReadFile("themes/bare.css")
+			if err != nil {
+				log.Panicln(err)
+			}
+
+			createThemeFile(css)
 		case "catppuccin":
 			css, err = config.Themes.ReadFile("themes/catppuccin.css")
 			if err != nil {

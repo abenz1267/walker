@@ -1,97 +1,51 @@
 {
   "ui": {
-    "fullscreen": true,
-    "ignore_exclusive": true,
     "anchors": {
-      "top": true,
       "bottom": true,
       "left": true,
-      "right": true
+      "right": true,
+      "top": true
     },
     "window": {
-      "name": "window",
-      "v_align": "start",
+      "v_align": "fill",
+      "h_align": "fill",
       "box": {
-        "margins": {
-          "top": 200,
-          "bottom": 200
-        },
-        "name": "box",
-        "v_align": "start",
         "h_align": "center",
-        "orientation": "horizontal",
-        "spacing": 10,
-        "revert": false,
-        "search": {
-          "name": "search",
-          "v_align": "start",
-          "revert": false,
-          "width": 400,
-          "spacing": 10,
-          "input": {
-            "h_align": "fill",
-            "h_expand": true,
-            "name": "input",
-            "icons": true
-          },
-          "spinner": {
-            "hide": true,
-            "v_align": "fill",
-            "name": "spinner"
-          }
+        "v_align": "start",
+        "margins": {
+          "bottom": 200,
+          "top": 200
         },
+        "orientation": "horizontal",
         "scroll": {
-          "overlay_scrolling": false,
-          "h_scrollbar_policy": "automatic",
-          "v_scrollbar_policy": "automatic",
           "list": {
             "always_show": true,
-            "name": "list",
-            "orientation": "vertical",
-            "h_align": "fill",
-            "h_expand": true,
-            "width": 400,
-            "max_height": 300,
-            "min_width": 400,
-            "max_width": 400,
             "item": {
-              "h_align": "fill",
-              "name": "item",
-              "revert": false,
-              "orientation": "horizontal",
-              "spacing": 5,
               "activation_label": {
-                "x_align": 1.0,
                 "width": 20,
-                "name": "activationlabel"
+                "x_align": 1
               },
               "icon": {
-                "theme": "Papirus",
-                "v_align": "center",
-                "name": "icon",
-                "icon_size": "large",
-                "pixel_size": -1
+                "theme": "Papirus"
               },
+              "spacing": 5,
               "text": {
-                "revert": false,
-                "h_align": "start",
-                "h_expand": true,
-                "name": "text",
-                "orientation": "vertical",
-                "revert": true,
-                "label": {
-                  "h_align": "start",
-                  "h_expand": true,
-                  "name": "label"
-                },
-                "sub": {
-                  "h_align": "start",
-                  "name": "sub"
-                }
+                "revert": true
               }
-            }
-          }
-        }
+            },
+            "max_height": 300,
+            "max_width": 400,
+            "min_width": 400,
+            "width": 400
+          },
+          "overlay_scrolling": false
+        },
+        "search": {
+          "spacing": 10,
+          "v_align": "start",
+          "width": 400
+        },
+        "spacing": 10
       }
     }
   }

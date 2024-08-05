@@ -2,6 +2,7 @@ package config
 
 import (
 	"bytes"
+	_ "embed"
 	"fmt"
 	"io/fs"
 	"log"
@@ -12,6 +13,9 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/spf13/viper"
 )
+
+//go:embed layout.default.json
+var defaultLayout []byte
 
 type UICfg struct {
 	UI *UI `mapstructure:"ui"`
@@ -238,9 +242,22 @@ func GetLayout(theme string) *UI {
 	}
 
 	layoutCfg := viper.New()
+
+	defs := viper.New()
+	defs.SetConfigType("json")
+
+	err := defs.ReadConfig(bytes.NewBuffer(defaultLayout))
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	for k, v := range defs.AllSettings() {
+		layoutCfg.SetDefault(k, v)
+	}
+
 	layoutCfg.SetConfigType(layoutFt)
 
-	err := layoutCfg.ReadConfig(bytes.NewBuffer(layout))
+	err = layoutCfg.ReadConfig(bytes.NewBuffer(layout))
 	if err != nil {
 		log.Panicln(err)
 	}

@@ -36,7 +36,6 @@ in {
 
     xdg.configFile = {
       "walker/config.json".text = mkIf (cfg.config != {}) (builtins.toJSON cfg.config);
-      "walker/style.css".text = mkIf (cfg.style != {}) cfg.style;
     };
 
     systemd.user.services.walker = mkIf cfg.runAsService {

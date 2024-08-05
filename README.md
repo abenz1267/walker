@@ -19,7 +19,7 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
 - drag&drop support
 - dmenu-mode
 - run as password input
-- theming support
+- theming support (global, per module, with inheritance)
 
 ## Builtin Modules
 

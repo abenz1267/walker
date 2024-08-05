@@ -35,6 +35,7 @@ func (w *Windows) SetupData(cfg *config.Config, ctx context.Context) {
 	}
 
 	w.general.IsSetup = true
+	w.general.HasInitialSetup = true
 }
 
 func (w Windows) Entries(ctx context.Context, term string) []util.Entry {

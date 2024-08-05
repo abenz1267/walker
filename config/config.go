@@ -79,7 +79,8 @@ type GeneralModule struct {
 	ShowSubWhenSingle bool     `mapstructure:"show_sub_when_single"`
 
 	// internal
-	IsSetup bool `mapstructure:"-"`
+	HasInitialSetup bool `mapstructure:"-"`
+	IsSetup         bool `mapstructure:"-"`
 }
 
 type Finder struct {

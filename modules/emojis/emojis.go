@@ -65,6 +65,7 @@ func (e *Emojis) SetupData(cfg *config.Config, ctx context.Context) {
 	e.entries = entries
 
 	e.general.IsSetup = true
+	e.general.HasInitialSetup = true
 }
 
 func (e *Emojis) Refresh() {

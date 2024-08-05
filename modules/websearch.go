@@ -72,6 +72,7 @@ func (w *Websearch) SetupData(_ *config.Config, ctx context.Context) {
 	}
 
 	w.general.IsSetup = true
+	w.general.HasInitialSetup = true
 }
 
 func (w *Websearch) Refresh() {

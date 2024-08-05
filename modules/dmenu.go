@@ -198,6 +198,7 @@ func (d Dmenu) Send() {
 
 func (d *Dmenu) SetupData(cfg *config.Config, ctx context.Context) {
 	d.isSetup = true
+	d.general.HasInitialSetup = true
 
 	if !d.IsService {
 		scanner := bufio.NewScanner(os.Stdin)

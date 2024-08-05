@@ -65,6 +65,7 @@ func (c *Commands) SetupData(cfg *config.Config, ctx context.Context) {
 	}
 
 	c.general.IsSetup = true
+	c.general.HasInitialSetup = true
 }
 
 func (c *Commands) Refresh() {

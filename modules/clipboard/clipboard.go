@@ -115,6 +115,7 @@ func (c *Clipboard) SetupData(cfg *config.Config, ctx context.Context) {
 	c.entries = clean(current, c.file)
 
 	c.general.IsSetup = true
+	c.general.HasInitialSetup = true
 }
 
 func clean(entries []ClipboardItem, file string) []ClipboardItem {

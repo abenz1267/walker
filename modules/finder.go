@@ -80,10 +80,12 @@ func (f *Finder) SetupData(cfg *config.Config, ctx context.Context) {
 		case <-isWalking:
 			fileWalker.Terminate()
 			f.general.IsSetup = true
+			f.general.HasInitialSetup = true
 			return
 		case <-ctx.Done():
 			fileWalker.Terminate()
 			f.general.IsSetup = true
+			f.general.HasInitialSetup = true
 			return
 		case file := <-fileListQueue:
 			if file == nil {

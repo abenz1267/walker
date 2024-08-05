@@ -60,6 +60,7 @@ func (r *Runner) SetupData(cfg *config.Config, ctx context.Context) {
 	}
 
 	r.general.IsSetup = true
+	r.general.HasInitialSetup = true
 }
 
 func (r *Runner) Refresh() {

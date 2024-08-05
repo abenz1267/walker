@@ -63,6 +63,7 @@ func (a *Applications) SetupData(_ *config.Config, ctx context.Context) {
 	}
 
 	a.general.IsSetup = true
+	a.general.HasInitialSetup = true
 }
 
 func (a *Applications) RunWm() {

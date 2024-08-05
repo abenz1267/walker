@@ -73,6 +73,7 @@ func (s *SSH) SetupData(cfg *config.Config, ctx context.Context) {
 	s.entries = append(s.entries, getConfigFileEntries(sshCfg)...)
 
 	s.general.IsSetup = true
+	s.general.HasInitialSetup = true
 }
 
 func getConfigFileEntries(sshCfg string) []util.Entry {

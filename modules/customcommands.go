@@ -44,8 +44,11 @@ func (c *CustomCommands) SetupData(cfg *config.Config, ctx context.Context) {
 	}
 
 	c.general.IsSetup = true
+	c.general.HasInitialSetup = true
 }
 
 func (c *CustomCommands) Refresh() {
-	c.general.IsSetup = !c.general.Refresh
+	if c.general.HasInitialSetup {
+		c.general.IsSetup = !c.general.Refresh
+	}
 }

@@ -51,7 +51,9 @@ func (s *Switcher) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (s *Switcher) SetupData(cfg *config.Config, ctx context.Context) {}
+func (s *Switcher) SetupData(cfg *config.Config, ctx context.Context) {
+	s.general.HasInitialSetup = true
+}
 
 func (s *Switcher) Refresh() {
 	s.general.IsSetup = !s.general.Refresh

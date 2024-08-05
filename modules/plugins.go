@@ -46,6 +46,7 @@ func (e *Plugin) SetupData(cfg *config.Config, ctx context.Context) {
 	}
 
 	e.isSetup = true
+	e.PluginCfg.HasInitialSetup = true
 }
 
 func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {

@@ -476,7 +476,9 @@ func reopen() {
 
 	go func() {
 		for _, proc := range toUse {
-			proc.Refresh()
+			if proc.General().HasInitialSetup {
+				proc.Refresh()
+			}
 		}
 	}()
 

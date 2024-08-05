@@ -73,7 +73,8 @@ row {
   padding: 4px;
 }
 
-row:selected {
+row:selected,
+row:hover {
   background: #414559;
   box-shadow: none;
   color: #cad3f5;

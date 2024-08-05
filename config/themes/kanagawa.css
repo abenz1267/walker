@@ -43,7 +43,8 @@ row {
   box-shadow: none;
 }
 
-row:selected {
+row:selected,
+row:hover {
   box-shadow: none;
   background: #1f1f28;
 }

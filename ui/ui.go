@@ -106,7 +106,6 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		}
 
 		if appstate.Password {
-
 			cssProvider := gtk.NewCSSProvider()
 			gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
 
@@ -137,6 +136,8 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			if val, ok := layouts[singleModule.General().Name]; ok {
 				layout = val
 				setupLayout(singleModule.General().Theme, singleModule.General().ThemeBase)
+			} else {
+				setupLayout(cfg.Theme, nil)
 			}
 		}
 

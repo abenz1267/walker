@@ -212,7 +212,6 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	case gdk.KEY_Escape:
 		if appstate.IsDmenu {
 			handleDmenuResult("")
-			return true
 		}
 
 		if cfg.IsService {

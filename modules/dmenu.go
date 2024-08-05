@@ -78,6 +78,8 @@ func (Dmenu) Reply(res string) {
 }
 
 func (d Dmenu) ListenForReply() {
+	os.Remove(DmenuSocketAddrReply)
+
 	l, err := net.ListenUnix("unix", &net.UnixAddr{Name: DmenuSocketAddrReply})
 	if err != nil {
 		panic(err)
@@ -137,7 +139,6 @@ func (d *Dmenu) SetSeparator(sep string) {
 }
 
 func (d *Dmenu) StartListening() {
-	os.Remove(DmenuSocketAddrReply)
 	os.Remove(DmenuSocketAddrGet)
 
 	l, err := net.ListenUnix("unix", &net.UnixAddr{Name: DmenuSocketAddrGet})

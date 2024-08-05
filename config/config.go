@@ -163,9 +163,8 @@ type Plugin struct {
 }
 
 type Search struct {
-	Delay              int    `mapstructure:"delay"`
-	ForceKeyboardFocus bool   `mapstructure:"force_keyboard_focus"`
-	Placeholder        string `mapstructure:"placeholder"`
+	Delay       int    `mapstructure:"delay"`
+	Placeholder string `mapstructure:"placeholder"`
 }
 
 type List struct {

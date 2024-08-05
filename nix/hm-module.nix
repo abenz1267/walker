@@ -4,19 +4,18 @@ self: {
   pkgs,
   ...
 }: let
-  inherit (lib) mkEnableOption mkOption mkPackageOption types mkIf;
-
-  packages = self.packages.${pkgs.stdenv.hostPlatform.system};
+  inherit (lib) mkEnableOption mkOption mkPackageOption types importJSON mkIf getExe;
 
   cfg = config.programs.walker;
 in {
   options = {
     programs.walker = {
       enable = mkEnableOption "walker";
-      package = mkPackageOption packages "walker" {
+      package = mkPackageOption self.packages.${pkgs.system} "walker" {
         default = "default";
-        pkgsText = "walker.packages.\${pkgs.stdenv.hostPlatform.system}";
+        pkgsText = "walker.packages.\${pkgs.system}";
       };
+
       runAsService = mkOption {
         type = types.bool;
         default = false;
@@ -25,7 +24,7 @@ in {
 
       config = mkOption {
         type = types.attrs;
-        default = builtins.fromJSON (builtins.readFile ../config/config.default.json);
+        default = importJSON ../config/config.default.json;
         description = "Configuration";
       };
     };
@@ -34,22 +33,12 @@ in {
   config = mkIf cfg.enable {
     home.packages = [cfg.package];
 
-    xdg.configFile = {
-      "walker/config.json".text = mkIf (cfg.config != {}) (builtins.toJSON cfg.config);
-    };
+    xdg.configFile."walker/config.json".text = mkIf (cfg.config != {}) (builtins.toJSON cfg.config);
 
     systemd.user.services.walker = mkIf cfg.runAsService {
-      Unit = {
-        Description = "Walker - Application Runner";
-      };
-      Install = {
-        WantedBy = [
-          "graphical-session.target"
-        ];
-      };
-      Service = {
-        ExecStart = "${cfg.package}/bin/walker --gapplication-service";
-      };
+      Unit.Description = "Walker - Application Runner";
+      Install.WantedBy = ["graphical-session.target"];
+      Service.ExecStart = "${getExe cfg.package} --gapplication-service";
     };
   };
 }

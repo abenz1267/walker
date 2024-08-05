@@ -9,34 +9,26 @@
     };
   };
 
-  outputs = inputs @ {flake-parts, ...}:
+  outputs = inputs @ {
+    flake-parts,
+    self,
+    ...
+  }:
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = ["x86_64-linux" "aarch64-linux"];
 
-      perSystem = {
-        pkgs,
-        system,
-        ...
-      }: let
-        walker = pkgs.callPackage ./. {};
+      perSystem = {pkgs, ...}: let
+        walker = pkgs.callPackage ./nix/package.nix {};
       in {
         formatter = pkgs.alejandra;
 
-        devShells.default = pkgs.mkShell {
-          inputsFrom = [walker];
-        };
+        devShells.default = pkgs.mkShell { inputsFrom = [walker]; };
 
-        packages = {
-          default = walker;
-          inherit walker;
-        };
+        packages.default = walker;
       };
 
       flake = {
-        homeManagerModules = rec {
-          walker = import ./nix/hm-module.nix inputs.self;
-          default = walker;
-        };
+        homeManagerModules.default = import ./nix/hm-module.nix self;
 
         nixConfig = {
           extra-substituters = ["https://walker.cachix.org"];

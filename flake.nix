@@ -22,21 +22,13 @@
       in {
         formatter = pkgs.alejandra;
 
-        devShells.default = pkgs.mkShell {
-          inputsFrom = [walker];
-        };
+        devShells.default = pkgs.mkShell { inputsFrom = [walker]; };
 
-        packages = {
-          default = walker;
-          inherit walker;
-        };
+        packages.default = walker;
       };
 
       flake = {
-        homeManagerModules = rec {
-          walker = import ./nix/hm-module.nix self;
-          default = walker;
-        };
+        homeManagerModules.default = import ./nix/hm-module.nix self;
 
         nixConfig = {
           extra-substituters = ["https://walker.cachix.org"];

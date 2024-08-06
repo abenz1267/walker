@@ -29,4 +29,4 @@ jobs:
           authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
       - name: Build default package
-        run: nix build -L --extra-substituters "https://walker.cachix.org" .
+        run: nix build -L --extra-substituters "https://walker.cachix.org" .#default

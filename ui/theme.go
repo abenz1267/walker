@@ -171,10 +171,16 @@ func setupScrollTheme() {
 	elements.scroll.SetOverlayScrolling(layout.Window.Box.Scroll.OverlayScrolling)
 	elements.scroll.SetPolicy(vScrollbarPolicy, hScrollbarPolicy)
 
-	elements.scroll.SetMaxContentWidth(layout.Window.Box.Scroll.List.MaxWidth)
 	elements.scroll.SetMinContentWidth(layout.Window.Box.Scroll.List.MinWidth)
-	elements.scroll.SetMaxContentHeight(layout.Window.Box.Scroll.List.MaxHeight)
-	elements.scroll.SetMinContentHeight(layout.Window.Box.Scroll.List.MinHeight)
+	elements.scroll.SetMaxContentWidth(layout.Window.Box.Scroll.List.MaxWidth)
+
+	if layout.Window.Box.Scroll.List.MinHeight == 0 {
+		elements.scroll.SetMinContentHeight(layout.Window.Box.Scroll.List.MinHeight)
+		elements.scroll.SetMaxContentHeight(layout.Window.Box.Scroll.List.MaxHeight)
+	} else {
+		elements.scroll.SetMaxContentHeight(layout.Window.Box.Scroll.List.MaxHeight)
+		elements.scroll.SetMinContentHeight(layout.Window.Box.Scroll.List.MinHeight)
+	}
 }
 
 func setupPasswordTheme() {

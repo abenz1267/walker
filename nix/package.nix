@@ -26,6 +26,8 @@ buildGoModule {
       ../internal
     ];
   };
+  subPackages = ["cmd/walker.go"];
+
   vendorHash = "sha256-2t6WXQ5XoDtnlhzc96KeJ2cx+8sVS1oy2z3tsIRGq1Y=";
 
   nativeBuildInputs = [

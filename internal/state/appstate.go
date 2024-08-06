@@ -48,13 +48,15 @@ func Get() *AppState {
 func (app *AppState) StartServiceableModules(cfg *config.Config) {
 	cfg.IsService = true
 
-	app.Clipboard = &clipboard.Clipboard{}
 	app.Dmenu = &modules.Dmenu{}
 
-	app.Clipboard.Setup(cfg)
+	clipboard := &clipboard.Clipboard{}
+	hasClipboard := clipboard.Setup(cfg)
+
 	app.Dmenu.Setup(cfg)
 
-	if !slices.Contains(cfg.Disabled, app.Clipboard.General().Name) {
+	if !slices.Contains(cfg.Disabled, clipboard.General().Name) && hasClipboard {
+		app.Clipboard = clipboard
 		app.Clipboard.SetupData(cfg, context.Background())
 	}
 

@@ -59,7 +59,28 @@
             "end": 0,
             "top": 0
           },
-          "orientation": "vertical",
+          "prompt": {
+            "name": "prompt",
+            "text": "",
+            "v_align": "start",
+            "v_expand": false,
+            "h_expand": false,
+            "h_align": "start",
+            "height": -1,
+            "width": -1,
+            "hide": false,
+            "opacity": 1,
+            "margins": {
+              "bottom": 0,
+              "start": 0,
+              "end": 0,
+              "top": 0
+            },
+            "justify": "start",
+            "x_align": 0,
+            "y_align": 0
+          },
+          "orientation": "horizontal",
           "spacing": 0,
           "revert": false,
           "input": {

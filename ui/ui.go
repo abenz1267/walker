@@ -49,6 +49,7 @@ type Elements struct {
 	overlay       *gtk.Overlay
 	spinner       *gtk.Spinner
 	search        *gtk.Box
+	prompt        *gtk.Label
 	box           *gtk.Box
 	appwin        *gtk.ApplicationWindow
 	typeahead     *gtk.SearchEntry
@@ -227,6 +228,8 @@ func setupElements(app *gtk.Application) *Elements {
 	typeahead.SetCanFocus(false)
 	typeahead.SetCanTarget(false)
 
+	prompt := gtk.NewLabel("")
+
 	scroll := gtk.NewScrolledWindow()
 
 	scroll.SetName("scroll")
@@ -254,6 +257,7 @@ func setupElements(app *gtk.Application) *Elements {
 		overlay:       overlay,
 		spinner:       spinner,
 		search:        search,
+		prompt:        prompt,
 		typeahead:     typeahead,
 		scroll:        scroll,
 		box:           box,

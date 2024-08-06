@@ -218,6 +218,12 @@ func setupInputTheme() {
 		}
 	}
 
+	if layout.Window.Box.Search.Prompt.Text != "" {
+		setupLabelWidgetStyle(elements.prompt, &layout.Window.Box.Search.Prompt.LabelWidget)
+		elements.prompt.SetText(layout.Window.Box.Search.Prompt.Text)
+		elements.search.Prepend(elements.prompt)
+	}
+
 	setupWidgetStyle(&elements.input.Widget, &layout.Window.Box.Search.Input.Widget, false)
 	setupWidgetStyle(&elements.typeahead.Widget, &layout.Window.Box.Search.Input.Widget, false)
 

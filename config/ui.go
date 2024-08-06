@@ -145,7 +145,13 @@ type SearchWrapper struct {
 	BoxWidget `mapstructure:",squash"`
 	Revert    bool          `mapstructure:"revert"`
 	Input     SearchWidget  `mapstructure:"input"`
+	Prompt    PromptWidget  `mapstructure:"prompt"`
 	Spinner   SpinnerWidget `mapstructure:"spinner"`
+}
+
+type PromptWidget struct {
+	LabelWidget `mapstructure:",squash"`
+	Text        string `mapstructure:"text"`
 }
 
 type SearchWidget struct {

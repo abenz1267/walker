@@ -353,7 +353,9 @@ func setupFactory() *gtk.SignalListItemFactory {
 				ii := val.Icon
 
 				if ii == "" {
-					ii = findModule(val.Module, toUse).General().Icon
+					if m := findModule(val.Module, toUse); m != nil {
+						ii = m.General().Icon
+					}
 				}
 
 				if ii != "" {

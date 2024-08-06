@@ -1,7 +1,20 @@
-* {
-  margin: 0;
-  padding: 0;
-  border-spacing: 0;
+#window,
+#box,
+#search,
+#password,
+#input,
+#typeahead,
+#spinner,
+#list,
+child,
+scrollbar,
+slider,
+#item,
+#text,
+#label,
+#sub,
+#activationlabel {
+  all: unset;
 }
 
 #window {
@@ -73,14 +86,14 @@ slider {
 #list {
 }
 
-row {
+child {
   border-radius: 8px;
   color: #cad3f5;
   padding: 4px;
 }
 
-row:selected,
-row:hover {
+child:selected,
+child:hover {
   background: #414559;
   box-shadow: none;
   color: #cad3f5;

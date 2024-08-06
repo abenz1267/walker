@@ -73,7 +73,10 @@ in {
       systemd.user.services.walker = mkIf cfg.runAsService {
         Unit.Description = "Walker - Application Runner";
         Install.WantedBy = ["graphical-session.target"];
-        Service.ExecStart = "${getExe cfg.package} --gapplication-service";
+        Service = {
+          ExecStart = "${getExe cfg.package} --gapplication-service";
+          Restart = "on-failure";
+        };
       };
     }
 

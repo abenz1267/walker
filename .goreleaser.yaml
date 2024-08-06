@@ -8,7 +8,10 @@ before:
     - go mod tidy
 
 builds:
-  - env:
+  - id: 'walker'
+    main: ./cmd
+    binary: walker
+    env:
       - CGO_ENABLED=1
     goos:
       - linux
@@ -20,6 +23,7 @@ archives:
     # this name template makes the OS and Arch compatible with the results of `uname`.
     name_template: >-
       {{ .ProjectName }}_
+      {{ .Version }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
       {{- else if eq .Arch "386" }}i386

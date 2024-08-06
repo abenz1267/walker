@@ -30,6 +30,7 @@ type Config struct {
 	Plugins        []Plugin       `mapstructure:"plugins"`
 	Search         Search         `mapstructure:"search"`
 	Theme          string         `mapstructure:"theme"`
+	ThemeBase      []string       `mapstructure:"theme_base"`
 	Terminal       string         `mapstructure:"terminal"`
 
 	Available []string `mapstructure:"-"`

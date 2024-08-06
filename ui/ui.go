@@ -74,12 +74,14 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		cfg = config.Get(appstate.ExplicitConfig)
 
 		theme := cfg.Theme
+		themeBase := cfg.ThemeBase
 
 		if appstate.ExplicitTheme != "" {
 			theme = appstate.ExplicitTheme
+			themeBase = nil
 		}
 
-		layout = config.GetLayout(theme, nil)
+		layout = config.GetLayout(theme, themeBase)
 
 		appstate.Labels = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
 		appstate.LabelsF = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
@@ -131,13 +133,13 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		}
 
 		if singleModule == nil {
-			setupLayout(theme, nil)
+			setupLayout(theme, themeBase)
 		} else {
 			if val, ok := layouts[singleModule.General().Name]; ok {
 				layout = val
 				setupLayout(singleModule.General().Theme, singleModule.General().ThemeBase)
 			} else {
-				setupLayout(cfg.Theme, nil)
+				setupLayout(theme, themeBase)
 			}
 		}
 

@@ -816,8 +816,8 @@ func quit() {
 	if singleModule != nil {
 		if _, ok := layouts[singleModule.General().Name]; ok {
 			glib.IdleAdd(func() {
-				layout = config.GetLayout(cfg.Theme, nil)
-				setupLayout(cfg.Theme, nil)
+				layout = config.GetLayout(cfg.Theme, cfg.ThemeBase)
+				setupLayout(cfg.Theme, cfg.ThemeBase)
 			})
 		}
 

@@ -375,7 +375,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		if layout.Window.Box.Scroll.List.Item.Revert {
 			if activationLabel != nil {
-				if cfg.ActivationMode.Overlay {
+				if layout.Window.Box.Scroll.List.Item.ActivationLabel.Overlay {
 					overlay.AddOverlay(activationLabel)
 				} else {
 					box.Append(activationLabel)
@@ -399,7 +399,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 			}
 
 			if activationLabel != nil {
-				if cfg.ActivationMode.Overlay {
+				if layout.Window.Box.Scroll.List.Item.ActivationLabel.Overlay {
 					overlay.AddOverlay(activationLabel)
 				} else {
 					box.Append(activationLabel)
@@ -440,7 +440,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 		}
 
 		if activationLabel != nil {
-			setupLabelWidgetStyle(activationLabel, &layout.Window.Box.Scroll.List.Item.ActivationLabel)
+			setupLabelWidgetStyle(activationLabel, &layout.Window.Box.Scroll.List.Item.ActivationLabel.LabelWidget)
 		}
 
 		if icon != nil {

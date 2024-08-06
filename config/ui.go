@@ -177,10 +177,15 @@ type ListWrapper struct {
 
 type ListItemWidget struct {
 	BoxWidget       `mapstructure:",squash"`
-	Revert          bool        `mapstructure:"revert"`
-	ActivationLabel LabelWidget `mapstructure:"activation_label"`
-	Icon            ImageWidget `mapstructure:"icon"`
-	Text            TextWrapper `mapstructure:"text"`
+	Revert          bool                  `mapstructure:"revert"`
+	ActivationLabel ActivationLabelWidget `mapstructure:"activation_label"`
+	Icon            ImageWidget           `mapstructure:"icon"`
+	Text            TextWrapper           `mapstructure:"text"`
+}
+
+type ActivationLabelWidget struct {
+	LabelWidget `mapstructure:",squash"`
+	Overlay     bool `mapstructure:"overlay"`
 }
 
 type TextWrapper struct {

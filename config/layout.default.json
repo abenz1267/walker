@@ -182,6 +182,7 @@
               "revert": false,
               "activation_label": {
                 "name": "activationlabel",
+                "override": false,
                 "v_align": "center",
                 "v_expand": false,
                 "h_expand": false,

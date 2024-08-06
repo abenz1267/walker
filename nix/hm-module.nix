@@ -82,7 +82,7 @@ in {
 
       xdg.configFile = {
         "walker/themes/${themeName}.json".source = jsonFormat.generate "walker-themes-${themeName}.json" cfg.theme.layout;
-        "walker/themes/${themeName}.css".source = jsonFormat.generate "walker-themes-${themeName}.css" cfg.theme.style;
+        "walker/themes/${themeName}.css".text = cfg.theme.style;
       };
     })
   ]);

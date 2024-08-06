@@ -81,8 +81,8 @@ in {
       programs.walker.config.theme = mkForce themeName;
 
       xdg.configFile = {
-        "walker/themes/${themeName}.json" = jsonFormat.generate "walker-themes-${themeName}.json" cfg.theme.layout;
-        "walker/themes/${themeName}.css" = jsonFormat.generate "walker-themes-${themeName}.css" cfg.theme.style;
+        "walker/themes/${themeName}.json".source = jsonFormat.generate "walker-themes-${themeName}.json" cfg.theme.layout;
+        "walker/themes/${themeName}.css".source = jsonFormat.generate "walker-themes-${themeName}.css" cfg.theme.style;
       };
     })
   ]);

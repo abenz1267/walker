@@ -177,29 +177,27 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint) []ut
 				}
 
 				isAction := false
+				skip := false
 
 				for scanner.Scan() {
 					line := scanner.Text()
 
+					if strings.HasPrefix(line, "[Desktop Entry") {
+						isAction = false
+						skip = false
+						continue
+					}
+
+					if skip {
+						continue
+					}
+
 					if strings.HasPrefix(line, "[Desktop Action") {
 						if !actions {
-							break
+							skip = true
 						}
 
-						app.Actions = append(app.Actions, util.Entry{
-							Sub:              app.Generic.Label,
-							Path:             app.Generic.Path,
-							Icon:             app.Generic.Icon,
-							Terminal:         app.Generic.Terminal,
-							Class:            ApplicationsName,
-							Matching:         app.Generic.Matching,
-							Categories:       app.Generic.Categories,
-							History:          app.Generic.History,
-							InitialClass:     app.Generic.InitialClass,
-							OpenWindows:      app.Generic.OpenWindows,
-							Prefer:           true,
-							RecalculateScore: true,
-						})
+						app.Actions = append(app.Actions, util.Entry{})
 
 						isAction = true
 					}
@@ -286,6 +284,21 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint) []ut
 							continue
 						}
 					}
+				}
+
+				for k := range app.Actions {
+					app.Actions[k].Sub = app.Generic.Label
+					app.Actions[k].Path = app.Generic.Path
+					app.Actions[k].Icon = app.Generic.Icon
+					app.Actions[k].Terminal = app.Generic.Terminal
+					app.Actions[k].Class = ApplicationsName
+					app.Actions[k].Matching = app.Generic.Matching
+					app.Actions[k].Categories = app.Generic.Categories
+					app.Actions[k].History = app.Generic.History
+					app.Actions[k].InitialClass = app.Generic.InitialClass
+					app.Actions[k].OpenWindows = app.Generic.OpenWindows
+					app.Actions[k].Prefer = true
+					app.Actions[k].RecalculateScore = true
 				}
 
 				apps = append(apps, app)

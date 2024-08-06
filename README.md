@@ -2,7 +2,7 @@
 
 Walker is a highly extendable application launcher that doesn't hold back on features and usability. Fast. Unclutters your brain. Improves your workflow.
 
-![Screenshot](https://github.com/abenz1267/walker/blob/master/images.png?raw=true)
+![Screenshot](https://github.com/abenz1267/walker/blob/master/assets/images.png?raw=true)
 
 ## Features
 

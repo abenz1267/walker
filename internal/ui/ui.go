@@ -353,7 +353,9 @@ func setupFactory() *gtk.SignalListItemFactory {
 				ii := val.Icon
 
 				if ii == "" {
-					ii = findModule(val.Module, toUse).General().Icon
+					if m := findModule(val.Module, toUse); m != nil {
+						ii = m.General().Icon
+					}
 				}
 
 				if ii != "" {
@@ -361,7 +363,6 @@ func setupFactory() *gtk.SignalListItemFactory {
 						icon = gtk.NewImageFromFile(ii)
 					} else {
 						i := elements.iconTheme.LookupIcon(ii, []string{}, layout.IconSizeIntMap[layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
-
 						icon = gtk.NewImageFromPaintable(i)
 					}
 				}

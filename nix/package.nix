@@ -14,11 +14,17 @@
 }:
 buildGoModule {
   pname = "walker";
-  version = lib.fileContents ../version.txt;
+  version = lib.fileContents ../cmd/version.txt;
 
-  src = builtins.path {
-    name = "walker-source";
-    path = ../.;
+  src = lib.fileset.toSource {
+    root = ../.;
+    fileset = lib.fileset.unions [
+      ../go.mod
+      ../go.sum
+
+      ../cmd
+      ../internal
+    ];
   };
   vendorHash = "sha256-2t6WXQ5XoDtnlhzc96KeJ2cx+8sVS1oy2z3tsIRGq1Y=";
 

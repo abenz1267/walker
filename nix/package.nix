@@ -14,7 +14,7 @@
 }:
 buildGoModule {
   pname = "walker";
-  version = lib.fileContents ../version.txt;
+  version = lib.fileContents ../cmd/version.txt;
 
   src = builtins.path {
     name = "walker-source";

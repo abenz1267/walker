@@ -128,6 +128,7 @@ type ActivationMode struct {
 	Disabled bool `mapstructure:"disabled"`
 	UseAlt   bool `mapstructure:"use_alt"`
 	UseFKeys bool `mapstructure:"use_f_keys"`
+	Overlay  bool `mapstructure:"overlay"`
 }
 
 type Clipboard struct {

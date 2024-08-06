@@ -284,9 +284,8 @@ func setupFactory() *gtk.SignalListItemFactory {
 	factory := gtk.NewSignalListItemFactory()
 	factory.ConnectSetup(func(object *coreglib.Object) {
 		item := object.Cast().(*gtk.ListItem)
-		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
-		item.SetChild(box)
-		box.SetFocusable(true)
+		overlay := gtk.NewOverlay()
+		item.SetChild(overlay)
 	})
 
 	factory.ConnectBind(func(object *coreglib.Object) {
@@ -299,14 +298,18 @@ func setupFactory() *gtk.SignalListItemFactory {
 			return
 		}
 
-		box, ok := child.(*gtk.Box)
+		overlay, ok := child.(*gtk.Overlay)
 		if !ok {
 			log.Panicln("child is not a box")
 		}
 
-		if box.FirstChild() != nil {
+		if overlay.FirstChild() != nil {
 			return
 		}
+
+		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
+		box.SetFocusable(true)
+		overlay.SetChild(box)
 
 		if val.DragDrop {
 			dd := gtk.NewDragSource()
@@ -366,7 +369,11 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		if layout.Window.Box.Scroll.List.Item.Revert {
 			if activationLabel != nil {
-				box.Append(activationLabel)
+				if cfg.ActivationMode.Overlay {
+					overlay.AddOverlay(activationLabel)
+				} else {
+					box.Append(activationLabel)
+				}
 			}
 
 			if text != nil {
@@ -386,7 +393,11 @@ func setupFactory() *gtk.SignalListItemFactory {
 			}
 
 			if activationLabel != nil {
-				box.Append(activationLabel)
+				if cfg.ActivationMode.Overlay {
+					overlay.AddOverlay(activationLabel)
+				} else {
+					box.Append(activationLabel)
+				}
 			}
 		}
 

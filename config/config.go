@@ -65,19 +65,21 @@ type CustomCommand struct {
 }
 
 type GeneralModule struct {
-	Delay             int      `mapstructure:"delay"`
-	EagerLoading      bool     `mapstructure:"eager_loading"`
-	History           bool     `mapstructure:"history"`
-	KeepSort          bool     `mapstructure:"keep_sort"`
-	Name              string   `mapstructure:"name"`
-	Placeholder       string   `mapstructure:"placeholder"`
-	Prefix            string   `mapstructure:"prefix"`
-	Refresh           bool     `mapstructure:"refresh"`
-	SwitcherOnly      bool     `mapstructure:"switcher_only"`
-	Theme             string   `mapstructure:"theme"`
-	ThemeBase         []string `mapstructure:"theme_base"`
-	Typeahead         bool     `mapstructure:"typeahead"`
-	ShowSubWhenSingle bool     `mapstructure:"show_sub_when_single"`
+	Delay              int      `mapstructure:"delay"`
+	EagerLoading       bool     `mapstructure:"eager_loading"`
+	History            bool     `mapstructure:"history"`
+	ShowIconWhenSingle bool     `mapstructure:"show_icon_when_single"`
+	Icon               string   `mapstructure:"icon"`
+	KeepSort           bool     `mapstructure:"keep_sort"`
+	Name               string   `mapstructure:"name"`
+	Placeholder        string   `mapstructure:"placeholder"`
+	Prefix             string   `mapstructure:"prefix"`
+	Refresh            bool     `mapstructure:"refresh"`
+	SwitcherOnly       bool     `mapstructure:"switcher_only"`
+	Theme              string   `mapstructure:"theme"`
+	ThemeBase          []string `mapstructure:"theme_base"`
+	Typeahead          bool     `mapstructure:"typeahead"`
+	ShowSubWhenSingle  bool     `mapstructure:"show_sub_when_single"`
 
 	// internal
 	HasInitialSetup bool `mapstructure:"-"`

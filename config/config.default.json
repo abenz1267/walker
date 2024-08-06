@@ -20,9 +20,11 @@
       "prioritize_new": true,
       "context_aware": true,
       "refresh": true,
-      "show_sub_when_single": true
+      "show_sub_when_single": true,
+      "show_icon_when_single": true
     },
     "windows": {
+      "icon": "view-restore",
       "name": "windows",
       "placeholder": "Windows"
     },
@@ -34,11 +36,13 @@
       "switcher_only": true
     },
     "commands": {
+      "icon": "utilities-terminal",
       "switcher_only": true,
       "name": "commands",
       "placeholder": "Commands"
     },
     "custom_commands": {
+      "icon": "utilities-terminal",
       "name": "custom_commands",
       "placeholder": "Custom Commands"
     },
@@ -50,6 +54,7 @@
       "typeahead": true
     },
     "finder": {
+      "icon": "folder",
       "name": "finder",
       "placeholder": "Finder",
       "switcher_only": true,
@@ -58,6 +63,7 @@
       "concurrency": 8
     },
     "runner": {
+      "icon": "utilities-terminal",
       "name": "runner",
       "placeholder": "Runner",
       "typeahead": true,
@@ -66,6 +72,7 @@
       "refresh": true
     },
     "ssh": {
+      "icon": "preferences-system-network",
       "name": "ssh",
       "placeholder": "SSH",
       "switcher_only": true,
@@ -78,6 +85,7 @@
       "prefix": "/"
     },
     "websearch": {
+      "icon": "applications-internet",
       "name": "websearch",
       "placeholder": "Websearch",
       "engines": ["google"]

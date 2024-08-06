@@ -348,13 +348,23 @@ func setupFactory() *gtk.SignalListItemFactory {
 			icon = gtk.NewImageFromFile(val.Image)
 		}
 
-		if (!layout.Window.Box.Scroll.List.Item.Icon.Hide) && val.Icon != "" {
-			if filepath.IsAbs(val.Icon) {
-				icon = gtk.NewImageFromFile(val.Icon)
-			} else {
-				i := elements.iconTheme.LookupIcon(val.Icon, []string{}, layout.IconSizeIntMap[layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
+		if !layout.Window.Box.Scroll.List.Item.Icon.Hide {
+			if singleModule == nil || singleModule.General().ShowIconWhenSingle {
+				ii := val.Icon
 
-				icon = gtk.NewImageFromPaintable(i)
+				if ii == "" {
+					ii = findModule(val.Module, toUse).General().Icon
+				}
+
+				if ii != "" {
+					if filepath.IsAbs(ii) {
+						icon = gtk.NewImageFromFile(ii)
+					} else {
+						i := elements.iconTheme.LookupIcon(ii, []string{}, layout.IconSizeIntMap[layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
+
+						icon = gtk.NewImageFromPaintable(i)
+					}
+				}
 			}
 		}
 

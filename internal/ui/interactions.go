@@ -773,6 +773,8 @@ func setInitials() {
 		e := proc.Entries(nil, "")
 
 		for _, entry := range e {
+			entry.Module = proc.General().Name
+
 			for _, v := range hstry {
 				if val, ok := v[entry.Identifier()]; ok {
 					if entry.LastUsed.IsZero() || val.LastUsed.After(entry.LastUsed) {

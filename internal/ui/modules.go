@@ -69,12 +69,9 @@ func setAvailables(cfg *config.Config) {
 		&emojis.Emojis{},
 		&modules.CustomCommands{},
 		&windows.Windows{},
-		appstate.Clipboard,
 	}
 
-	if appstate.Dmenu != nil {
-		res = append(res, appstate.Dmenu)
-	} else {
+	if !appstate.IsService {
 		res = append(res, &modules.Dmenu{})
 	}
 
@@ -96,18 +93,25 @@ func setAvailables(cfg *config.Config) {
 			continue
 		}
 
-		if !v.General().IsSetup {
-			if ok := v.Setup(cfg); ok {
-				if v.General().Name == "" {
-					log.Panicln("module has no name\n")
-				}
-
-				available = append(available, v)
-				cfg.Available = append(cfg.Available, v.General().Name)
+		if ok := v.Setup(cfg); ok {
+			if v.General().Name == "" {
+				log.Panicln("module has no name\n")
 			}
-		} else {
+
 			available = append(available, v)
 			cfg.Available = append(cfg.Available, v.General().Name)
+		}
+	}
+
+	if appstate.IsService {
+		if appstate.Dmenu != nil {
+			available = append(available, appstate.Dmenu)
+			cfg.Available = append(cfg.Available, appstate.Dmenu.General().Name)
+		}
+
+		if appstate.Clipboard != nil {
+			available = append(available, appstate.Clipboard)
+			cfg.Available = append(cfg.Available, appstate.Clipboard.General().Name)
 		}
 	}
 }

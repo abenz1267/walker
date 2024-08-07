@@ -48,7 +48,7 @@ in {
 
       config = mkOption {
         inherit (jsonFormat) type;
-        default = importJSON ../config/config.default.json;
+        default = importJSON ../internal/config/config.default.json;
         description = ''
           Configuration written to `$XDG_CONFIG_HOME/walker/config.json`.
 

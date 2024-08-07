@@ -83,13 +83,7 @@ func (c Clipboard) Entries(ctx context.Context, term string) []util.Entry {
 func (c *Clipboard) Setup(cfg *config.Config) bool {
 	pth, _ := exec.LookPath("wl-copy")
 	if pth == "" {
-		log.Println("currently wl-clipboard only.")
-		return false
-	}
-
-	pth, _ = exec.LookPath("wl-paste")
-	if pth == "" {
-		log.Println("currently wl-clipboard only.")
+		log.Println("Clipboard disabled: currently wl-clipboard only.")
 		return false
 	}
 

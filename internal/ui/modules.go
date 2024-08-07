@@ -1,6 +1,9 @@
 package ui
 
 import (
+	"fmt"
+	"log"
+	"os"
 	"slices"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -11,33 +14,8 @@ import (
 )
 
 func setupModules() {
-	all := getModules()
+	setAvailables(cfg)
 	toUse = []modules.Workable{}
-	available = []modules.Workable{}
-
-	for k, v := range all {
-		if v == nil {
-			continue
-		}
-
-		if !v.General().IsSetup {
-			if ok := all[k].Setup(cfg); ok {
-				if slices.Contains(cfg.Disabled, v.General().Name) {
-					continue
-				}
-
-				available = append(available, all[k])
-				cfg.Available = append(cfg.Available, v.General().Name)
-			}
-		} else {
-			if slices.Contains(cfg.Disabled, v.General().Name) {
-				continue
-			}
-
-			available = append(available, all[k])
-			cfg.Available = append(cfg.Available, v.General().Name)
-		}
-	}
 
 	if len(appstate.ExplicitModules) > 0 {
 		setExplicits()
@@ -64,13 +42,13 @@ func setupModules() {
 		elements.input.SetObjectProperty("placeholder-text", text)
 	}
 
-	toCheck := toUse
+	checkForLayout := toUse
 
 	if appstate.IsService {
-		toCheck = all
+		checkForLayout = available
 	}
 
-	for _, v := range toCheck {
+	for _, v := range checkForLayout {
 		if v != nil && v.General().Theme != "" && v.General().Theme != cfg.Theme {
 			layouts[v.General().Name] = config.GetLayout(v.General().Theme, v.General().ThemeBase)
 		}
@@ -79,7 +57,7 @@ func setupModules() {
 	setupSingleModule()
 }
 
-func getModules() []modules.Workable {
+func setAvailables(cfg *config.Config) {
 	res := []modules.Workable{
 		&modules.Applications{},
 		&modules.Runner{},
@@ -107,7 +85,31 @@ func getModules() []modules.Workable {
 		res = append(res, e)
 	}
 
-	return res
+	available = []modules.Workable{}
+
+	for _, v := range res {
+		if v == nil {
+			continue
+		}
+
+		if slices.Contains(cfg.Disabled, v.General().Name) {
+			continue
+		}
+
+		if !v.General().IsSetup {
+			if ok := v.Setup(cfg); ok {
+				if v.General().Name == "" {
+					log.Panicln("module has no name\n")
+				}
+
+				available = append(available, v)
+				cfg.Available = append(cfg.Available, v.General().Name)
+			}
+		} else {
+			available = append(available, v)
+			cfg.Available = append(cfg.Available, v.General().Name)
+		}
+	}
 }
 
 func findModule(name string, modules ...[]modules.Workable) modules.Workable {
@@ -125,8 +127,6 @@ func findModule(name string, modules ...[]modules.Workable) modules.Workable {
 func setExplicits() {
 	explicits = []modules.Workable{}
 
-	toSetup := []string{}
-
 	for _, v := range appstate.ExplicitModules {
 		if slices.Contains(cfg.Available, v) {
 			for k, m := range available {
@@ -134,22 +134,14 @@ func setExplicits() {
 					explicits = append(explicits, available[k])
 				}
 			}
-		} else {
-			toSetup = append(toSetup, v)
 		}
 	}
 
-	modules := getModules()
+	if len(explicits) == 0 {
+		fmt.Printf("Module(s) not found\n.")
 
-	for k, v := range modules {
-		if v != nil {
-			if slices.Contains(toSetup, v.General().Name) {
-				if !v.General().IsSetup {
-					if ok := v.Setup(cfg); ok {
-						explicits = append(explicits, modules[k])
-					}
-				}
-			}
+		if !appstate.IsService {
+			os.Exit(1)
 		}
 	}
 }

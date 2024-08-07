@@ -53,6 +53,7 @@ func (w Windows) Entries(ctx context.Context, term string) []util.Entry {
 			Matching:        util.Fuzzy,
 			SpecialFunc:     w.SpecialFunc,
 			SpecialFuncArgs: []interface{}{v.Toplevel.Id()},
+			Prefer:          true,
 		})
 	}
 

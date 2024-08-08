@@ -1,9 +1,9 @@
-name: Nix
+name: Nix-Git
 
 on:
   push:
-    tags:
-      - v*
+    branches:
+      - master
   workflow_dispatch:
 
 jobs:
@@ -28,8 +28,8 @@ jobs:
       - name: Set up Cachix
         uses: cachix/cachix-action@v15
         with:
-          name: walker
-          authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+          name: walker-git
+          authToken: '${{ secrets.CACHIX_GIT_AUTH_TOKEN }}'
 
       - name: Build default package
-        run: nix build -L --extra-substituters "https://walker.cachix.org" .#default
+        run: nix build -L --extra-substituters "https://walker-git.cachix.org" .#default

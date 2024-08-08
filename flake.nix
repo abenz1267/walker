@@ -31,8 +31,8 @@
         homeManagerModules.default = import ./nix/hm-module.nix self;
 
         nixConfig = {
-          extra-substituters = ["https://walker.cachix.org"];
-          extra-trusted-public-keys = ["walker.cachix.org-1:fG8q+uAaMqhsMxWjwvk0IMb4mFPFLqHjuvfwQxE4oJM="];
+          extra-substituters = ["https://walker-git.cachix.org"];
+          extra-trusted-public-keys = ["walker-git.cachix.org-1:vmC0ocfPWh0S/vRAQGtChuiZBTAe4wiKDeyyXM0/7pM="];
         };
       };
     };

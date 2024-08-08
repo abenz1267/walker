@@ -136,12 +136,19 @@ programs.walker = {
 };
 ```
 
-Additionally, there is a binary cache at https://walker.cachix.org which you can use with the following:
+Additionally, there is a binary caches at `https://walker.cachix.org` and `https://walker-git.cachix.org` which you can use with the following:
 
 ```nix
 nix.settings = {
   substituters = ["https://walker.cachix.org"];
   trusted-public-keys = ["walker.cachix.org-1:fG8q+uAaMqhsMxWjwvk0IMb4mFPFLqHjuvfwQxE4oJM="];
+};
+```
+
+```nix
+nix.settings = {
+  substituters = ["https://walker-git.cachix.org"];
+  trusted-public-keys = ["walker-git.cachix.org-1:vmC0ocfPWh0S/vRAQGtChuiZBTAe4wiKDeyyXM0/7pM="];
 };
 ```
 

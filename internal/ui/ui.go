@@ -375,7 +375,13 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		if !cfg.ActivationMode.Disabled {
 			if item.Position()+1 <= uint(len(appstate.Labels)) {
-				activationLabel = gtk.NewLabel(appstate.UsedLabels[item.Position()])
+				aml := appstate.UsedLabels[item.Position()]
+
+				if !layout.Window.Box.Scroll.List.Item.ActivationLabel.HideModifier {
+					aml = fmt.Sprintf("%s%s", amLabel, aml)
+				}
+
+				activationLabel = gtk.NewLabel(aml)
 			}
 		}
 

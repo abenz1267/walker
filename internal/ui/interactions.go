@@ -30,6 +30,7 @@ var (
 	amKey             uint
 	cmdAltModifier    gdk.ModifierType
 	amModifier        gdk.ModifierType
+	amLabel           string
 	commands          map[string]func()
 	singleModule      modules.Workable
 )
@@ -60,12 +61,14 @@ func setupInteractions(appstate *state.AppState) {
 
 	amKey = gdk.KEY_Control_L
 	amModifier = gdk.ControlMask
+	amLabel = "Ctrl + "
 
 	cmdAltModifier = gdk.AltMask
 
 	if cfg.ActivationMode.UseAlt {
 		amKey = gdk.KEY_Alt_L
 		amModifier = gdk.AltMask
+		amLabel = "Alt + "
 		cmdAltModifier = gdk.ControlMask
 	}
 

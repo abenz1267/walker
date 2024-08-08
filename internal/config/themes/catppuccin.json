@@ -7,11 +7,8 @@
       "top": true
     },
     "window": {
-      "v_align": "fill",
-      "h_align": "fill",
       "box": {
         "h_align": "center",
-        "v_align": "start",
         "margins": {
           "bottom": 200,
           "top": 200
@@ -22,7 +19,9 @@
             "always_show": true,
             "item": {
               "activation_label": {
-                "width": 20,
+                "h_align": "end",
+                "h_expand": true,
+                "justify": "right",
                 "x_align": 1
               },
               "icon": {
@@ -30,7 +29,9 @@
               },
               "spacing": 5,
               "text": {
-                "revert": true
+                "revert": true,
+                "h_align": "fill",
+                "h_expand": true
               }
             },
             "max_height": 300,
@@ -45,8 +46,11 @@
           "v_align": "start",
           "width": 400
         },
-        "spacing": 10
-      }
+        "spacing": 10,
+        "v_align": "start"
+      },
+      "h_align": "fill",
+      "v_align": "fill"
     }
   }
 }

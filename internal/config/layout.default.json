@@ -199,7 +199,9 @@
                 },
                 "justify": "start",
                 "x_align": 0,
-                "y_align": 0
+                "y_align": 0,
+                "override": false,
+                "hide_modifier": false
               },
               "icon": {
                 "name": "icon",

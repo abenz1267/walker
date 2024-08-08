@@ -184,8 +184,9 @@ type ListItemWidget struct {
 }
 
 type ActivationLabelWidget struct {
-	LabelWidget `mapstructure:",squash"`
-	Overlay     bool `mapstructure:"overlay"`
+	LabelWidget  `mapstructure:",squash"`
+	Overlay      bool `mapstructure:"overlay"`
+	HideModifier bool `mapstructure:"hide_modifier"`
 }
 
 type TextWrapper struct {

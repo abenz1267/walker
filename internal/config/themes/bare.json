@@ -1,17 +1,14 @@
 {
   "ui": {
     "anchors": {
-      "top": true,
       "bottom": true,
       "left": true,
-      "right": true
+      "right": true,
+      "top": true
     },
     "window": {
-      "v_align": "fill",
-      "h_align": "fill",
       "box": {
         "h_align": "center",
-        "width": 400,
         "margins": {
           "top": 400
         },
@@ -19,7 +16,8 @@
           "list": {
             "item": {
               "activation_label": {
-                "width": 20,
+                "h_align": "end",
+                "h_expand": true,
                 "x_align": 1
               },
               "icon": {
@@ -41,8 +39,11 @@
           "spinner": {
             "hide": true
           }
-        }
-      }
+        },
+        "width": 400
+      },
+      "h_align": "fill",
+      "v_align": "fill"
     }
   }
 }

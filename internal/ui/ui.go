@@ -377,7 +377,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 			if item.Position()+1 <= uint(len(appstate.Labels)) {
 				aml := appstate.UsedLabels[item.Position()]
 
-				if !layout.Window.Box.Scroll.List.Item.ActivationLabel.HideModifier {
+				if !cfg.ActivationMode.UseFKeys && !layout.Window.Box.Scroll.List.Item.ActivationLabel.HideModifier {
 					aml = fmt.Sprintf("%s%s", amLabel, aml)
 				}
 

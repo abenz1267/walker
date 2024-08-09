@@ -8,7 +8,7 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
 
 - plugin support: simple stdin/stdout (external or via configuration, see wiki)
 - icons/images
-- start as service for faster startup (see benchmarks below)
+- start as service for faster startup
 - run entries via labels (F<1-8> or jkl;asdf)
 - non-blocking async handling of results
 - typeahead
@@ -253,17 +253,6 @@ AM = Activation Mode
 ### Activation Mode
 
 Activation-Mode can be triggered by holding `LCtrl` ( or `LAlt`). The window will get an additional class `activation` you can use for styling. While activated, you can run items by pressing their respective label. This only works for the top 8 items.
-
-## Startup "Benchmarks"
-
-System: Arch Linux, Hyprland, Amd 7950x, 32gb DDR5-6000, SSD
-
-Measured time is until telling GTK to show the window.
-
-| Mode         | Startup time |
-| ------------ | ------------ |
-| normal       | 23ms - 33ms  |
-| with service | ~1.8ms       |
 
 ## FAQ
 

@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -84,7 +85,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 		layout = config.GetLayout(theme, themeBase)
 
-		appstate.Labels = []string{"j", "k", "l", ";", "a", "s", "d", "f"}
+		appstate.Labels = strings.Split(cfg.ActivationMode.Labels, "")
 		appstate.LabelsF = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
 		appstate.UsedLabels = appstate.Labels
 
@@ -457,6 +458,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		if activationLabel != nil {
 			setupLabelWidgetStyle(activationLabel, &layout.Window.Box.Scroll.List.Item.ActivationLabel.LabelWidget)
+			activationLabel.SetWrap(false)
 		}
 
 		if icon != nil {

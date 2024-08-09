@@ -11,7 +11,9 @@
     "placeholder": "Search...",
     "delay": 0
   },
-  "activation_mode": {},
+  "activation_mode": {
+    "labels": "jkl;asdf"
+  },
   "builtins": {
     "applications": {
       "name": "applications",

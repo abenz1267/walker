@@ -25,7 +25,6 @@ import (
 )
 
 var (
-	keys              map[uint]uint
 	activationEnabled bool
 	amKey             uint
 	cmdAltModifier    gdk.ModifierType
@@ -51,7 +50,6 @@ func setupCommands() {
 
 func setupInteractions(appstate *state.AppState) {
 	go setupCommands()
-	go createActivationKeys()
 
 	keycontroller := gtk.NewEventControllerKey()
 	keycontroller.SetPropagationPhase(gtk.PropagationPhase(1))
@@ -143,13 +141,9 @@ func selectPrev() {
 	}
 }
 
-func selectActivationMode(val uint, keepOpen bool) {
-	var target uint
+var fkeys = []uint{65470, 65471, 65472, 65473, 65474, 65475, 65476, 65477}
 
-	if n, ok := keys[val]; ok {
-		target = n
-	}
-
+func selectActivationMode(val uint, keepOpen bool, isFKey bool, target uint) {
 	if target < common.selection.NItems() {
 		common.selection.SetSelected(target)
 	}
@@ -224,38 +218,14 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			exit()
 			return true
 		}
-	case gdk.KEY_J, gdk.KEY_K, gdk.KEY_L, gdk.KEY_colon, gdk.KEY_A, gdk.KEY_S, gdk.KEY_D, gdk.KEY_F:
-		fallthrough
-	case gdk.KEY_j, gdk.KEY_k, gdk.KEY_l, gdk.KEY_semicolon, gdk.KEY_a, gdk.KEY_s, gdk.KEY_d, gdk.KEY_f:
-		if val == gdk.KEY_j {
-			if cfg.ActivationMode.Disabled {
-				if modifier == gdk.ControlMask {
-					selectNext()
-					return true
-				}
-			}
-		} else if val == gdk.KEY_k {
-			if cfg.ActivationMode.Disabled {
-				if modifier == gdk.ControlMask {
-					selectPrev()
-					return true
-				}
-			}
-		}
-
-		if !cfg.ActivationMode.Disabled && activationEnabled {
-			isAmShift := modifier == (gdk.ShiftMask | amModifier)
-
-			selectActivationMode(val, isAmShift)
-			return true
-		} else {
-			elements.input.GrabFocus()
-			return false
-		}
 	case gdk.KEY_F1, gdk.KEY_F2, gdk.KEY_F3, gdk.KEY_F4, gdk.KEY_F5, gdk.KEY_F6, gdk.KEY_F7, gdk.KEY_F8:
-		isShift := modifier == gdk.ShiftMask
-		selectActivationMode(val, isShift)
-		return true
+		index := slices.Index(fkeys, val)
+
+		if index != -1 {
+			isShift := modifier == gdk.ShiftMask
+			selectActivationMode(val, isShift, true, uint(index))
+			return true
+		}
 	case gdk.KEY_Return:
 		isShift := modifier == gdk.ShiftMask
 		isAlt := modifier == cmdAltModifier
@@ -340,7 +310,41 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		selectPrev()
 		return true
 	default:
+		if val == gdk.KEY_j {
+			if cfg.ActivationMode.Disabled {
+				if modifier == gdk.ControlMask {
+					selectNext()
+					return true
+				}
+			}
+		} else if val == gdk.KEY_k {
+			if cfg.ActivationMode.Disabled {
+				if modifier == gdk.ControlMask {
+					selectPrev()
+					return true
+				}
+			}
+		}
+
+		if !cfg.ActivationMode.Disabled && activationEnabled {
+			uc := gdk.KeyvalToUnicode(val)
+
+			if uc != 0 {
+				index := slices.Index(appstate.UsedLabels, string(uc))
+
+				if index != -1 {
+					isAmShift := modifier == (gdk.ShiftMask | amModifier)
+
+					selectActivationMode(val, isAmShift, false, uint(index))
+					return true
+				} else {
+					return false
+				}
+			}
+		}
+
 		elements.input.GrabFocus()
+		return false
 	}
 
 	return false
@@ -507,8 +511,6 @@ func closeAfterActivation(keepOpen, next bool) {
 		}
 	}
 }
-
-const charset = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
 
 var cancel context.CancelFunc
 
@@ -863,34 +865,6 @@ func quit() {
 func exit() {
 	elements.appwin.Close()
 	os.Exit(0)
-}
-
-func createActivationKeys() {
-	keys = make(map[uint]uint)
-	keys[gdk.KEY_j] = 0
-	keys[gdk.KEY_k] = 1
-	keys[gdk.KEY_l] = 2
-	keys[gdk.KEY_semicolon] = 3
-	keys[gdk.KEY_a] = 4
-	keys[gdk.KEY_s] = 5
-	keys[gdk.KEY_d] = 6
-	keys[gdk.KEY_f] = 7
-	keys[gdk.KEY_J] = 0
-	keys[gdk.KEY_K] = 1
-	keys[gdk.KEY_L] = 2
-	keys[gdk.KEY_colon] = 3
-	keys[gdk.KEY_A] = 4
-	keys[gdk.KEY_S] = 5
-	keys[gdk.KEY_D] = 6
-	keys[gdk.KEY_F] = 7
-	keys[gdk.KEY_F1] = 0
-	keys[gdk.KEY_F2] = 1
-	keys[gdk.KEY_F3] = 2
-	keys[gdk.KEY_F4] = 3
-	keys[gdk.KEY_F5] = 4
-	keys[gdk.KEY_F6] = 5
-	keys[gdk.KEY_F7] = 6
-	keys[gdk.KEY_F8] = 7
 }
 
 const modifier = 0.10

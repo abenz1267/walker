@@ -62,6 +62,7 @@ func setAvailables(cfg *config.Config) {
 		&modules.Applications{},
 		&modules.Runner{},
 		&modules.Websearch{},
+		&modules.Calc{},
 		&modules.Commands{},
 		&modules.SSH{},
 		&modules.Finder{},

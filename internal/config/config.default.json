@@ -25,6 +25,11 @@
       "show_sub_when_single": true,
       "show_icon_when_single": true
     },
+    "calc": {
+      "name": "calc",
+      "icon": "accessories-calculator",
+      "placeholder": "Calculator"
+    },
     "windows": {
       "icon": "view-restore",
       "name": "windows",

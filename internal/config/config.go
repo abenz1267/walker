@@ -39,6 +39,7 @@ type Config struct {
 
 type Builtins struct {
 	Applications   Applications   `mapstructure:"applications"`
+	Calc           Calc           `mapstructure:"calc"`
 	Clipboard      Clipboard      `mapstructure:"clipboard"`
 	Commands       Commands       `mapstructure:"commands"`
 	CustomCommands CustomCommands `mapstructure:"custom_commands"`
@@ -50,6 +51,10 @@ type Builtins struct {
 	Switcher       Switcher       `mapstructure:"switcher"`
 	Websearch      Websearch      `mapstructure:"websearch"`
 	Windows        Windows        `mapstructure:"windows"`
+}
+
+type Calc struct {
+	GeneralModule `mapstructure:",squash"`
 }
 
 type CustomCommands struct {

@@ -143,7 +143,7 @@ func selectPrev() {
 
 var fkeys = []uint{65470, 65471, 65472, 65473, 65474, 65475, 65476, 65477}
 
-func selectActivationMode(val uint, keepOpen bool, isFKey bool, target uint) {
+func selectActivationMode(keepOpen bool, isFKey bool, target uint) {
 	if target < common.selection.NItems() {
 		common.selection.SetSelected(target)
 	}
@@ -223,7 +223,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 
 		if index != -1 {
 			isShift := modifier == gdk.ShiftMask
-			selectActivationMode(val, isShift, true, uint(index))
+			selectActivationMode(isShift, true, uint(index))
 			return true
 		}
 	case gdk.KEY_Return:
@@ -327,7 +327,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		}
 
 		if !cfg.ActivationMode.Disabled && activationEnabled {
-			uc := gdk.KeyvalToUnicode(val)
+			uc := gdk.KeyvalToUnicode(gdk.KeyvalToLower(val))
 
 			if uc != 0 {
 				index := slices.Index(appstate.UsedLabels, string(uc))
@@ -335,7 +335,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				if index != -1 {
 					isAmShift := modifier == (gdk.ShiftMask | amModifier)
 
-					selectActivationMode(val, isAmShift, false, uint(index))
+					selectActivationMode(isAmShift, false, uint(index))
 					return true
 				} else {
 					return false

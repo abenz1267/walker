@@ -48,13 +48,22 @@ func setupModules() {
 		checkForLayout = available
 	}
 
-	for _, v := range checkForLayout {
-		if v != nil && v.General().Theme != "" && v.General().Theme != cfg.Theme {
-			layouts[v.General().Name] = config.GetLayout(v.General().Theme, v.General().ThemeBase)
-		}
+	if len(toUse) == 1 {
+		setupLayouts(checkForLayout)
+	} else {
+		go setupLayouts(checkForLayout)
 	}
 
 	setupSingleModule()
+}
+
+func setupLayouts(modules []modules.Workable) {
+	for _, v := range modules {
+		g := v.General()
+		if v != nil && g.Theme != "" && g.Theme != cfg.Theme {
+			layouts[g.Name] = config.GetLayout(g.Theme, g.ThemeBase)
+		}
+	}
 }
 
 func setAvailables(cfg *config.Config) {

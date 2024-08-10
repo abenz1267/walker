@@ -137,9 +137,10 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		if singleModule == nil {
 			setupLayout(theme, themeBase)
 		} else {
-			if val, ok := layouts[singleModule.General().Name]; ok {
+			g := singleModule.General()
+			if val, ok := layouts[g.Name]; ok {
 				layout = val
-				setupLayout(singleModule.General().Theme, singleModule.General().ThemeBase)
+				setupLayout(g.Theme, g.ThemeBase)
 			} else {
 				setupLayout(theme, themeBase)
 			}

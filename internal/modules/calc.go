@@ -38,7 +38,7 @@ func (c *Calc) Setup(cfg *config.Config) bool {
 
 	// to update exchange rates
 	cmd := exec.Command("qalc", "-e", "1+1")
-	cmd.Run()
+	cmd.Start()
 
 	return true
 }

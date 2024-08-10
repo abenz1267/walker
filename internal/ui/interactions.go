@@ -766,34 +766,30 @@ func setTypeahead(modules []modules.Workable) {
 func setInitials() {
 	entries := []util.Entry{}
 
-	for _, proc := range toUse {
-		if proc.General().Name != "applications" {
-			continue
-		}
+	proc := findModule("applications", toUse)
 
-		if !proc.General().IsSetup {
-			proc.SetupData(cfg, nil)
-		}
+	if !proc.General().IsSetup {
+		proc.SetupData(cfg, nil)
+	}
 
-		e := proc.Entries(nil, "")
+	e := proc.Entries(nil, "")
 
-		for _, entry := range e {
-			entry.Module = proc.General().Name
+	for _, entry := range e {
+		entry.Module = proc.General().Name
 
-			for _, v := range hstry {
-				if val, ok := v[entry.Identifier()]; ok {
-					if entry.LastUsed.IsZero() || val.LastUsed.After(entry.LastUsed) {
-						entry.Used = val.Used
-						entry.DaysSinceUsed = val.DaysSinceUsed
-						entry.LastUsed = val.LastUsed
-					}
+		for _, v := range hstry {
+			if val, ok := v[entry.Identifier()]; ok {
+				if entry.LastUsed.IsZero() || val.LastUsed.After(entry.LastUsed) {
+					entry.Used = val.Used
+					entry.DaysSinceUsed = val.DaysSinceUsed
+					entry.LastUsed = val.LastUsed
 				}
 			}
-
-			entry.ScoreFinal = float64(usageModifier(entry))
-
-			entries = append(entries, entry)
 		}
+
+		entry.ScoreFinal = float64(usageModifier(entry))
+
+		entries = append(entries, entry)
 	}
 
 	if len(entries) == 0 {

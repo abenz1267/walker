@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"io/fs"
+	"log"
 	"os"
 	"path/filepath"
 	"strings"
@@ -16,6 +17,7 @@ import (
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/adrg/xdg"
 	"github.com/djherbis/times"
+	"github.com/fsnotify/fsnotify"
 )
 
 const ApplicationsName = "applications"
@@ -30,6 +32,7 @@ type Applications struct {
 	isContextAware bool
 	openWindows    map[string]uint
 	wmRunning      bool
+	isWatching     bool
 }
 
 type Application struct {
@@ -55,8 +58,12 @@ func (a *Applications) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (a *Applications) SetupData(_ *config.Config, ctx context.Context) {
+func (a *Applications) SetupData(cfg *config.Config, ctx context.Context) {
 	a.entries = parse(a.cache, a.actions, a.prioritizeNew, a.openWindows)
+
+	if cfg.IsService {
+		go a.Watch()
+	}
 
 	if !a.wmRunning && a.isContextAware {
 		go a.RunWm()
@@ -64,6 +71,63 @@ func (a *Applications) SetupData(_ *config.Config, ctx context.Context) {
 
 	a.general.IsSetup = true
 	a.general.HasInitialSetup = true
+}
+
+func (a *Applications) Watch() {
+	a.isWatching = true
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Panicln(err)
+	}
+	defer watcher.Close()
+
+	for _, v := range xdg.ApplicationDirs {
+		if util.FileExists(v) {
+			err := watcher.Add(v)
+			if err != nil {
+				log.Panicln(err)
+			}
+		}
+	}
+
+	rc := make(chan struct{})
+	go a.debounceParsing(500*time.Millisecond, rc)
+
+	go func() {
+		for {
+			select {
+			case _, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+
+				rc <- struct{}{}
+			case _, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+			}
+		}
+	}()
+
+	<-make(chan struct{})
+}
+
+func (a *Applications) debounceParsing(interval time.Duration, input chan struct{}) {
+	shouldParse := false
+
+	for {
+		select {
+		case <-input:
+			shouldParse = true
+		case <-time.After(interval):
+			if shouldParse {
+				a.entries = parse(a.cache, a.actions, a.prioritizeNew, a.openWindows)
+				shouldParse = false
+			}
+		}
+	}
 }
 
 func (a *Applications) RunWm() {
@@ -110,7 +174,9 @@ func (a *Applications) RunWm() {
 }
 
 func (a *Applications) Refresh() {
-	a.general.IsSetup = !a.general.Refresh
+	if !a.isWatching {
+		a.general.IsSetup = !a.general.Refresh
+	}
 }
 
 func (a *Applications) Entries(ctx context.Context, _ string) []util.Entry {

@@ -26,7 +26,7 @@ import (
 //go:embed version.txt
 var version string
 
-var now = time.Now().UnixNano()
+var now = time.Now().UnixMilli()
 
 func main() {
 	state := state.Get()
@@ -110,7 +110,7 @@ func main() {
 
 	app.ConnectCommandLine(func(cmd *gio.ApplicationCommandLine) int {
 		if state.Benchmark {
-			fmt.Println("start handle cmd: ", time.Now().UnixNano())
+			fmt.Println("start handle cmd: ", time.Now().UnixMilli())
 		}
 
 		options := cmd.OptionsDict()
@@ -185,7 +185,7 @@ func main() {
 		}
 
 		if state.Benchmark {
-			fmt.Println("run activate: ", time.Now().UnixNano())
+			fmt.Println("run activate: ", time.Now().UnixMilli())
 		}
 
 		app.Activate()
@@ -219,7 +219,7 @@ func main() {
 	}
 
 	if state.Benchmark {
-		fmt.Println("start run: ", time.Now().UnixNano())
+		fmt.Println("start run: ", time.Now().UnixMilli())
 	}
 
 	code := app.Run(os.Args)

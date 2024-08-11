@@ -158,7 +158,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		appstate.IsRunning = true
 
 		if appstate.Benchmark {
-			fmt.Println("Visible (first ui)", time.Now().UnixNano())
+			fmt.Println("Visible (first ui)", time.Now().UnixMilli())
 		}
 	}
 }
@@ -538,7 +538,7 @@ func reopen() {
 	elements.appwin.SetVisible(true)
 
 	if appstate.Benchmark {
-		fmt.Println("Visible (re-open)", time.Now().UnixNano())
+		fmt.Println("Visible (re-open)", time.Now().UnixMilli())
 	}
 
 	if len(toUse) == 1 {

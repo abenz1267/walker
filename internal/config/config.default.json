@@ -28,7 +28,8 @@
     "calc": {
       "name": "calc",
       "icon": "accessories-calculator",
-      "placeholder": "Calculator"
+      "placeholder": "Calculator",
+      "min_chars": 4
     },
     "windows": {
       "icon": "view-restore",

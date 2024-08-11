@@ -77,6 +77,7 @@ type GeneralModule struct {
 	Icon               string   `mapstructure:"icon"`
 	KeepSort           bool     `mapstructure:"keep_sort"`
 	Name               string   `mapstructure:"name"`
+	MinChars           int      `mapstructure:"min_chars"`
 	Placeholder        string   `mapstructure:"placeholder"`
 	Prefix             string   `mapstructure:"prefix"`
 	Refresh            bool     `mapstructure:"refresh"`

@@ -668,6 +668,10 @@ func processAsync(ctx context.Context, text string) {
 		go func(ctx context.Context, wg *sync.WaitGroup, text string, w modules.Workable) {
 			defer wg.Done()
 
+			if len(text) < w.General().MinChars {
+				return
+			}
+
 			e := w.Entries(ctx, text)
 
 			toPush := []util.Entry{}

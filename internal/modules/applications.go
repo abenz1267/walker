@@ -179,7 +179,7 @@ func (a *Applications) Refresh() {
 	}
 }
 
-func (a *Applications) Entries(ctx context.Context, _ string) []util.Entry {
+func (a *Applications) Entries(ctx context.Context, term string) []util.Entry {
 	return a.entries
 }
 

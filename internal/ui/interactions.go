@@ -772,6 +772,10 @@ func setInitials() {
 
 	proc := findModule("applications", toUse)
 
+	if proc == nil {
+		return
+	}
+
 	if !proc.General().IsSetup {
 		proc.SetupData(cfg, nil)
 	}

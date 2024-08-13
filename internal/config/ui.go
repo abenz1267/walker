@@ -55,6 +55,8 @@ func (u *UI) InitUnitMaps() {
 	u.IconSizeIntMap["inherit"] = -1
 	u.IconSizeIntMap["normal"] = 16
 	u.IconSizeIntMap["large"] = 32
+	u.IconSizeIntMap["larger"] = 64
+	u.IconSizeIntMap["largest"] = 128
 
 	u.JustifyMap = make(map[string]gtk.Justification)
 	u.JustifyMap["left"] = gtk.JustifyLeft

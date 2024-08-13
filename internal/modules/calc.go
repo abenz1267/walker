@@ -63,7 +63,7 @@ func (c Calc) Entries(ctx context.Context, term string) []util.Entry {
 	res := util.Entry{
 		Label:    strings.TrimSpace(txt),
 		Sub:      "Calc",
-		Matching: util.AlwaysBottom,
+		Matching: util.AlwaysTop,
 	}
 
 	if c.hasClip {

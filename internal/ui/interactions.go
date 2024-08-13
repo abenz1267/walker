@@ -675,9 +675,11 @@ func processAsync(ctx context.Context, text string) {
 			e := w.Entries(ctx, text)
 
 			toPush := []util.Entry{}
+			g := w.General()
 
 			for k := range e {
-				e[k].Module = w.General().Name
+				e[k].Module = g.Name
+				e[k].Weight = g.Weight
 
 				if e[k].DragDrop && !elements.grid.CanTarget() {
 					elements.grid.SetCanTarget(true)

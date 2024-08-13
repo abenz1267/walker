@@ -96,6 +96,16 @@ func sortEntries(entries []util.Entry) {
 			max := a.ScoreFinal + 50
 
 			if min < b.ScoreFinal && b.ScoreFinal < max {
+				if a.Module != b.Module {
+					if a.Weight > b.Weight {
+						return -1
+					}
+
+					if a.Weight < b.Weight {
+						return 1
+					}
+				}
+
 				if a.Prefer && !b.Prefer {
 					return -1
 				}

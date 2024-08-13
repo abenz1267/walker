@@ -87,6 +87,7 @@ type GeneralModule struct {
 	ThemeBase          []string `mapstructure:"theme_base"`
 	Typeahead          bool     `mapstructure:"typeahead"`
 	ShowSubWhenSingle  bool     `mapstructure:"show_sub_when_single"`
+	Weight             int      `mapstructure:"weight"`
 
 	// internal
 	HasInitialSetup bool `mapstructure:"-"`

@@ -17,6 +17,7 @@
   },
   "builtins": {
     "applications": {
+      "weight": 5,
       "name": "applications",
       "placeholder": "Applications",
       "actions": true,
@@ -27,17 +28,20 @@
       "show_icon_when_single": true
     },
     "calc": {
+      "weight": 5,
       "name": "calc",
       "icon": "accessories-calculator",
       "placeholder": "Calculator",
       "min_chars": 4
     },
     "windows": {
+      "weight": 5,
       "icon": "view-restore",
       "name": "windows",
       "placeholder": "Windows"
     },
     "clipboard": {
+      "weight": 5,
       "name": "clipboard",
       "placeholder": "Clipboard",
       "image_height": 300,
@@ -45,17 +49,20 @@
       "switcher_only": true
     },
     "commands": {
+      "weight": 5,
       "icon": "utilities-terminal",
       "switcher_only": true,
       "name": "commands",
       "placeholder": "Commands"
     },
     "custom_commands": {
+      "weight": 5,
       "icon": "utilities-terminal",
       "name": "custom_commands",
       "placeholder": "Custom Commands"
     },
     "emojis": {
+      "weight": 5,
       "name": "emojis",
       "placeholder": "Emojis",
       "switcher_only": true,
@@ -63,6 +70,7 @@
       "typeahead": true
     },
     "finder": {
+      "weight": 5,
       "icon": "folder",
       "name": "finder",
       "placeholder": "Finder",
@@ -72,6 +80,7 @@
       "concurrency": 8
     },
     "runner": {
+      "weight": 5,
       "icon": "utilities-terminal",
       "name": "runner",
       "placeholder": "Runner",
@@ -81,6 +90,7 @@
       "refresh": true
     },
     "ssh": {
+      "weight": 5,
       "icon": "preferences-system-network",
       "name": "ssh",
       "placeholder": "SSH",
@@ -89,17 +99,20 @@
       "refresh": true
     },
     "switcher": {
+      "weight": 5,
       "name": "switcher",
       "placeholder": "Switcher",
       "prefix": "/"
     },
     "websearch": {
+      "weight": 5,
       "icon": "applications-internet",
       "name": "websearch",
       "placeholder": "Websearch",
       "engines": ["google"]
     },
     "dmenu": {
+      "weight": 5,
       "name": "dmenu",
       "placeholder": "Dmenu",
       "switcher_only": true

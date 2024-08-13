@@ -598,7 +598,11 @@ func setupLayerShell() {
 	ls.InitForWindow(&elements.appwin.Window)
 	ls.SetNamespace(&elements.appwin.Window, "walker")
 
-	ls.SetKeyboardMode(&elements.appwin.Window, ls.LayerShellKeyboardModeOnDemand)
+	if !cfg.ForceKeyboardFocus {
+		ls.SetKeyboardMode(&elements.appwin.Window, ls.LayerShellKeyboardModeOnDemand)
+	} else {
+		ls.SetKeyboardMode(&elements.appwin.Window, ls.LayerShellKeyboardModeExclusive)
+	}
 
 	if layout != nil {
 		if layout.IgnoreExclusive {

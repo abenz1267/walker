@@ -1,5 +1,6 @@
 {
   "theme": "catppuccin",
+  "force_keyboard_focus": true,
   "list": {
     "max_entries": 50,
     "show_initial_entries": true,

@@ -99,13 +99,13 @@ func setAvailables(cfg *config.Config) {
 			continue
 		}
 
-		if slices.Contains(cfg.Disabled, v.General().Name) {
-			continue
-		}
-
 		if ok := v.Setup(cfg); ok {
 			if v.General().Name == "" {
 				log.Panicln("module has no name\n")
+			}
+
+			if slices.Contains(cfg.Disabled, v.General().Name) {
+				continue
 			}
 
 			available = append(available, v)

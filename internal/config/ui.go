@@ -100,6 +100,7 @@ type LabelWidget struct {
 	Justify string  `mapstructure:"justify"`
 	XAlign  float32 `mapstructure:"x_align"`
 	YAlign  float32 `mapstructure:"y_align"`
+	Wrap    bool    `mapstructure:"wrap"`
 }
 
 type ImageWidget struct {

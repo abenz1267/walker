@@ -26,6 +26,7 @@ type Config struct {
 	Builtins           Builtins       `mapstructure:"builtins"`
 	Disabled           []string       `mapstructure:"disabled"`
 	ForceKeyboardFocus bool           `mapstructure:"force_keyboard_focus"`
+	AsWindow           bool           `mapstructure:"as_window"`
 	IgnoreMouse        bool           `mapstructure:"ignore_mouse"`
 	List               List           `mapstructure:"list"`
 	Plugins            []Plugin       `mapstructure:"plugins"`

@@ -591,6 +591,10 @@ func afterUI() {
 }
 
 func setupLayerShell() {
+	if cfg.AsWindow {
+		return
+	}
+
 	if !ls.IsSupported() {
 		log.Panicln("gtk-layer-shell not supported")
 	}
@@ -618,6 +622,10 @@ func setupLayerShell() {
 }
 
 func setupLayerShellAnchors() {
+	if cfg.AsWindow {
+		return
+	}
+
 	if layout != nil {
 		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeTop, layout.Anchors.Top)
 		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeBottom, layout.Anchors.Bottom)

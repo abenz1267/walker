@@ -25,7 +25,8 @@
       "context_aware": true,
       "refresh": true,
       "show_sub_when_single": true,
-      "show_icon_when_single": true
+      "show_icon_when_single": true,
+      "show_generic": false
     },
     "calc": {
       "weight": 5,

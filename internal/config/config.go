@@ -129,6 +129,7 @@ type Applications struct {
 	Cache         bool `mapstructure:"cache"`
 	PrioritizeNew bool `mapstructure:"prioritize_new"`
 	ContextAware  bool `mapstructure:"context_aware"`
+	ShowGeneric   bool `mapstructure:"show_generic"`
 }
 
 type Windows struct {

@@ -33,6 +33,7 @@ type Applications struct {
 	openWindows    map[string]uint
 	wmRunning      bool
 	isWatching     bool
+	showGeneric    bool
 }
 
 type Application struct {
@@ -53,13 +54,14 @@ func (a *Applications) Setup(cfg *config.Config) bool {
 	a.actions = cfg.Builtins.Applications.Actions
 	a.prioritizeNew = cfg.Builtins.Applications.PrioritizeNew
 	a.isContextAware = cfg.Builtins.Applications.ContextAware
+	a.showGeneric = cfg.Builtins.Applications.ShowGeneric
 	a.openWindows = make(map[string]uint)
 
 	return true
 }
 
 func (a *Applications) SetupData(cfg *config.Config, ctx context.Context) {
-	a.entries = parse(a.cache, a.actions, a.prioritizeNew, a.openWindows)
+	a.entries = parse(a.cache, a.actions, a.prioritizeNew, a.openWindows, a.showGeneric)
 
 	if cfg.IsService {
 		go a.Watch()
@@ -123,7 +125,7 @@ func (a *Applications) debounceParsing(interval time.Duration, input chan struct
 			shouldParse = true
 		case <-time.After(interval):
 			if shouldParse {
-				a.entries = parse(a.cache, a.actions, a.prioritizeNew, a.openWindows)
+				a.entries = parse(a.cache, a.actions, a.prioritizeNew, a.openWindows, a.showGeneric)
 				shouldParse = false
 			}
 		}
@@ -183,7 +185,7 @@ func (a *Applications) Entries(ctx context.Context, term string) []util.Entry {
 	return a.entries
 }
 
-func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint) []util.Entry {
+func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, showGeneric bool) []util.Entry {
 	apps := []Application{}
 	entries := []util.Entry{}
 
@@ -353,7 +355,13 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint) []ut
 				}
 
 				for k := range app.Actions {
-					app.Actions[k].Sub = app.Generic.Label
+					sub := app.Generic.Label
+
+					if showGeneric && app.Generic.Sub != "" {
+						sub = fmt.Sprintf("%s (%s)", app.Generic.Label, app.Generic.Sub)
+					}
+
+					app.Actions[k].Sub = sub
 					app.Actions[k].Path = app.Generic.Path
 					app.Actions[k].Icon = app.Generic.Icon
 					app.Actions[k].Terminal = app.Generic.Terminal

@@ -191,6 +191,10 @@ func (c *Clipboard) watch() {
 			file := saveTmpImg(val)
 			e.Content = file
 			e.IsImg = true
+		} else {
+			cmd := exec.Command("wl-copy")
+			cmd.Stdin = strings.NewReader(e.Content)
+			cmd.Start()
 		}
 
 		c.entries = append([]util.Entry{itemToEntry(e)}, c.entries...)

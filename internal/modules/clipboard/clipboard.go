@@ -21,7 +21,8 @@ const ClipboardName = "clipboard"
 
 type Clipboard struct {
 	general  config.GeneralModule
-	entries  []ClipboardItem
+	items    []ClipboardItem
+	entries  []util.Entry
 	file     string
 	imgTypes map[string]string
 	max      int
@@ -45,39 +46,7 @@ func (c *Clipboard) Refresh() {
 func (c Clipboard) Cleanup() {}
 
 func (c Clipboard) Entries(ctx context.Context, term string) []util.Entry {
-	entries := []util.Entry{}
-
-	es := []ClipboardItem{}
-
-	util.FromGob(c.file, &es)
-
-	for _, v := range es {
-		e := util.Entry{
-			Label:      v.Content,
-			Sub:        "Text",
-			Exec:       "wl-copy",
-			Piped:      util.Piped{Content: v.Content, Type: "string"},
-			Categories: []string{"clipboard"},
-			Class:      "clipboard",
-			Matching:   util.Fuzzy,
-			LastUsed:   v.Time,
-		}
-
-		if v.IsImg {
-			e.Label = "Image"
-			e.Image = v.Content
-			e.Exec = "wl-copy"
-			e.Piped = util.Piped{
-				Content: v.Content,
-				Type:    "file",
-			}
-			e.HideText = true
-		}
-
-		entries = append(entries, e)
-	}
-
-	return entries
+	return c.entries
 }
 
 func (c *Clipboard) Setup(cfg *config.Config) bool {
@@ -106,7 +75,11 @@ func (c *Clipboard) SetupData(cfg *config.Config, ctx context.Context) {
 
 	go c.watch()
 
-	c.entries = clean(current, c.file)
+	c.items = clean(current, c.file)
+
+	for _, v := range c.items {
+		c.entries = append(c.entries, itemToEntry(v))
+	}
 
 	c.general.IsSetup = true
 	c.general.HasInitialSetup = true
@@ -132,7 +105,7 @@ func clean(entries []ClipboardItem, file string) []ClipboardItem {
 }
 
 func (c Clipboard) exists(hash string) bool {
-	for _, v := range c.entries {
+	for _, v := range c.items {
 		if v.Hash == hash {
 			return true
 		}
@@ -220,12 +193,44 @@ func (c *Clipboard) watch() {
 			e.IsImg = true
 		}
 
-		c.entries = append([]ClipboardItem{e}, c.entries...)
+		c.entries = append([]util.Entry{itemToEntry(e)}, c.entries...)
+		c.items = append([]ClipboardItem{e}, c.items...)
+
+		if len(c.items) >= c.max {
+			c.items = slices.Clone(c.items[:c.max])
+		}
 
 		if len(c.entries) >= c.max {
 			c.entries = slices.Clone(c.entries[:c.max])
 		}
 
-		util.ToGob(&c.entries, c.file)
+		util.ToGob(&c.items, c.file)
 	}
+}
+
+func itemToEntry(item ClipboardItem) util.Entry {
+	entry := util.Entry{
+		Label:            item.Content,
+		Sub:              "Text",
+		Exec:             "wl-copy",
+		Piped:            util.Piped{Content: item.Content, Type: "string"},
+		Categories:       []string{"clipboard"},
+		Class:            "clipboard",
+		Matching:         util.Fuzzy,
+		LastUsed:         item.Time,
+		RecalculateScore: true,
+	}
+
+	if item.IsImg {
+		entry.Label = "Image"
+		entry.Image = item.Content
+		entry.Exec = "wl-copy"
+		entry.Piped = util.Piped{
+			Content: item.Content,
+			Type:    "file",
+		}
+		entry.HideText = true
+	}
+
+	return entry
 }

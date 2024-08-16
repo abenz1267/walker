@@ -25,13 +25,15 @@ import (
 )
 
 var (
-	activationEnabled bool
-	amKey             uint
-	cmdAltModifier    gdk.ModifierType
-	amModifier        gdk.ModifierType
-	amLabel           string
-	commands          map[string]func()
-	singleModule      modules.Workable
+	activationEnabled       bool
+	amKey                   uint
+	cmdAltModifier          gdk.ModifierType
+	amModifier              gdk.ModifierType
+	amLabel                 string
+	commands                map[string]func()
+	singleModule            modules.Workable
+	tahSuggestionIdentifier string
+	tahAcceptedIdentifier   string
 )
 
 func setupCommands() {
@@ -250,6 +252,9 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		return true
 	case gdk.KEY_Tab:
 		if elements.typeahead.Text() != "" {
+			tahAcceptedIdentifier = tahSuggestionIdentifier
+			tahSuggestionIdentifier = ""
+
 			elements.input.SetText(elements.typeahead.Text())
 			elements.input.SetPosition(-1)
 
@@ -752,6 +757,8 @@ func processAsync(ctx context.Context, text string) {
 		})
 	}
 
+	tahAcceptedIdentifier = ""
+
 	handler.mut.Unlock()
 
 	if !layout.Window.Box.Search.Spinner.Hide {
@@ -776,6 +783,7 @@ func setTypeahead(modules []modules.Workable) {
 				for _, v := range tah {
 					if strings.HasPrefix(v.Term, trimmed) {
 						toSet = v.Term
+						tahSuggestionIdentifier = v.Identifier
 					}
 				}
 

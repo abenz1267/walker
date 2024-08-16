@@ -37,6 +37,16 @@ func (h *Handler) handle() {
 
 func sortEntries(entries []util.Entry) {
 	slices.SortFunc(entries, func(a, b util.Entry) int {
+		if tahAcceptedIdentifier != "" {
+			if a.Identifier() == tahAcceptedIdentifier {
+				return -1
+			}
+
+			if b.Identifier() == tahAcceptedIdentifier {
+				return 1
+			}
+		}
+
 		text := elements.input.Text()
 
 		if text == "" {

@@ -7,7 +7,6 @@ import (
 	"sync"
 
 	"github.com/abenz1267/walker/internal/util"
-	"github.com/diamondburned/gotk4/pkg/glib/v2"
 )
 
 type Handler struct {
@@ -28,21 +27,6 @@ func (h *Handler) handle() {
 
 			h.mut.Lock()
 			h.entries = append(h.entries, entries...)
-
-			if !appstate.KeepSort && !h.keepSort {
-				sortEntries(h.entries)
-			}
-
-			if len(h.entries) > cfg.List.MaxEntries {
-				h.entries = h.entries[:cfg.List.MaxEntries]
-			}
-
-			if len(h.entries) > 0 {
-				glib.IdleAdd(func() {
-					common.items.Splice(0, int(common.items.NItems()), h.entries...)
-				})
-			}
-
 			h.mut.Unlock()
 		case <-h.ctx.Done():
 			return

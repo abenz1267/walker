@@ -736,6 +736,24 @@ func processAsync(ctx context.Context, text string) {
 
 	wg.Wait()
 
+	handler.mut.Lock()
+
+	if !appstate.KeepSort && !handler.keepSort {
+		sortEntries(handler.entries)
+	}
+
+	if len(handler.entries) > cfg.List.MaxEntries {
+		handler.entries = handler.entries[:cfg.List.MaxEntries]
+	}
+
+	if len(handler.entries) > 0 {
+		glib.IdleAdd(func() {
+			common.items.Splice(0, int(common.items.NItems()), handler.entries...)
+		})
+	}
+
+	handler.mut.Unlock()
+
 	if !layout.Window.Box.Search.Spinner.Hide {
 		elements.spinner.SetVisible(false)
 	}

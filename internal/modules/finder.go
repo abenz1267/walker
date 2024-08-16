@@ -66,18 +66,18 @@ func (f *Finder) SetupData(cfg *config.Config, ctx context.Context) {
 
 	fileWalker.SetErrorHandler(errorHandler)
 
-	isWalking := make(chan bool)
+	done := make(chan bool)
 
 	go func(isWalking chan bool) {
 		err := fileWalker.Start()
 		if err == nil {
 			isWalking <- false
 		}
-	}(isWalking)
+	}(done)
 
 	for {
 		select {
-		case <-isWalking:
+		case <-done:
 			fileWalker.Terminate()
 			f.general.IsSetup = true
 			f.general.HasInitialSetup = true

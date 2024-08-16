@@ -282,7 +282,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				return true
 			}
 
-			var inputhstry []string
+			var inputhstry []history.InputHistoryItem
 
 			if len(explicits) == 1 {
 				inputhstry = history.GetInputHistory(explicits[0].General().Name)
@@ -298,7 +298,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				}
 
 				glib.IdleAdd(func() {
-					elements.input.SetText(inputhstry[historyIndex])
+					elements.input.SetText(inputhstry[historyIndex].Term)
 					elements.input.SetPosition(-1)
 				})
 			}
@@ -444,14 +444,16 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		setStdin(cmd, &entry.PipedAlt)
 	}
 
+	identifier := entry.Identifier()
+
 	if entry.History {
-		hstry.Save(entry.Identifier(), strings.TrimSpace(elements.input.Text()))
+		hstry.Save(identifier, strings.TrimSpace(elements.input.Text()))
 	}
 
 	module := findModule(entry.Module, toUse, explicits)
 
 	if module != nil && (module.General().History || module.General().Typeahead) {
-		history.SaveInputHistory(module.General().Name, elements.input.Text())
+		history.SaveInputHistory(module.General().Name, elements.input.Text(), identifier)
 	}
 
 	err := cmd.Start()
@@ -754,8 +756,8 @@ func setTypeahead(modules []modules.Workable) {
 
 			if trimmed != "" {
 				for _, v := range tah {
-					if strings.HasPrefix(v, trimmed) {
-						toSet = v
+					if strings.HasPrefix(v.Term, trimmed) {
+						toSet = v.Term
 					}
 				}
 
@@ -839,6 +841,7 @@ func quit() {
 
 	appstate.IsRunning = false
 	appstate.IsSingle = false
+	// typeaheadSuggestionAccepted = ""
 	historyIndex = 0
 
 	for _, v := range toUse {

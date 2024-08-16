@@ -6,30 +6,40 @@ import (
 	"github.com/abenz1267/walker/internal/util"
 )
 
-type InputHistory map[string][]string
+type InputHistoryItem struct {
+	Term       string
+	Identifier string
+}
+
+type InputHistory map[string][]InputHistoryItem
 
 var inputhstry InputHistory
 
-func SaveInputHistory(module string, input string) {
+func SaveInputHistory(module string, input string, identifier string) {
 	if inputhstry == nil {
 		inputhstry = make(InputHistory)
 	}
 
 	if _, ok := inputhstry[module]; !ok {
-		inputhstry[module] = []string{}
+		inputhstry[module] = []InputHistoryItem{}
 	}
 
-	inputhstry[module] = append([]string{input}, inputhstry[module]...)
+	n := InputHistoryItem{
+		Term:       input,
+		Identifier: identifier,
+	}
 
-	util.ToGob(&inputhstry, filepath.Join(util.CacheDir(), "inputhistory_0.3.8.gob"))
+	inputhstry[module] = append([]InputHistoryItem{n}, inputhstry[module]...)
+
+	util.ToGob(&inputhstry, filepath.Join(util.CacheDir(), "inputhistory_0.7.6.gob"))
 }
 
-func GetInputHistory(module string) []string {
+func GetInputHistory(module string) []InputHistoryItem {
 	if inputhstry != nil {
 		return inputhstry[module]
 	}
 
-	file := filepath.Join(util.CacheDir(), "inputhistory_0.3.8.gob")
+	file := filepath.Join(util.CacheDir(), "inputhistory_0.7.6.gob")
 
 	if inputhstry == nil {
 		inputhstry = make(InputHistory)

@@ -83,7 +83,7 @@ func setupInteractions(appstate *state.AppState) {
 	elements.appwin.AddController(globalKeyController)
 	elements.appwin.AddController(globalKeyReleasedController)
 
-	if !cfg.IgnoreMouse {
+	if !cfg.IgnoreMouse && !cfg.DisableClickToClose {
 		gesture := gtk.NewGestureClick()
 		gesture.SetPropagationPhase(gtk.PropagationPhase(3))
 		gesture.Connect("pressed", func(gesture *gtk.GestureClick, n int) {

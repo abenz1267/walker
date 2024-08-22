@@ -1,6 +1,7 @@
 {
   "theme": "catppuccin",
   "as_window": false,
+  "disable_click_to_close": false,
   "force_keyboard_focus": true,
   "list": {
     "max_entries": 50,

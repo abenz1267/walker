@@ -22,18 +22,19 @@ var defaultConfig []byte
 var Themes embed.FS
 
 type Config struct {
-	ActivationMode     ActivationMode `mapstructure:"activation_mode"`
-	Builtins           Builtins       `mapstructure:"builtins"`
-	Disabled           []string       `mapstructure:"disabled"`
-	ForceKeyboardFocus bool           `mapstructure:"force_keyboard_focus"`
-	AsWindow           bool           `mapstructure:"as_window"`
-	IgnoreMouse        bool           `mapstructure:"ignore_mouse"`
-	List               List           `mapstructure:"list"`
-	Plugins            []Plugin       `mapstructure:"plugins"`
-	Search             Search         `mapstructure:"search"`
-	Theme              string         `mapstructure:"theme"`
-	ThemeBase          []string       `mapstructure:"theme_base"`
-	Terminal           string         `mapstructure:"terminal"`
+	ActivationMode      ActivationMode `mapstructure:"activation_mode"`
+	Builtins            Builtins       `mapstructure:"builtins"`
+	DisableClickToClose bool           `mapstructure:"disable_click_to_close"`
+	Disabled            []string       `mapstructure:"disabled"`
+	ForceKeyboardFocus  bool           `mapstructure:"force_keyboard_focus"`
+	AsWindow            bool           `mapstructure:"as_window"`
+	IgnoreMouse         bool           `mapstructure:"ignore_mouse"`
+	List                List           `mapstructure:"list"`
+	Plugins             []Plugin       `mapstructure:"plugins"`
+	Search              Search         `mapstructure:"search"`
+	Theme               string         `mapstructure:"theme"`
+	ThemeBase           []string       `mapstructure:"theme_base"`
+	Terminal            string         `mapstructure:"terminal"`
 
 	Available []string `mapstructure:"-"`
 	IsService bool     `mapstructure:"-"`

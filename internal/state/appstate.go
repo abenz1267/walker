@@ -11,6 +11,7 @@ import (
 )
 
 type AppState struct {
+	ActiveItem          int
 	Clipboard           modules.Workable
 	IsDmenu             bool
 	Dmenu               *modules.Dmenu

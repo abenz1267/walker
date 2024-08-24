@@ -105,6 +105,7 @@ func main() {
 	app.AddMainOption("version", 'v', glib.OptionFlagNone, glib.OptionArgNone, "print version", "")
 	app.AddMainOption("forceprint", 'f', glib.OptionFlagNone, glib.OptionArgNone, "forces printing input if no item is selected", "")
 	app.AddMainOption("bench", 'b', glib.OptionFlagNone, glib.OptionArgNone, "prints nanoseconds for start and displaying in both service and client", "")
+	app.AddMainOption("active", 'a', glib.OptionFlagNone, glib.OptionArgString, "active item", "")
 
 	app.Connect("activate", ui.Activate(state))
 
@@ -128,6 +129,7 @@ func main() {
 		if options.Contains("dmenu") {
 			labelColumnString := options.LookupValue("labelcolumn", glib.NewVariantString("").Type())
 			separatorString := options.LookupValue("separator", glib.NewVariantString("").Type())
+			activeItemString := options.LookupValue("active", glib.NewVariantString("").Type())
 
 			if separatorString != nil && separatorString.String() != "" {
 				if state.Dmenu != nil {
@@ -150,8 +152,20 @@ func main() {
 				}
 			}
 
+			if activeItemString != nil && activeItemString.String() != "" {
+				n := activeItemString.String()
+
+				a, err := strconv.Atoi(n)
+				if err != nil {
+					log.Println(err)
+				}
+
+				state.ActiveItem = a - 1
+			}
+
 			state.ExplicitModules = append(state.ExplicitModules, "dmenu")
 			state.IsDmenu = true
+
 		} else {
 			if modulesString != nil && modulesString.String() != "" {
 				m := strings.Split(modulesString.String(), ",")

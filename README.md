@@ -208,11 +208,12 @@ The window and items will have a class based on the source. Selecting an item wi
 
 F.e. search = `!somecommand` => `#window.runner`
 
-| class                | condition              |
-| -------------------- | ---------------------- |
-| `#window.activation` | AM enabled             |
-| `#spinner.visible`   | Processing in progress |
-| `#item.<entryclass>` | Always                 |
+| class                | condition                  |
+| -------------------- | -------------------------- |
+| `#window.activation` | AM enabled                 |
+| `#spinner.visible`   | Processing in progress     |
+| `#item.<entryclass>` | Always                     |
+| `#item.active`       | Dmenu with '--active'-flag |
 
 ### Starting as service
 

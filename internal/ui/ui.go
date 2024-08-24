@@ -342,7 +342,19 @@ func setupFactory() *gtk.SignalListItemFactory {
 			box.AddController(dd)
 		}
 
-		box.SetCSSClasses([]string{"item", val.Class})
+		boxClasses := []string{"item", val.Class}
+
+		if appstate.ActiveItem >= 0 {
+			if item.Position() == uint(appstate.ActiveItem) {
+				boxClasses = append(boxClasses, "active")
+			}
+		} else {
+			if item.Position() == common.selection.NItems()-1 {
+				boxClasses = append(boxClasses, "active")
+			}
+		}
+
+		box.SetCSSClasses(boxClasses)
 
 		var icon *gtk.Image
 

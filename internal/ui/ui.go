@@ -344,11 +344,11 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		boxClasses := []string{"item", val.Class}
 
-		if appstate.ActiveItem >= 0 {
-			if item.Position() == uint(appstate.ActiveItem) {
+		if appstate.ActiveItem != nil && *appstate.ActiveItem >= 0 {
+			if item.Position() == uint(*appstate.ActiveItem) {
 				boxClasses = append(boxClasses, "active")
 			}
-		} else {
+		} else if appstate.ActiveItem != nil {
 			if item.Position() == common.selection.NItems()-1 {
 				boxClasses = append(boxClasses, "active")
 			}

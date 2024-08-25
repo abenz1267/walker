@@ -160,7 +160,9 @@ func main() {
 					log.Println(err)
 				}
 
-				state.ActiveItem = a - 1
+				val := a - 1
+
+				state.ActiveItem = &val
 			}
 
 			state.ExplicitModules = append(state.ExplicitModules, "dmenu")

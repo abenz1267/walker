@@ -128,13 +128,13 @@ func getType() string {
 }
 
 func getContent() (string, string) {
-	cmd := exec.Command("wl-paste")
+	cmd := exec.Command("wl-paste", "-n")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return "", ""
 	}
 
-	txt := strings.TrimSpace(string(out))
+	txt := string(out)
 	hash := md5.Sum([]byte(txt))
 	strg := hex.EncodeToString(hash[:])
 

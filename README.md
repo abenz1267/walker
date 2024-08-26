@@ -90,8 +90,8 @@ Make sure you have the following dependencies installed:
 
 ```bash
 git clone https://github.com/abenz1267/walker /tmp/walker
-cd /tmp/walker
-go build -x // the '-x' is for debug output
+cd /tmp/walker/cmd
+go build -x -o walker // the '-x' is for debug output
 sudo cp walker /usr/bin/
 ```
 

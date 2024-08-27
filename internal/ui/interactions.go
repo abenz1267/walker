@@ -579,10 +579,6 @@ func processAsync(ctx context.Context, text string) {
 	handler.ctx = ctx
 	handler.entries = []util.Entry{}
 
-	glib.IdleAdd(func() {
-		common.items.Splice(0, int(common.items.NItems()))
-	})
-
 	p := toUse
 
 	hasPrefix := false
@@ -751,11 +747,9 @@ func processAsync(ctx context.Context, text string) {
 		handler.entries = handler.entries[:cfg.List.MaxEntries]
 	}
 
-	if len(handler.entries) > 0 {
-		glib.IdleAdd(func() {
-			common.items.Splice(0, int(common.items.NItems()), handler.entries...)
-		})
-	}
+	glib.IdleAdd(func() {
+		common.items.Splice(0, int(common.items.NItems()), handler.entries...)
+	})
 
 	tahAcceptedIdentifier = ""
 

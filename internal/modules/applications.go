@@ -274,6 +274,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 						nodisplay := strings.TrimPrefix(line, "NoDisplay=") == "true"
 
 						if nodisplay {
+							done[info.Name()] = struct{}{}
 							return nil
 						}
 

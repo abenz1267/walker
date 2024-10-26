@@ -193,6 +193,10 @@ func setupElementsPassword(app *gtk.Application) *Elements {
 		elements.appwin.Close()
 	})
 
+	if appstate.ExplicitPlaceholder != "" {
+		pw.SetObjectProperty("placeholder-text", appstate.ExplicitPlaceholder)
+	}
+
 	appwin := gtk.NewApplicationWindow(app)
 	appwin.SetApplication(app)
 

@@ -872,6 +872,7 @@ func quit() {
 
 	appstate.ExplicitModules = []string{}
 	appstate.ExplicitPlaceholder = ""
+	appstate.ExplicitTheme = ""
 	appstate.IsDmenu = false
 
 	explicits = []modules.Workable{}

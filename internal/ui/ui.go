@@ -138,9 +138,19 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			setupLayout(theme, themeBase)
 		} else {
 			g := singleModule.General()
+
 			if val, ok := layouts[g.Name]; ok {
 				layout = val
-				setupLayout(g.Theme, g.ThemeBase)
+
+				theme := g.Theme
+				themeBase := g.ThemeBase
+
+				if appstate.ExplicitTheme != "" {
+					theme = appstate.ExplicitTheme
+					themeBase = nil
+				}
+
+				setupLayout(theme, themeBase)
 			} else {
 				setupLayout(theme, themeBase)
 			}
@@ -543,7 +553,16 @@ func reopen() {
 	if singleModule != nil {
 		if val, ok := layouts[singleModule.General().Name]; ok {
 			layout = val
-			setupLayout(singleModule.General().Theme, singleModule.General().ThemeBase)
+
+			theme := singleModule.General().Theme
+			themeBase := singleModule.General().ThemeBase
+
+			if appstate.ExplicitTheme != "" {
+				theme = appstate.ExplicitTheme
+				themeBase = nil
+			}
+
+			setupLayout(theme, themeBase)
 		}
 	}
 

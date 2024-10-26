@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -188,6 +189,7 @@ func (a *Applications) Entries(ctx context.Context, term string) []util.Entry {
 func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, showGeneric bool) []util.Entry {
 	apps := []Application{}
 	entries := []util.Entry{}
+	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
 
 	if cache {
 		ok := readCache(ApplicationsName, &entries)
@@ -274,6 +276,28 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 						nodisplay := strings.TrimPrefix(line, "NoDisplay=") == "true"
 
 						if nodisplay {
+							done[info.Name()] = struct{}{}
+							return nil
+						}
+
+						continue
+					}
+
+					if strings.HasPrefix(line, "OnlyShowIn=") {
+						onlyshowin := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "OnlyShowIn=")), ";")
+
+						if slices.Contains(onlyshowin, desktop) {
+							continue
+						}
+
+						done[info.Name()] = struct{}{}
+						return nil
+					}
+
+					if strings.HasPrefix(line, "NotShowIn=") {
+						notshowin := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "NotShowIn=")), ";")
+
+						if slices.Contains(notshowin, desktop) {
 							done[info.Name()] = struct{}{}
 							return nil
 						}

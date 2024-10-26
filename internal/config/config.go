@@ -166,15 +166,15 @@ type Runner struct {
 }
 
 type Plugin struct {
-	GeneralModule  `mapstructure:",squash"`
-	Cmd            string            `mapstructure:"cmd"`
-	CmdAlt         string            `mapstructure:"cmd_alt"`
-	Matching       util.MatchingType `mapstructure:"matching"`
-	Src            string            `mapstructure:"src"`
-	SrcOnce        string            `mapstructure:"src_once"`
-	SrcOnceRefresh bool              `mapstructure:"src_once_refresh"`
-	Entries        []util.Entry      `mapstructure:"entries"`
-	Terminal       bool              `mapstructure:"terminal"`
+	GeneralModule    `mapstructure:",squash"`
+	Cmd              string            `mapstructure:"cmd"`
+	CmdAlt           string            `mapstructure:"cmd_alt"`
+	Entries          []util.Entry      `mapstructure:"entries"`
+	Matching         util.MatchingType `mapstructure:"matching"`
+	RecalculateScore bool              `mapstructure:"recalculate_score,omitempty" json:"recalculate_score,omitempty"`
+	Src              string            `mapstructure:"src"`
+	SrcOnce          string            `mapstructure:"src_once"`
+	Terminal         bool              `mapstructure:"terminal"`
 }
 
 type Search struct {

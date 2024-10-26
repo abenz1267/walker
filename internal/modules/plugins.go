@@ -37,6 +37,7 @@ func (e *Plugin) SetupData(cfg *config.Config, ctx context.Context) {
 	if e.PluginCfg.Entries != nil {
 		for k := range e.PluginCfg.Entries {
 			e.PluginCfg.Entries[k].Sub = e.PluginCfg.Name
+			e.PluginCfg.Entries[k].RecalculateScore = e.PluginCfg.RecalculateScore
 		}
 	}
 
@@ -51,6 +52,11 @@ func (e *Plugin) SetupData(cfg *config.Config, ctx context.Context) {
 
 func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 	if e.PluginCfg.Entries != nil {
+		for k := range e.PluginCfg.Entries {
+			e.PluginCfg.Entries[k].ScoreFinal = 0
+			e.PluginCfg.Entries[k].ScoreFuzzy = 0
+		}
+
 		return e.PluginCfg.Entries
 	}
 

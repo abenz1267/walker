@@ -214,7 +214,7 @@ func (c *Clipboard) watch() {
 
 func itemToEntry(item ClipboardItem) util.Entry {
 	entry := util.Entry{
-		Label:            item.Content,
+		Label:            strings.TrimSpace(item.Content),
 		Sub:              "Text",
 		Exec:             "wl-copy",
 		Piped:            util.Piped{Content: item.Content, Type: "string"},

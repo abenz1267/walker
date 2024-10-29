@@ -57,6 +57,11 @@ func main() {
 				isNew = true
 			}
 
+			if slices.Contains(args, "-v") || slices.Contains(args, "--version") {
+				fmt.Println(version)
+				return
+			}
+
 			if slices.Contains(args, "-b") || slices.Contains(args, "--benchmark") {
 				fmt.Println("Startup: ", now)
 				state.Benchmark = true
@@ -173,11 +178,6 @@ func main() {
 				m := strings.Split(modulesString.String(), ",")
 				state.ExplicitModules = m
 			}
-		}
-
-		if options.Contains("version") {
-			fmt.Println(version)
-			return 0
 		}
 
 		state.ForcePrint = options.Contains("forceprint")

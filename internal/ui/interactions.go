@@ -48,6 +48,9 @@ func setupCommands() {
 	commands["clearclipboard"] = func() {
 		os.Remove(filepath.Join(util.CacheDir(), "clipboard.gob"))
 	}
+	commands["cleartypeaheadcache"] = func() {
+		os.Remove(filepath.Join(util.CacheDir(), "inputhistory_0.7.6.gob"))
+	}
 }
 
 func setupInteractions(appstate *state.AppState) {

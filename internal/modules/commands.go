@@ -34,10 +34,6 @@ func (c *Commands) SetupData(cfg *config.Config, ctx context.Context) {
 		exec  string
 	}{
 		{
-			label: "Reload Config",
-			exec:  "reloadconfig",
-		},
-		{
 			label: "Reset History",
 			exec:  "resethistory",
 		},

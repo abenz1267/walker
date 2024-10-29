@@ -44,6 +44,7 @@
       "placeholder": "Windows"
     },
     "clipboard": {
+      "exec": "wl-copy",
       "weight": 5,
       "name": "clipboard",
       "placeholder": "Clipboard",

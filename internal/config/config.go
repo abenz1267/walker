@@ -147,8 +147,9 @@ type ActivationMode struct {
 
 type Clipboard struct {
 	GeneralModule `mapstructure:",squash"`
-	ImageHeight   int `mapstructure:"image_height"`
-	MaxEntries    int `mapstructure:"max_entries"`
+	ImageHeight   int    `mapstructure:"image_height"`
+	MaxEntries    int    `mapstructure:"max_entries"`
+	Exec          string `mapstructure:"exec"`
 }
 
 type Dmenu struct {

@@ -26,6 +26,7 @@ type Clipboard struct {
 	file     string
 	imgTypes map[string]string
 	max      int
+	exec     string
 }
 
 type ClipboardItem struct {
@@ -60,6 +61,7 @@ func (c *Clipboard) Setup(cfg *config.Config) bool {
 
 	c.file = filepath.Join(util.CacheDir(), "clipboard.gob")
 	c.max = cfg.Builtins.Clipboard.MaxEntries
+	c.exec = cfg.Builtins.Clipboard.Exec
 
 	c.imgTypes = make(map[string]string)
 	c.imgTypes["image/png"] = "png"
@@ -78,7 +80,7 @@ func (c *Clipboard) SetupData(cfg *config.Config, ctx context.Context) {
 	c.items = clean(current, c.file)
 
 	for _, v := range c.items {
-		c.entries = append(c.entries, itemToEntry(v))
+		c.entries = append(c.entries, itemToEntry(v, c.exec))
 	}
 
 	c.general.IsSetup = true
@@ -197,7 +199,7 @@ func (c *Clipboard) watch() {
 			cmd.Start()
 		}
 
-		c.entries = append([]util.Entry{itemToEntry(e)}, c.entries...)
+		c.entries = append([]util.Entry{itemToEntry(e, c.exec)}, c.entries...)
 		c.items = append([]ClipboardItem{e}, c.items...)
 
 		if len(c.items) >= c.max {
@@ -212,11 +214,11 @@ func (c *Clipboard) watch() {
 	}
 }
 
-func itemToEntry(item ClipboardItem) util.Entry {
+func itemToEntry(item ClipboardItem, exec string) util.Entry {
 	entry := util.Entry{
 		Label:            strings.TrimSpace(item.Content),
 		Sub:              "Text",
-		Exec:             "wl-copy",
+		Exec:             exec,
 		Piped:            util.Piped{Content: item.Content, Type: "string"},
 		Categories:       []string{"clipboard"},
 		Class:            "clipboard",
@@ -228,7 +230,7 @@ func itemToEntry(item ClipboardItem) util.Entry {
 	if item.IsImg {
 		entry.Label = "Image"
 		entry.Image = item.Content
-		entry.Exec = "wl-copy"
+		entry.Exec = exec
 		entry.Piped = util.Piped{
 			Content: item.Content,
 			Type:    "file",

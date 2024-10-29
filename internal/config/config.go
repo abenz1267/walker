@@ -184,10 +184,11 @@ type Search struct {
 }
 
 type List struct {
-	Cycle              bool `mapstructure:"cycle"`
-	MaxEntries         int  `mapstructure:"max_entries"`
-	ShowInitialEntries bool `mapstructure:"show_initial_entries"`
-	SingleClick        bool `mapstructure:"single_click"`
+	Cycle               bool `mapstructure:"cycle"`
+	MaxEntries          int  `mapstructure:"max_entries"`
+	ShowInitialEntries  bool `mapstructure:"show_initial_entries"`
+	SingleClick         bool `mapstructure:"single_click"`
+	VisibilityThreshold int  `mapstructure:"visibility_threshold"`
 }
 
 func Get(config string) *Config {

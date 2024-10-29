@@ -6,7 +6,8 @@
   "list": {
     "max_entries": 50,
     "show_initial_entries": true,
-    "single_click": true
+    "single_click": true,
+    "visibility_threshold": 20
   },
   "search": {
     "force_keyboard_focus": true,

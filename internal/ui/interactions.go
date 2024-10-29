@@ -729,8 +729,14 @@ func processAsync(ctx context.Context, text string) {
 					}
 				}
 
-				if e[k].ScoreFinal != 0 {
-					toPush = append(toPush, e[k])
+				if toMatch == "" {
+					if e[k].ScoreFinal != 0 {
+						toPush = append(toPush, e[k])
+					}
+				} else {
+					if e[k].ScoreFinal > float64(cfg.List.VisibilityThreshold) {
+						toPush = append(toPush, e[k])
+					}
 				}
 			}
 

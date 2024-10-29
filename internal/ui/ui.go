@@ -514,6 +514,11 @@ func setupLabelWidgetStyle(label *gtk.Label, style *config.LabelWidget) {
 	setupWidgetStyle(&label.Widget, &style.Widget, false)
 
 	label.SetWrap(style.Wrap)
+
+	if !style.Wrap {
+		label.SetEllipsize(3)
+	}
+
 	label.SetJustify(layout.JustifyMap[style.Justify])
 	label.SetXAlign(style.XAlign)
 	label.SetYAlign(style.YAlign)

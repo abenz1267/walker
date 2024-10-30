@@ -242,6 +242,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 						History:          true,
 						Matching:         matching,
 						RecalculateScore: true,
+						File:             path,
 					},
 					Actions: []util.Entry{},
 				}
@@ -398,6 +399,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 					app.Actions[k].OpenWindows = app.Generic.OpenWindows
 					app.Actions[k].Prefer = true
 					app.Actions[k].RecalculateScore = true
+					app.Actions[k].File = path
 				}
 
 				apps = append(apps, app)

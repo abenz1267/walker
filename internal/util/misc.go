@@ -42,6 +42,7 @@ type Entry struct {
 
 	// internal
 	DaysSinceUsed   int                       `mapstructure:"-"`
+	File            string                    `mapstructure:"-"`
 	History         bool                      `mapstructure:"-"`
 	LastUsed        time.Time                 `mapstructure:"-"`
 	Module          string                    `mapstructure:"-"`

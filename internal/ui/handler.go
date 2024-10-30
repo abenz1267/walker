@@ -100,12 +100,14 @@ func sortEntries(entries []util.Entry) {
 					}
 				}
 
-				if a.Prefer && !b.Prefer {
-					return -1
-				}
+				if a.File == b.File {
+					if a.Prefer && !b.Prefer {
+						return -1
+					}
 
-				if !a.Prefer && b.Prefer {
-					return 1
+					if !a.Prefer && b.Prefer {
+						return 1
+					}
 				}
 			}
 		}

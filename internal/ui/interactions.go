@@ -560,16 +560,12 @@ func process() {
 	}
 }
 
-var handlerPool = sync.Pool{
-	New: func() any {
-		return new(Handler)
-	},
-}
+var mut sync.Mutex
 
 func processAsync(ctx context.Context, text string) {
-	handler := handlerPool.Get().(*Handler)
+	entries := []util.Entry{}
+
 	defer func() {
-		handlerPool.Put(handler)
 		cancel()
 
 		if !layout.Window.Box.Search.Spinner.Hide {
@@ -578,9 +574,6 @@ func processAsync(ctx context.Context, text string) {
 	}()
 
 	hasExplicit := len(explicits) > 0
-
-	handler.ctx = ctx
-	handler.entries = []util.Entry{}
 
 	p := toUse
 
@@ -620,14 +613,13 @@ func processAsync(ctx context.Context, text string) {
 
 	setTypeahead(p)
 
-	handler.receiver = make(chan []util.Entry)
-	go handler.handle()
-
 	var wg sync.WaitGroup
 	wg.Add(len(p))
 
+	keepSort := false
+
 	if len(p) == 1 {
-		handler.keepSort = p[0].General().KeepSort
+		keepSort = p[0].General().KeepSort
 		appstate.IsSingle = true
 	}
 
@@ -740,35 +732,33 @@ func processAsync(ctx context.Context, text string) {
 				}
 			}
 
-			handler.receiver <- toPush
+			mut.Lock()
+			entries = append(entries, toPush...)
+			mut.Unlock()
 		}(ctx, &wg, text, p[k])
 	}
 
 	wg.Wait()
 
-	handler.mut.Lock()
-
-	if !appstate.KeepSort && !handler.keepSort {
-		sortEntries(handler.entries)
+	if !appstate.KeepSort && !keepSort {
+		sortEntries(entries)
 	}
 
-	if len(handler.entries) > cfg.List.MaxEntries {
-		handler.entries = handler.entries[:cfg.List.MaxEntries]
+	if len(entries) > cfg.List.MaxEntries {
+		entries = entries[:cfg.List.MaxEntries]
 	}
 
 	if appstate.IsDebug {
-		for _, v := range handler.entries {
+		for _, v := range entries {
 			fmt.Printf("Entries == label: %s sub: %s score: %f\n", v.Label, v.Sub, v.ScoreFinal)
 		}
 	}
 
 	glib.IdleAdd(func() {
-		common.items.Splice(0, int(common.items.NItems()), handler.entries...)
+		common.items.Splice(0, int(common.items.NItems()), entries...)
 	})
 
 	tahAcceptedIdentifier = ""
-
-	handler.mut.Unlock()
 
 	if !layout.Window.Box.Search.Spinner.Hide {
 		elements.spinner.SetVisible(false)

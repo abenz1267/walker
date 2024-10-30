@@ -1,39 +1,11 @@
 package ui
 
 import (
-	"context"
 	"slices"
 	"strings"
-	"sync"
 
 	"github.com/abenz1267/walker/internal/util"
 )
-
-type Handler struct {
-	receiver chan []util.Entry
-	entries  []util.Entry
-	ctx      context.Context
-	keepSort bool
-	mut      sync.Mutex
-}
-
-func (h *Handler) handle() {
-	for {
-		select {
-		case entries := <-h.receiver:
-			if len(entries) == 0 {
-				continue
-			}
-
-			h.mut.Lock()
-			h.entries = append(h.entries, entries...)
-			h.mut.Unlock()
-		case <-h.ctx.Done():
-			return
-		default:
-		}
-	}
-}
 
 func sortEntries(entries []util.Entry) {
 	slices.SortFunc(entries, func(a, b util.Entry) int {

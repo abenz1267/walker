@@ -976,5 +976,11 @@ func fuzzyScore(entry util.Entry, text string) float64 {
 
 	tm := 1.0 / float64(textLength)
 
-	return float64(usageScore)*tm + float64(entry.ScoreFuzzy)/tm
+	score := float64(usageScore)*tm + float64(entry.ScoreFuzzy)/tm
+
+	if appstate.IsDebug {
+		fmt.Printf("Matching == label: %s sub: %s searchable: %s categories: %s score: %f usage: %d fuzzy: %f m: %f\n", entry.Label, entry.Sub, entry.Searchable, entry.Categories, score, usageScore, entry.ScoreFuzzy, m)
+	}
+
+	return score
 }

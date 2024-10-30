@@ -2,6 +2,7 @@ package state
 
 import (
 	"context"
+	"os"
 	"slices"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -13,6 +14,7 @@ import (
 type AppState struct {
 	ActiveItem          *int
 	Clipboard           modules.Workable
+	IsDebug             bool
 	IsDmenu             bool
 	Dmenu               *modules.Dmenu
 	DmenuSeparator      string
@@ -38,8 +40,11 @@ type AppState struct {
 func Get() *AppState {
 	algo.Init("default")
 
+	_, isDebug := os.LookupEnv("DEBUG")
+
 	return &AppState{
 		IsService:      false,
+		IsDebug:        isDebug,
 		IsRunning:      false,
 		HasUI:          false,
 		ExplicitConfig: "config.json",

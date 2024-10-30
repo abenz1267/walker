@@ -2,7 +2,7 @@
   "theme": "catppuccin",
   "as_window": false,
   "disable_click_to_close": false,
-  "force_keyboard_focus": true,
+  "force_keyboard_focus": false,
   "list": {
     "max_entries": 50,
     "show_initial_entries": true,
@@ -10,8 +10,6 @@
     "visibility_threshold": 20
   },
   "search": {
-    "force_keyboard_focus": true,
-    "history": true,
     "placeholder": "Search...",
     "delay": 0
   },

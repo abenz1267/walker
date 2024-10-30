@@ -756,6 +756,12 @@ func processAsync(ctx context.Context, text string) {
 		handler.entries = handler.entries[:cfg.List.MaxEntries]
 	}
 
+	if appstate.IsDebug {
+		for _, v := range handler.entries {
+			fmt.Printf("Entries == label: %s sub: %s score: %f\n", v.Label, v.Sub, v.ScoreFinal)
+		}
+	}
+
 	glib.IdleAdd(func() {
 		common.items.Splice(0, int(common.items.NItems()), handler.entries...)
 	})

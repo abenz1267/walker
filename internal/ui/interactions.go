@@ -402,27 +402,8 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	}
 
 	if entry.Sub == "switcher" {
-		for _, m := range toUse {
-			if m.General().Name == entry.Label {
-				explicits = []modules.Workable{}
-				explicits = append(explicits, m)
-
-				common.items.Splice(0, int(common.items.NItems()))
-				elements.input.SetObjectProperty("placeholder-text", m.General().Placeholder)
-				setupSingleModule()
-
-				if val, ok := layouts[singleModule.General().Name]; ok {
-					glib.IdleAdd(func() {
-						layout = val
-						setupLayout(singleModule.General().Theme, singleModule.General().ThemeBase)
-					})
-				}
-
-				elements.input.SetText("")
-				elements.input.GrabFocus()
-				return
-			}
-		}
+		handleSwitcher(entry.Label)
+		return
 	}
 
 	if cfg.Terminal != "" {
@@ -470,6 +451,34 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	}
 
 	closeAfterActivation(keepOpen, selectNext)
+}
+
+func handleSwitcher(module string) {
+	for _, m := range toUse {
+		if m.General().Name == module {
+			explicits = []modules.Workable{}
+			explicits = append(explicits, m)
+
+			common.items.Splice(0, int(common.items.NItems()))
+			elements.input.SetObjectProperty("placeholder-text", m.General().Placeholder)
+			setupSingleModule()
+
+			if val, ok := layouts[singleModule.General().Name]; ok {
+				glib.IdleAdd(func() {
+					layout = val
+					setupLayout(singleModule.General().Theme, singleModule.General().ThemeBase)
+				})
+			}
+
+			if elements.input.Text() != "" {
+				elements.input.SetText("")
+			} else {
+				process()
+			}
+
+			elements.input.GrabFocus()
+		}
+	}
 }
 
 func handleDmenuResult(result string) {

@@ -43,6 +43,45 @@
         "orientation": "vertical",
         "spacing": 0,
         "revert": false,
+        "bar": {
+          "name": "bar",
+          "orientation": "vertical",
+          "position": "start",
+          "h_align": "fill",
+          "h_expand": true,
+          "spacing": 16,
+          "entry": {
+            "h_align": "start",
+            "h_expand": false,
+            "icon": {
+              "v_align": "start",
+              "v_expand": false,
+              "h_expand": false,
+              "h_align": "start",
+              "height": -1,
+              "width": -1,
+              "hide": false,
+              "opacity": 1,
+              "margins": {
+                "bottom": 0,
+                "start": 0,
+                "end": 0,
+                "top": 0
+              },
+              "icon_size": "large",
+              "pixel_size": -1,
+              "theme": ""
+            },
+            "label": {
+              "v_align": "fill",
+              "v_expand": true,
+              "y_align": 0.5,
+              "margins": {
+                "start": 4
+              }
+            }
+          }
+        },
         "search": {
           "name": "search",
           "v_align": "start",

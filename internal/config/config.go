@@ -23,6 +23,7 @@ var Themes embed.FS
 
 type Config struct {
 	ActivationMode      ActivationMode `mapstructure:"activation_mode"`
+	Bar                 Bar            `mapstructure:"bar"`
 	Builtins            Builtins       `mapstructure:"builtins"`
 	DisableClickToClose bool           `mapstructure:"disable_click_to_close"`
 	Disabled            []string       `mapstructure:"disabled"`
@@ -38,6 +39,17 @@ type Config struct {
 
 	Available []string `mapstructure:"-"`
 	IsService bool     `mapstructure:"-"`
+}
+
+type Bar struct {
+	Entries []BarEntry `mapstructure:"entries"`
+}
+
+type BarEntry struct {
+	Exec   string `mapstructure:"exec"`
+	Icon   string `mapstructure:"icon"`
+	Label  string `mapstructure:"label"`
+	Module string `mapstructure:"module"`
 }
 
 type Builtins struct {

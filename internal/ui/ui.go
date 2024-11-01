@@ -50,6 +50,7 @@ type Elements struct {
 	overlay       *gtk.Overlay
 	spinner       *gtk.Spinner
 	search        *gtk.Box
+	bar           *gtk.Box
 	prompt        *gtk.Label
 	box           *gtk.Box
 	appwin        *gtk.ApplicationWindow
@@ -269,7 +270,10 @@ func setupElements(app *gtk.Application) *Elements {
 
 	appwin.SetChild(box)
 
+	bar := gtk.NewBox(gtk.OrientationVertical, 0)
+
 	ui := &Elements{
+		bar:           bar,
 		overlay:       overlay,
 		spinner:       spinner,
 		search:        search,

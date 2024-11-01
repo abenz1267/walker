@@ -134,6 +134,19 @@ type Box struct {
 	Scroll    Scroll        `mapstructure:"scroll"`
 	Revert    bool          `mapstructure:"revert"`
 	Search    SearchWrapper `mapstructure:"search"`
+	Bar       BarWrapper    `mapstructure:"bar"`
+}
+
+type BarWrapper struct {
+	BoxWidget `mapstructure:",squash"`
+	Position  string          `mapstructure:"position"`
+	Entry     BarEntryWrapper `mapstructure:"entry"`
+}
+
+type BarEntryWrapper struct {
+	BoxWidget `mapstructure:",squash"`
+	Icon      ImageWidget `mapstructure:"icon"`
+	Label     LabelWidget `mapstructure:"label"`
 }
 
 type Scroll struct {

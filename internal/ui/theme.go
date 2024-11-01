@@ -4,7 +4,9 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"os/exec"
 	"path/filepath"
+	"syscall"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
@@ -12,6 +14,8 @@ import (
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
+
+var barHasItems = false
 
 func setupCss(theme string, base []string) {
 	var css []byte
@@ -77,19 +81,23 @@ func setupTheme(theme string) {
 		layout.InitUnitMaps()
 	}
 
-	setupWidgetStyle(&elements.appwin.Widget, &layout.Window.Widget, true)
-	setupBoxTheme()
-
 	if !appstate.Password {
-		setupScrollTheme()
-		setupListTheme()
-
 		if layout.Window.Box.Scroll.List.Item.Icon.Theme != "" {
 			elements.iconTheme = gtk.NewIconTheme()
 			elements.iconTheme.SetThemeName(layout.Window.Box.Scroll.List.Item.Icon.Theme)
 		} else {
 			elements.iconTheme = gtk.IconThemeGetForDisplay(gdk.DisplayGetDefault())
 		}
+	}
+
+	setupWidgetStyle(&elements.appwin.Widget, &layout.Window.Widget, true)
+
+	setupBarTheme()
+	setupBoxTheme()
+
+	if !appstate.Password {
+		setupScrollTheme()
+		setupListTheme()
 	}
 
 	setupBoxWidgetStyle(elements.search, &layout.Window.Box.Search.BoxWidget)
@@ -150,11 +158,106 @@ func setupBoxTheme() {
 	}
 
 	if layout.Window.Box.Revert {
+		if layout.Window.Box.Bar.Position == "start" {
+			elements.box.Append(elements.bar)
+		}
+
 		elements.box.Append(elements.scroll)
+
+		if layout.Window.Box.Bar.Position == "between" {
+			elements.box.Append(elements.bar)
+		}
+
 		elements.box.Append(elements.search)
+
+		if layout.Window.Box.Bar.Position == "end" {
+			elements.box.Append(elements.bar)
+		}
 	} else {
+		if layout.Window.Box.Bar.Position == "start" {
+			elements.box.Append(elements.bar)
+		}
+
 		elements.box.Append(elements.search)
+
+		if layout.Window.Box.Bar.Position == "between" {
+			elements.box.Append(elements.bar)
+		}
+
 		elements.box.Append(elements.scroll)
+
+		if layout.Window.Box.Bar.Position == "end" {
+			elements.box.Append(elements.bar)
+		}
+	}
+}
+
+func setupBarTheme() {
+	if len(cfg.Bar.Entries) == 0 {
+		return
+	}
+
+	if layout.Window.Box.Bar.Orientation == "horizontal" {
+		elements.bar.SetOrientation(gtk.OrientationHorizontal)
+	}
+
+	setupBoxWidgetStyle(elements.bar, &layout.Window.Box.Bar.BoxWidget)
+
+	if !barHasItems {
+		for _, v := range cfg.Bar.Entries {
+			box := gtk.NewBox(gtk.OrientationHorizontal, 0)
+			box.SetCSSClasses([]string{"barentry"})
+
+			setupWidgetStyle(&box.Widget, &layout.Window.Box.Bar.Entry.Widget, false)
+
+			controller := gtk.NewGestureClick()
+			controller.SetPropagationPhase(gtk.PropagationPhase(1))
+			controller.Connect("pressed", func(gesture *gtk.GestureClick, n int) {
+				if v.Module == "" && v.Exec != "" {
+					cmd := exec.Command("sh", "-c", v.Exec)
+
+					cmd.SysProcAttr = &syscall.SysProcAttr{
+						Setpgid:    true,
+						Pgid:       0,
+						Foreground: false,
+					}
+
+					err := cmd.Start()
+					if err != nil {
+						log.Println(err)
+					}
+
+					closeAfterActivation(false, false)
+				} else {
+					handleSwitcher(v.Module)
+				}
+			})
+
+			box.AddController(controller)
+
+			if v.Icon != "" {
+				var icon *gtk.Image
+
+				i := elements.iconTheme.LookupIcon(v.Icon, []string{}, layout.IconSizeIntMap[layout.Window.Box.Bar.Entry.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
+
+				icon = gtk.NewImageFromPaintable(i)
+
+				setupIconWidgetStyle(icon, &layout.Window.Box.Bar.Entry.Icon)
+
+				box.Append(icon)
+			}
+
+			if v.Label != "" {
+				label := gtk.NewLabel(v.Label)
+				setupLabelWidgetStyle(label, &layout.Window.Box.Bar.Entry.Label)
+
+				box.Append(label)
+			}
+
+			elements.bar.Append(box)
+		}
+
+		barHasItems = true
 	}
 }
 

@@ -767,11 +767,11 @@ func processAsync(ctx context.Context, text string) {
 		}
 	}
 
-	if cfg.List.Placeholder != "" && len(entries) == 0 {
-		elements.listPlaceholder.SetVisible(true)
-	}
-
 	glib.IdleAdd(func() {
+		if cfg.List.Placeholder != "" && len(entries) == 0 {
+			elements.listPlaceholder.SetVisible(true)
+		}
+
 		common.items.Splice(0, int(common.items.NItems()), entries...)
 	})
 

@@ -7,7 +7,8 @@
     "max_entries": 50,
     "show_initial_entries": true,
     "single_click": true,
-    "visibility_threshold": 20
+    "visibility_threshold": 20,
+    "placeholder": "No Results"
   },
   "search": {
     "placeholder": "Search...",

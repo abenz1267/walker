@@ -157,9 +157,17 @@ func setupBoxTheme() {
 		return
 	}
 
+	if cfg.List.Placeholder != "" {
+		setupLabelWidgetStyle(elements.listPlaceholder, &layout.Window.Box.Scroll.List.Placeholder)
+	}
+
 	if layout.Window.Box.Revert {
 		if layout.Window.Box.Bar.Position == "start" {
 			elements.box.Append(elements.bar)
+		}
+
+		if cfg.List.Placeholder != "" {
+			elements.box.Append(elements.listPlaceholder)
 		}
 
 		elements.box.Append(elements.scroll)
@@ -185,6 +193,10 @@ func setupBoxTheme() {
 		}
 
 		elements.box.Append(elements.scroll)
+
+		if cfg.List.Placeholder != "" {
+			elements.box.Append(elements.listPlaceholder)
+		}
 
 		if layout.Window.Box.Bar.Position == "end" {
 			elements.box.Append(elements.bar)

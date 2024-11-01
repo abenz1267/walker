@@ -31,7 +31,7 @@
         "h_expand": false,
         "h_align": "start",
         "height": -1,
-        "width": 500,
+        "width": 400,
         "hide": false,
         "opacity": 1,
         "margins": {
@@ -186,6 +186,18 @@
             "width": -1,
             "hide": false,
             "opacity": 1,
+            "placeholder": {
+              "name": "listplaceholder",
+              "h_align": "fill",
+              "h_expand": true,
+              "x_align": 0.5,
+              "margins": {
+                "bottom": 0,
+                "start": 0,
+                "end": 0,
+                "top": 10
+              }
+            },
             "margins": {
               "bottom": 0,
               "start": 0,

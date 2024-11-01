@@ -180,15 +180,16 @@ type SpinnerWidget struct {
 }
 
 type ListWrapper struct {
-	Widget      `mapstructure:",squash"`
-	Item        ListItemWidget `mapstructure:"item"`
+	AlwaysShow  bool           `mapstructure:"always_show"`
 	Grid        bool           `mapstructure:"grid"`
-	Orientation string         `mapstructure:"orientation"`
-	MinHeight   int            `mapstructure:"min_height"`
+	Item        ListItemWidget `mapstructure:"item"`
 	MaxHeight   int            `mapstructure:"max_height"`
 	MaxWidth    int            `mapstructure:"max_width"`
+	MinHeight   int            `mapstructure:"min_height"`
 	MinWidth    int            `mapstructure:"min_width"`
-	AlwaysShow  bool           `mapstructure:"always_show"`
+	Orientation string         `mapstructure:"orientation"`
+	Placeholder LabelWidget    `mapstructure:"placeholder"`
+	Widget      `mapstructure:",squash"`
 }
 
 type ListItemWidget struct {

@@ -12,6 +12,8 @@ slider,
 #item,
 #text,
 #label,
+#bar,
+#listplaceholder,
 #sub,
 #activationlabel {
   all: unset;
@@ -24,6 +26,7 @@ slider,
 #box {
   background: #303446;
   padding: 16px;
+  padding-top: 0px;
   border-radius: 8px;
   box-shadow:
     0 19px 38px rgba(0, 0, 0, 0.3),
@@ -69,7 +72,7 @@ slider {
 
 #input > *:last-child,
 #typeahead > *:last-child {
-  color: #7f849c;
+  opacity: 0;
 }
 
 #spinner {
@@ -84,6 +87,10 @@ slider {
 }
 
 #list {
+}
+
+#listplaceholder {
+  color: #cad3f5;
 }
 
 child {

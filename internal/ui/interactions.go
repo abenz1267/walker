@@ -534,6 +534,10 @@ func closeAfterActivation(keepOpen, next bool) {
 var cancel context.CancelFunc
 
 func process() {
+	if cfg.List.Placeholder != "" {
+		elements.listPlaceholder.SetVisible(false)
+	}
+
 	if cancel != nil {
 		cancel()
 	}
@@ -761,6 +765,10 @@ func processAsync(ctx context.Context, text string) {
 		for _, v := range entries {
 			fmt.Printf("Entries == label: %s sub: %s score: %f\n", v.Label, v.Sub, v.ScoreFinal)
 		}
+	}
+
+	if cfg.List.Placeholder != "" && len(entries) == 0 {
+		elements.listPlaceholder.SetVisible(true)
 	}
 
 	glib.IdleAdd(func() {

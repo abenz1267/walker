@@ -46,20 +46,21 @@ type Common struct {
 }
 
 type Elements struct {
-	scroll        *gtk.ScrolledWindow
-	overlay       *gtk.Overlay
-	spinner       *gtk.Spinner
-	search        *gtk.Box
-	bar           *gtk.Box
-	prompt        *gtk.Label
-	box           *gtk.Box
-	appwin        *gtk.ApplicationWindow
-	typeahead     *gtk.SearchEntry
-	input         *gtk.SearchEntry
-	grid          *gtk.GridView
-	prefixClasses map[string][]string
-	iconTheme     *gtk.IconTheme
-	password      *gtk.PasswordEntry
+	scroll          *gtk.ScrolledWindow
+	overlay         *gtk.Overlay
+	spinner         *gtk.Spinner
+	search          *gtk.Box
+	bar             *gtk.Box
+	prompt          *gtk.Label
+	box             *gtk.Box
+	appwin          *gtk.ApplicationWindow
+	typeahead       *gtk.SearchEntry
+	input           *gtk.SearchEntry
+	grid            *gtk.GridView
+	prefixClasses   map[string][]string
+	iconTheme       *gtk.IconTheme
+	password        *gtk.PasswordEntry
+	listPlaceholder *gtk.Label
 }
 
 func Activate(state *state.AppState) func(app *gtk.Application) {
@@ -272,19 +273,27 @@ func setupElements(app *gtk.Application) *Elements {
 
 	bar := gtk.NewBox(gtk.OrientationVertical, 0)
 
+	var listPlaceholder *gtk.Label
+
+	if cfg.List.Placeholder != "" {
+		listPlaceholder = gtk.NewLabel(cfg.List.Placeholder)
+		listPlaceholder.SetVisible(false)
+	}
+
 	ui := &Elements{
-		bar:           bar,
-		overlay:       overlay,
-		spinner:       spinner,
-		search:        search,
-		prompt:        prompt,
-		typeahead:     typeahead,
-		scroll:        scroll,
-		box:           box,
-		appwin:        appwin,
-		input:         input,
-		grid:          grid,
-		prefixClasses: make(map[string][]string),
+		listPlaceholder: listPlaceholder,
+		bar:             bar,
+		overlay:         overlay,
+		spinner:         spinner,
+		search:          search,
+		prompt:          prompt,
+		typeahead:       typeahead,
+		scroll:          scroll,
+		box:             box,
+		appwin:          appwin,
+		input:           input,
+		grid:            grid,
+		prefixClasses:   make(map[string][]string),
 	}
 
 	if cfg.List.SingleClick {

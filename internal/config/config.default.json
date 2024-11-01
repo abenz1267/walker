@@ -46,6 +46,7 @@
       "exec": "wl-copy",
       "weight": 5,
       "name": "clipboard",
+      "avoid_line_breaks": true,
       "placeholder": "Clipboard",
       "image_height": 300,
       "max_entries": 10,

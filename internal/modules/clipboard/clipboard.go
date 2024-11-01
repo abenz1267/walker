@@ -20,13 +20,14 @@ import (
 const ClipboardName = "clipboard"
 
 type Clipboard struct {
-	general  config.GeneralModule
-	items    []ClipboardItem
-	entries  []util.Entry
-	file     string
-	imgTypes map[string]string
-	max      int
-	exec     string
+	general         config.GeneralModule
+	items           []ClipboardItem
+	entries         []util.Entry
+	file            string
+	imgTypes        map[string]string
+	max             int
+	exec            string
+	avoidLineBreaks bool
 }
 
 type ClipboardItem struct {
@@ -62,6 +63,7 @@ func (c *Clipboard) Setup(cfg *config.Config) bool {
 	c.file = filepath.Join(util.CacheDir(), "clipboard.gob")
 	c.max = cfg.Builtins.Clipboard.MaxEntries
 	c.exec = cfg.Builtins.Clipboard.Exec
+	c.avoidLineBreaks = cfg.Builtins.Clipboard.AvoidLineBreaks
 
 	c.imgTypes = make(map[string]string)
 	c.imgTypes["image/png"] = "png"
@@ -80,7 +82,7 @@ func (c *Clipboard) SetupData(cfg *config.Config, ctx context.Context) {
 	c.items = clean(current, c.file)
 
 	for _, v := range c.items {
-		c.entries = append(c.entries, itemToEntry(v, c.exec))
+		c.entries = append(c.entries, itemToEntry(v, c.exec, c.avoidLineBreaks))
 	}
 
 	c.general.IsSetup = true
@@ -199,7 +201,7 @@ func (c *Clipboard) watch() {
 			cmd.Start()
 		}
 
-		c.entries = append([]util.Entry{itemToEntry(e, c.exec)}, c.entries...)
+		c.entries = append([]util.Entry{itemToEntry(e, c.exec, c.avoidLineBreaks)}, c.entries...)
 		c.items = append([]ClipboardItem{e}, c.items...)
 
 		if len(c.items) >= c.max {
@@ -214,9 +216,15 @@ func (c *Clipboard) watch() {
 	}
 }
 
-func itemToEntry(item ClipboardItem, exec string) util.Entry {
+func itemToEntry(item ClipboardItem, exec string, avoidLineBreaks bool) util.Entry {
+	label := strings.TrimSpace(item.Content)
+
+	if avoidLineBreaks {
+		label = strings.ReplaceAll(label, "\n", " ")
+	}
+
 	entry := util.Entry{
-		Label:            strings.TrimSpace(item.Content),
+		Label:            label,
 		Sub:              "Text",
 		Exec:             exec,
 		Piped:            util.Piped{Content: item.Content, Type: "string"},

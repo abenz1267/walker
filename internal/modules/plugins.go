@@ -15,8 +15,11 @@ import (
 
 type Plugin struct {
 	PluginCfg    config.Plugin
-	isSetup      bool
 	cachedOutput []byte
+	isSetup      bool
+	labelColumn  int
+	resultColumn int
+	separator    string
 }
 
 func (e *Plugin) General() *config.GeneralModule {
@@ -28,6 +31,10 @@ func (e *Plugin) Refresh() {
 }
 
 func (e *Plugin) Setup(cfg *config.Config) bool {
+	e.labelColumn = e.PluginCfg.LabelColumn
+	e.resultColumn = e.PluginCfg.ResultColumn
+	e.separator = util.TrasformSeparator(e.PluginCfg.Separator)
+
 	return true
 }
 
@@ -103,13 +110,28 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 				continue
 			}
 
+			result := txt
+			label := unescaped
+
+			if e.resultColumn > 0 || e.labelColumn > 0 {
+				cols := strings.Split(txt, e.separator)
+
+				if e.resultColumn > 0 {
+					result = cols[e.resultColumn-1]
+				}
+
+				if e.labelColumn > 0 {
+					label = cols[e.labelColumn-1]
+				}
+			}
+
 			e := util.Entry{
-				Label:    unescaped,
+				Label:    label,
 				Sub:      e.PluginCfg.Name,
 				Class:    e.PluginCfg.Name,
 				Terminal: e.PluginCfg.Terminal,
-				Exec:     strings.ReplaceAll(e.PluginCfg.Cmd, "%RESULT%", txt),
-				ExecAlt:  strings.ReplaceAll(e.PluginCfg.CmdAlt, "%RESULT%", txt),
+				Exec:     strings.ReplaceAll(e.PluginCfg.Cmd, "%RESULT%", result),
+				ExecAlt:  strings.ReplaceAll(e.PluginCfg.CmdAlt, "%RESULT%", result),
 				Matching: e.PluginCfg.Matching,
 			}
 

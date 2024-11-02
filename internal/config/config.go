@@ -185,8 +185,11 @@ type Plugin struct {
 	Cmd              string            `mapstructure:"cmd"`
 	CmdAlt           string            `mapstructure:"cmd_alt"`
 	Entries          []util.Entry      `mapstructure:"entries"`
+	LabelColumn      int               `mapstructure:"label_column"`
 	Matching         util.MatchingType `mapstructure:"matching"`
 	RecalculateScore bool              `mapstructure:"recalculate_score,omitempty" json:"recalculate_score,omitempty"`
+	ResultColumn     int               `mapstructure:"result_column"`
+	Separator        string            `mapstructure:"separator"`
 	Src              string            `mapstructure:"src"`
 	SrcOnce          string            `mapstructure:"src_once"`
 	Terminal         bool              `mapstructure:"terminal"`

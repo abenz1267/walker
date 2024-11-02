@@ -8,7 +8,6 @@ import (
 	"net"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -111,7 +110,7 @@ func (d Dmenu) ListenForReply() {
 func (d *Dmenu) Setup(cfg *config.Config) bool {
 	d.general = cfg.Builtins.Dmenu.GeneralModule
 
-	d.SetSeparator(cfg.Builtins.Dmenu.Separator)
+	d.Separator = util.TrasformSeparator(cfg.Builtins.Dmenu.Separator)
 	d.LabelColumn = cfg.Builtins.Dmenu.LabelColumn
 
 	d.initialSeparator = d.Separator
@@ -125,17 +124,6 @@ func (d *Dmenu) Setup(cfg *config.Config) bool {
 func (d *Dmenu) Cleanup() {
 	d.Separator = d.initialSeparator
 	d.LabelColumn = d.initialLabelColumn
-}
-
-func (d *Dmenu) SetSeparator(sep string) {
-	if sep == "" {
-		sep = "'\t'"
-	}
-
-	s, err := strconv.Unquote(sep)
-	if err == nil {
-		d.Separator = s
-	}
 }
 
 func (d *Dmenu) StartListening() {

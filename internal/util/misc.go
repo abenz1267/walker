@@ -4,6 +4,7 @@ import (
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
+	"strconv"
 	"strings"
 	"time"
 )
@@ -65,4 +66,17 @@ func (e Entry) Identifier() string {
 type Piped struct {
 	Content string `mapstructure:"content,omitempty"`
 	Type    string `mapstructure:"type,omitempty"`
+}
+
+func TrasformSeparator(sep string) string {
+	if sep == "" {
+		sep = "'\t'"
+	}
+
+	s, err := strconv.Unquote(sep)
+	if err != nil {
+		return sep
+	}
+
+	return s
 }

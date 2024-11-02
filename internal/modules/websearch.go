@@ -26,6 +26,7 @@ type Websearch struct {
 	general    config.GeneralModule
 	engines    []string
 	engineInfo map[string]EngineInfo
+	threshold  int
 }
 
 type EngineInfo struct {
@@ -42,6 +43,7 @@ func (w Websearch) Cleanup() {}
 func (w *Websearch) Setup(cfg *config.Config) bool {
 	w.engines = cfg.Builtins.Websearch.Engines
 	w.general = cfg.Builtins.Websearch.GeneralModule
+	w.threshold = cfg.List.VisibilityThreshold
 
 	return true
 }
@@ -99,7 +101,7 @@ func (w Websearch) Entries(ctx context.Context, term string) []util.Entry {
 				Sub:        "Websearch",
 				Exec:       fmt.Sprintf("xdg-open %s", url),
 				Class:      "websearch",
-				ScoreFinal: float64(k + 1),
+				ScoreFinal: float64(k + 1 + w.threshold),
 			}
 
 			entries = append(entries, n)

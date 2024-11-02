@@ -33,6 +33,7 @@ type Config struct {
 	List                List           `mapstructure:"list"`
 	Plugins             []Plugin       `mapstructure:"plugins"`
 	Search              Search         `mapstructure:"search"`
+	Timeout             int            `mapstructure:"timeout"`
 	Theme               string         `mapstructure:"theme"`
 	ThemeBase           []string       `mapstructure:"theme_base"`
 	Terminal            string         `mapstructure:"terminal"`

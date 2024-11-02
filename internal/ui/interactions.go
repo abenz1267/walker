@@ -12,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"syscall"
+	"time"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/history"
@@ -534,6 +535,8 @@ func closeAfterActivation(keepOpen, next bool) {
 var cancel context.CancelFunc
 
 func process() {
+	handleTimout()
+
 	if cfg.List.Placeholder != "" {
 		elements.listPlaceholder.SetVisible(false)
 	}
@@ -570,6 +573,26 @@ func process() {
 		if !layout.Window.Box.Search.Spinner.Hide {
 			elements.spinner.SetVisible(false)
 		}
+	}
+}
+
+var timoutTimer *time.Timer
+
+func handleTimout() {
+	if cfg.Timeout > 0 {
+		if timoutTimer != nil {
+			timoutTimer.Stop()
+		}
+
+		timoutTimer = time.AfterFunc(time.Duration(cfg.Timeout)*time.Second, func() {
+			if appstate.IsRunning {
+				if appstate.IsService {
+					quit()
+				} else {
+					exit()
+				}
+			}
+		})
 	}
 }
 

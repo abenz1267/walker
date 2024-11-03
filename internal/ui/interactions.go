@@ -665,7 +665,7 @@ func processAsync(ctx context.Context, text string) {
 			continue
 		}
 
-		if !hasExplicit {
+		if len(p) > 1 {
 			if p[k].General().SwitcherOnly {
 				wg.Done()
 				continue

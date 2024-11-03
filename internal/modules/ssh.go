@@ -85,6 +85,7 @@ func getConfigFileEntries(sshCfg string) []util.Entry {
 	}
 
 	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {
@@ -117,6 +118,7 @@ func getHostFileEntries(hosts string) []util.Entry {
 	}
 
 	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
 
 	hs := make(map[string]struct{})

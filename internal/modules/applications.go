@@ -220,6 +220,8 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 					return err
 				}
 
+				defer file.Close()
+
 				matching := util.Fuzzy
 
 				if prioritizeNew {
@@ -233,7 +235,6 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 					}
 				}
 
-				defer file.Close()
 				scanner := bufio.NewScanner(file)
 
 				app := Application{

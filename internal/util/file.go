@@ -30,15 +30,27 @@ func FromGob[T any](src string, dest *T) bool {
 		log.Panicln(err)
 	}
 
+	defer file.Close()
+
 	b, err := io.ReadAll(file)
 	if err != nil {
 		log.Panic(err)
 	}
 
 	decoder := gob.NewDecoder(bytes.NewReader(b))
+
 	err = decoder.Decode(dest)
 	if err != nil {
-		log.Panicln(err)
+		log.Println(err)
+
+		log.Printf("cache file %s is malformed, truncating.\n", src)
+
+		err = os.Truncate(src, 0)
+		if err != nil {
+			log.Panicln(err)
+		}
+
+		return false
 	}
 
 	return true
@@ -62,6 +74,8 @@ func FromJson[T any](src string, dest *T) bool {
 	if err != nil {
 		log.Panicln(err)
 	}
+
+	defer file.Close()
 
 	b, err := io.ReadAll(file)
 	if err != nil {

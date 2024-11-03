@@ -188,6 +188,7 @@ func (r *Runner) parseAliases() {
 	}
 
 	defer file.Close()
+
 	scanner := bufio.NewScanner(file)
 
 	for scanner.Scan() {

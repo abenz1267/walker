@@ -75,7 +75,12 @@ func (c *Clipboard) Setup(cfg *config.Config) bool {
 
 func (c *Clipboard) SetupData(cfg *config.Config, ctx context.Context) {
 	current := []ClipboardItem{}
-	util.FromGob(c.file, &current)
+	ok := util.FromGob(c.file, &current)
+
+	if !ok {
+		fmt.Println("clipboard couldn't be loaded: cache malformed.")
+		return
+	}
 
 	go c.watch()
 

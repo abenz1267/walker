@@ -257,6 +257,8 @@ func Get(config string) *Config {
 
 	cfg := &Config{}
 
+	viper.AutomaticEnv()
+
 	err = viper.Unmarshal(cfg)
 	if err != nil {
 		log.Panic(err)

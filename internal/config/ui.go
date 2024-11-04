@@ -241,7 +241,10 @@ func GetLayout(theme string, base []string) *UI {
 		log.Panicln(err)
 	}
 
+	layoutCfg.AutomaticEnv()
+
 	ui := &UICfg{}
+
 	err = layoutCfg.Unmarshal(ui)
 	if err != nil {
 		log.Panic(err)

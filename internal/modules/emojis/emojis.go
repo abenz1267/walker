@@ -16,8 +16,9 @@ import (
 var list string
 
 type Emojis struct {
-	general config.GeneralModule
-	entries []util.Entry
+	general         config.GeneralModule
+	entries         []util.Entry
+	showUnqualified bool
 }
 
 func (e *Emojis) General() *config.GeneralModule {
@@ -32,6 +33,7 @@ func (e Emojis) Entries(ctx context.Context, term string) []util.Entry {
 
 func (e *Emojis) Setup(cfg *config.Config) bool {
 	e.general = cfg.Builtins.Emojis.GeneralModule
+	e.showUnqualified = cfg.Builtins.Emojis.ShowUnqualified
 
 	return true
 }
@@ -49,6 +51,10 @@ func (e *Emojis) SetupData(cfg *config.Config, ctx context.Context) {
 		}
 
 		fields := strings.Split(text, ",")
+
+		if !e.showUnqualified && fields[3] == "unqualified" {
+			continue
+		}
 
 		entries = append(entries, util.Entry{
 			Label:            fmt.Sprintf("%s %s", fields[4], fields[5]),

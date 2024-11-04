@@ -124,7 +124,8 @@ type Switcher struct {
 }
 
 type Emojis struct {
-	GeneralModule `mapstructure:",squash"`
+	GeneralModule   `mapstructure:",squash"`
+	ShowUnqualified bool `mapstructure:"show_unqualified"`
 }
 
 type SSH struct {

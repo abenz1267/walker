@@ -73,7 +73,8 @@
       "placeholder": "Emojis",
       "switcher_only": true,
       "history": true,
-      "typeahead": true
+      "typeahead": true,
+      "show_unqualified": false
     },
     "finder": {
       "weight": 5,

@@ -655,6 +655,18 @@ func setupLayerShell() {
 	ls.InitForWindow(&elements.appwin.Window)
 	ls.SetNamespace(&elements.appwin.Window, "walker")
 
+	if cfg.Monitor != "" {
+		monitors := gdk.DisplayManagerGet().DefaultDisplay().Monitors()
+
+		for i := 0; i < int(monitors.NItems()); i++ {
+			monitor := monitors.Item(uint(i)).Cast().(*gdk.Monitor)
+
+			if monitor.Connector() == cfg.Monitor {
+				ls.SetMonitor(&elements.appwin.Window, monitor)
+			}
+		}
+	}
+
 	if !cfg.ForceKeyboardFocus {
 		ls.SetKeyboardMode(&elements.appwin.Window, ls.LayerShellKeyboardModeOnDemand)
 	} else {

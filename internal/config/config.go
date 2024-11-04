@@ -31,12 +31,13 @@ type Config struct {
 	AsWindow            bool           `mapstructure:"as_window"`
 	IgnoreMouse         bool           `mapstructure:"ignore_mouse"`
 	List                List           `mapstructure:"list"`
+	Monitor             string         `mapstructure:"monitor"`
 	Plugins             []Plugin       `mapstructure:"plugins"`
 	Search              Search         `mapstructure:"search"`
-	Timeout             int            `mapstructure:"timeout"`
+	Terminal            string         `mapstructure:"terminal"`
 	Theme               string         `mapstructure:"theme"`
 	ThemeBase           []string       `mapstructure:"theme_base"`
-	Terminal            string         `mapstructure:"terminal"`
+	Timeout             int            `mapstructure:"timeout"`
 
 	Available []string `mapstructure:"-"`
 	IsService bool     `mapstructure:"-"`

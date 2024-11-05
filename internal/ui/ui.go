@@ -169,6 +169,8 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		appstate.HasUI = true
 		appstate.IsRunning = true
 
+		handleTimout()
+
 		if appstate.Benchmark {
 			fmt.Println("Visible (first ui)", time.Now().UnixMilli())
 		}
@@ -612,6 +614,8 @@ func reopen() {
 	}
 
 	elements.input.GrabFocus()
+
+	handleTimout()
 
 	process()
 }

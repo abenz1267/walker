@@ -535,8 +535,6 @@ func closeAfterActivation(keepOpen, next bool) {
 var cancel context.CancelFunc
 
 func process() {
-	handleTimout()
-
 	if cfg.List.Placeholder != "" {
 		elements.listPlaceholder.SetVisible(false)
 	}
@@ -579,7 +577,7 @@ func process() {
 var timoutTimer *time.Timer
 
 func handleTimout() {
-	if cfg.Timeout > 0 {
+	fn := func() {
 		if timoutTimer != nil {
 			timoutTimer.Stop()
 		}
@@ -587,12 +585,21 @@ func handleTimout() {
 		timoutTimer = time.AfterFunc(time.Duration(cfg.Timeout)*time.Second, func() {
 			if appstate.IsRunning {
 				if appstate.IsService {
-					quit()
+					glib.IdleAdd(quit)
 				} else {
-					exit()
+					glib.IdleAdd(exit)
 				}
 			}
 		})
+	}
+
+	if cfg.Timeout > 0 {
+		elements.input.Connect("search-changed", fn)
+
+		scrollController := gtk.NewEventControllerScroll(gtk.EventControllerScrollBothAxes)
+		scrollController.Connect("scroll", fn)
+
+		elements.scroll.AddController(scrollController)
 	}
 }
 

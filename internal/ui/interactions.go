@@ -198,6 +198,8 @@ func handleGlobalKeysReleased(val, code uint, state gdk.ModifierType) {
 }
 
 func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
+	timeoutReset()
+
 	switch val {
 	case amKey:
 		if !cfg.ActivationMode.Disabled && common.selection.NItems() != 0 {
@@ -576,8 +578,8 @@ func process() {
 
 var timoutTimer *time.Timer
 
-func handleTimout() {
-	fn := func() {
+func timeoutReset() {
+	if cfg.Timeout > 0 {
 		if timoutTimer != nil {
 			timoutTimer.Stop()
 		}
@@ -592,12 +594,14 @@ func handleTimout() {
 			}
 		})
 	}
+}
 
+func handleTimout() {
 	if cfg.Timeout > 0 {
-		elements.input.Connect("search-changed", fn)
+		elements.input.Connect("search-changed", timeoutReset)
 
 		scrollController := gtk.NewEventControllerScroll(gtk.EventControllerScrollBothAxes)
-		scrollController.Connect("scroll", fn)
+		scrollController.Connect("scroll", timeoutReset)
 
 		elements.scroll.AddController(scrollController)
 	}

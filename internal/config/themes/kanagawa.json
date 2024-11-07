@@ -1,7 +1,8 @@
 {
   "ui": {
     "anchors": {
-      "top": true
+      "top": true,
+      "bottom": true
     },
     "window": {
       "v_align": "start",

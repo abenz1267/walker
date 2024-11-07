@@ -28,6 +28,7 @@ type Clipboard struct {
 	max             int
 	exec            string
 	avoidLineBreaks bool
+	isWatching      bool
 }
 
 type ClipboardItem struct {
@@ -75,12 +76,7 @@ func (c *Clipboard) Setup(cfg *config.Config) bool {
 
 func (c *Clipboard) SetupData(cfg *config.Config, ctx context.Context) {
 	current := []ClipboardItem{}
-	ok := util.FromGob(c.file, &current)
-
-	if !ok {
-		fmt.Println("clipboard couldn't be loaded: cache malformed.")
-		return
-	}
+	_ = util.FromGob(c.file, &current)
 
 	go c.watch()
 
@@ -174,6 +170,12 @@ func saveTmpImg(ext string) string {
 }
 
 func (c *Clipboard) watch() {
+	if c.isWatching {
+		return
+	}
+
+	c.isWatching = true
+
 	for {
 		time.Sleep(500 * time.Millisecond)
 

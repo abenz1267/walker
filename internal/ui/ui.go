@@ -551,6 +551,8 @@ func handleListVisibility() {
 }
 
 func reopen() {
+	timeoutReset()
+
 	if appstate.IsRunning {
 		return
 	}

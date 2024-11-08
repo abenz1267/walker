@@ -580,15 +580,15 @@ func process() {
 	}
 }
 
-var timoutTimer *time.Timer
+var timeoutTimer *time.Timer
 
 func timeoutReset() {
 	if cfg.Timeout > 0 {
-		if timoutTimer != nil {
-			timoutTimer.Stop()
+		if timeoutTimer != nil {
+			timeoutTimer.Stop()
 		}
 
-		timoutTimer = time.AfterFunc(time.Duration(cfg.Timeout)*time.Second, func() {
+		timeoutTimer = time.AfterFunc(time.Duration(cfg.Timeout)*time.Second, func() {
 			if appstate.IsRunning {
 				if appstate.IsService {
 					glib.IdleAdd(quit)
@@ -908,6 +908,8 @@ func usageModifier(item util.Entry) int {
 }
 
 func quit() {
+	timeoutTimer = nil
+
 	if singleModule != nil {
 		if _, ok := layouts[singleModule.General().Name]; ok {
 			glib.IdleAdd(func() {

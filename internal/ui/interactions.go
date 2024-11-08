@@ -908,6 +908,7 @@ func usageModifier(item util.Entry) int {
 }
 
 func quit() {
+	timeoutTimer.Stop()
 	timeoutTimer = nil
 
 	if singleModule != nil {

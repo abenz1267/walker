@@ -202,7 +202,11 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 
 	switch val {
 	case amKey:
-		if !cfg.ActivationMode.Disabled && common.selection.NItems() != 0 {
+		if cfg.ActivationMode.Disabled {
+			return false
+		}
+
+		if common.selection.NItems() != 0 {
 			if val == amKey {
 				enableAM()
 				return true

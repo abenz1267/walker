@@ -6,6 +6,7 @@
   "disable_click_to_close": false,
   "force_keyboard_focus": false,
   "list": {
+    "keyboard_scroll_style": "emacs",
     "max_entries": 50,
     "show_initial_entries": true,
     "single_click": true,

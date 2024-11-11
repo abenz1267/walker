@@ -325,14 +325,14 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		selectPrev()
 		return true
 	default:
-		if val == gdk.KEY_j {
+		if (cfg.List.KeyboardScrollStyle == "vim" && val == gdk.KEY_j) || val == gdk.KEY_n {
 			if cfg.ActivationMode.Disabled {
 				if modifier == gdk.ControlMask {
 					selectNext()
 					return true
 				}
 			}
-		} else if val == gdk.KEY_k {
+		} else if (cfg.List.KeyboardScrollStyle == "vim" && val == gdk.KEY_k) || val == gdk.KEY_p {
 			if cfg.ActivationMode.Disabled {
 				if modifier == gdk.ControlMask {
 					selectPrev()

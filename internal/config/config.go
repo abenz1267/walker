@@ -204,6 +204,7 @@ type Search struct {
 
 type List struct {
 	Cycle               bool   `mapstructure:"cycle"`
+	KeyboardScrollStyle string `mapstructure:"keyboard_scroll_style"`
 	MaxEntries          int    `mapstructure:"max_entries"`
 	Placeholder         string `mapstructure:"placeholder"`
 	ShowInitialEntries  bool   `mapstructure:"show_initial_entries"`

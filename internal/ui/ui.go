@@ -162,6 +162,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 		if appstate.Password {
 			elements.password.GrabFocus()
+			timeoutReset()
 		} else {
 			elements.input.GrabFocus()
 		}

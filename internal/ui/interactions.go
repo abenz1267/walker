@@ -590,6 +590,10 @@ func timeoutReset() {
 
 		timeoutTimer = time.AfterFunc(time.Duration(cfg.Timeout)*time.Second, func() {
 			if appstate.IsRunning {
+				if appstate.Password {
+					fmt.Print("")
+				}
+
 				if appstate.IsService {
 					glib.IdleAdd(quit)
 				} else {
@@ -602,6 +606,11 @@ func timeoutReset() {
 
 func handleTimout() {
 	if cfg.Timeout > 0 {
+		if appstate.Password {
+			elements.password.Connect("changed", timeoutReset)
+			return
+		}
+
 		elements.input.Connect("search-changed", timeoutReset)
 
 		scrollController := gtk.NewEventControllerScroll(gtk.EventControllerScrollBothAxes)

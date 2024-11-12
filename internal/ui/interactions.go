@@ -824,9 +824,16 @@ func processAsync(ctx context.Context, text string) {
 
 	tahAcceptedIdentifier = ""
 
-	if !layout.Window.Box.Search.Spinner.Hide {
-		elements.spinner.SetVisible(false)
-	}
+	glib.IdleAdd(func() {
+		if !layout.Window.Box.Search.Spinner.Hide {
+			elements.spinner.SetVisible(false)
+		}
+
+		if common.items.NItems() == 1 && appstate.AutoSelect {
+			common.selection.SelectItem(0, true)
+			activateItem(false, false, false)
+		}
+	})
 }
 
 func setTypeahead(modules []modules.Workable) {
@@ -933,6 +940,7 @@ func quit() {
 
 	appstate.IsRunning = false
 	appstate.IsSingle = false
+	appstate.AutoSelect = appstate.AutoSelectOld
 	// typeaheadSuggestionAccepted = ""
 	historyIndex = 0
 

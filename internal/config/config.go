@@ -87,6 +87,7 @@ type CustomCommand struct {
 }
 
 type GeneralModule struct {
+	AutoSelect         bool     `mapstructure:"auto_select"`
 	Delay              int      `mapstructure:"delay"`
 	EagerLoading       bool     `mapstructure:"eager_loading"`
 	History            bool     `mapstructure:"history"`

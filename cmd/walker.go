@@ -67,6 +67,10 @@ func main() {
 				state.Benchmark = true
 			}
 
+			if slices.Contains(args, "-x") || slices.Contains(args, "--autoselect") {
+				state.AutoSelect = true
+			}
+
 			state.IsService = slices.Contains(args, "--gapplication-service")
 
 			if state.IsService {
@@ -96,6 +100,7 @@ func main() {
 
 	app := gtk.NewApplication(appName, gio.ApplicationHandlesCommandLine)
 
+	app.AddMainOption("autoselect", 'x', glib.OptionFlagNone, glib.OptionArgNone, "auto select only item in list", "")
 	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
 	app.AddMainOption("new", 'n', glib.OptionFlagNone, glib.OptionArgNone, "start new instance ignoring service", "")
 	app.AddMainOption("keepsort", 'k', glib.OptionFlagNone, glib.OptionArgNone, "don't sort alphabetically", "")

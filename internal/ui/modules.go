@@ -171,6 +171,12 @@ func setupSingleModule() {
 		singleModule = toUse[0]
 	}
 
+	appstate.AutoSelectOld = appstate.AutoSelect
+
+	if !appstate.AutoSelect {
+		appstate.AutoSelect = singleModule.General().AutoSelect
+	}
+
 	glib.IdleAdd(func() {
 		elements.input.SetObjectProperty("search-delay", singleModule.General().Delay)
 	})

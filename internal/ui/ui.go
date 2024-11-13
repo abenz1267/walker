@@ -320,14 +320,13 @@ func setupElements(app *gtk.Application) *Elements {
 
 func setupFactory() *gtk.SignalListItemFactory {
 	factory := gtk.NewSignalListItemFactory()
-	factory.ConnectSetup(func(object *coreglib.Object) {
-		item := object.Cast().(*gtk.ListItem)
-		overlay := gtk.NewOverlay()
-		item.SetChild(overlay)
-	})
 
 	factory.ConnectBind(func(object *coreglib.Object) {
 		item := object.Cast().(*gtk.ListItem)
+
+		overlay := gtk.NewOverlay()
+		item.SetChild(overlay)
+
 		valObj := common.items.Item(item.Position())
 		val := gioutil.ObjectValue[util.Entry](valObj)
 		child := item.Child()

@@ -5,14 +5,16 @@ import (
 	"log"
 	"os/exec"
 	"strings"
+	"unicode"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
 )
 
 type Calc struct {
-	general config.GeneralModule
-	hasClip bool
+	general       config.GeneralModule
+	requireNumber bool
+	hasClip       bool
 }
 
 func (c *Calc) General() *config.GeneralModule {
@@ -35,6 +37,7 @@ func (c *Calc) Setup(cfg *config.Config) bool {
 
 	c.general = cfg.Builtins.Calc.GeneralModule
 	c.general.IsSetup = true
+	c.requireNumber = cfg.Builtins.Calc.RequireNumber
 
 	// to update exchange rates
 	cmd := exec.Command("qalc", "-e", "1+1")
@@ -46,6 +49,18 @@ func (c *Calc) Setup(cfg *config.Config) bool {
 func (c *Calc) SetupData(cfg *config.Config, ctx context.Context) {}
 
 func (c Calc) Entries(ctx context.Context, term string) []util.Entry {
+	hasNumber := false
+
+	for _, c := range term {
+		if unicode.IsDigit(c) {
+			hasNumber = true
+		}
+	}
+
+	if !hasNumber {
+		return []util.Entry{}
+	}
+
 	entries := []util.Entry{}
 
 	cmd := exec.Command("qalc", "-t", term)

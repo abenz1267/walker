@@ -72,6 +72,7 @@ type Builtins struct {
 
 type Calc struct {
 	GeneralModule `mapstructure:",squash"`
+	RequireNumber bool `mapstructure:"require_number"`
 }
 
 type CustomCommands struct {

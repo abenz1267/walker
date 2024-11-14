@@ -49,16 +49,18 @@ func (c *Calc) Setup(cfg *config.Config) bool {
 func (c *Calc) SetupData(cfg *config.Config, ctx context.Context) {}
 
 func (c Calc) Entries(ctx context.Context, term string) []util.Entry {
-	hasNumber := false
+	if c.requireNumber {
+		hasNumber := false
 
-	for _, c := range term {
-		if unicode.IsDigit(c) {
-			hasNumber = true
+		for _, c := range term {
+			if unicode.IsDigit(c) {
+				hasNumber = true
+			}
 		}
-	}
 
-	if !hasNumber {
-		return []util.Entry{}
+		if !hasNumber {
+			return []util.Entry{}
+		}
 	}
 
 	entries := []util.Entry{}

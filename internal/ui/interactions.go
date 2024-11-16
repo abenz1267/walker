@@ -944,7 +944,7 @@ func quit() {
 	appstate.IsRunning = false
 	appstate.IsSingle = false
 	appstate.AutoSelect = appstate.AutoSelectOld
-	// typeaheadSuggestionAccepted = ""
+
 	historyIndex = 0
 
 	for _, v := range toUse {

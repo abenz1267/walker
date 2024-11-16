@@ -329,16 +329,6 @@ func setTerminal(cfg *Config) {
 		"xterm",
 	}
 
-	term, ok := os.LookupEnv("TERM")
-	if ok {
-		t = append([]string{term}, t...)
-	}
-
-	terminal, ok := os.LookupEnv("TERMINAL")
-	if ok {
-		t = append([]string{terminal}, t...)
-	}
-
 	for _, v := range t {
 		path, _ := exec.LookPath(v)
 

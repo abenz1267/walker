@@ -117,10 +117,18 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 				cols := strings.Split(txt, e.separator)
 
 				if e.resultColumn > 0 {
+					if len(cols) < e.resultColumn {
+						continue
+					}
+
 					result = cols[e.resultColumn-1]
 				}
 
 				if e.labelColumn > 0 {
+					if len(cols) < e.labelColumn {
+						continue
+					}
+
 					label = cols[e.labelColumn-1]
 				}
 			}

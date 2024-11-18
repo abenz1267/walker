@@ -45,6 +45,13 @@ func getCSS(theme string) []byte {
 		}
 	} else {
 		switch theme {
+		case "default":
+			css, err = config.Themes.ReadFile("themes/default.css")
+			if err != nil {
+				log.Panicln(err)
+			}
+
+			createThemeFile(css)
 		case "kanagawa":
 			css, err = config.Themes.ReadFile("themes/kanagawa.css")
 			if err != nil {

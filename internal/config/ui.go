@@ -334,6 +334,11 @@ func getLayout(theme string) ([]byte, string) {
 		layoutFt = "json"
 
 		switch theme {
+		case "default":
+			layout, err = Themes.ReadFile("themes/default.json")
+			if err != nil {
+				log.Panicln(err)
+			}
 		case "kanagawa":
 			layout, err = Themes.ReadFile("themes/kanagawa.json")
 			if err != nil {

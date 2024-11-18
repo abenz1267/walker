@@ -59,6 +59,7 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
 
 ## Themes
 
+- default
 - catppuccin
 - kanagawa
 - bare

@@ -1,0 +1,74 @@
+{
+  "ui": {
+    "anchors": {
+      "top": true,
+      "bottom": true,
+      "left": true,
+      "right": true
+    },
+    "window": {
+      "v_align": "fill",
+      "h_align": "fill",
+      "box": {
+        "h_align": "center",
+        "width": 450,
+        "margins": {
+          "top": 200
+        },
+        "bar": {
+          "position": "end",
+          "orientation": "horizontal",
+          "margins": {},
+          "entry": {
+            "h_align": "fill",
+            "h_expand": true,
+            "icon": {
+              "theme": "Papirus",
+              "pixel_size": 24,
+              "h_align": "center",
+              "h_expand": true
+            }
+          }
+        },
+        "scroll": {
+          "list": {
+            "margins": {
+              "top": 8
+            },
+            "item": {
+              "margins": {},
+              "activation_label": {
+                "h_align": "fill",
+                "v_align": "fill",
+                "width": 20,
+                "x_align": 0.5,
+                "y_align": 0.5
+              },
+              "text": {
+                "sub": {}
+              },
+              "icon": {
+                "pixel_size": 26,
+                "theme": "Papirus"
+              }
+            },
+            "max_height": 300,
+            "max_width": 400,
+            "min_width": 400,
+            "width": 400
+          }
+        },
+        "search": {
+          "input": {
+            "h_align": "fill",
+            "h_expand": true,
+            "icons": true
+          },
+          "spinner": {
+            "hide": true
+          }
+        }
+      }
+    }
+  }
+}

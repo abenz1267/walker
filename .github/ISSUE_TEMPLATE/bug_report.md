@@ -1,10 +1,9 @@
---s
+---
 name: Bug report
 about: as title
-title: ''
-labels: ''
-assignees: ''
-
+title: ""
+labels: ""
+assignees: ""
 ---
 
 **Describe the bug**

@@ -122,6 +122,7 @@ func (r Runner) Entries(ctx context.Context, term string) []util.Entry {
 			RecalculateScore: true,
 			MatchFields:      1,
 			Matching:         util.Fuzzy,
+			Terminal:         true,
 		}
 
 		entries = append(entries, n)

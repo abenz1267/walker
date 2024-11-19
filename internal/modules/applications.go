@@ -237,6 +237,8 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 
 				scanner := bufio.NewScanner(file)
 
+				fmt.Println(path)
+
 				app := Application{
 					Generic: util.Entry{
 						Class:            ApplicationsName,
@@ -244,6 +246,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 						Matching:         matching,
 						RecalculateScore: true,
 						File:             path,
+						Searchable:       path,
 					},
 					Actions: []util.Entry{},
 				}
@@ -401,6 +404,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 					app.Actions[k].Prefer = true
 					app.Actions[k].RecalculateScore = true
 					app.Actions[k].File = path
+					app.Actions[k].Searchable = path
 				}
 
 				apps = append(apps, app)

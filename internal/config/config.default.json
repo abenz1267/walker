@@ -71,6 +71,7 @@
       "placeholder": "Custom Commands"
     },
     "emojis": {
+      "exec": "wl-copy",
       "weight": 5,
       "name": "emojis",
       "placeholder": "Emojis",

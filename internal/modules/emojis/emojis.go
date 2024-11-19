@@ -19,6 +19,8 @@ type Emojis struct {
 	general         config.GeneralModule
 	entries         []util.Entry
 	showUnqualified bool
+	exec            string
+	execAlt         string
 }
 
 func (e *Emojis) General() *config.GeneralModule {
@@ -34,6 +36,8 @@ func (e Emojis) Entries(ctx context.Context, term string) []util.Entry {
 func (e *Emojis) Setup(cfg *config.Config) bool {
 	e.general = cfg.Builtins.Emojis.GeneralModule
 	e.showUnqualified = cfg.Builtins.Emojis.ShowUnqualified
+	e.exec = cfg.Builtins.Emojis.Exec
+	e.execAlt = cfg.Builtins.Emojis.ExecAlt
 
 	return true
 }
@@ -59,7 +63,9 @@ func (e *Emojis) SetupData(cfg *config.Config, ctx context.Context) {
 		entries = append(entries, util.Entry{
 			Label:            fmt.Sprintf("%s %s", fields[4], fields[5]),
 			Sub:              "Emojis",
-			Exec:             fmt.Sprintf("wl-copy %s", fields[4]),
+			Exec:             e.exec,
+			ExecAlt:          e.execAlt,
+			Piped:            util.Piped{Content: fields[4], Type: "string"},
 			Searchable:       fields[5],
 			Categories:       []string{fields[0], fields[1]},
 			Class:            "emojis",

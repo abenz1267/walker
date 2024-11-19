@@ -92,19 +92,19 @@ type GeneralModule struct {
 	Delay              int      `mapstructure:"delay"`
 	EagerLoading       bool     `mapstructure:"eager_loading"`
 	History            bool     `mapstructure:"history"`
-	ShowIconWhenSingle bool     `mapstructure:"show_icon_when_single"`
 	Icon               string   `mapstructure:"icon"`
 	KeepSort           bool     `mapstructure:"keep_sort"`
-	Name               string   `mapstructure:"name"`
 	MinChars           int      `mapstructure:"min_chars"`
+	Name               string   `mapstructure:"name"`
 	Placeholder        string   `mapstructure:"placeholder"`
 	Prefix             string   `mapstructure:"prefix"`
 	Refresh            bool     `mapstructure:"refresh"`
+	ShowIconWhenSingle bool     `mapstructure:"show_icon_when_single"`
+	ShowSubWhenSingle  bool     `mapstructure:"show_sub_when_single"`
 	SwitcherOnly       bool     `mapstructure:"switcher_only"`
 	Theme              string   `mapstructure:"theme"`
 	ThemeBase          []string `mapstructure:"theme_base"`
 	Typeahead          bool     `mapstructure:"typeahead"`
-	ShowSubWhenSingle  bool     `mapstructure:"show_sub_when_single"`
 	Weight             int      `mapstructure:"weight"`
 
 	// internal
@@ -128,7 +128,9 @@ type Switcher struct {
 
 type Emojis struct {
 	GeneralModule   `mapstructure:",squash"`
-	ShowUnqualified bool `mapstructure:"show_unqualified"`
+	Exec            string `mapstructure:"exec"`
+	ExecAlt         string `mapstructure:"exec_alt"`
+	ShowUnqualified bool   `mapstructure:"show_unqualified"`
 }
 
 type SSH struct {

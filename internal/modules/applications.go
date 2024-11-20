@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/abenz1267/walker/internal/config"
+	"github.com/abenz1267/walker/internal/history"
 	"github.com/abenz1267/walker/internal/modules/windows/wlr"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/adrg/xdg"
@@ -24,17 +25,19 @@ import (
 const ApplicationsName = "applications"
 
 type Applications struct {
-	general        config.GeneralModule
-	mu             sync.Mutex
-	cache          bool
-	actions        bool
-	prioritizeNew  bool
-	entries        []util.Entry
-	isContextAware bool
-	openWindows    map[string]uint
-	wmRunning      bool
-	isWatching     bool
-	showGeneric    bool
+	general                   config.GeneralModule
+	mu                        sync.Mutex
+	cache                     bool
+	actions                   bool
+	prioritizeNew             bool
+	entries                   []util.Entry
+	isContextAware            bool
+	openWindows               map[string]uint
+	wmRunning                 bool
+	isWatching                bool
+	showGeneric               bool
+	hideActionsWithEmptyQuery bool
+	Hstry                     history.History
 }
 
 type Application struct {
@@ -57,6 +60,7 @@ func (a *Applications) Setup(cfg *config.Config) bool {
 	a.isContextAware = cfg.Builtins.Applications.ContextAware
 	a.showGeneric = cfg.Builtins.Applications.ShowGeneric
 	a.openWindows = make(map[string]uint)
+	a.hideActionsWithEmptyQuery = cfg.Builtins.Applications.HideActionsWithEmptyQuery
 
 	return true
 }
@@ -183,6 +187,29 @@ func (a *Applications) Refresh() {
 }
 
 func (a *Applications) Entries(ctx context.Context, term string) []util.Entry {
+	if a.hideActionsWithEmptyQuery && term == "" {
+		entries := []util.Entry{}
+
+		for _, entry := range a.entries {
+			if entry.IsAction {
+				for _, v := range a.Hstry {
+					if val, ok := v[entry.Identifier()]; ok {
+						if val.LastUsed.After(entry.LastUsed) {
+							entries = append(entries, entry)
+							continue
+						}
+					}
+				}
+
+				continue
+			}
+
+			entries = append(entries, entry)
+		}
+
+		return entries
+	}
+
 	return a.entries
 }
 
@@ -236,8 +263,6 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 				}
 
 				scanner := bufio.NewScanner(file)
-
-				fmt.Println(path)
 
 				app := Application{
 					Generic: util.Entry{

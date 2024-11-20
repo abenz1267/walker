@@ -145,12 +145,13 @@ type Websearch struct {
 }
 
 type Applications struct {
-	GeneralModule `mapstructure:",squash"`
-	Actions       bool `mapstructure:"actions"`
-	Cache         bool `mapstructure:"cache"`
-	PrioritizeNew bool `mapstructure:"prioritize_new"`
-	ContextAware  bool `mapstructure:"context_aware"`
-	ShowGeneric   bool `mapstructure:"show_generic"`
+	GeneralModule             `mapstructure:",squash"`
+	Actions                   bool `mapstructure:"actions"`
+	Cache                     bool `mapstructure:"cache"`
+	ContextAware              bool `mapstructure:"context_aware"`
+	HideActionsWithEmptyQuery bool `mapstructure:"hide_actions_with_empty_query"`
+	PrioritizeNew             bool `mapstructure:"prioritize_new"`
+	ShowGeneric               bool `mapstructure:"show_generic"`
 }
 
 type Windows struct {

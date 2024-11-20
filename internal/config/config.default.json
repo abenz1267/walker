@@ -27,6 +27,7 @@
       "placeholder": "Applications",
       "actions": true,
       "prioritize_new": true,
+      "hide_actions_with_empty_query": true,
       "context_aware": true,
       "refresh": true,
       "show_sub_when_single": true,

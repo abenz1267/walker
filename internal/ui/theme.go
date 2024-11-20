@@ -104,6 +104,8 @@ func setupTheme(theme string) {
 
 	if !appstate.Password {
 		setupScrollTheme()
+		setupAiScrollTheme()
+		setupWidgetStyle(&elements.ai.Widget, &layout.Window.Box.AiScroll.Content.Widget, false)
 		setupListTheme()
 	}
 
@@ -178,6 +180,7 @@ func setupBoxTheme() {
 		}
 
 		elements.box.Append(elements.scroll)
+		elements.box.Append(elements.aiScroll)
 
 		if layout.Window.Box.Bar.Position == "between" {
 			elements.box.Append(elements.bar)
@@ -200,6 +203,7 @@ func setupBoxTheme() {
 		}
 
 		elements.box.Append(elements.scroll)
+		elements.box.Append(elements.aiScroll)
 
 		if cfg.List.Placeholder != "" {
 			elements.box.Append(elements.listPlaceholder)
@@ -278,6 +282,22 @@ func setupBarTheme() {
 
 		barHasItems = true
 	}
+}
+
+func setupAiScrollTheme() {
+	vScrollbarPolicy := gtk.PolicyAutomatic
+	hScrollbarPolicy := gtk.PolicyAutomatic
+
+	setupWidgetStyle(&elements.aiScroll.Widget, &layout.Window.Box.AiScroll.Widget, false)
+
+	elements.aiScroll.Widget.SetVisible(false)
+
+	vScrollbarPolicy = layout.ScrollPolicyMap[layout.Window.Box.AiScroll.VScrollbarPolicy]
+
+	hScrollbarPolicy = layout.ScrollPolicyMap[layout.Window.Box.AiScroll.HScrollbarPolicy]
+
+	elements.scroll.SetOverlayScrolling(layout.Window.Box.AiScroll.OverlayScrolling)
+	elements.scroll.SetPolicy(vScrollbarPolicy, hScrollbarPolicy)
 }
 
 func setupScrollTheme() {

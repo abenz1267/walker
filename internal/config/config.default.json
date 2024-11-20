@@ -34,6 +34,17 @@
       "show_icon_when_single": true,
       "show_generic": false
     },
+    "ai": {
+      "weight": 5,
+      "placeholder": "AI",
+      "name": "ai",
+      "icon": "accessories-calculator",
+      "switcher_only": true,
+      "anthropic": {
+        "model": "claude-3-5-sonnet-20241022",
+        "max_tokens": 1000
+      }
+    },
     "calc": {
       "require_number": true,
       "weight": 5,

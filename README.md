@@ -21,6 +21,9 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
 
 ## Builtin Modules
 
+- ai
+  - currently only Claude 3.5
+  - define different prompts
 - runner
   - parses your shell config for aliases
   - exlusive list or all binaries

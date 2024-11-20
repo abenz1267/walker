@@ -132,9 +132,22 @@ type Window struct {
 type Box struct {
 	BoxWidget `mapstructure:",squash"`
 	Scroll    Scroll        `mapstructure:"scroll"`
+	AiScroll  AiScroll      `mapstructure:"ai_scroll"`
 	Revert    bool          `mapstructure:"revert"`
 	Search    SearchWrapper `mapstructure:"search"`
 	Bar       BarWrapper    `mapstructure:"bar"`
+}
+
+type AiScroll struct {
+	Widget           `mapstructure:",squash"`
+	Content          AiWrapper `mapstructure:"content"`
+	OverlayScrolling bool      `mapstructure:"overlay_scrolling"`
+	HScrollbarPolicy string    `mapstructure:"h_scrollbar_policy"`
+	VScrollbarPolicy string    `mapstructure:"v_scrollbar_policy"`
+}
+
+type AiWrapper struct {
+	Widget `mapstructure:",squash"`
 }
 
 type BarWrapper struct {

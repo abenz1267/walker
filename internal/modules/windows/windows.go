@@ -62,12 +62,14 @@ func (w Windows) Entries(ctx context.Context, term string) []util.Entry {
 func (w *Windows) Refresh() {
 }
 
-func (w Windows) SpecialFunc(args ...interface{}) {
+func (w Windows) SpecialFunc(args ...interface{}) string {
 	if len(args) == 0 {
-		return
+		return ""
 	}
 
 	id := args[0].(wl.ProxyId)
 
 	wlr.Activate(id)
+
+	return ""
 }

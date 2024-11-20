@@ -69,6 +69,7 @@ func setupLayouts(modules []modules.Workable) {
 func setAvailables(cfg *config.Config) {
 	res := []modules.Workable{
 		&modules.Applications{Hstry: hstry},
+		&modules.AI{},
 		&modules.Runner{},
 		&modules.Websearch{},
 		&modules.Calc{},

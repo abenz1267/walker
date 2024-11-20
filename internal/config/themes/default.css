@@ -1,5 +1,7 @@
 #window,
 #box,
+#aiscroll,
+#aicontent,
 #search,
 #password,
 #input,
@@ -19,6 +21,13 @@ slider,
 
 #window {
   color: rgba(255, 255, 255, 0.8);
+}
+
+#aiscroll,
+#aicontent,
+#aicontent > *:first-child {
+  background: none;
+  color: inherit;
 }
 
 #box {

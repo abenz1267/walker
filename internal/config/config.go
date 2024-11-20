@@ -56,6 +56,7 @@ type BarEntry struct {
 
 type Builtins struct {
 	Applications   Applications   `mapstructure:"applications"`
+	AI             AI             `mapstructure:"ai"`
 	Calc           Calc           `mapstructure:"calc"`
 	Clipboard      Clipboard      `mapstructure:"clipboard"`
 	Commands       Commands       `mapstructure:"commands"`
@@ -68,6 +69,22 @@ type Builtins struct {
 	Switcher       Switcher       `mapstructure:"switcher"`
 	Websearch      Websearch      `mapstructure:"websearch"`
 	Windows        Windows        `mapstructure:"windows"`
+}
+
+type AI struct {
+	GeneralModule `mapstructure:",squash"`
+	Anthropic     Anthropic `mapstructure:"anthropic"`
+}
+
+type Anthropic struct {
+	Model     string   `mapstructure:"model"`
+	MaxTokens int      `mapstructure:"max_tokens"`
+	Prompts   []Prompt `mapstructure:"prompts"`
+}
+
+type Prompt struct {
+	Label  string `mapstructure:"label"`
+	Prompt string `mapstructure:"prompt"`
 }
 
 type Calc struct {

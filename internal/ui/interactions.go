@@ -374,13 +374,36 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
 
-	if !keepOpen && entry.Sub != "switcher" && cfg.IsService {
+	if !keepOpen && entry.Sub != "switcher" && cfg.IsService && entry.SpecialFunc == nil {
 		go quit()
 	}
 
 	if entry.SpecialFunc != nil {
-		entry.SpecialFunc(entry.SpecialFuncArgs...)
-		closeAfterActivation(keepOpen, selectNext)
+		if timeoutTimer != nil {
+			timeoutTimer.Stop()
+		}
+
+		timeoutTimer = nil
+
+		args := []interface{}{}
+		args = append(args, entry.SpecialFuncArgs...)
+		args = append(args, elements.input.Text())
+
+		res := entry.SpecialFunc(args...)
+
+		if res != "" {
+			buf := gtk.NewTextBuffer(nil)
+			buf.SetText(res)
+
+			glib.IdleAdd(func() {
+				elements.scroll.SetVisible(false)
+				elements.ai.SetBuffer(buf)
+				elements.aiScroll.SetVisible(true)
+			})
+		} else {
+			closeAfterActivation(keepOpen, selectNext)
+		}
+
 		return
 	}
 
@@ -970,6 +993,14 @@ func quit() {
 		elements.input.SetText("")
 		elements.input.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
 		elements.appwin.SetVisible(false)
+
+		elements.scroll.SetVisible(true)
+
+		buf := gtk.NewTextBuffer(nil)
+		buf.SetText("")
+
+		elements.ai.SetBuffer(buf)
+		elements.aiScroll.SetVisible(false)
 	})
 
 	common.app.Hold()

@@ -28,9 +28,6 @@
               "activation_label": {
                 "x_align": 1.0,
                 "width": 20
-              },
-              "icon": {
-                "theme": "Kanagawa"
               }
             }
           }

@@ -23,9 +23,6 @@
                 "width": 20,
                 "x_align": 1
               },
-              "icon": {
-                "theme": "Papirus"
-              },
               "spacing": 5,
               "text": {
                 "revert": true

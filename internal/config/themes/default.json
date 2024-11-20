@@ -23,7 +23,6 @@
             "h_align": "fill",
             "h_expand": true,
             "icon": {
-              "theme": "Papirus",
               "pixel_size": 24,
               "h_align": "center",
               "h_expand": true
@@ -48,8 +47,7 @@
                 "sub": {}
               },
               "icon": {
-                "pixel_size": 26,
-                "theme": "Papirus"
+                "pixel_size": 26
               }
             },
             "max_height": 300,

@@ -22,6 +22,8 @@ type HistoryEntry struct {
 	DaysSinceUsed int       `json:"-"`
 }
 
+const HistoryName = "history_0.8.14.gob"
+
 func (s *History) Delete(hash string) {
 	for _, v := range *s {
 		for h := range v {
@@ -31,7 +33,7 @@ func (s *History) Delete(hash string) {
 		}
 	}
 
-	util.ToGob(&s, filepath.Join(util.CacheDir(), "history.gob"))
+	util.ToGob(&s, filepath.Join(util.CacheDir(), HistoryName))
 }
 
 func (s History) Save(hash string, prefix string) {
@@ -59,11 +61,11 @@ func (s History) Save(hash string, prefix string) {
 
 	p[hash] = h
 
-	util.ToGob(&s, filepath.Join(util.CacheDir(), "history.gob"))
+	util.ToGob(&s, filepath.Join(util.CacheDir(), HistoryName))
 }
 
 func Get() History {
-	file := filepath.Join(util.CacheDir(), "history.gob")
+	file := filepath.Join(util.CacheDir(), HistoryName)
 
 	history := History{}
 	_ = util.FromGob(file, &history)

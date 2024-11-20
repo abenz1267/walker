@@ -430,6 +430,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 					app.Actions[k].RecalculateScore = true
 					app.Actions[k].File = path
 					app.Actions[k].Searchable = path
+					app.Actions[k].IsAction = true
 				}
 
 				apps = append(apps, app)

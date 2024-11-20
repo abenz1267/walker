@@ -40,7 +40,7 @@ var (
 func setupCommands() {
 	commands = make(map[string]func())
 	commands["resethistory"] = func() {
-		os.Remove(filepath.Join(util.CacheDir(), "history.gob"))
+		os.Remove(filepath.Join(util.CacheDir(), history.HistoryName))
 		hstry = history.Get()
 	}
 	commands["clearapplicationscache"] = func() {

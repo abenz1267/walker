@@ -42,7 +42,13 @@
       "switcher_only": true,
       "anthropic": {
         "model": "claude-3-5-sonnet-20241022",
-        "max_tokens": 1000
+        "max_tokens": 1000,
+        "prompts": [
+          {
+            "label": "General Assistant",
+            "prompt": "You are a helpful general assistant. Keep your answers short and precise."
+          }
+        ]
       }
     },
     "calc": {

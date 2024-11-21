@@ -14,26 +14,20 @@ import (
 )
 
 type Plugin struct {
-	PluginCfg    config.Plugin
+	Config       config.Plugin
 	cachedOutput []byte
-	isSetup      bool
-	labelColumn  int
-	resultColumn int
-	separator    string
 }
 
 func (e *Plugin) General() *config.GeneralModule {
-	return &e.PluginCfg.GeneralModule
+	return &e.Config.GeneralModule
 }
 
 func (e *Plugin) Refresh() {
-	e.PluginCfg.IsSetup = !e.PluginCfg.Refresh
+	e.Config.IsSetup = !e.Config.Refresh
 }
 
 func (e *Plugin) Setup(cfg *config.Config) bool {
-	e.labelColumn = e.PluginCfg.LabelColumn
-	e.resultColumn = e.PluginCfg.ResultColumn
-	e.separator = util.TrasformSeparator(e.PluginCfg.Separator)
+	e.Config.Separator = util.TrasformSeparator(e.Config.Separator)
 
 	return true
 }
@@ -41,35 +35,35 @@ func (e *Plugin) Setup(cfg *config.Config) bool {
 func (e Plugin) Cleanup() {}
 
 func (e *Plugin) SetupData(cfg *config.Config, ctx context.Context) {
-	if e.PluginCfg.Entries != nil {
-		for k := range e.PluginCfg.Entries {
-			e.PluginCfg.Entries[k].Sub = e.PluginCfg.Name
-			e.PluginCfg.Entries[k].RecalculateScore = e.PluginCfg.RecalculateScore
+	if e.Config.Entries != nil {
+		for k := range e.Config.Entries {
+			e.Config.Entries[k].Sub = e.Config.Name
+			e.Config.Entries[k].RecalculateScore = e.Config.RecalculateScore
 		}
 	}
 
-	if e.PluginCfg.SrcOnce != "" {
-		e.PluginCfg.Src = e.PluginCfg.SrcOnce
+	if e.Config.SrcOnce != "" {
+		e.Config.Src = e.Config.SrcOnce
 		e.cachedOutput = e.getSrcOutput(false, "")
 	}
 
-	e.isSetup = true
-	e.PluginCfg.HasInitialSetup = true
+	e.Config.IsSetup = true
+	e.Config.HasInitialSetup = true
 }
 
 func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
-	if e.PluginCfg.Entries != nil {
-		for k := range e.PluginCfg.Entries {
-			e.PluginCfg.Entries[k].ScoreFinal = 0
-			e.PluginCfg.Entries[k].ScoreFuzzy = 0
+	if e.Config.Entries != nil {
+		for k := range e.Config.Entries {
+			e.Config.Entries[k].ScoreFinal = 0
+			e.Config.Entries[k].ScoreFuzzy = 0
 		}
 
-		return e.PluginCfg.Entries
+		return e.Config.Entries
 	}
 
 	entries := []util.Entry{}
 
-	if e.PluginCfg.Src == "" {
+	if e.Config.Src == "" {
 		return entries
 	}
 
@@ -77,20 +71,20 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 	hasExplicitResult := false
 	hasExplicitResultAlt := false
 
-	if strings.Contains(e.PluginCfg.Src, "%TERM%") {
+	if strings.Contains(e.Config.Src, "%TERM%") {
 		hasExplicitTerm = true
-		e.PluginCfg.Src = strings.ReplaceAll(e.PluginCfg.Src, "%TERM%", term)
+		e.Config.Src = strings.ReplaceAll(e.Config.Src, "%TERM%", term)
 	}
 
-	if strings.Contains(e.PluginCfg.Cmd, "%RESULT%") {
+	if strings.Contains(e.Config.Cmd, "%RESULT%") {
 		hasExplicitResult = true
 	}
 
-	if strings.Contains(e.PluginCfg.CmdAlt, "%RESULT%") {
+	if strings.Contains(e.Config.CmdAlt, "%RESULT%") {
 		hasExplicitResultAlt = true
 	}
 
-	if e.PluginCfg.Cmd != "" {
+	if e.Config.Cmd != "" {
 		var out []byte
 
 		if e.cachedOutput != nil {
@@ -113,34 +107,34 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 			result := txt
 			label := unescaped
 
-			if e.resultColumn > 0 || e.labelColumn > 0 {
-				cols := strings.Split(txt, e.separator)
+			if e.Config.ResultColumn > 0 || e.Config.LabelColumn > 0 {
+				cols := strings.Split(txt, e.Config.Separator)
 
-				if e.resultColumn > 0 {
-					if len(cols) < e.resultColumn {
+				if e.Config.ResultColumn > 0 {
+					if len(cols) < e.Config.ResultColumn {
 						continue
 					}
 
-					result = cols[e.resultColumn-1]
+					result = cols[e.Config.ResultColumn-1]
 				}
 
-				if e.labelColumn > 0 {
-					if len(cols) < e.labelColumn {
+				if e.Config.LabelColumn > 0 {
+					if len(cols) < e.Config.LabelColumn {
 						continue
 					}
 
-					label = cols[e.labelColumn-1]
+					label = cols[e.Config.LabelColumn-1]
 				}
 			}
 
 			e := util.Entry{
 				Label:    label,
-				Sub:      e.PluginCfg.Name,
-				Class:    e.PluginCfg.Name,
-				Terminal: e.PluginCfg.Terminal,
-				Exec:     strings.ReplaceAll(e.PluginCfg.Cmd, "%RESULT%", result),
-				ExecAlt:  strings.ReplaceAll(e.PluginCfg.CmdAlt, "%RESULT%", result),
-				Matching: e.PluginCfg.Matching,
+				Sub:      e.Config.Name,
+				Class:    e.Config.Name,
+				Terminal: e.Config.Terminal,
+				Exec:     strings.ReplaceAll(e.Config.Cmd, "%RESULT%", result),
+				ExecAlt:  strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result),
+				Matching: e.Config.Matching,
 			}
 
 			if !hasExplicitResult {
@@ -159,7 +153,7 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 		return entries
 	}
 
-	cmd := exec.Command("sh", "-c", e.PluginCfg.Src)
+	cmd := exec.Command("sh", "-c", e.Config.Src)
 
 	if !hasExplicitTerm {
 		cmd.Stdin = strings.NewReader(term)
@@ -178,14 +172,14 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 	}
 
 	for k := range entries {
-		entries[k].Class = e.PluginCfg.Name
+		entries[k].Class = e.Config.Name
 	}
 
 	return entries
 }
 
 func (e Plugin) getSrcOutput(hasExplicitTerm bool, term string) []byte {
-	cmd := exec.Command("sh", "-c", e.PluginCfg.Src)
+	cmd := exec.Command("sh", "-c", e.Config.Src)
 
 	if !hasExplicitTerm && term != "" {
 		cmd.Stdin = strings.NewReader(term)

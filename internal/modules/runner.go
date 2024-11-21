@@ -17,23 +17,19 @@ import (
 )
 
 type Runner struct {
-	general      config.GeneralModule
-	shellConfig  string
-	genericEntry bool
-	aliases      map[string]string
-	bins         []string
+	config  config.Runner
+	aliases map[string]string
+	bins    []string
 }
 
 func (r Runner) Cleanup() {}
 
 func (r *Runner) General() *config.GeneralModule {
-	return &r.general
+	return &r.config.GeneralModule
 }
 
 func (r *Runner) Setup(cfg *config.Config) bool {
-	r.general = cfg.Builtins.Runner.GeneralModule
-	r.shellConfig = cfg.Builtins.Runner.ShellConfig
-	r.genericEntry = cfg.Builtins.Runner.GenericEntry
+	r.config = cfg.Builtins.Runner
 
 	return true
 }
@@ -59,12 +55,12 @@ func (r *Runner) SetupData(cfg *config.Config, ctx context.Context) {
 		r.bins = filtered
 	}
 
-	r.general.IsSetup = true
-	r.general.HasInitialSetup = true
+	r.config.IsSetup = true
+	r.config.HasInitialSetup = true
 }
 
 func (r *Runner) Refresh() {
-	r.general.IsSetup = !r.general.Refresh
+	r.config.IsSetup = !r.config.Refresh
 }
 
 func (r Runner) Entries(ctx context.Context, term string) []util.Entry {
@@ -112,7 +108,7 @@ func (r Runner) Entries(ctx context.Context, term string) []util.Entry {
 		exec = fmt.Sprintf("%s %s", bin, strings.Join(fields[1:], " "))
 	}
 
-	if r.genericEntry {
+	if r.config.GenericEntry {
 		n := util.Entry{
 			Label:            fmt.Sprintf("run: %s", term),
 			Sub:              "Runner",
@@ -176,13 +172,13 @@ func (r *Runner) getBins() {
 }
 
 func (r *Runner) parseAliases() {
-	if r.shellConfig == "" {
+	if r.config.ShellConfig == "" {
 		return
 	}
 
 	r.aliases = make(map[string]string)
 
-	file, err := os.Open(r.shellConfig)
+	file, err := os.Open(r.config.ShellConfig)
 	if err != nil {
 		log.Println(err)
 		return

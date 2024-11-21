@@ -20,18 +20,15 @@ var (
 )
 
 type Dmenu struct {
-	general            config.GeneralModule
-	isSetup            bool
+	Config             config.Dmenu
 	Content            []string
-	Separator          string
-	LabelColumn        int
 	initialSeparator   string
 	initialLabelColumn int
 	IsService          bool
 }
 
 func (d *Dmenu) General() *config.GeneralModule {
-	return &d.general
+	return &d.Config.GeneralModule
 }
 
 func (d Dmenu) Entries(ctx context.Context, term string) []util.Entry {
@@ -40,11 +37,11 @@ func (d Dmenu) Entries(ctx context.Context, term string) []util.Entry {
 	for _, v := range d.Content {
 		label := v
 
-		if d.LabelColumn > 0 {
-			split := strings.Split(v, d.Separator)
+		if d.Config.LabelColumn > 0 {
+			split := strings.Split(v, d.Config.Separator)
 
-			if len(split) >= d.LabelColumn {
-				label = split[d.LabelColumn-1]
+			if len(split) >= d.Config.LabelColumn {
+				label = split[d.Config.LabelColumn-1]
 			}
 		}
 
@@ -108,22 +105,21 @@ func (d Dmenu) ListenForReply() {
 }
 
 func (d *Dmenu) Setup(cfg *config.Config) bool {
-	d.general = cfg.Builtins.Dmenu.GeneralModule
+	d.Config = cfg.Builtins.Dmenu
 
-	d.Separator = util.TrasformSeparator(cfg.Builtins.Dmenu.Separator)
-	d.LabelColumn = cfg.Builtins.Dmenu.LabelColumn
+	d.Config.Separator = util.TrasformSeparator(d.Config.Separator)
 
-	d.initialSeparator = d.Separator
-	d.initialLabelColumn = d.LabelColumn
+	d.initialSeparator = d.Config.Separator
+	d.initialLabelColumn = d.Config.LabelColumn
 
-	d.general.SwitcherOnly = true
+	d.Config.SwitcherOnly = true
 
 	return true
 }
 
 func (d *Dmenu) Cleanup() {
-	d.Separator = d.initialSeparator
-	d.LabelColumn = d.initialLabelColumn
+	d.Config.Separator = d.initialSeparator
+	d.Config.LabelColumn = d.initialLabelColumn
 }
 
 func (d *Dmenu) StartListening() {
@@ -185,8 +181,8 @@ func (d *Dmenu) SetupData(cfg *config.Config, ctx context.Context) {
 		d.IsService = true
 	}
 
-	d.isSetup = true
-	d.general.HasInitialSetup = true
+	d.Config.IsSetup = true
+	d.Config.HasInitialSetup = true
 
 	if !d.IsService {
 		scanner := bufio.NewScanner(os.Stdin)
@@ -198,5 +194,5 @@ func (d *Dmenu) SetupData(cfg *config.Config, ctx context.Context) {
 }
 
 func (d *Dmenu) Refresh() {
-	d.general.IsSetup = !d.general.Refresh
+	d.Config.IsSetup = !d.Config.Refresh
 }

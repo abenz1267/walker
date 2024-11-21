@@ -143,7 +143,7 @@ func main() {
 
 			if separatorString != nil && separatorString.String() != "" {
 				if state.Dmenu != nil {
-					state.Dmenu.Separator = separatorString.String()
+					state.Dmenu.Config.Separator = separatorString.String()
 				} else {
 					state.DmenuSeparator = separatorString.String()
 				}
@@ -156,7 +156,7 @@ func main() {
 				}
 
 				if state.Dmenu != nil {
-					state.Dmenu.LabelColumn = col
+					state.Dmenu.Config.LabelColumn = col
 				} else {
 					state.DmenuLabelColumn = col
 				}

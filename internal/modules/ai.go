@@ -21,12 +21,9 @@ const (
 )
 
 type AI struct {
-	general         config.GeneralModule
-	config          config.AI
-	isSetup         bool
-	hasInitialSetup bool
-	anthropicKey    string
-	entries         []util.Entry
+	config       config.AI
+	entries      []util.Entry
+	anthropicKey string
 }
 
 func (ai *AI) Cleanup() {
@@ -37,14 +34,13 @@ func (ai *AI) Entries(ctx context.Context, term string) []util.Entry {
 }
 
 func (ai *AI) General() *config.GeneralModule {
-	return &ai.general
+	return &ai.config.GeneralModule
 }
 
 func (ai *AI) Refresh() {
 }
 
 func (ai *AI) Setup(cfg *config.Config) bool {
-	ai.general = cfg.Builtins.AI.GeneralModule
 	ai.config = cfg.Builtins.AI
 
 	return true
@@ -76,8 +72,8 @@ func (ai *AI) SetupData(cfg *config.Config, ctx context.Context) {
 		log.Println("ai: no anthropic api key set.")
 	}
 
-	ai.general.IsSetup = true
-	ai.general.HasInitialSetup = true
+	ai.config.IsSetup = true
+	ai.config.HasInitialSetup = true
 }
 
 type AnthropicRequest struct {

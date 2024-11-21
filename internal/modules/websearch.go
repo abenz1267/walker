@@ -23,8 +23,7 @@ const (
 )
 
 type Websearch struct {
-	general    config.GeneralModule
-	engines    []string
+	config     config.Websearch
 	engineInfo map[string]EngineInfo
 	threshold  int
 }
@@ -35,21 +34,20 @@ type EngineInfo struct {
 }
 
 func (w *Websearch) General() *config.GeneralModule {
-	return &w.general
+	return &w.config.GeneralModule
 }
 
 func (w Websearch) Cleanup() {}
 
 func (w *Websearch) Setup(cfg *config.Config) bool {
-	w.engines = cfg.Builtins.Websearch.Engines
-	w.general = cfg.Builtins.Websearch.GeneralModule
+	w.config = cfg.Builtins.Websearch
 	w.threshold = cfg.List.VisibilityThreshold
 
 	return true
 }
 
 func (w *Websearch) SetupData(_ *config.Config, ctx context.Context) {
-	slices.Reverse(w.engines)
+	slices.Reverse(w.config.Engines)
 
 	w.engineInfo = make(map[string]EngineInfo)
 
@@ -73,12 +71,12 @@ func (w *Websearch) SetupData(_ *config.Config, ctx context.Context) {
 		URL:   YandexURL,
 	}
 
-	w.general.IsSetup = true
-	w.general.HasInitialSetup = true
+	w.config.IsSetup = true
+	w.config.HasInitialSetup = true
 }
 
 func (w *Websearch) Refresh() {
-	w.general.IsSetup = !w.general.Refresh
+	w.config.IsSetup = !w.config.Refresh
 }
 
 func (w Websearch) Entries(ctx context.Context, term string) []util.Entry {
@@ -90,9 +88,9 @@ func (w Websearch) Entries(ctx context.Context, term string) []util.Entry {
 		return nil
 	}
 
-	term = strings.TrimPrefix(term, w.general.Prefix)
+	term = strings.TrimPrefix(term, w.config.Prefix)
 
-	for k, v := range w.engines {
+	for k, v := range w.config.Engines {
 		if val, ok := w.engineInfo[strings.ToLower(v)]; ok {
 			url := strings.ReplaceAll(val.URL, "%TERM%", url.QueryEscape(term))
 

@@ -12,13 +12,12 @@ import (
 )
 
 type Calc struct {
-	general       config.GeneralModule
-	requireNumber bool
-	hasClip       bool
+	config  config.Calc
+	hasClip bool
 }
 
 func (c *Calc) General() *config.GeneralModule {
-	return &c.general
+	return &c.config.GeneralModule
 }
 
 func (c Calc) Cleanup() {}
@@ -35,9 +34,7 @@ func (c *Calc) Setup(cfg *config.Config) bool {
 		c.hasClip = true
 	}
 
-	c.general = cfg.Builtins.Calc.GeneralModule
-	c.general.IsSetup = true
-	c.requireNumber = cfg.Builtins.Calc.RequireNumber
+	c.config = cfg.Builtins.Calc
 
 	// to update exchange rates
 	cmd := exec.Command("qalc", "-e", "1+1")
@@ -49,7 +46,7 @@ func (c *Calc) Setup(cfg *config.Config) bool {
 func (c *Calc) SetupData(cfg *config.Config, ctx context.Context) {}
 
 func (c Calc) Entries(ctx context.Context, term string) []util.Entry {
-	if c.requireNumber {
+	if c.config.RequireNumber {
 		hasNumber := false
 
 		for _, c := range term {

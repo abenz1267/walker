@@ -25,19 +25,13 @@ import (
 const ApplicationsName = "applications"
 
 type Applications struct {
-	general                   config.GeneralModule
-	mu                        sync.Mutex
-	cache                     bool
-	actions                   bool
-	prioritizeNew             bool
-	entries                   []util.Entry
-	isContextAware            bool
-	openWindows               map[string]uint
-	wmRunning                 bool
-	isWatching                bool
-	showGeneric               bool
-	hideActionsWithEmptyQuery bool
-	Hstry                     history.History
+	config      config.Applications
+	mu          sync.Mutex
+	entries     []util.Entry
+	openWindows map[string]uint
+	wmRunning   bool
+	isWatching  bool
+	Hstry       history.History
 }
 
 type Application struct {
@@ -46,38 +40,32 @@ type Application struct {
 }
 
 func (a *Applications) General() *config.GeneralModule {
-	return &a.general
+	return &a.config.GeneralModule
 }
 
 func (a *Applications) Cleanup() {}
 
 func (a *Applications) Setup(cfg *config.Config) bool {
-	a.general = cfg.Builtins.Applications.GeneralModule
+	a.config = cfg.Builtins.Applications
 
-	a.cache = cfg.Builtins.Applications.Cache
-	a.actions = cfg.Builtins.Applications.Actions
-	a.prioritizeNew = cfg.Builtins.Applications.PrioritizeNew
-	a.isContextAware = cfg.Builtins.Applications.ContextAware
-	a.showGeneric = cfg.Builtins.Applications.ShowGeneric
 	a.openWindows = make(map[string]uint)
-	a.hideActionsWithEmptyQuery = cfg.Builtins.Applications.HideActionsWithEmptyQuery
 
 	return true
 }
 
 func (a *Applications) SetupData(cfg *config.Config, ctx context.Context) {
-	a.entries = parse(a.cache, a.actions, a.prioritizeNew, a.openWindows, a.showGeneric)
+	a.entries = a.parse()
 
 	if cfg.IsService {
 		go a.Watch()
 	}
 
-	if !a.wmRunning && a.isContextAware {
+	if !a.wmRunning && a.config.ContextAware {
 		go a.RunWm()
 	}
 
-	a.general.IsSetup = true
-	a.general.HasInitialSetup = true
+	a.config.IsSetup = true
+	a.config.HasInitialSetup = true
 }
 
 func (a *Applications) Watch() {
@@ -130,7 +118,7 @@ func (a *Applications) debounceParsing(interval time.Duration, input chan struct
 			shouldParse = true
 		case <-time.After(interval):
 			if shouldParse {
-				a.entries = parse(a.cache, a.actions, a.prioritizeNew, a.openWindows, a.showGeneric)
+				a.entries = a.parse()
 				shouldParse = false
 			}
 		}
@@ -182,12 +170,12 @@ func (a *Applications) RunWm() {
 
 func (a *Applications) Refresh() {
 	if !a.isWatching {
-		a.general.IsSetup = !a.general.Refresh
+		a.config.IsSetup = !a.config.Refresh
 	}
 }
 
 func (a *Applications) Entries(ctx context.Context, term string) []util.Entry {
-	if a.hideActionsWithEmptyQuery && term == "" {
+	if a.config.HideActionsWithEmptyQuery && term == "" {
 		entries := []util.Entry{}
 		added := make(map[string]struct{})
 
@@ -219,12 +207,12 @@ func (a *Applications) Entries(ctx context.Context, term string) []util.Entry {
 	return a.entries
 }
 
-func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, showGeneric bool) []util.Entry {
+func (a *Applications) parse() []util.Entry {
 	apps := []Application{}
 	entries := []util.Entry{}
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
 
-	if cache {
+	if a.config.Cache {
 		ok := readCache(ApplicationsName, &entries)
 		if ok {
 			return entries
@@ -257,7 +245,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 
 				matching := util.Fuzzy
 
-				if prioritizeNew {
+				if a.config.PrioritizeNew {
 					if info, err := times.Stat(path); err == nil {
 						target := time.Now().Add(-time.Minute * 5)
 
@@ -299,7 +287,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 					}
 
 					if strings.HasPrefix(line, "[Desktop Action") {
-						if !actions {
+						if !a.config.Actions {
 							skip = true
 						}
 
@@ -377,7 +365,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 						if strings.HasPrefix(line, "StartupWMClass=") {
 							app.Generic.InitialClass = strings.ToLower(strings.TrimSpace(strings.TrimPrefix(line, "StartupWMClass=")))
 
-							if val, ok := openWindows[app.Generic.InitialClass]; ok {
+							if val, ok := a.openWindows[app.Generic.InitialClass]; ok {
 								app.Generic.OpenWindows = val
 							}
 
@@ -418,7 +406,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 				for k := range app.Actions {
 					sub := app.Generic.Label
 
-					if showGeneric && app.Generic.Sub != "" {
+					if a.config.ShowGeneric && app.Generic.Sub != "" {
 						sub = fmt.Sprintf("%s (%s)", app.Generic.Label, app.Generic.Sub)
 					}
 
@@ -453,7 +441,7 @@ func parse(cache, actions, prioritizeNew bool, openWindows map[string]uint, show
 		entries = append(entries, v.Actions...)
 	}
 
-	if cache {
+	if a.config.Cache {
 		util.ToJson(&entries, filepath.Join(util.CacheDir(), fmt.Sprintf("%s.json", ApplicationsName)))
 	}
 

@@ -8,12 +8,12 @@ import (
 )
 
 type Commands struct {
-	general config.GeneralModule
+	config  config.Commands
 	entries []util.Entry
 }
 
 func (c *Commands) General() *config.GeneralModule {
-	return &c.general
+	return &c.config.GeneralModule
 }
 
 func (c Commands) Cleanup() {}
@@ -23,7 +23,7 @@ func (c Commands) Entries(ctx context.Context, term string) []util.Entry {
 }
 
 func (c *Commands) Setup(cfg *config.Config) bool {
-	c.general = cfg.Builtins.Commands.GeneralModule
+	c.config = cfg.Builtins.Commands
 
 	return true
 }
@@ -60,10 +60,10 @@ func (c *Commands) SetupData(cfg *config.Config, ctx context.Context) {
 		})
 	}
 
-	c.general.IsSetup = true
-	c.general.HasInitialSetup = true
+	c.config.IsSetup = true
+	c.config.HasInitialSetup = true
 }
 
 func (c *Commands) Refresh() {
-	c.general.IsSetup = !c.general.Refresh
+	c.config.IsSetup = !c.config.Refresh
 }

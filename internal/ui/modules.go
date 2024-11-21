@@ -88,7 +88,7 @@ func setAvailables(cfg *config.Config) {
 
 	for _, v := range cfg.Plugins {
 		e := &modules.Plugin{}
-		e.PluginCfg = v
+		e.Config = v
 
 		res = append(res, e)
 	}

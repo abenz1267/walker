@@ -6,7 +6,6 @@ import (
 	"log"
 	"os"
 	"strings"
-	"sync"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
@@ -14,20 +13,18 @@ import (
 )
 
 type Finder struct {
-	mutex       sync.Mutex
-	general     config.GeneralModule
-	concurrency int
-	entries     []util.Entry
+	config  config.Finder
+	entries []util.Entry
 }
 
 func (f *Finder) General() *config.GeneralModule {
-	return &f.general
+	return &f.config.GeneralModule
 }
 
 func (f *Finder) Cleanup() {}
 
 func (f *Finder) Refresh() {
-	f.general.IsSetup = !f.general.Refresh
+	f.config.IsSetup = !f.config.Refresh
 }
 
 func (f *Finder) Entries(ctx context.Context, term string) []util.Entry {
@@ -35,8 +32,7 @@ func (f *Finder) Entries(ctx context.Context, term string) []util.Entry {
 }
 
 func (f *Finder) Setup(cfg *config.Config) bool {
-	f.general = cfg.Builtins.Finder.GeneralModule
-	f.concurrency = cfg.Builtins.Finder.Concurrency
+	f.config = cfg.Builtins.Finder
 
 	if cfg.Builtins.Finder.EagerLoading {
 		go f.SetupData(cfg, context.Background())
@@ -62,7 +58,7 @@ func (f *Finder) SetupData(cfg *config.Config, ctx context.Context) {
 		return true
 	}
 
-	fileWalker.SetConcurrency(f.concurrency)
+	fileWalker.SetConcurrency(f.config.Concurrency)
 
 	fileWalker.SetErrorHandler(errorHandler)
 
@@ -79,13 +75,13 @@ func (f *Finder) SetupData(cfg *config.Config, ctx context.Context) {
 		select {
 		case <-done:
 			fileWalker.Terminate()
-			f.general.IsSetup = true
-			f.general.HasInitialSetup = true
+			f.config.IsSetup = true
+			f.config.HasInitialSetup = true
 			return
 		case <-ctx.Done():
 			fileWalker.Terminate()
-			f.general.IsSetup = true
-			f.general.HasInitialSetup = true
+			f.config.IsSetup = true
+			f.config.HasInitialSetup = true
 			return
 		case file := <-fileListQueue:
 			if file == nil {

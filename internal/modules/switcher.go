@@ -8,12 +8,12 @@ import (
 )
 
 type Switcher struct {
-	general config.GeneralModule
-	cfg     *config.Config
+	config    config.Switcher
+	available []string
 }
 
 func (s *Switcher) General() *config.GeneralModule {
-	return &s.general
+	return &s.config.GeneralModule
 }
 
 func (s Switcher) Cleanup() {}
@@ -21,7 +21,7 @@ func (s Switcher) Cleanup() {}
 func (s Switcher) Entries(ctx context.Context, term string) []util.Entry {
 	entries := []util.Entry{}
 
-	for _, v := range s.cfg.Available {
+	for _, v := range s.available {
 		if v == "switcher" {
 			continue
 		}
@@ -42,19 +42,19 @@ func (s Switcher) Entries(ctx context.Context, term string) []util.Entry {
 }
 
 func (s *Switcher) Setup(cfg *config.Config) bool {
-	s.general = cfg.Builtins.Switcher.GeneralModule
+	s.config = cfg.Builtins.Switcher
 
-	s.cfg = cfg
+	s.available = cfg.Available
 
-	s.general.IsSetup = true
+	s.config.IsSetup = true
 
 	return true
 }
 
 func (s *Switcher) SetupData(cfg *config.Config, ctx context.Context) {
-	s.general.HasInitialSetup = true
+	s.config.HasInitialSetup = true
 }
 
 func (s *Switcher) Refresh() {
-	s.general.IsSetup = !s.general.Refresh
+	s.config.IsSetup = !s.config.Refresh
 }

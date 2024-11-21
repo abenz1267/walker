@@ -14,18 +14,18 @@ import (
 )
 
 type SSH struct {
-	general config.GeneralModule
+	config  config.SSH
 	entries []util.Entry
 }
 
 func (s *SSH) General() *config.GeneralModule {
-	return &s.general
+	return &s.config.GeneralModule
 }
 
 func (s SSH) Cleanup() {}
 
 func (s *SSH) Refresh() {
-	s.general.IsSetup = !s.general.Refresh
+	s.config.IsSetup = !s.config.Refresh
 }
 
 func (s SSH) Entries(ctx context.Context, term string) []util.Entry {
@@ -47,7 +47,7 @@ func (s SSH) Entries(ctx context.Context, term string) []util.Entry {
 }
 
 func (s *SSH) Setup(cfg *config.Config) bool {
-	s.general = cfg.Builtins.SSH.GeneralModule
+	s.config = cfg.Builtins.SSH
 
 	return true
 }
@@ -72,8 +72,8 @@ func (s *SSH) SetupData(cfg *config.Config, ctx context.Context) {
 	s.entries = append(s.entries, getHostFileEntries(hosts)...)
 	s.entries = append(s.entries, getConfigFileEntries(sshCfg)...)
 
-	s.general.IsSetup = true
-	s.general.HasInitialSetup = true
+	s.config.IsSetup = true
+	s.config.HasInitialSetup = true
 }
 
 func getConfigFileEntries(sshCfg string) []util.Entry {

@@ -44,30 +44,8 @@ func getCSS(theme string) []byte {
 			log.Panicln(err)
 		}
 	} else {
-		switch theme {
-		case "default":
+		if theme == "default" {
 			css, err = config.Themes.ReadFile("themes/default.css")
-			if err != nil {
-				log.Panicln(err)
-			}
-
-			createThemeFile(css)
-		case "kanagawa":
-			css, err = config.Themes.ReadFile("themes/kanagawa.css")
-			if err != nil {
-				log.Panicln(err)
-			}
-
-			createThemeFile(css)
-		case "bare":
-			css, err = config.Themes.ReadFile("themes/bare.css")
-			if err != nil {
-				log.Panicln(err)
-			}
-
-			createThemeFile(css)
-		case "catppuccin":
-			css, err = config.Themes.ReadFile("themes/catppuccin.css")
 			if err != nil {
 				log.Panicln(err)
 			}

@@ -60,13 +60,6 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
   - f.e. `toggle window floating`
   - no need to create keybinds for commands you don't run often
 
-## Themes
-
-- default
-- catppuccin
-- kanagawa
-- bare
-
 ## Requirements
 
 - gtk4-layer-shell

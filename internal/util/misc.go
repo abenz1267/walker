@@ -42,19 +42,19 @@ type Entry struct {
 	Prefer           bool         `mapstructure:"prefer,omitempty" json:"prefer,omitempty"`
 
 	// internal
-	DaysSinceUsed   int                              `mapstructure:"-"`
-	File            string                           `mapstructure:"-"`
-	History         bool                             `mapstructure:"-"`
-	LastUsed        time.Time                        `mapstructure:"-"`
-	Module          string                           `mapstructure:"-"`
-	OpenWindows     uint                             `mapstructure:"-"`
-	Piped           Piped                            `mapstructure:"-"`
-	PipedAlt        Piped                            `mapstructure:"-"`
-	SpecialFunc     func(args ...interface{}) string `mapstructure:"-"`
-	SpecialFuncArgs []interface{}                    `mapstructure:"-"`
-	Used            int                              `mapstructure:"-"`
-	Weight          int                              `mapstructure:"-"`
-	IsAction        bool                             `mapstructure:"-"`
+	DaysSinceUsed   int                       `mapstructure:"-"`
+	File            string                    `mapstructure:"-"`
+	History         bool                      `mapstructure:"-"`
+	LastUsed        time.Time                 `mapstructure:"-"`
+	Module          string                    `mapstructure:"-"`
+	OpenWindows     uint                      `mapstructure:"-"`
+	Piped           Piped                     `mapstructure:"-"`
+	PipedAlt        Piped                     `mapstructure:"-"`
+	SpecialFunc     func(args ...interface{}) `mapstructure:"-"`
+	SpecialFuncArgs []interface{}             `mapstructure:"-"`
+	Used            int                       `mapstructure:"-"`
+	Weight          int                       `mapstructure:"-"`
+	IsAction        bool                      `mapstructure:"-"`
 }
 
 func (e Entry) Identifier() string {

@@ -34,14 +34,22 @@
           "h_align": "fill",
           "v_align": "fill",
           "max_height": 300,
-          "max_width": 400,
           "min_width": 400,
           "height": 300,
           "width": 400,
-          "content": {
-            "name": "aicontent",
-            "h_align": "fill",
-            "v_align": "fill"
+          "list": {
+            "name": "ailist",
+            "orientation": "vertical",
+            "width": 400,
+            "spacing": 10,
+            "item": {
+              "name": "aiitem",
+              "h_align": "fill",
+              "v_align": "fill",
+              "x_align": 0.0,
+              "y_align": 0.0,
+              "wrap": true
+            }
           }
         },
         "scroll": {

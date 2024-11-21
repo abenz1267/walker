@@ -140,14 +140,15 @@ type Box struct {
 
 type AiScroll struct {
 	Widget           `mapstructure:",squash"`
-	Content          AiWrapper `mapstructure:"content"`
-	OverlayScrolling bool      `mapstructure:"overlay_scrolling"`
-	HScrollbarPolicy string    `mapstructure:"h_scrollbar_policy"`
-	VScrollbarPolicy string    `mapstructure:"v_scrollbar_policy"`
+	List             AiListWrapper `mapstructure:"list"`
+	OverlayScrolling bool          `mapstructure:"overlay_scrolling"`
+	HScrollbarPolicy string        `mapstructure:"h_scrollbar_policy"`
+	VScrollbarPolicy string        `mapstructure:"v_scrollbar_policy"`
 }
 
-type AiWrapper struct {
-	Widget `mapstructure:",squash"`
+type AiListWrapper struct {
+	BoxWidget `mapstructure:",squash"`
+	Item      LabelWidget `mapstructure:"item"`
 }
 
 type BarWrapper struct {

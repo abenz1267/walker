@@ -83,7 +83,6 @@ func setupTheme(theme string) {
 	if !appstate.Password {
 		setupScrollTheme()
 		setupAiScrollTheme()
-		setupWidgetStyle(&elements.ai.Widget, &layout.Window.Box.AiScroll.Content.Widget, false)
 		setupListTheme()
 	}
 

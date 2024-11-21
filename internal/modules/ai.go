@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
 const (
@@ -77,13 +80,15 @@ func (ai *AI) SetupData(cfg *config.Config, ctx context.Context) {
 }
 
 type AnthropicRequest struct {
-	Model     string `json:"model"`
-	MaxTokens int    `json:"max_tokens"`
-	System    string `json:"system"`
-	Messages  []struct {
-		Role    string `json:"role"`
-		Content string `json:"content"`
-	} `json:"messages"`
+	Model     string             `json:"model"`
+	MaxTokens int                `json:"max_tokens"`
+	System    string             `json:"system"`
+	Messages  []AnthropicMessage `json:"messages"`
+}
+
+type AnthropicMessage struct {
+	Role    string `json:"role"`
+	Content string `json:"content"`
 }
 
 type AnthropicResponse struct {
@@ -99,15 +104,12 @@ type AnthropicResponse struct {
 	} `json:"content,omitempty"`
 }
 
-func (ai *AI) anthropic(query string, prompt string) string {
+func (ai *AI) anthropic(query string, prompt string, scroll *gtk.ScrolledWindow, setupLabelWidgetStyle func(label *gtk.Label, style *config.LabelWidget), labelWidgetStyle *config.LabelWidget) {
 	req := AnthropicRequest{
 		Model:     ai.config.Anthropic.Model,
 		MaxTokens: ai.config.Anthropic.MaxTokens,
 		System:    prompt,
-		Messages: []struct {
-			Role    string `json:"role"`
-			Content string `json:"content"`
-		}{
+		Messages: []AnthropicMessage{
 			{
 				Role:    "user",
 				Content: query,
@@ -137,18 +139,58 @@ func (ai *AI) anthropic(query string, prompt string) string {
 		log.Panicln(err)
 	}
 
-	return anthropicResp.Content[0].Text
+	messages := []AnthropicMessage{}
+	messages = append(messages, AnthropicMessage{
+		Role:    "user",
+		Content: query,
+	})
+
+	messages = append(messages, AnthropicMessage{
+		Role:    "assistant",
+		Content: anthropicResp.Content[0].Text,
+	})
+
+	glib.IdleAdd(func() {
+		box := scroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
+		spinner := box.FirstChild().(*gtk.Spinner)
+		spinner.SetVisible(false)
+
+		for _, v := range messages {
+			content := v.Content
+
+			if v.Role == "user" {
+				content = fmt.Sprintf(">> %s", content)
+			}
+
+			label := gtk.NewLabel(content)
+
+			label.SetWrap(true)
+
+			if v.Role == "user" {
+				label.SetCSSClasses([]string{"aiItem", "user"})
+			} else {
+				label.SetCSSClasses([]string{"aiItem", "assistant"})
+			}
+
+			setupLabelWidgetStyle(label, labelWidgetStyle)
+
+			box.Append(label)
+		}
+
+		scroll.SetChild(box)
+	})
 }
 
-func (ai *AI) SpecialFunc(args ...interface{}) string {
+func (ai *AI) SpecialFunc(args ...interface{}) {
 	provider := args[0].(string)
 	prompt := args[1].(string)
 	query := args[2].(string)
+	aiScroll := args[3].(*gtk.ScrolledWindow)
+	setupLabelWidgetStyle := args[4].(func(label *gtk.Label, style *config.LabelWidget))
+	labelWidgetStyle := args[5].(*config.LabelWidget)
 
 	switch provider {
 	case "anthropic":
-		return ai.anthropic(query, prompt)
+		ai.anthropic(query, prompt, aiScroll, setupLabelWidgetStyle, labelWidgetStyle)
 	}
-
-	return ""
 }

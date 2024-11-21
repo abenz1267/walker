@@ -54,11 +54,11 @@ type Elements struct {
 	prompt          *gtk.Label
 	box             *gtk.Box
 	appwin          *gtk.ApplicationWindow
-	ai              *gtk.TextView
 	aiScroll        *gtk.ScrolledWindow
 	typeahead       *gtk.SearchEntry
 	input           *gtk.SearchEntry
 	grid            *gtk.GridView
+	aiList          *gtk.ListView
 	prefixClasses   map[string][]string
 	iconTheme       *gtk.IconTheme
 	password        *gtk.PasswordEntry
@@ -285,15 +285,9 @@ func setupElements(app *gtk.Application) *Elements {
 		listPlaceholder.SetVisible(false)
 	}
 
-	ai := gtk.NewTextView()
-	ai.SetEditable(false)
-	ai.SetCursorVisible(false)
-
 	aiScroll := gtk.NewScrolledWindow()
-
 	scroll.SetPropagateNaturalWidth(true)
 	scroll.SetPropagateNaturalHeight(true)
-	aiScroll.SetChild(ai)
 
 	ui := &Elements{
 		listPlaceholder: listPlaceholder,
@@ -308,7 +302,6 @@ func setupElements(app *gtk.Application) *Elements {
 		appwin:          appwin,
 		input:           input,
 		grid:            grid,
-		ai:              ai,
 		aiScroll:        aiScroll,
 		prefixClasses:   make(map[string][]string),
 	}

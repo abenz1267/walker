@@ -35,6 +35,7 @@ var (
 	singleModule            modules.Workable
 	tahSuggestionIdentifier string
 	tahAcceptedIdentifier   string
+	isAi                    bool
 )
 
 func setupCommands() {
@@ -389,18 +390,31 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		args = append(args, entry.SpecialFuncArgs...)
 		args = append(args, elements.input.Text())
 
-		res := entry.SpecialFunc(args...)
-
-		if res != "" {
-			buf := gtk.NewTextBuffer(nil)
-			buf.SetText(res)
+		if singleModule != nil && singleModule.General().Name == cfg.Builtins.AI.Name {
+			isAi = true
 
 			glib.IdleAdd(func() {
+				elements.input.SetText("")
 				elements.scroll.SetVisible(false)
-				elements.ai.SetBuffer(buf)
 				elements.aiScroll.SetVisible(true)
+
+				box := gtk.NewBox(gtk.OrientationVertical, 0)
+
+				spinner := gtk.NewSpinner()
+				spinner.SetSpinning(true)
+
+				box.Append(spinner)
+
+				setupBoxWidgetStyle(box, &layout.Window.Box.AiScroll.List.BoxWidget)
+
+				elements.aiScroll.SetChild(box)
+
+				args = append(args, elements.aiScroll, setupLabelWidgetStyle, &layout.Window.Box.AiScroll.List.Item)
+				go entry.SpecialFunc(args...)
 			})
+
 		} else {
+			entry.SpecialFunc(args...)
 			closeAfterActivation(keepOpen, selectNext)
 		}
 
@@ -564,6 +578,10 @@ func closeAfterActivation(keepOpen, next bool) {
 var cancel context.CancelFunc
 
 func process() {
+	if isAi {
+		return
+	}
+
 	if cfg.List.Placeholder != "" {
 		elements.listPlaceholder.SetVisible(false)
 	}
@@ -995,12 +1013,8 @@ func quit() {
 		elements.appwin.SetVisible(false)
 
 		elements.scroll.SetVisible(true)
-
-		buf := gtk.NewTextBuffer(nil)
-		buf.SetText("")
-
-		elements.ai.SetBuffer(buf)
 		elements.aiScroll.SetVisible(false)
+		isAi = false
 	})
 
 	common.app.Hold()

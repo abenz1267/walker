@@ -68,6 +68,12 @@ func (ai *AI) SetupData(cfg *config.Config, ctx context.Context) {
 				SpecialFuncArgs:  []interface{}{"anthropic", v.Prompt},
 			})
 		}
+
+		if len(ai.config.Anthropic.Prompts) == 0 {
+			log.Println("ai: no prompts set.")
+		}
+	} else {
+		log.Println("ai: no anthropic api key set.")
 	}
 
 	ai.general.IsSetup = true

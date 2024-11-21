@@ -189,13 +189,19 @@ func (a *Applications) Refresh() {
 func (a *Applications) Entries(ctx context.Context, term string) []util.Entry {
 	if a.hideActionsWithEmptyQuery && term == "" {
 		entries := []util.Entry{}
+		added := make(map[string]struct{})
 
 		for _, entry := range a.entries {
 			if entry.IsAction {
 				for _, v := range a.Hstry {
 					if val, ok := v[entry.Identifier()]; ok {
 						if val.LastUsed.After(entry.LastUsed) {
+							if _, ok := added[entry.Identifier()]; ok {
+								continue
+							}
+
 							entries = append(entries, entry)
+							added[entry.Identifier()] = struct{}{}
 							continue
 						}
 					}

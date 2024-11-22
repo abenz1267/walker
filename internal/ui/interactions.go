@@ -241,6 +241,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		if modifier == gdk.ControlMask {
 			if isAi {
 				ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
+				elements.input.SetText("")
 				ai.ClearCurrent()
 			}
 		}

@@ -71,6 +71,7 @@ slider,
 }
 
 #input placeholder {
+  opacity: 0.5;
 }
 
 #input > *:first-child,

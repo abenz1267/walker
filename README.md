@@ -245,6 +245,7 @@ AM = Activation Mode
 | `Ctrl+k` (if ActivationMode is disabled), `Up`, `LEFT_TAB` (shift+tab?) | previous entry                                                           |
 | `Escape`                                                                | close                                                                    |
 | `Ctrl + Label`                                                          | Activate item by label                                                   |
+| `Ctrl + c`                                                              | AI: copy last response                                                   |
 | `Ctrl + Shift + Label`                                                  | Activate item by label without closing                                   |
 | `Shift+Backspace`                                                       | delete entry from history                                                |
 

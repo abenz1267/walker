@@ -8,8 +8,8 @@ import (
 )
 
 type Switcher struct {
-	config    config.Switcher
-	available []string
+	config config.Switcher
+	cfg    *config.Config
 }
 
 func (s *Switcher) General() *config.GeneralModule {
@@ -21,7 +21,7 @@ func (s Switcher) Cleanup() {}
 func (s Switcher) Entries(ctx context.Context, term string) []util.Entry {
 	entries := []util.Entry{}
 
-	for _, v := range s.available {
+	for _, v := range s.cfg.Available {
 		if v == "switcher" {
 			continue
 		}
@@ -44,7 +44,7 @@ func (s Switcher) Entries(ctx context.Context, term string) []util.Entry {
 func (s *Switcher) Setup(cfg *config.Config) bool {
 	s.config = cfg.Builtins.Switcher
 
-	s.available = cfg.Available
+	s.cfg = cfg
 
 	s.config.IsSetup = true
 

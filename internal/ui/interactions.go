@@ -398,6 +398,8 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		args = append(args, elements.input.Text())
 
 		if module.General().Name == cfg.Builtins.AI.Name {
+			elements.input.SetObjectProperty("placeholder-text", entry.Label)
+
 			isAi = true
 
 			glib.IdleAdd(func() {

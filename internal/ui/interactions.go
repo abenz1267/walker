@@ -164,6 +164,10 @@ func selectActivationMode(keepOpen bool, isFKey bool, target uint) {
 }
 
 func enableAM() {
+	if isAi {
+		return
+	}
+
 	c := elements.appwin.CSSClasses()
 	c = append(c, "activation")
 
@@ -218,6 +222,13 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
 			hstry.Delete(entry.Identifier())
 			return true
+		}
+	case gdk.KEY_c:
+		if modifier == gdk.ControlMask {
+			if singleModule != nil && singleModule.General().Name == cfg.Builtins.AI.Name {
+				ai := singleModule.(*modules.AI)
+				ai.CopyLastResponse()
+			}
 		}
 	case gdk.KEY_Escape:
 		if appstate.IsDmenu {
@@ -380,12 +391,6 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	}
 
 	if entry.SpecialFunc != nil {
-		if timeoutTimer != nil {
-			timeoutTimer.Stop()
-		}
-
-		timeoutTimer = nil
-
 		args := []interface{}{}
 		args = append(args, entry.SpecialFuncArgs...)
 		args = append(args, elements.input.Text())
@@ -398,7 +403,16 @@ func activateItem(keepOpen, selectNext, alt bool) {
 				elements.scroll.SetVisible(false)
 				elements.aiScroll.SetVisible(true)
 
-				box := gtk.NewBox(gtk.OrientationVertical, 0)
+				var box *gtk.Box
+
+				_, ok := elements.aiScroll.Child().(*gtk.Viewport)
+				if !ok {
+					box = gtk.NewBox(gtk.OrientationVertical, 0)
+					box.SetName(layout.Window.Box.AiScroll.List.Name)
+					elements.aiScroll.SetChild(box)
+				} else {
+					box = elements.aiScroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
+				}
 
 				spinner := gtk.NewSpinner()
 				spinner.SetSpinning(true)
@@ -407,9 +421,8 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 				setupBoxWidgetStyle(box, &layout.Window.Box.AiScroll.List.BoxWidget)
 
-				elements.aiScroll.SetChild(box)
+				args = append(args, elements.aiScroll, setupLabelWidgetStyle, &layout.Window.Box.AiScroll.List.Item, spinner)
 
-				args = append(args, elements.aiScroll, setupLabelWidgetStyle, &layout.Window.Box.AiScroll.List.Item)
 				go entry.SpecialFunc(args...)
 			})
 
@@ -635,10 +648,16 @@ func timeoutReset() {
 					fmt.Print("")
 				}
 
-				if appstate.IsService {
-					glib.IdleAdd(quit)
-				} else {
-					glib.IdleAdd(exit)
+				if appstate.IsDmenu {
+					handleDmenuResult("")
+				}
+
+				if !isAi {
+					if appstate.IsService {
+						glib.IdleAdd(quit)
+					} else {
+						glib.IdleAdd(exit)
+					}
 				}
 			}
 		})

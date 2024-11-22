@@ -1,7 +1,7 @@
 #window,
 #box,
-#aiscroll,
-#aicontent,
+#aiScroll,
+#aiList,
 #search,
 #password,
 #input,
@@ -21,13 +21,6 @@ slider,
 
 #window {
   color: rgba(255, 255, 255, 0.8);
-}
-
-#aiscroll,
-#aicontent,
-#aicontent > *:first-child {
-  background: none;
-  color: inherit;
 }
 
 #box {
@@ -143,4 +136,25 @@ child:hover {
 .activation #icon,
 .activation #search {
   opacity: 0.5;
+}
+
+#aiScroll,
+#aiList {
+  background: none;
+  color: inherit;
+}
+
+.aiItem {
+  padding: 10px;
+  border-radius: 2px;
+}
+
+.aiItem.user {
+  background: none;
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.aiItem.assistant {
+  background: hsla(219, 28.6%, 19.2%, 0.8);
 }

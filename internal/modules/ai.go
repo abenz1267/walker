@@ -8,6 +8,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
+	"strings"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
@@ -24,12 +26,32 @@ const (
 )
 
 type AI struct {
-	config       config.AI
-	entries      []util.Entry
-	anthropicKey string
+	config           config.AI
+	entries          []util.Entry
+	anthropicKey     string
+	currentPrompt    string
+	currenctMessages []AnthropicMessage
+	currentScroll    *gtk.ScrolledWindow
 }
 
 func (ai *AI) Cleanup() {
+	ai.currentPrompt = ""
+	ai.currenctMessages = []AnthropicMessage{}
+
+	if ai.currentScroll == nil {
+		return
+	}
+
+	glib.IdleAdd(func() {
+		vp := ai.currentScroll.Child().(*gtk.Viewport)
+
+		box := vp.Child().(*gtk.Box)
+		for box.FirstChild() != nil {
+			box.Remove(box.FirstChild())
+		}
+
+		ai.currentScroll = nil
+	})
 }
 
 func (ai *AI) Entries(ctx context.Context, term string) []util.Entry {
@@ -104,17 +126,37 @@ type AnthropicResponse struct {
 	} `json:"content,omitempty"`
 }
 
-func (ai *AI) anthropic(query string, prompt string, scroll *gtk.ScrolledWindow, setupLabelWidgetStyle func(label *gtk.Label, style *config.LabelWidget), labelWidgetStyle *config.LabelWidget) {
+func (ai *AI) anthropic(query string, prompt string, scroll *gtk.ScrolledWindow, setupLabelWidgetStyle func(label *gtk.Label, style *config.LabelWidget), labelWidgetStyle *config.LabelWidget, spinner *gtk.Spinner) {
+	box := scroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
+
+	queryMsg := AnthropicMessage{
+		Role:    "user",
+		Content: query,
+	}
+
+	messages := []AnthropicMessage{}
+
+	if len(ai.currenctMessages) > 0 {
+		messages = ai.currenctMessages
+	}
+
+	messages = append(messages, queryMsg)
+
+	glib.IdleAdd(func() {
+		l := gtk.NewLabel(fmt.Sprintf(">> %s", queryMsg.Content))
+		l.SetCSSClasses([]string{"aiItem", "user"})
+		l.SetSelectable(true)
+
+		setupLabelWidgetStyle(l, labelWidgetStyle)
+
+		box.Append(l)
+	})
+
 	req := AnthropicRequest{
 		Model:     ai.config.Anthropic.Model,
 		MaxTokens: ai.config.Anthropic.MaxTokens,
 		System:    prompt,
-		Messages: []AnthropicMessage{
-			{
-				Role:    "user",
-				Content: query,
-			},
-		},
+		Messages:  messages,
 	}
 
 	b, err := json.Marshal(req)
@@ -139,46 +181,43 @@ func (ai *AI) anthropic(query string, prompt string, scroll *gtk.ScrolledWindow,
 		log.Panicln(err)
 	}
 
-	messages := []AnthropicMessage{}
-	messages = append(messages, AnthropicMessage{
-		Role:    "user",
-		Content: query,
-	})
+	responseMessages := []AnthropicMessage{}
 
-	messages = append(messages, AnthropicMessage{
-		Role:    "assistant",
-		Content: anthropicResp.Content[0].Text,
-	})
+	for _, v := range anthropicResp.Content {
+		responseMessages = append(responseMessages, AnthropicMessage{
+			Role:    "assistant",
+			Content: v.Text,
+		})
+	}
+
+	messages = append(messages, responseMessages...)
+	ai.currenctMessages = messages
 
 	glib.IdleAdd(func() {
-		box := scroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
-		spinner := box.FirstChild().(*gtk.Spinner)
 		spinner.SetVisible(false)
 
-		for _, v := range messages {
-			content := v.Content
+		for _, v := range responseMessages {
+			label := gtk.NewLabel(v.Content)
 
-			if v.Role == "user" {
-				content = fmt.Sprintf(">> %s", content)
-			}
-
-			label := gtk.NewLabel(content)
-
-			label.SetWrap(true)
-
-			if v.Role == "user" {
-				label.SetCSSClasses([]string{"aiItem", "user"})
-			} else {
-				label.SetCSSClasses([]string{"aiItem", "assistant"})
-			}
+			label.SetCSSClasses([]string{"aiItem", "assistant"})
+			label.SetSelectable(true)
 
 			setupLabelWidgetStyle(label, labelWidgetStyle)
 
 			box.Append(label)
 		}
-
-		scroll.SetChild(box)
 	})
+}
+
+func (ai *AI) CopyLastResponse() {
+	cmd := exec.Command("wl-copy")
+	cmd.Stdin = strings.NewReader(ai.currenctMessages[len(ai.currenctMessages)-1].Content)
+
+	err := cmd.Start()
+	if err != nil {
+		log.Println(err)
+		return
+	}
 }
 
 func (ai *AI) SpecialFunc(args ...interface{}) {
@@ -188,9 +227,18 @@ func (ai *AI) SpecialFunc(args ...interface{}) {
 	aiScroll := args[3].(*gtk.ScrolledWindow)
 	setupLabelWidgetStyle := args[4].(func(label *gtk.Label, style *config.LabelWidget))
 	labelWidgetStyle := args[5].(*config.LabelWidget)
+	spinner := args[6].(*gtk.Spinner)
+
+	if ai.currentPrompt != "" {
+		prompt = ai.currentPrompt
+	}
+
+	if ai.currentScroll == nil {
+		ai.currentScroll = aiScroll
+	}
 
 	switch provider {
 	case "anthropic":
-		ai.anthropic(query, prompt, aiScroll, setupLabelWidgetStyle, labelWidgetStyle)
+		ai.anthropic(query, prompt, aiScroll, setupLabelWidgetStyle, labelWidgetStyle, spinner)
 	}
 }

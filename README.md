@@ -246,6 +246,8 @@ AM = Activation Mode
 | `Escape`                                                                | close                                                                    |
 | `Ctrl + Label`                                                          | Activate item by label                                                   |
 | `Ctrl + c`                                                              | AI: copy last response                                                   |
+| `Ctrl + p`                                                              | AI: resume last session for prompt                                       |
+| `Ctrl + x`                                                              | AI: clear current session                                                |
 | `Ctrl + Shift + Label`                                                  | Activate item by label without closing                                   |
 | `Shift+Backspace`                                                       | delete entry from history                                                |
 

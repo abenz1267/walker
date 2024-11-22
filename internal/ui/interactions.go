@@ -225,9 +225,23 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		}
 	case gdk.KEY_c:
 		if modifier == gdk.ControlMask {
-			if singleModule != nil && singleModule.General().Name == cfg.Builtins.AI.Name {
-				ai := singleModule.(*modules.AI)
+			if isAi {
+				ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
 				ai.CopyLastResponse()
+			}
+		}
+	case gdk.KEY_p:
+		if modifier == gdk.ControlMask {
+			if isAi {
+				ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
+				ai.ResumeLastMessages()
+			}
+		}
+	case gdk.KEY_x:
+		if modifier == gdk.ControlMask {
+			if isAi {
+				ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
+				ai.ClearCurrent()
 			}
 		}
 	case gdk.KEY_Escape:

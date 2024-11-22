@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -23,21 +24,26 @@ const (
 	ANTHROPIC_API_URL        = "https://api.anthropic.com/v1/messages"
 	ANTHROPIC_AUTH_HEADER    = "x-api-key"
 	ANTHROPIC_API_KEY        = "ANTHROPIC_API_KEY"
+	aiHistoryFile            = "ai_history_0.9.6.gob"
 )
 
 type AI struct {
-	config           config.AI
-	entries          []util.Entry
-	anthropicKey     string
-	currentPrompt    string
-	canProcess       bool
-	currenctMessages []AnthropicMessage
-	currentScroll    *gtk.ScrolledWindow
+	config                config.AI
+	entries               []util.Entry
+	anthropicKey          string
+	currentPrompt         string
+	canProcess            bool
+	currentMessages       []AnthropicMessage
+	currentScroll         *gtk.ScrolledWindow
+	history               map[string][]AnthropicMessage
+	setupLabelWidgetStyle func(label *gtk.Label, style *config.LabelWidget)
+	labelWidgetStyle      *config.LabelWidget
+	scroll                *gtk.ScrolledWindow
 }
 
 func (ai *AI) Cleanup() {
 	ai.currentPrompt = ""
-	ai.currenctMessages = []AnthropicMessage{}
+	ai.currentMessages = []AnthropicMessage{}
 
 	if ai.currentScroll == nil {
 		return
@@ -69,7 +75,50 @@ func (ai *AI) Refresh() {
 func (ai *AI) Setup(cfg *config.Config) bool {
 	ai.config = cfg.Builtins.AI
 
+	file := filepath.Join(util.CacheDir(), aiHistoryFile)
+
+	ai.history = make(map[string][]AnthropicMessage)
+
+	util.FromGob(file, &ai.history)
+
 	return true
+}
+
+func (ai *AI) ResumeLastMessages() {
+	ai.currentMessages = ai.history[ai.currentPrompt]
+	box := ai.scroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
+
+	glib.IdleAdd(func() {
+		for _, v := range ai.currentMessages {
+			content := v.Content
+			label := gtk.NewLabel(content)
+
+			if v.Role == "user" {
+				content = fmt.Sprintf(">> %s", content)
+				label.SetText(content)
+				label.SetCSSClasses([]string{"aiItem", "user"})
+			} else {
+				label.SetCSSClasses([]string{"aiItem", "assistant"})
+			}
+
+			label.SetSelectable(true)
+
+			ai.setupLabelWidgetStyle(label, ai.labelWidgetStyle)
+
+			box.Append(label)
+		}
+	})
+}
+
+func (ai *AI) ClearCurrent() {
+	box := ai.scroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
+	ai.currentMessages = []AnthropicMessage{}
+
+	glib.IdleAdd(func() {
+		for box.FirstChild() != nil {
+			box.Remove(box.FirstChild())
+		}
+	})
 }
 
 func (ai *AI) SetupData(cfg *config.Config, ctx context.Context) {
@@ -127,8 +176,8 @@ type AnthropicResponse struct {
 	} `json:"content,omitempty"`
 }
 
-func (ai *AI) anthropic(query string, scroll *gtk.ScrolledWindow, setupLabelWidgetStyle func(label *gtk.Label, style *config.LabelWidget), labelWidgetStyle *config.LabelWidget) {
-	box := scroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
+func (ai *AI) anthropic(query string) {
+	box := ai.scroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
 
 	queryMsg := AnthropicMessage{
 		Role:    "user",
@@ -137,8 +186,8 @@ func (ai *AI) anthropic(query string, scroll *gtk.ScrolledWindow, setupLabelWidg
 
 	messages := []AnthropicMessage{}
 
-	if len(ai.currenctMessages) > 0 {
-		messages = ai.currenctMessages
+	if len(ai.currentMessages) > 0 {
+		messages = ai.currentMessages
 	}
 
 	messages = append(messages, queryMsg)
@@ -149,7 +198,7 @@ func (ai *AI) anthropic(query string, scroll *gtk.ScrolledWindow, setupLabelWidg
 		l.SetCSSClasses([]string{"aiItem", "user"})
 		l.SetSelectable(true)
 
-		setupLabelWidgetStyle(l, labelWidgetStyle)
+		ai.setupLabelWidgetStyle(l, ai.labelWidgetStyle)
 
 		box.Append(l)
 
@@ -197,7 +246,11 @@ func (ai *AI) anthropic(query string, scroll *gtk.ScrolledWindow, setupLabelWidg
 	}
 
 	messages = append(messages, responseMessages...)
-	ai.currenctMessages = messages
+	ai.currentMessages = messages
+
+	ai.history[ai.currentPrompt] = messages
+
+	util.ToGob(&ai.history, filepath.Join(util.CacheDir(), aiHistoryFile))
 
 	glib.IdleAdd(func() {
 		box.Remove(spinner)
@@ -208,7 +261,7 @@ func (ai *AI) anthropic(query string, scroll *gtk.ScrolledWindow, setupLabelWidg
 			label.SetCSSClasses([]string{"aiItem", "assistant"})
 			label.SetSelectable(true)
 
-			setupLabelWidgetStyle(label, labelWidgetStyle)
+			ai.setupLabelWidgetStyle(label, ai.labelWidgetStyle)
 
 			box.Append(label)
 		}
@@ -217,7 +270,7 @@ func (ai *AI) anthropic(query string, scroll *gtk.ScrolledWindow, setupLabelWidg
 
 func (ai *AI) CopyLastResponse() {
 	cmd := exec.Command("wl-copy")
-	cmd.Stdin = strings.NewReader(ai.currenctMessages[len(ai.currenctMessages)-1].Content)
+	cmd.Stdin = strings.NewReader(ai.currentMessages[len(ai.currentMessages)-1].Content)
 
 	err := cmd.Start()
 	if err != nil {
@@ -241,11 +294,14 @@ func (ai *AI) SpecialFunc(args ...interface{}) {
 	if ai.currentPrompt == "" {
 		ai.currentPrompt = prompt
 		ai.canProcess = true
+		ai.setupLabelWidgetStyle = setupLabelWidgetStyle
+		ai.labelWidgetStyle = labelWidgetStyle
+		ai.scroll = aiScroll
 		return
 	}
 
 	switch provider {
 	case "anthropic":
-		ai.anthropic(query, aiScroll, setupLabelWidgetStyle, labelWidgetStyle)
+		ai.anthropic(query)
 	}
 }

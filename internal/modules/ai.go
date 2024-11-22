@@ -30,6 +30,7 @@ type AI struct {
 	entries          []util.Entry
 	anthropicKey     string
 	currentPrompt    string
+	canProcess       bool
 	currenctMessages []AnthropicMessage
 	currentScroll    *gtk.ScrolledWindow
 }
@@ -82,11 +83,11 @@ func (ai *AI) SetupData(cfg *config.Config, ctx context.Context) {
 				Label:            v.Label,
 				Sub:              "Claude 3.5",
 				Exec:             "",
-				ScoreFinal:       100,
-				RecalculateScore: false,
-				Matching:         util.AlwaysTop,
+				RecalculateScore: true,
+				Matching:         util.Fuzzy,
 				SpecialFunc:      ai.SpecialFunc,
 				SpecialFuncArgs:  []interface{}{"anthropic", v.Prompt},
+				SingleModuleOnly: v.SingleModuleOnly,
 			})
 		}
 
@@ -126,7 +127,7 @@ type AnthropicResponse struct {
 	} `json:"content,omitempty"`
 }
 
-func (ai *AI) anthropic(query string, prompt string, scroll *gtk.ScrolledWindow, setupLabelWidgetStyle func(label *gtk.Label, style *config.LabelWidget), labelWidgetStyle *config.LabelWidget, spinner *gtk.Spinner) {
+func (ai *AI) anthropic(query string, scroll *gtk.ScrolledWindow, setupLabelWidgetStyle func(label *gtk.Label, style *config.LabelWidget), labelWidgetStyle *config.LabelWidget) {
 	box := scroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
 
 	queryMsg := AnthropicMessage{
@@ -141,6 +142,7 @@ func (ai *AI) anthropic(query string, prompt string, scroll *gtk.ScrolledWindow,
 	}
 
 	messages = append(messages, queryMsg)
+	spinner := gtk.NewSpinner()
 
 	glib.IdleAdd(func() {
 		l := gtk.NewLabel(fmt.Sprintf(">> %s", queryMsg.Content))
@@ -150,12 +152,16 @@ func (ai *AI) anthropic(query string, prompt string, scroll *gtk.ScrolledWindow,
 		setupLabelWidgetStyle(l, labelWidgetStyle)
 
 		box.Append(l)
+
+		spinner.SetSpinning(true)
+
+		box.Append(spinner)
 	})
 
 	req := AnthropicRequest{
 		Model:     ai.config.Anthropic.Model,
 		MaxTokens: ai.config.Anthropic.MaxTokens,
-		System:    prompt,
+		System:    ai.currentPrompt,
 		Messages:  messages,
 	}
 
@@ -194,7 +200,7 @@ func (ai *AI) anthropic(query string, prompt string, scroll *gtk.ScrolledWindow,
 	ai.currenctMessages = messages
 
 	glib.IdleAdd(func() {
-		spinner.SetVisible(false)
+		box.Remove(spinner)
 
 		for _, v := range responseMessages {
 			label := gtk.NewLabel(v.Content)
@@ -227,18 +233,19 @@ func (ai *AI) SpecialFunc(args ...interface{}) {
 	aiScroll := args[3].(*gtk.ScrolledWindow)
 	setupLabelWidgetStyle := args[4].(func(label *gtk.Label, style *config.LabelWidget))
 	labelWidgetStyle := args[5].(*config.LabelWidget)
-	spinner := args[6].(*gtk.Spinner)
-
-	if ai.currentPrompt != "" {
-		prompt = ai.currentPrompt
-	}
 
 	if ai.currentScroll == nil {
 		ai.currentScroll = aiScroll
 	}
 
+	if ai.currentPrompt == "" {
+		ai.currentPrompt = prompt
+		ai.canProcess = true
+		return
+	}
+
 	switch provider {
 	case "anthropic":
-		ai.anthropic(query, prompt, aiScroll, setupLabelWidgetStyle, labelWidgetStyle, spinner)
+		ai.anthropic(query, aiScroll, setupLabelWidgetStyle, labelWidgetStyle)
 	}
 }

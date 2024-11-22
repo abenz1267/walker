@@ -38,7 +38,7 @@
       "weight": 5,
       "placeholder": "AI",
       "name": "ai",
-      "icon": "accessories-calculator",
+      "icon": "help-browser",
       "switcher_only": true,
       "anthropic": {
         "model": "claude-3-5-sonnet-20241022",

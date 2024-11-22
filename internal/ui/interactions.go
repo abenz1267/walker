@@ -390,12 +390,14 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		go quit()
 	}
 
+	module := findModule(entry.Module, toUse, explicits)
+
 	if entry.SpecialFunc != nil {
 		args := []interface{}{}
 		args = append(args, entry.SpecialFuncArgs...)
 		args = append(args, elements.input.Text())
 
-		if singleModule != nil && singleModule.General().Name == cfg.Builtins.AI.Name {
+		if module.General().Name == cfg.Builtins.AI.Name {
 			isAi = true
 
 			glib.IdleAdd(func() {
@@ -414,18 +416,12 @@ func activateItem(keepOpen, selectNext, alt bool) {
 					box = elements.aiScroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
 				}
 
-				spinner := gtk.NewSpinner()
-				spinner.SetSpinning(true)
-
-				box.Append(spinner)
-
 				setupBoxWidgetStyle(box, &layout.Window.Box.AiScroll.List.BoxWidget)
 
-				args = append(args, elements.aiScroll, setupLabelWidgetStyle, &layout.Window.Box.AiScroll.List.Item, spinner)
+				args = append(args, elements.aiScroll, setupLabelWidgetStyle, &layout.Window.Box.AiScroll.List.Item)
 
 				go entry.SpecialFunc(args...)
 			})
-
 		} else {
 			entry.SpecialFunc(args...)
 			closeAfterActivation(keepOpen, selectNext)
@@ -495,8 +491,6 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	if entry.History {
 		hstry.Save(identifier, strings.TrimSpace(elements.input.Text()))
 	}
-
-	module := findModule(entry.Module, toUse, explicits)
 
 	if module != nil && (module.General().History || module.General().Typeahead) {
 		history.SaveInputHistory(module.General().Name, elements.input.Text(), identifier)
@@ -796,6 +790,10 @@ func processAsync(ctx context.Context, text string) {
 			g := w.General()
 
 			for k := range e {
+				if e[k].SingleModuleOnly && singleModule == nil {
+					continue
+				}
+
 				e[k].Module = g.Name
 				e[k].Weight = g.Weight
 

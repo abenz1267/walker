@@ -83,8 +83,9 @@ type Anthropic struct {
 }
 
 type Prompt struct {
-	Label  string `mapstructure:"label"`
-	Prompt string `mapstructure:"prompt"`
+	Label            string `mapstructure:"label"`
+	Prompt           string `mapstructure:"prompt"`
+	SingleModuleOnly bool   `mapstructure:"single_module_only"`
 }
 
 type Calc struct {

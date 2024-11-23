@@ -422,20 +422,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 				elements.scroll.SetVisible(false)
 				elements.aiScroll.SetVisible(true)
 
-				var box *gtk.Box
-
-				_, ok := elements.aiScroll.Child().(*gtk.Viewport)
-				if !ok {
-					box = gtk.NewBox(gtk.OrientationVertical, 0)
-					box.SetName(layout.Window.Box.AiScroll.List.Name)
-					elements.aiScroll.SetChild(box)
-				} else {
-					box = elements.aiScroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
-				}
-
-				setupBoxWidgetStyle(box, &layout.Window.Box.AiScroll.List.BoxWidget)
-
-				args = append(args, elements.aiScroll, setupLabelWidgetStyle, &layout.Window.Box.AiScroll.List.Item)
+				args = append(args, elements.aiList, common.aiItems, elements.spinner)
 
 				go entry.SpecialFunc(args...)
 			})

@@ -83,6 +83,7 @@ func setupTheme(theme string) {
 	if !appstate.Password {
 		setupScrollTheme()
 		setupAiScrollTheme()
+		setupAiListTheme()
 		setupListTheme()
 	}
 
@@ -259,6 +260,10 @@ func setupBarTheme() {
 
 		barHasItems = true
 	}
+}
+
+func setupAiListTheme() {
+	setupWidgetStyle(&elements.aiList.Widget, &layout.Window.Box.AiScroll.List.Widget, false)
 }
 
 func setupAiScrollTheme() {

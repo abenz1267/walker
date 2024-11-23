@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -14,6 +13,7 @@ import (
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
+	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
@@ -28,36 +28,28 @@ const (
 )
 
 type AI struct {
-	config                config.AI
-	entries               []util.Entry
-	anthropicKey          string
-	currentPrompt         string
-	canProcess            bool
-	currentMessages       []AnthropicMessage
-	currentScroll         *gtk.ScrolledWindow
-	history               map[string][]AnthropicMessage
-	setupLabelWidgetStyle func(label *gtk.Label, style *config.LabelWidget)
-	labelWidgetStyle      *config.LabelWidget
-	scroll                *gtk.ScrolledWindow
+	config          config.AI
+	entries         []util.Entry
+	anthropicKey    string
+	currentPrompt   string
+	canProcess      bool
+	currentMessages []AnthropicMessage
+	history         map[string][]AnthropicMessage
+	list            *gtk.ListView
+	items           *gioutil.ListModel[AnthropicMessage]
+	spinner         *gtk.Spinner
 }
 
 func (ai *AI) Cleanup() {
 	ai.currentPrompt = ""
 	ai.currentMessages = []AnthropicMessage{}
 
-	if ai.currentScroll == nil {
+	if ai.list == nil {
 		return
 	}
 
 	glib.IdleAdd(func() {
-		vp := ai.currentScroll.Child().(*gtk.Viewport)
-
-		box := vp.Child().(*gtk.Box)
-		for box.FirstChild() != nil {
-			box.Remove(box.FirstChild())
-		}
-
-		ai.currentScroll = nil
+		ai.items.Splice(0, int(ai.items.NItems()))
 	})
 }
 
@@ -86,39 +78,16 @@ func (ai *AI) Setup(cfg *config.Config) bool {
 
 func (ai *AI) ResumeLastMessages() {
 	ai.currentMessages = ai.history[ai.currentPrompt]
-	box := ai.scroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
+	ai.items.Splice(0, int(ai.items.NItems()), ai.currentMessages...)
 
 	glib.IdleAdd(func() {
-		for _, v := range ai.currentMessages {
-			content := v.Content
-			label := gtk.NewLabel(content)
-
-			if v.Role == "user" {
-				content = fmt.Sprintf(">> %s", content)
-				label.SetText(content)
-				label.SetCSSClasses([]string{"aiItem", "user"})
-			} else {
-				label.SetCSSClasses([]string{"aiItem", "assistant"})
-			}
-
-			label.SetSelectable(true)
-
-			ai.setupLabelWidgetStyle(label, ai.labelWidgetStyle)
-
-			box.Append(label)
-		}
+		ai.list.ScrollTo(uint(len(ai.currentMessages)-1), gtk.ListScrollNone, nil)
 	})
 }
 
 func (ai *AI) ClearCurrent() {
-	box := ai.scroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
 	ai.currentMessages = []AnthropicMessage{}
-
-	glib.IdleAdd(func() {
-		for box.FirstChild() != nil {
-			box.Remove(box.FirstChild())
-		}
-	})
+	ai.items.Splice(0, int(ai.items.NItems()))
 }
 
 func (ai *AI) SetupData(cfg *config.Config, ctx context.Context) {
@@ -177,7 +146,9 @@ type AnthropicResponse struct {
 }
 
 func (ai *AI) anthropic(query string) {
-	box := ai.scroll.Child().(*gtk.Viewport).Child().(*gtk.Box)
+	glib.IdleAdd(func() {
+		ai.spinner.SetVisible(true)
+	})
 
 	queryMsg := AnthropicMessage{
 		Role:    "user",
@@ -191,21 +162,10 @@ func (ai *AI) anthropic(query string) {
 	}
 
 	messages = append(messages, queryMsg)
-	spinner := gtk.NewSpinner()
 
-	glib.IdleAdd(func() {
-		l := gtk.NewLabel(fmt.Sprintf(">> %s", queryMsg.Content))
-		l.SetCSSClasses([]string{"aiItem", "user"})
-		l.SetSelectable(true)
+	queryPos := len(messages) - 1
 
-		ai.setupLabelWidgetStyle(l, ai.labelWidgetStyle)
-
-		box.Append(l)
-
-		spinner.SetSpinning(true)
-
-		box.Append(spinner)
-	})
+	ai.items.Splice(0, int(ai.items.NItems()), messages...)
 
 	req := AnthropicRequest{
 		Model:     ai.config.Anthropic.Model,
@@ -252,19 +212,11 @@ func (ai *AI) anthropic(query string) {
 
 	util.ToGob(&ai.history, filepath.Join(util.CacheDir(), aiHistoryFile))
 
+	ai.items.Splice(0, int(ai.items.NItems()), messages...)
+
 	glib.IdleAdd(func() {
-		box.Remove(spinner)
-
-		for _, v := range responseMessages {
-			label := gtk.NewLabel(v.Content)
-
-			label.SetCSSClasses([]string{"aiItem", "assistant"})
-			label.SetSelectable(true)
-
-			ai.setupLabelWidgetStyle(label, ai.labelWidgetStyle)
-
-			box.Append(label)
-		}
+		ai.list.ScrollTo(uint(queryPos), gtk.ListScrollNone, nil)
+		ai.spinner.SetVisible(false)
 	})
 }
 
@@ -283,20 +235,16 @@ func (ai *AI) SpecialFunc(args ...interface{}) {
 	provider := args[0].(string)
 	prompt := args[1].(string)
 	query := args[2].(string)
-	aiScroll := args[3].(*gtk.ScrolledWindow)
-	setupLabelWidgetStyle := args[4].(func(label *gtk.Label, style *config.LabelWidget))
-	labelWidgetStyle := args[5].(*config.LabelWidget)
-
-	if ai.currentScroll == nil {
-		ai.currentScroll = aiScroll
-	}
+	list := args[3].(*gtk.ListView)
+	items := args[4].(*gioutil.ListModel[AnthropicMessage])
+	spinner := args[5].(*gtk.Spinner)
 
 	if ai.currentPrompt == "" {
 		ai.currentPrompt = prompt
 		ai.canProcess = true
-		ai.setupLabelWidgetStyle = setupLabelWidgetStyle
-		ai.labelWidgetStyle = labelWidgetStyle
-		ai.scroll = aiScroll
+		ai.list = list
+		ai.items = items
+		ai.spinner = spinner
 		return
 	}
 

@@ -230,6 +230,7 @@ func setupElementsPassword(app *gtk.Application) *Elements {
 func setupCommon(app *gtk.Application) {
 	items := gioutil.NewListModel[util.Entry]()
 	aiItems := gioutil.NewListModel[modules.AnthropicMessage]()
+	aiItems.Append(modules.AnthropicMessage{Role: "user", Content: "Hello, how are you?"})
 
 	selection := gtk.NewSingleSelection(items.ListModel)
 	selection.SetAutoselect(true)
@@ -253,8 +254,6 @@ func setupCommon(app *gtk.Application) {
 
 func setupElements(app *gtk.Application) *Elements {
 	spinner := gtk.NewSpinner()
-	spinner.SetName("spinner")
-
 	search := gtk.NewBox(gtk.OrientationHorizontal, 0)
 	typeahead := gtk.NewSearchEntry()
 	typeahead.SetCanFocus(false)

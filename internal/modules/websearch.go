@@ -7,7 +7,6 @@ import (
 	"net/http"
 	"net/url"
 	"os/exec"
-	"slices"
 	"strings"
 	"time"
 
@@ -15,17 +14,10 @@ import (
 	"github.com/abenz1267/walker/internal/util"
 )
 
-const (
-	GoogleURL     = "https://www.google.com/search?q=%TERM%"
-	DuckDuckGoURL = "https://duckduckgo.com/?q=%TERM%"
-	EcosiaURL     = "https://www.ecosia.org/search?q=%TERM%"
-	YandexURL     = "https://yandex.com/search/?text=%TERM%"
-)
-
 type Websearch struct {
-	config     config.Websearch
-	engineInfo map[string]EngineInfo
-	threshold  int
+	config    config.Websearch
+	threshold int
+	prefixes  []string
 }
 
 type EngineInfo struct {
@@ -47,32 +39,14 @@ func (w *Websearch) Setup(cfg *config.Config) bool {
 }
 
 func (w *Websearch) SetupData(_ *config.Config, ctx context.Context) {
-	slices.Reverse(w.config.Engines)
-
-	w.engineInfo = make(map[string]EngineInfo)
-
-	w.engineInfo["google"] = EngineInfo{
-		Label: "Google",
-		URL:   GoogleURL,
-	}
-
-	w.engineInfo["duckduckgo"] = EngineInfo{
-		Label: "DuckDuckGo",
-		URL:   DuckDuckGoURL,
-	}
-
-	w.engineInfo["ecosia"] = EngineInfo{
-		Label: "Ecosia",
-		URL:   EcosiaURL,
-	}
-
-	w.engineInfo["yandex"] = EngineInfo{
-		Label: "Yandex",
-		URL:   YandexURL,
-	}
-
 	w.config.IsSetup = true
 	w.config.HasInitialSetup = true
+
+	w.prefixes = []string{}
+
+	for _, v := range w.config.Entries {
+		w.prefixes = append(w.prefixes, v.Prefix)
+	}
 }
 
 func (w *Websearch) Refresh() {
@@ -90,20 +64,40 @@ func (w Websearch) Entries(ctx context.Context, term string) []util.Entry {
 
 	term = strings.TrimPrefix(term, w.config.Prefix)
 
-	for k, v := range w.config.Engines {
-		if val, ok := w.engineInfo[strings.ToLower(v)]; ok {
-			url := strings.ReplaceAll(val.URL, "%TERM%", url.QueryEscape(term))
+	prefix := ""
 
-			n := util.Entry{
-				Label:      fmt.Sprintf("Search with %s", val.Label),
-				Sub:        "Websearch",
-				Exec:       fmt.Sprintf("xdg-open %s", url),
-				Class:      "websearch",
-				ScoreFinal: float64(k + 1 + w.threshold),
-			}
-
-			entries = append(entries, n)
+	for _, v := range w.prefixes {
+		if strings.HasPrefix(term, v) {
+			prefix = v
+			break
 		}
+	}
+
+	term = strings.TrimPrefix(term, prefix)
+
+	for k, v := range w.config.Entries {
+		if prefix != "" && v.Prefix != prefix {
+			continue
+		}
+
+		url := strings.ReplaceAll(v.Url, "%TERM%", url.QueryEscape(term))
+
+		score := float64(k + 1 + w.threshold)
+
+		if prefix != "" {
+			score = 1000000
+		}
+
+		n := util.Entry{
+			Label:            fmt.Sprintf("Search with %s", v.Name),
+			Sub:              "Websearch",
+			Exec:             fmt.Sprintf("xdg-open %s", url),
+			Class:            "websearch",
+			ScoreFinal:       score,
+			SingleModuleOnly: v.SwitcherOnly && prefix == "",
+		}
+
+		entries = append(entries, n)
 	}
 
 	if strings.ContainsAny(term, ".") && !strings.HasSuffix(term, ".") {

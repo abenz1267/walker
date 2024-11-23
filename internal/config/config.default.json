@@ -138,7 +138,27 @@
       "icon": "applications-internet",
       "name": "websearch",
       "placeholder": "Websearch",
-      "engines": ["google"]
+      "entries": [
+        {
+          "name": "Google",
+          "url": "https://www.google.com/search?q=%TERM%"
+        },
+        {
+          "name": "DuckDuckGo",
+          "url": "https://duckduckgo.com/?q=%TERM%",
+          "switcher_only": true
+        },
+        {
+          "name": "Ecosia",
+          "url": "https://www.ecosia.org/search?q=%TERM%",
+          "switcher_only": true
+        },
+        {
+          "name": "Yandex",
+          "url": "https://yandex.com/search/?text=%TERM%",
+          "switcher_only": true
+        }
+      ]
     },
     "dmenu": {
       "weight": 5,

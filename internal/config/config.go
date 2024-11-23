@@ -159,7 +159,14 @@ type SSH struct {
 
 type Websearch struct {
 	GeneralModule `mapstructure:",squash"`
-	Engines       []string `mapstructure:"engines"`
+	Entries       []WebsearchEntry `mapstructure:"entries"`
+}
+
+type WebsearchEntry struct {
+	Name         string `mapstructure:"name"`
+	Url          string `mapstructure:"url"`
+	Prefix       string `mapstructure:"prefix"`
+	SwitcherOnly bool   `mapstructure:"switcher_only"`
 }
 
 type Applications struct {

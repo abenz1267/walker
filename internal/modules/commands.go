@@ -49,6 +49,10 @@ func (c *Commands) SetupData(cfg *config.Config, ctx context.Context) {
 			label: "Clear Typeahead Cache",
 			exec:  "cleartypeaheadcache",
 		},
+		{
+			label: "Adjust Theme",
+			exec:  "adjusttheme",
+		},
 	}
 
 	for _, v := range entries {

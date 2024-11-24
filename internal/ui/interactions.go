@@ -31,27 +31,48 @@ var (
 	cmdAltModifier          gdk.ModifierType
 	amModifier              gdk.ModifierType
 	amLabel                 string
-	commands                map[string]func()
+	commands                map[string]func() bool
 	singleModule            modules.Workable
 	tahSuggestionIdentifier string
 	tahAcceptedIdentifier   string
 	isAi                    bool
+	blockTimeout            bool
 )
 
 func setupCommands() {
-	commands = make(map[string]func())
-	commands["resethistory"] = func() {
+	commands = make(map[string]func() bool)
+	commands["resethistory"] = func() bool {
 		os.Remove(filepath.Join(util.CacheDir(), history.HistoryName))
 		hstry = history.Get()
+		return true
 	}
-	commands["clearapplicationscache"] = func() {
+	commands["clearapplicationscache"] = func() bool {
 		os.Remove(filepath.Join(util.CacheDir(), "applications.json"))
+		return true
 	}
-	commands["clearclipboard"] = func() {
+	commands["clearclipboard"] = func() bool {
 		os.Remove(filepath.Join(util.CacheDir(), "clipboard.gob"))
+		return true
 	}
-	commands["cleartypeaheadcache"] = func() {
+	commands["cleartypeaheadcache"] = func() bool {
 		os.Remove(filepath.Join(util.CacheDir(), "inputhistory_0.7.6.gob"))
+		return true
+	}
+	commands["adjusttheme"] = func() bool {
+		blockTimeout = true
+
+		cssFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.css", cfg.Theme))
+
+		cmd := exec.Command("sh", "-c", fmt.Sprintf("xdg-open %s", cssFile))
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setpgid:    true,
+			Pgid:       0,
+			Foreground: false,
+		}
+
+		cmd.Start()
+
+		return false
 	}
 }
 
@@ -401,7 +422,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
 
-	if !keepOpen && entry.Sub != "switcher" && cfg.IsService && entry.SpecialFunc == nil {
+	if !keepOpen && entry.Sub != "Walker" && entry.Sub != "switcher" && cfg.IsService && entry.SpecialFunc == nil {
 		go quit()
 	}
 
@@ -453,8 +474,12 @@ func activateItem(keepOpen, selectNext, alt bool) {
 	}
 
 	if entry.Sub == "Walker" {
-		commands[entry.Exec]()
-		closeAfterActivation(keepOpen, selectNext)
+		shouldClose := commands[entry.Exec]()
+
+		if shouldClose {
+			closeAfterActivation(keepOpen, selectNext)
+		}
+
 		return
 	}
 
@@ -650,7 +675,7 @@ func timeoutReset() {
 					handleDmenuResult("")
 				}
 
-				if !isAi {
+				if !isAi && !blockTimeout {
 					if appstate.IsService {
 						glib.IdleAdd(quit)
 					} else {
@@ -1035,8 +1060,10 @@ func quit() {
 
 		elements.scroll.SetVisible(true)
 		elements.aiScroll.SetVisible(false)
-		isAi = false
 	})
+
+	isAi = false
+	blockTimeout = false
 
 	common.app.Hold()
 }

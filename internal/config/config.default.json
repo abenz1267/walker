@@ -1,6 +1,7 @@
 {
   "theme": "default",
   "monitor": "",
+  "hotreload_theme": false,
   "as_window": false,
   "timeout": 0,
   "disable_click_to_close": false,

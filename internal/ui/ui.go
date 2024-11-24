@@ -4,6 +4,7 @@ import (
 	_ "embed"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -21,6 +22,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/fsnotify/fsnotify"
 )
 
 var (
@@ -178,6 +180,10 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 		if appstate.Benchmark {
 			fmt.Println("Visible (first ui)", time.Now().UnixMilli())
+		}
+
+		if cfg.IsService && cfg.HotreloadTheme {
+			go watchTheme()
 		}
 	}
 }
@@ -761,4 +767,42 @@ func setupLayout(theme string, base []string) {
 	setupTheme(theme)
 	setupCss(theme, base)
 	setupLayerShellAnchors()
+}
+
+func watchTheme() {
+	themes := filepath.Join(util.ThemeDir())
+
+	watcher, err := fsnotify.NewWatcher()
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	err = watcher.Add(themes)
+	if err != nil {
+		slog.Error("watcher add error", err)
+		return
+	}
+
+	go func() {
+		for {
+			select {
+			case _, ok := <-watcher.Events:
+				if !ok {
+					return
+				}
+
+				glib.IdleAdd(func() {
+					setupLayout(cfg.Theme, cfg.ThemeBase)
+				})
+			case _, ok := <-watcher.Errors:
+				if !ok {
+					return
+				}
+			}
+		}
+	}()
+
+	defer watcher.Close()
+
+	<-make(chan struct{})
 }

@@ -29,6 +29,7 @@ type Config struct {
 	Disabled            []string       `mapstructure:"disabled"`
 	ForceKeyboardFocus  bool           `mapstructure:"force_keyboard_focus"`
 	AsWindow            bool           `mapstructure:"as_window"`
+	HotreloadTheme      bool           `mapstructure:"hotreload_theme"`
 	IgnoreMouse         bool           `mapstructure:"ignore_mouse"`
 	List                List           `mapstructure:"list"`
 	Monitor             string         `mapstructure:"monitor"`

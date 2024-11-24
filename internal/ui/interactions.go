@@ -1102,7 +1102,13 @@ func fuzzyScore(entry util.Entry, text string) float64 {
 			continue
 		}
 
-		score := util.FuzzyScore(text, t)
+		var score float64
+
+		if strings.HasPrefix(text, "'") {
+			score = util.ExactScore(text, t)
+		} else {
+			score = util.FuzzyScore(text, t)
+		}
 
 		if score == 0 {
 			continue

@@ -13,3 +13,12 @@ func FuzzyScore(input, target string) float64 {
 
 	return float64(res.Score - res.Start)
 }
+
+func ExactScore(input, target string) float64 {
+	input = strings.TrimPrefix(input, "'")
+
+	chars := util.ToChars([]byte(target))
+	res, _ := algo.ExactMatchNaive(false, true, true, &chars, []rune(strings.ToLower(input)), true, nil)
+
+	return float64(res.Score - res.Start)
+}

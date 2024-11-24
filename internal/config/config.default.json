@@ -64,7 +64,8 @@
       "weight": 5,
       "icon": "view-restore",
       "name": "windows",
-      "placeholder": "Windows"
+      "placeholder": "Windows",
+      "show_icon_when_single": true
     },
     "clipboard": {
       "exec": "wl-copy",

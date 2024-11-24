@@ -100,7 +100,7 @@
       "show_unqualified": false
     },
     "symbols": {
-      "exec": "wl-copy",
+      "after_copy": "",
       "weight": 5,
       "name": "symbols",
       "placeholder": "Symbols",

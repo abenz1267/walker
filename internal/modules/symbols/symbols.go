@@ -54,11 +54,16 @@ func (e *Symbols) SetupData(cfg *config.Config, ctx context.Context) {
 			continue
 		}
 
+		exec := fmt.Sprintf("wl-copy '%s'", toUse)
+
+		if e.config.AfterCopy != "" {
+			exec = fmt.Sprintf("wl-copy '%s' | %s", toUse, e.config.AfterCopy)
+		}
+
 		entries = append(entries, util.Entry{
 			Label:            fmt.Sprintf("%s - %s", toUse, fields[1]),
 			Sub:              "Symbols",
-			Exec:             fmt.Sprintf("echo '%s' | %s", toUse, e.config.Exec),
-			ExecAlt:          fmt.Sprintf("echo '%s' | %s", toUse, e.config.ExecAlt),
+			Exec:             exec,
 			Class:            "symbols",
 			Matching:         util.Fuzzy,
 			RecalculateScore: true,

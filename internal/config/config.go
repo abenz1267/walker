@@ -155,8 +155,7 @@ type Emojis struct {
 
 type Symbols struct {
 	GeneralModule `mapstructure:",squash"`
-	Exec          string `mapstructure:"exec"`
-	ExecAlt       string `mapstructure:"exec_alt"`
+	AfterCopy     string `mapstructure:"after_copy"`
 }
 
 type SSH struct {

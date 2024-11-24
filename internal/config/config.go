@@ -68,6 +68,7 @@ type Builtins struct {
 	Runner         Runner         `mapstructure:"runner"`
 	SSH            SSH            `mapstructure:"ssh"`
 	Switcher       Switcher       `mapstructure:"switcher"`
+	Symbols        Symbols        `mapstructure:"symbols"`
 	Websearch      Websearch      `mapstructure:"websearch"`
 	Windows        Windows        `mapstructure:"windows"`
 }
@@ -150,6 +151,12 @@ type Emojis struct {
 	Exec            string `mapstructure:"exec"`
 	ExecAlt         string `mapstructure:"exec_alt"`
 	ShowUnqualified bool   `mapstructure:"show_unqualified"`
+}
+
+type Symbols struct {
+	GeneralModule `mapstructure:",squash"`
+	Exec          string `mapstructure:"exec"`
+	ExecAlt       string `mapstructure:"exec_alt"`
 }
 
 type SSH struct {

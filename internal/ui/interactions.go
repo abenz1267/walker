@@ -525,6 +525,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		history.SaveInputHistory(module.General().Name, elements.input.Text(), identifier)
 	}
 
+	fmt.Println(cmd.String())
 	err := cmd.Start()
 	if err != nil {
 		log.Println(err)
@@ -574,12 +575,14 @@ func handleDmenuResult(result string) {
 }
 
 func setStdin(cmd *exec.Cmd, piped *util.Piped) {
-	if piped.Content != "" {
+	if piped.String != "" {
 		switch piped.Type {
+		case "bytes":
+			cmd.Stdin = bytes.NewReader(piped.Bytes)
 		case "string":
-			cmd.Stdin = strings.NewReader(piped.Content)
+			cmd.Stdin = strings.NewReader(piped.String)
 		case "file":
-			b, err := os.ReadFile(piped.Content)
+			b, err := os.ReadFile(piped.String)
 			if err != nil {
 				log.Panic(err)
 			}

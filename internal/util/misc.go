@@ -66,8 +66,9 @@ func (e Entry) Identifier() string {
 }
 
 type Piped struct {
-	Content string `mapstructure:"content,omitempty"`
-	Type    string `mapstructure:"type,omitempty"`
+	Bytes  []byte `mapstructure:"bytes,omitempty"`
+	String string `mapstructure:"content,omitempty"`
+	Type   string `mapstructure:"type,omitempty"`
 }
 
 func TrasformSeparator(sep string) string {

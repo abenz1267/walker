@@ -65,7 +65,7 @@ func (e *Emojis) SetupData(cfg *config.Config, ctx context.Context) {
 			Sub:              "Emojis",
 			Exec:             e.exec,
 			ExecAlt:          e.execAlt,
-			Piped:            util.Piped{Content: fields[4], Type: "string"},
+			Piped:            util.Piped{String: fields[4], Type: "string"},
 			Searchable:       fields[5],
 			Categories:       []string{fields[0], fields[1]},
 			Class:            "emojis",

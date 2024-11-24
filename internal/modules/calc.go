@@ -83,8 +83,8 @@ func (c Calc) Entries(ctx context.Context, term string) []util.Entry {
 	if c.hasClip {
 		res.Exec = "wl-copy"
 		res.Piped = util.Piped{
-			Content: txt,
-			Type:    "string",
+			String: txt,
+			Type:   "string",
 		}
 	}
 

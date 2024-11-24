@@ -230,7 +230,7 @@ func itemToEntry(item ClipboardItem, exec string, avoidLineBreaks bool) util.Ent
 		Label:            label,
 		Sub:              "Text",
 		Exec:             exec,
-		Piped:            util.Piped{Content: item.Content, Type: "string"},
+		Piped:            util.Piped{String: item.Content, Type: "string"},
 		Categories:       []string{"clipboard"},
 		Class:            "clipboard",
 		Matching:         util.Fuzzy,
@@ -243,8 +243,8 @@ func itemToEntry(item ClipboardItem, exec string, avoidLineBreaks bool) util.Ent
 		entry.Image = item.Content
 		entry.Exec = exec
 		entry.Piped = util.Piped{
-			Content: item.Content,
-			Type:    "file",
+			String: item.Content,
+			Type:   "file",
 		}
 		entry.HideText = true
 	}

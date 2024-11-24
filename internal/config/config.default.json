@@ -99,6 +99,15 @@
       "typeahead": true,
       "show_unqualified": false
     },
+    "symbols": {
+      "exec": "wl-copy",
+      "weight": 5,
+      "name": "symbols",
+      "placeholder": "Symbols",
+      "switcher_only": true,
+      "history": true,
+      "typeahead": true
+    },
     "finder": {
       "weight": 5,
       "icon": "folder",

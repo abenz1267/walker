@@ -138,12 +138,12 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 			}
 
 			if !hasExplicitResult {
-				e.Piped.Content = txt
+				e.Piped.String = txt
 				e.Piped.Type = "string"
 			}
 
 			if !hasExplicitResultAlt {
-				e.PipedAlt.Content = txt
+				e.PipedAlt.String = txt
 				e.PipedAlt.Type = "string"
 			}
 

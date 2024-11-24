@@ -1,0 +1,76 @@
+package symbols
+
+import (
+	"bufio"
+	"context"
+	"fmt"
+	"strconv"
+	"strings"
+
+	_ "embed"
+
+	"github.com/abenz1267/walker/internal/config"
+	"github.com/abenz1267/walker/internal/util"
+)
+
+//go:embed UnicodeData.txt
+var list string
+
+type Symbols struct {
+	config  config.Symbols
+	entries []util.Entry
+}
+
+func (e *Symbols) General() *config.GeneralModule {
+	return &e.config.GeneralModule
+}
+
+func (e Symbols) Cleanup() {}
+
+func (e Symbols) Entries(ctx context.Context, term string) []util.Entry {
+	return e.entries
+}
+
+func (e *Symbols) Setup(cfg *config.Config) bool {
+	e.config = cfg.Builtins.Symbols
+
+	return true
+}
+
+func (e *Symbols) SetupData(cfg *config.Config, ctx context.Context) {
+	scanner := bufio.NewScanner(strings.NewReader(list))
+
+	entries := []util.Entry{}
+
+	for scanner.Scan() {
+		text := scanner.Text()
+
+		fields := strings.Split(text, ";")
+
+		symbol := fmt.Sprintf("'\\u%s'", fields[0])
+
+		toUse, err := strconv.Unquote(symbol)
+		if err != nil {
+			continue
+		}
+
+		entries = append(entries, util.Entry{
+			Label:            fmt.Sprintf("%s - %s", toUse, fields[1]),
+			Sub:              "Symbols",
+			Exec:             fmt.Sprintf("echo '%s' | %s", toUse, e.config.Exec),
+			ExecAlt:          fmt.Sprintf("echo '%s' | %s", toUse, e.config.ExecAlt),
+			Class:            "symbols",
+			Matching:         util.Fuzzy,
+			RecalculateScore: true,
+		})
+	}
+
+	e.entries = entries
+
+	e.config.IsSetup = true
+	e.config.HasInitialSetup = true
+}
+
+func (e *Symbols) Refresh() {
+	e.config.IsSetup = !e.config.Refresh
+}

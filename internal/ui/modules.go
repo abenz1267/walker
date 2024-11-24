@@ -9,6 +9,7 @@ import (
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/modules"
 	"github.com/abenz1267/walker/internal/modules/emojis"
+	"github.com/abenz1267/walker/internal/modules/symbols"
 	"github.com/abenz1267/walker/internal/modules/windows"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 )
@@ -78,6 +79,7 @@ func setAvailables(cfg *config.Config) {
 		&modules.Finder{},
 		&modules.Switcher{},
 		&emojis.Emojis{},
+		&symbols.Symbols{},
 		&modules.CustomCommands{},
 		&windows.Windows{},
 	}

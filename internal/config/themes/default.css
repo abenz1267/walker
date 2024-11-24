@@ -1,3 +1,19 @@
+:root {
+  --main-color: rgba(255, 255, 255, 0.8);
+  --main-border-color: #232d3f;
+  --main-background: linear-gradient(
+    to bottom,
+    hsla(240, 12.7%, 13.9%, 0.98),
+    hsla(219, 28.6%, 19.2%, 0.96)
+  );
+  --search-background: hsla(219, 28.6%, 19.2%, 0.8);
+  --search-icon-color: rgba(255, 255, 255, 0.8);
+  --typeahead-color: hsl(174, 89.7%, 32.7%);
+  --selected-background: hsla(172, 100%, 25.3%, 0.6);
+  --ai-color: rgba(255, 255, 255, 0.8);
+  --ai-response-background: hsla(219, 28.6%, 19.2%, 0.8);
+}
+
 #window,
 #box,
 #aiScroll,
@@ -20,18 +36,14 @@ slider,
 }
 
 #window {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--main-color);
 }
 
 #box {
   border-radius: 2px;
-  background: linear-gradient(
-    to bottom,
-    hsla(240, 12.7%, 13.9%, 0.98),
-    hsla(219, 28.6%, 19.2%, 0.96)
-  );
+  background: var(--main-background);
   padding: 32px;
-  border: 1px solid #232d3f;
+  border: 1px solid var(--main-border-color);
   box-shadow:
     0 19px 38px rgba(0, 0, 0, 0.3),
     0 15px 12px rgba(0, 0, 0, 0.22);
@@ -41,7 +53,7 @@ slider,
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.1),
     0 1px 2px rgba(0, 0, 0, 0.22);
-  background: hsla(219, 28.6%, 19.2%, 0.8);
+  background: var(--search-background);
 }
 
 #prompt {
@@ -68,7 +80,7 @@ slider,
 }
 
 #typeahead {
-  color: hsl(174, 89.7%, 32.7%);
+  color: var(--typeahead-color);
 }
 
 #input placeholder {
@@ -79,13 +91,13 @@ slider,
 #typeahead > *:first-child {
   margin-right: 16px;
   margin-left: 4px;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--search-icon-color);
   opacity: 0.2;
 }
 
 #input > *:last-child,
 #typeahead > *:last-child {
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--search-icon-color);
   opacity: 0.8;
 }
 
@@ -99,8 +111,7 @@ child {
 
 child:selected,
 child:hover {
-  /*color: #232d3f;*/
-  background: hsla(172, 100%, 25.3%, 0.6);
+  background: var(--selected-background);
 }
 
 #item {
@@ -143,7 +154,7 @@ child:hover {
 .aiItem {
   padding: 10px;
   border-radius: 2px;
-  color: rgba(255, 255, 255, 0.8);
+  color: var(--ai-color);
 }
 
 .aiItem.user {
@@ -153,5 +164,5 @@ child:hover {
 }
 
 .aiItem.assistant {
-  background: hsla(219, 28.6%, 19.2%, 0.8);
+  background: var(--ai-response-background);
 }

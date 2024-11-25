@@ -33,7 +33,7 @@
       "refresh": true,
       "show_sub_when_single": true,
       "show_icon_when_single": true,
-      "show_generic": false
+      "show_generic": true
     },
     "ai": {
       "weight": 5,

@@ -31,7 +31,7 @@ type AI struct {
 	config          config.AI
 	entries         []util.Entry
 	anthropicKey    string
-	currentPrompt   string
+	currentPrompt   *config.AnthropicPrompt
 	canProcess      bool
 	currentMessages []AnthropicMessage
 	history         map[string][]AnthropicMessage
@@ -41,7 +41,7 @@ type AI struct {
 }
 
 func (ai *AI) Cleanup() {
-	ai.currentPrompt = ""
+	ai.currentPrompt = nil
 	ai.currentMessages = []AnthropicMessage{}
 
 	if ai.list == nil {
@@ -77,7 +77,7 @@ func (ai *AI) Setup(cfg *config.Config) bool {
 }
 
 func (ai *AI) ResumeLastMessages() {
-	ai.currentMessages = ai.history[ai.currentPrompt]
+	ai.currentMessages = ai.history[ai.currentPrompt.Prompt]
 	ai.items.Splice(0, int(ai.items.NItems()), ai.currentMessages...)
 
 	glib.IdleAdd(func() {
@@ -104,7 +104,7 @@ func (ai *AI) SetupData(cfg *config.Config, ctx context.Context) {
 				RecalculateScore: true,
 				Matching:         util.Fuzzy,
 				SpecialFunc:      ai.SpecialFunc,
-				SpecialFuncArgs:  []interface{}{"anthropic", v.Prompt},
+				SpecialFuncArgs:  []interface{}{"anthropic", &v},
 				SingleModuleOnly: v.SingleModuleOnly,
 			})
 		}
@@ -121,10 +121,11 @@ func (ai *AI) SetupData(cfg *config.Config, ctx context.Context) {
 }
 
 type AnthropicRequest struct {
-	Model     string             `json:"model"`
-	MaxTokens int                `json:"max_tokens"`
-	System    string             `json:"system"`
-	Messages  []AnthropicMessage `json:"messages"`
+	Model       string             `json:"model"`
+	MaxTokens   int                `json:"max_tokens"`
+	Temperature float64            `json:"temperature"`
+	System      string             `json:"system"`
+	Messages    []AnthropicMessage `json:"messages"`
 }
 
 type AnthropicMessage struct {
@@ -168,10 +169,11 @@ func (ai *AI) anthropic(query string) {
 	ai.items.Splice(0, int(ai.items.NItems()), messages...)
 
 	req := AnthropicRequest{
-		Model:     ai.config.Anthropic.Model,
-		MaxTokens: ai.config.Anthropic.MaxTokens,
-		System:    ai.currentPrompt,
-		Messages:  messages,
+		Model:       ai.currentPrompt.Model,
+		MaxTokens:   ai.currentPrompt.MaxTokens,
+		Temperature: ai.currentPrompt.Temperature,
+		System:      ai.currentPrompt.Prompt,
+		Messages:    messages,
 	}
 
 	b, err := json.Marshal(req)
@@ -208,7 +210,7 @@ func (ai *AI) anthropic(query string) {
 	messages = append(messages, responseMessages...)
 	ai.currentMessages = messages
 
-	ai.history[ai.currentPrompt] = messages
+	ai.history[ai.currentPrompt.Prompt] = messages
 
 	util.ToGob(&ai.history, filepath.Join(util.CacheDir(), aiHistoryFile))
 
@@ -233,13 +235,13 @@ func (ai *AI) CopyLastResponse() {
 
 func (ai *AI) SpecialFunc(args ...interface{}) {
 	provider := args[0].(string)
-	prompt := args[1].(string)
+	prompt := args[1].(*config.AnthropicPrompt)
 	query := args[2].(string)
 	list := args[3].(*gtk.ListView)
 	items := args[4].(*gioutil.ListModel[AnthropicMessage])
 	spinner := args[5].(*gtk.Spinner)
 
-	if ai.currentPrompt == "" {
+	if ai.currentPrompt == nil {
 		ai.currentPrompt = prompt
 		ai.canProcess = true
 		ai.list = list

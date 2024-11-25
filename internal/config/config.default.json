@@ -42,10 +42,11 @@
       "icon": "help-browser",
       "switcher_only": true,
       "anthropic": {
-        "model": "claude-3-5-sonnet-20241022",
-        "max_tokens": 1000,
         "prompts": [
           {
+            "model": "claude-3-5-sonnet-20241022",
+            "temperature": 1.0,
+            "max_tokens": 1000,
             "label": "General Assistant",
             "prompt": "You are a helpful general assistant. Keep your answers short and precise."
           }

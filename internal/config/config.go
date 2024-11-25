@@ -79,15 +79,16 @@ type AI struct {
 }
 
 type Anthropic struct {
-	Model     string   `mapstructure:"model"`
-	MaxTokens int      `mapstructure:"max_tokens"`
-	Prompts   []Prompt `mapstructure:"prompts"`
+	Prompts []AnthropicPrompt `mapstructure:"prompts"`
 }
 
-type Prompt struct {
-	Label            string `mapstructure:"label"`
-	Prompt           string `mapstructure:"prompt"`
-	SingleModuleOnly bool   `mapstructure:"single_module_only"`
+type AnthropicPrompt struct {
+	Model            string  `mapstructure:"model"`
+	MaxTokens        int     `mapstructure:"max_tokens"`
+	Temperature      float64 `mapstructure:"temperature"`
+	Label            string  `mapstructure:"label"`
+	Prompt           string  `mapstructure:"prompt"`
+	SingleModuleOnly bool    `mapstructure:"single_module_only"`
 }
 
 type Calc struct {

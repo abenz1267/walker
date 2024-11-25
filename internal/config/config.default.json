@@ -26,7 +26,11 @@
       "weight": 5,
       "name": "applications",
       "placeholder": "Applications",
-      "actions": true,
+      "actions": {
+        "enabled": true,
+        "hide_category": false,
+        "hide_without_query": true
+      },
       "prioritize_new": true,
       "hide_actions_with_empty_query": true,
       "context_aware": true,

@@ -175,7 +175,7 @@ func (a *Applications) Refresh() {
 }
 
 func (a *Applications) Entries(ctx context.Context, term string) []util.Entry {
-	if a.config.HideActionsWithEmptyQuery && term == "" {
+	if a.config.Actions.HideWithoutQuery && term == "" {
 		entries := []util.Entry{}
 		added := make(map[string]struct{})
 
@@ -287,7 +287,7 @@ func (a *Applications) parse() []util.Entry {
 					}
 
 					if strings.HasPrefix(line, "[Desktop Action") {
-						if !a.config.Actions {
+						if !a.config.Actions.Enabled {
 							skip = true
 						}
 
@@ -406,7 +406,7 @@ func (a *Applications) parse() []util.Entry {
 				for k := range app.Actions {
 					sub := app.Generic.Label
 
-					if a.config.ShowGeneric && app.Generic.Sub != "" {
+					if a.config.ShowGeneric && app.Generic.Sub != "" && !a.config.Actions.HideCategory {
 						sub = fmt.Sprintf("%s (%s)", app.Generic.Label, app.Generic.Sub)
 					}
 
@@ -437,11 +437,11 @@ func (a *Applications) parse() []util.Entry {
 	}
 
 	for _, v := range apps {
-		if a.config.ShowGeneric || !a.config.Actions {
+		if a.config.ShowGeneric || !a.config.Actions.Enabled {
 			entries = append(entries, v.Generic)
 		}
 
-		if a.config.Actions {
+		if a.config.Actions.Enabled {
 			entries = append(entries, v.Actions...)
 		}
 	}

@@ -54,6 +54,9 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
   - drag&drop support
 - emojis
 - symbols
+- bookmarks
+  - currently custom bookmarks only
+  - planned: bookmarks from browsers
 - calculator
   - uses [libqalculate](https://github.com/Qalculate/libqalculate)
 - custom commands (for running simple commands)

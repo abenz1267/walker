@@ -39,6 +39,20 @@
       "show_icon_when_single": true,
       "show_generic": true
     },
+    "bookmarks": {
+      "weight": 5,
+      "placeholder": "Bookmarks",
+      "name": "bookmarks",
+      "icon": "bookmark",
+      "switcher_only": true,
+      "entries": [
+        {
+          "label": "Walker",
+          "url": "https://github.com/abenz1267/walker",
+          "keywords": ["walker", "github"]
+        }
+      ]
+    },
     "ai": {
       "weight": 5,
       "placeholder": "AI",

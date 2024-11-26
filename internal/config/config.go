@@ -58,6 +58,7 @@ type BarEntry struct {
 type Builtins struct {
 	Applications   Applications   `mapstructure:"applications"`
 	AI             AI             `mapstructure:"ai"`
+	Bookmarks      Bookmarks      `mapstructure:"bookmarks"`
 	Calc           Calc           `mapstructure:"calc"`
 	Clipboard      Clipboard      `mapstructure:"clipboard"`
 	Commands       Commands       `mapstructure:"commands"`
@@ -71,6 +72,17 @@ type Builtins struct {
 	Symbols        Symbols        `mapstructure:"symbols"`
 	Websearch      Websearch      `mapstructure:"websearch"`
 	Windows        Windows        `mapstructure:"windows"`
+}
+
+type Bookmarks struct {
+	GeneralModule `mapstructure:",squash"`
+	Entries       []BookmarkEntry `mapstructure:"entries"`
+}
+
+type BookmarkEntry struct {
+	Label    string   `mapstructure:"label"`
+	Url      string   `mapstructure:"url"`
+	Keywords []string `mapstructure:"keywords"`
 }
 
 type AI struct {

@@ -730,18 +730,9 @@ func processAsync(ctx context.Context, text string) {
 	for _, v := range p {
 		prefix := v.General().Prefix
 
-		if len(prefix) == 1 {
-			if strings.HasPrefix(text, prefix) {
-				prefixes = append(prefixes, prefix)
-				hasPrefix = true
-			}
-		}
-
-		if len(prefix) > 1 {
-			if strings.HasPrefix(text, fmt.Sprintf("%s ", prefix)) {
-				prefixes = append(prefixes, prefix)
-				hasPrefix = true
-			}
+		if len(prefix) > 0 && strings.HasPrefix(text, prefix) {
+			prefixes = append(prefixes, prefix)
+			hasPrefix = true
 		}
 	}
 
@@ -776,12 +767,19 @@ func processAsync(ctx context.Context, text string) {
 		}
 
 		if len(p) > 1 {
-			if p[k].General().SwitcherOnly {
-				wg.Done()
-				continue
-			}
-
 			prefix := p[k].General().Prefix
+
+			if p[k].General().SwitcherOnly {
+				if prefix == "" {
+					wg.Done()
+					continue
+				}
+
+				if !strings.HasPrefix(text, prefix) {
+					wg.Done()
+					continue
+				}
+			}
 
 			if hasPrefix && prefix == "" {
 				wg.Done()
@@ -791,10 +789,6 @@ func processAsync(ctx context.Context, text string) {
 			if !hasPrefix && prefix != "" {
 				wg.Done()
 				continue
-			}
-
-			if len(prefix) > 1 {
-				prefix = fmt.Sprintf("%s ", prefix)
 			}
 
 			if hasPrefix && !strings.HasPrefix(text, prefix) {

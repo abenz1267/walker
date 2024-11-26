@@ -81,109 +81,127 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		layouts = make(map[string]*config.UI)
 
 		hstry = history.Get()
-		cfg = config.Get(appstate.ExplicitConfig)
 
-		theme := cfg.Theme
-		themeBase := cfg.ThemeBase
+		var cfgErr error
+		cfg, cfgErr = config.Get(appstate.ExplicitConfig)
 
-		if appstate.ExplicitTheme != "" {
-			theme = appstate.ExplicitTheme
-			themeBase = nil
-		}
+		if cfgErr == nil {
+			theme := cfg.Theme
+			themeBase := cfg.ThemeBase
 
-		layout = config.GetLayout(theme, themeBase)
-
-		appstate.Labels = strings.Split(cfg.ActivationMode.Labels, "")
-		appstate.LabelsF = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
-		appstate.UsedLabels = appstate.Labels
-
-		if cfg.ActivationMode.UseFKeys {
-			appstate.UsedLabels = appstate.LabelsF
-		}
-
-		cfg.IsService = appstate.IsService
-
-		if appstate.Dmenu == nil {
-			if appstate.DmenuSeparator != "" {
-				cfg.Builtins.Dmenu.Separator = appstate.DmenuSeparator
+			if appstate.ExplicitTheme != "" {
+				theme = appstate.ExplicitTheme
+				themeBase = nil
 			}
 
-			if appstate.DmenuLabelColumn != 0 {
-				cfg.Builtins.Dmenu.LabelColumn = appstate.DmenuLabelColumn
-			}
-		}
+			layout = config.GetLayout(theme, themeBase)
 
-		if appstate.ExplicitPlaceholder != "" {
-			cfg.Search.Placeholder = appstate.ExplicitPlaceholder
-		}
+			appstate.Labels = strings.Split(cfg.ActivationMode.Labels, "")
+			appstate.LabelsF = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
+			appstate.UsedLabels = appstate.Labels
 
-		if appstate.Password {
-			cssProvider := gtk.NewCSSProvider()
-			gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
-
-			common = &Common{
-				cssProvider: cssProvider,
+			if cfg.ActivationMode.UseFKeys {
+				appstate.UsedLabels = appstate.LabelsF
 			}
 
-			elements = setupElementsPassword(app)
+			cfg.IsService = appstate.IsService
 
-			setupLayerShell()
-		} else {
-			setupCommon(app)
-
-			elements = setupElements(app)
-
-			setupLayerShell()
-
-			setupModules()
-
-			afterUI()
-
-			setupInteractions(appstate)
-		}
-
-		if singleModule == nil {
-			setupLayout(theme, themeBase)
-		} else {
-			g := singleModule.General()
-
-			if val, ok := layouts[g.Name]; ok {
-				layout = val
-
-				theme := g.Theme
-				themeBase := g.ThemeBase
-
-				if appstate.ExplicitTheme != "" {
-					theme = appstate.ExplicitTheme
-					themeBase = nil
+			if appstate.Dmenu == nil {
+				if appstate.DmenuSeparator != "" {
+					cfg.Builtins.Dmenu.Separator = appstate.DmenuSeparator
 				}
 
+				if appstate.DmenuLabelColumn != 0 {
+					cfg.Builtins.Dmenu.LabelColumn = appstate.DmenuLabelColumn
+				}
+			}
+
+			if appstate.ExplicitPlaceholder != "" {
+				cfg.Search.Placeholder = appstate.ExplicitPlaceholder
+			}
+
+			if appstate.Password {
+				cssProvider := gtk.NewCSSProvider()
+				gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
+
+				common = &Common{
+					cssProvider: cssProvider,
+				}
+
+				elements = setupElementsPassword(app)
+
+				setupLayerShell()
+			} else {
+				setupCommon(app)
+
+				elements = setupElements(app)
+
+				setupLayerShell()
+
+				setupModules()
+
+				afterUI()
+
+				setupInteractions(appstate)
+			}
+
+			if singleModule == nil {
 				setupLayout(theme, themeBase)
 			} else {
-				setupLayout(theme, themeBase)
+				g := singleModule.General()
+
+				if val, ok := layouts[g.Name]; ok {
+					layout = val
+
+					theme := g.Theme
+					themeBase := g.ThemeBase
+
+					if appstate.ExplicitTheme != "" {
+						theme = appstate.ExplicitTheme
+						themeBase = nil
+					}
+
+					setupLayout(theme, themeBase)
+				} else {
+					setupLayout(theme, themeBase)
+				}
 			}
-		}
 
-		elements.appwin.SetVisible(true)
+			elements.appwin.SetVisible(true)
 
-		if appstate.Password {
-			elements.password.GrabFocus()
-			timeoutReset()
+			if appstate.Password {
+				elements.password.GrabFocus()
+				timeoutReset()
+			} else {
+				elements.input.GrabFocus()
+			}
+
+			appstate.HasUI = true
+			appstate.IsRunning = true
+
+			handleTimout()
+
+			if cfg.IsService && cfg.HotreloadTheme {
+				go watchTheme()
+			}
 		} else {
-			elements.input.GrabFocus()
+			appwin := gtk.NewApplicationWindow(app)
+			box := gtk.NewBox(gtk.OrientationVertical, 0)
+
+			label := gtk.NewLabel("Failed to load config. Please check the release notes for possible breaking changes.")
+			box.Append(label)
+			box.SetSpacing(20)
+			box.SetVAlign(gtk.AlignCenter)
+
+			errorLabel := gtk.NewLabel(cfgErr.Error())
+			box.Append(errorLabel)
+
+			appwin.SetChild(box)
+			appwin.SetVisible(true)
 		}
-
-		appstate.HasUI = true
-		appstate.IsRunning = true
-
-		handleTimout()
 
 		if appstate.Benchmark {
 			fmt.Println("Visible (first ui)", time.Now().UnixMilli())
-		}
-
-		if cfg.IsService && cfg.HotreloadTheme {
-			go watchTheme()
 		}
 	}
 }

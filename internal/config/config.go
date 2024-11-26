@@ -6,6 +6,7 @@ import (
 	_ "embed"
 	"errors"
 	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 
@@ -267,7 +268,7 @@ type List struct {
 	VisibilityThreshold int    `mapstructure:"visibility_threshold"`
 }
 
-func Get(config string) *Config {
+func Get(config string) (*Config, error) {
 	os.MkdirAll(util.ThemeDir(), 0755)
 
 	defs := viper.New()
@@ -317,12 +318,13 @@ func Get(config string) *Config {
 
 	err = viper.Unmarshal(cfg)
 	if err != nil {
-		log.Panic(err)
+		slog.Error("config", "error", err)
+		return nil, err
 	}
 
 	go setTerminal(cfg)
 
-	return cfg
+	return cfg, nil
 }
 
 func setTerminal(cfg *Config) {

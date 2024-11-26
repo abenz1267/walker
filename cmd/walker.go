@@ -74,8 +74,12 @@ func main() {
 			state.IsService = slices.Contains(args, "--gapplication-service")
 
 			if state.IsService {
-				cfg := config.Get(state.ExplicitConfig)
-				state.StartServiceableModules(cfg)
+				cfg, err := config.Get(state.ExplicitConfig)
+				if err != nil {
+					log.Fatal("Failed to load config")
+				} else {
+					state.StartServiceableModules(cfg)
+				}
 			}
 
 			if slices.Contains(args, "-d") || slices.Contains(args, "--dmenu") {

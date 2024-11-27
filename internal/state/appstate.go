@@ -37,6 +37,7 @@ type AppState struct {
 	LabelsF             []string
 	UsedLabels          []string
 	InitialQuery        string
+	LastQuery           string
 }
 
 func Get() *AppState {

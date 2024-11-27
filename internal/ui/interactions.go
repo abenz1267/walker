@@ -256,6 +256,12 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			if isAi {
 				ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
 				ai.ResumeLastMessages()
+			} else {
+				if appstate.IsService {
+					elements.input.SetText(appstate.LastQuery)
+					elements.input.SetPosition(-1)
+					elements.input.GrabFocus()
+				}
 			}
 		}
 	case gdk.KEY_x:
@@ -1077,6 +1083,10 @@ func quit() {
 	appstate.IsDmenu = false
 
 	explicits = []modules.Workable{}
+
+	if appstate.IsService {
+		appstate.LastQuery = elements.input.Text()
+	}
 
 	glib.IdleAdd(func() {
 		if layout != nil {

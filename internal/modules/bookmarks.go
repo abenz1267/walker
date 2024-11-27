@@ -67,7 +67,7 @@ func (bookmarks *Bookmarks) SetupData(cfg *config.Config, ctx context.Context) {
 			Sub:              v.Url,
 			Categories:       v.Keywords,
 			Icon:             cfg.Builtins.Bookmarks.GeneralModule.Icon,
-			Exec:             fmt.Sprintf("xdg-open %s", v.Url),
+			Exec:             fmt.Sprintf("xdg-open '%s'", v.Url),
 			Matching:         util.Fuzzy,
 			RecalculateScore: true,
 		})
@@ -84,7 +84,7 @@ func (bookmarks *Bookmarks) SetupData(cfg *config.Config, ctx context.Context) {
 				Sub:              fmt.Sprintf("%s: %s", v.Label, entry.Url),
 				Categories:       entry.Keywords,
 				Icon:             cfg.Builtins.Bookmarks.GeneralModule.Icon,
-				Exec:             fmt.Sprintf("xdg-open %s", entry.Url),
+				Exec:             fmt.Sprintf("xdg-open '%s'", entry.Url),
 				Matching:         util.Fuzzy,
 				RecalculateScore: true,
 				Prefix:           v.Prefix,

@@ -760,6 +760,8 @@ func processAsync(ctx context.Context, text string) {
 		appstate.IsSingle = true
 	}
 
+	hasEntryPrefix := false
+
 	for k := range p {
 		if p[k] == nil {
 			wg.Done()
@@ -867,11 +869,31 @@ func processAsync(ctx context.Context, text string) {
 
 				if toMatch == "" {
 					if e[k].ScoreFinal != 0 {
-						toPush = append(toPush, e[k])
+						if e[k].Prefix != "" && strings.HasPrefix(text, e[k].Prefix) {
+							hasEntryPrefix = true
+
+							toPush = append(toPush, e[k])
+						} else {
+							if e[k].IgnoreUnprefixed {
+								continue
+							}
+
+							toPush = append(toPush, e[k])
+						}
 					}
 				} else {
 					if e[k].ScoreFinal > float64(cfg.List.VisibilityThreshold) {
-						toPush = append(toPush, e[k])
+						if e[k].Prefix != "" && strings.HasPrefix(text, e[k].Prefix) {
+							hasEntryPrefix = true
+
+							toPush = append(toPush, e[k])
+						} else {
+							if e[k].IgnoreUnprefixed {
+								continue
+							}
+
+							toPush = append(toPush, e[k])
+						}
 					}
 				}
 			}
@@ -883,6 +905,18 @@ func processAsync(ctx context.Context, text string) {
 	}
 
 	wg.Wait()
+
+	if hasEntryPrefix {
+		finalEntries := []util.Entry{}
+
+		for _, v := range entries {
+			if v.Prefix != "" {
+				finalEntries = append(finalEntries, v)
+			}
+		}
+
+		entries = finalEntries
+	}
 
 	if !appstate.KeepSort && !keepSort {
 		sortEntries(entries)
@@ -1074,6 +1108,12 @@ const modifier = 0.10
 
 func fuzzyScore(entry util.Entry, text string) float64 {
 	textLength := len(text)
+
+	if entry.Prefix != "" {
+		if strings.HasPrefix(text, entry.Prefix) {
+			text = strings.TrimPrefix(text, entry.Prefix)
+		}
+	}
 
 	if textLength == 0 {
 		return 1

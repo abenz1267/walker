@@ -95,6 +95,7 @@ func (w Websearch) Entries(ctx context.Context, term string) []util.Entry {
 			Class:            "websearch",
 			ScoreFinal:       score,
 			SingleModuleOnly: v.SwitcherOnly && prefix == "",
+			Prefix:           prefix,
 		}
 
 		entries = append(entries, n)

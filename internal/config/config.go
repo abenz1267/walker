@@ -77,7 +77,15 @@ type Builtins struct {
 
 type Bookmarks struct {
 	GeneralModule `mapstructure:",squash"`
+	Groups        []BookmarkGroup `mapstructure:"groups"`
 	Entries       []BookmarkEntry `mapstructure:"entries"`
+}
+
+type BookmarkGroup struct {
+	Label            string          `mapstructure:"label"`
+	Prefix           string          `mapstructure:"prefix"`
+	IgnoreUnprefixed bool            `mapstructure:"ignore_unprefixed"`
+	Entries          []BookmarkEntry `mapstructure:"entries"`
 }
 
 type BookmarkEntry struct {

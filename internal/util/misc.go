@@ -45,17 +45,19 @@ type Entry struct {
 	DaysSinceUsed    int                       `mapstructure:"-"`
 	File             string                    `mapstructure:"-"`
 	History          bool                      `mapstructure:"-"`
+	IgnoreUnprefixed bool                      `mapstructure:"-"`
+	IsAction         bool                      `mapstructure:"-"`
 	LastUsed         time.Time                 `mapstructure:"-"`
 	Module           string                    `mapstructure:"-"`
 	OpenWindows      uint                      `mapstructure:"-"`
 	Piped            Piped                     `mapstructure:"-"`
 	PipedAlt         Piped                     `mapstructure:"-"`
+	Prefix           string                    `mapstructure:"-"`
+	SingleModuleOnly bool                      `mapstructure:"-"`
 	SpecialFunc      func(args ...interface{}) `mapstructure:"-"`
 	SpecialFuncArgs  []interface{}             `mapstructure:"-"`
 	Used             int                       `mapstructure:"-"`
 	Weight           int                       `mapstructure:"-"`
-	IsAction         bool                      `mapstructure:"-"`
-	SingleModuleOnly bool                      `mapstructure:"-"`
 }
 
 func (e Entry) Identifier() string {

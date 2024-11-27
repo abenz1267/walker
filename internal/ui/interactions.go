@@ -813,7 +813,9 @@ func processAsync(ctx context.Context, text string) {
 		go func(ctx context.Context, wg *sync.WaitGroup, text string, w modules.Workable) {
 			defer wg.Done()
 
-			if len(text) < w.General().MinChars {
+			mCfg := w.General()
+
+			if len(text) < mCfg.MinChars {
 				return
 			}
 
@@ -822,7 +824,34 @@ func processAsync(ctx context.Context, text string) {
 			toPush := []util.Entry{}
 			g := w.General()
 
+		outer:
 			for k := range e {
+				if len(mCfg.Blacklist) > 0 {
+					for _, b := range mCfg.Blacklist {
+						if !b.Label && !b.Sub {
+							if b.Reg.MatchString(e[k].Label) {
+								continue outer
+							}
+
+							if b.Reg.MatchString(e[k].Sub) {
+								continue outer
+							}
+						}
+
+						if b.Label {
+							if b.Reg.MatchString(e[k].Label) {
+								continue outer
+							}
+						}
+
+						if b.Sub {
+							if b.Reg.MatchString(e[k].Sub) {
+								continue outer
+							}
+						}
+					}
+				}
+
 				if e[k].SingleModuleOnly && singleModule == nil {
 					continue
 				}

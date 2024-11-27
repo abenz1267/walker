@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"regexp"
 	"slices"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -55,7 +56,20 @@ func setupModules() {
 		go setupLayouts(checkForLayout)
 	}
 
+	prepareBlacklists()
 	setupSingleModule()
+}
+
+func prepareBlacklists() {
+	for k, v := range available {
+		c := v.General()
+
+		if len(c.Blacklist) > 0 {
+			for n, b := range c.Blacklist {
+				available[k].General().Blacklist[n].Reg = regexp.MustCompile(b.Regexp)
+			}
+		}
+	}
 }
 
 func setupLayouts(modules []modules.Workable) {

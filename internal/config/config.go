@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"os/exec"
+	"regexp"
 
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/spf13/viper"
@@ -130,28 +131,38 @@ type CustomCommand struct {
 }
 
 type GeneralModule struct {
-	AutoSelect         bool     `mapstructure:"auto_select"`
-	Delay              int      `mapstructure:"delay"`
-	EagerLoading       bool     `mapstructure:"eager_loading"`
-	History            bool     `mapstructure:"history"`
-	Icon               string   `mapstructure:"icon"`
-	KeepSort           bool     `mapstructure:"keep_sort"`
-	MinChars           int      `mapstructure:"min_chars"`
-	Name               string   `mapstructure:"name"`
-	Placeholder        string   `mapstructure:"placeholder"`
-	Prefix             string   `mapstructure:"prefix"`
-	Refresh            bool     `mapstructure:"refresh"`
-	ShowIconWhenSingle bool     `mapstructure:"show_icon_when_single"`
-	ShowSubWhenSingle  bool     `mapstructure:"show_sub_when_single"`
-	SwitcherOnly       bool     `mapstructure:"switcher_only"`
-	Theme              string   `mapstructure:"theme"`
-	ThemeBase          []string `mapstructure:"theme_base"`
-	Typeahead          bool     `mapstructure:"typeahead"`
-	Weight             int      `mapstructure:"weight"`
+	AutoSelect         bool        `mapstructure:"auto_select"`
+	Blacklist          []Blacklist `mapstructure:"blacklist"`
+	Delay              int         `mapstructure:"delay"`
+	EagerLoading       bool        `mapstructure:"eager_loading"`
+	History            bool        `mapstructure:"history"`
+	Icon               string      `mapstructure:"icon"`
+	KeepSort           bool        `mapstructure:"keep_sort"`
+	MinChars           int         `mapstructure:"min_chars"`
+	Name               string      `mapstructure:"name"`
+	Placeholder        string      `mapstructure:"placeholder"`
+	Prefix             string      `mapstructure:"prefix"`
+	Refresh            bool        `mapstructure:"refresh"`
+	ShowIconWhenSingle bool        `mapstructure:"show_icon_when_single"`
+	ShowSubWhenSingle  bool        `mapstructure:"show_sub_when_single"`
+	SwitcherOnly       bool        `mapstructure:"switcher_only"`
+	Theme              string      `mapstructure:"theme"`
+	ThemeBase          []string    `mapstructure:"theme_base"`
+	Typeahead          bool        `mapstructure:"typeahead"`
+	Weight             int         `mapstructure:"weight"`
 
 	// internal
 	HasInitialSetup bool `mapstructure:"-"`
 	IsSetup         bool `mapstructure:"-"`
+}
+
+type Blacklist struct {
+	Regexp string `mapstructure:"regexp"`
+	Label  bool   `mapstructure:"label"`
+	Sub    bool   `mapstructure:"sub"`
+
+	// internal
+	Reg *regexp.Regexp `mapstructure:"-"`
 }
 
 type Finder struct {

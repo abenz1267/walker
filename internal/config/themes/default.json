@@ -16,7 +16,7 @@
               "h_align": "center",
               "h_expand": true,
               "pixel_size": 24,
-              "theme": "Papirus"
+              "theme": ""
             }
           },
           "orientation": "horizontal",
@@ -64,7 +64,7 @@
               },
               "icon": {
                 "pixel_size": 26,
-                "theme": "Papirus"
+                "theme": ""
               }
             },
             "margins": {

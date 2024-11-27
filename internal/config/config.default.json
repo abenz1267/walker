@@ -16,7 +16,8 @@
   },
   "search": {
     "placeholder": "Search...",
-    "delay": 0
+    "delay": 0,
+    "resume_last_query": false
   },
   "activation_mode": {
     "labels": "jkl;asdf"

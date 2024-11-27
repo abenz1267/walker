@@ -531,7 +531,6 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		history.SaveInputHistory(module.General().Name, elements.input.Text(), identifier)
 	}
 
-	fmt.Println(cmd.String())
 	err := cmd.Start()
 	if err != nil {
 		log.Println(err)
@@ -1095,8 +1094,13 @@ func quit() {
 			}
 		}
 
-		elements.input.SetText("")
-		elements.input.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
+		if !cfg.Search.ResumeLastQuery {
+			elements.input.SetText("")
+			elements.input.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
+		} else {
+			elements.input.SelectRegion(0, -1)
+		}
+
 		elements.appwin.SetVisible(false)
 
 		elements.scroll.SetVisible(true)

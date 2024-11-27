@@ -684,18 +684,22 @@ func reopen() {
 		elements.input.SetObjectProperty("placeholder-text", text)
 	}
 
-	if appstate.InitialQuery != "" {
-		elements.input.SetText(appstate.InitialQuery)
-		glib.IdleAdd(func() {
-			elements.input.SetPosition(-1)
-		})
-	}
-
-	elements.input.GrabFocus()
-
 	handleTimout()
 
-	process()
+	if appstate.InitialQuery != "" {
+		glib.IdleAdd(func() {
+			elements.input.SetText(appstate.InitialQuery)
+			elements.input.SetPosition(-1)
+			elements.input.GrabFocus()
+		})
+
+		return
+	}
+
+	glib.IdleAdd(func() {
+		elements.input.GrabFocus()
+		process()
+	})
 }
 
 func createThemeFile(data []byte) {

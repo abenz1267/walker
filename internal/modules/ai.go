@@ -4,12 +4,15 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"syscall"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
@@ -38,6 +41,7 @@ type AI struct {
 	list            *gtk.ListView
 	items           *gioutil.ListModel[AnthropicMessage]
 	spinner         *gtk.Spinner
+	terminal        string
 }
 
 func (ai *AI) Cleanup() {
@@ -66,6 +70,7 @@ func (ai *AI) Refresh() {
 
 func (ai *AI) Setup(cfg *config.Config) bool {
 	ai.config = cfg.Builtins.AI
+	ai.terminal = cfg.Terminal
 
 	file := filepath.Join(util.CacheDir(), aiHistoryFile)
 
@@ -253,5 +258,25 @@ func (ai *AI) SpecialFunc(args ...interface{}) {
 	switch provider {
 	case "anthropic":
 		ai.anthropic(query)
+	}
+}
+
+func (ai *AI) RunLastMessageInTerminal() {
+	last := ai.currentMessages[len(ai.currentMessages)-1].Content
+	shell := os.Getenv("SHELL")
+
+	toRun := fmt.Sprintf("%s --title %s -e sh -c \"%s; exec %s\"", ai.terminal, "WalkerRunner", last, shell)
+	cmd := exec.Command("sh", "-c", toRun)
+
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Setpgid:    true,
+		Pgid:       0,
+		Foreground: false,
+	}
+
+	err := cmd.Start()
+	if err != nil {
+		slog.Error("Failed to start terminal", "err", err)
+		return
 	}
 }

@@ -131,13 +131,14 @@
     },
     "finder": {
       "weight": 5,
-      "icon": "folder",
+      "icon": "file",
       "name": "finder",
       "placeholder": "Finder",
       "switcher_only": true,
       "ignore_gitignore": true,
       "refresh": true,
-      "concurrency": 8
+      "concurrency": 8,
+      "show_icon_when_single": true
     },
     "runner": {
       "weight": 5,

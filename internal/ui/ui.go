@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"log"
@@ -476,12 +477,22 @@ func setupFactory() *gtk.SignalListItemFactory {
 				}
 
 				if ii != "" {
-					if filepath.IsAbs(ii) {
-						icon = gtk.NewImageFromFile(ii)
-					} else {
-						i := elements.iconTheme.LookupIcon(ii, []string{}, layout.IconSizeIntMap[layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
+					if ii == "file" {
+						fileinfo := gio.NewFileForPath(val.DragDropData)
 
-						icon = gtk.NewImageFromPaintable(i)
+						info, err := fileinfo.QueryInfo(context.Background(), "standard::icon", gio.FileQueryInfoNone)
+						if err == nil {
+							fi := info.Icon()
+							icon = gtk.NewImageFromGIcon(fi)
+						}
+					} else {
+						if filepath.IsAbs(ii) {
+							icon = gtk.NewImageFromFile(ii)
+						} else {
+							i := elements.iconTheme.LookupIcon(ii, []string{}, layout.IconSizeIntMap[layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
+
+							icon = gtk.NewImageFromPaintable(i)
+						}
 					}
 				}
 			}

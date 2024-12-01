@@ -250,9 +250,9 @@ AM = Activation Mode
 | `Escape`                                                                | close                                                                    |
 | `Ctrl + Label`                                                          | Activate item by label                                                   |
 | `Ctrl + c`                                                              | AI: copy last response                                                   |
-| `Ctrl + p`                                                              | All (service-only): resume last query,AI: resume last session for prompt |
+| `Ctrl + r`                                                              | All (service-only): resume last query,AI: resume last session for prompt |
 | `Ctrl + x`                                                              | AI: clear current session                                                |
-| `Ctrl + r`                                                              | AI: run last message in terminal                                         |
+| `Ctrl + e`                                                              | AI: run last message in terminal                                         |
 | `Ctrl + Shift + Label`                                                  | Activate item by label without closing                                   |
 | `Shift+Backspace`                                                       | delete entry from history                                                |
 

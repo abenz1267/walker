@@ -251,7 +251,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				ai.CopyLastResponse()
 			}
 		}
-	case gdk.KEY_r:
+	case gdk.KEY_e:
 		if modifier == gdk.ControlMask {
 			if isAi {
 				ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
@@ -259,7 +259,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				quit()
 			}
 		}
-	case gdk.KEY_p:
+	case gdk.KEY_r:
 		if modifier == gdk.ControlMask {
 			if isAi {
 				ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)

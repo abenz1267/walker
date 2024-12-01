@@ -398,32 +398,42 @@ func setupAiFactory() *gtk.SignalListItemFactory {
 func setupFactory() *gtk.SignalListItemFactory {
 	factory := gtk.NewSignalListItemFactory()
 
+	factory.ConnectSetup(func(object *coreglib.Object) {
+		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
+		box.SetFocusable(true)
+
+		overlay := gtk.NewOverlay()
+		overlay.SetChild(box)
+
+		item := object.Cast().(*gtk.ListItem)
+		item.SetChild(overlay)
+	})
+
+	factory.ConnectUnbind(func(object *coreglib.Object) {
+		item := object.Cast().(*gtk.ListItem)
+		overlay := item.Child().(*gtk.Overlay)
+		box := overlay.Child().(*gtk.Box)
+
+		for box.FirstChild() != nil {
+			box.Remove(box.FirstChild())
+		}
+	})
+
+	factory.ConnectTeardown(func(object *coreglib.Object) {
+	})
+
 	factory.ConnectBind(func(object *coreglib.Object) {
 		item := object.Cast().(*gtk.ListItem)
 
-		overlay := gtk.NewOverlay()
-		item.SetChild(overlay)
-
 		valObj := common.items.Item(item.Position())
 		val := gioutil.ObjectValue[util.Entry](valObj)
-		child := item.Child()
 
-		if child == nil {
+		overlay := item.Child().(*gtk.Overlay)
+		box := overlay.Child().(*gtk.Box)
+
+		if box.FirstChild() != nil {
 			return
 		}
-
-		overlay, ok := child.(*gtk.Overlay)
-		if !ok {
-			log.Panicln("child is not a box")
-		}
-
-		if overlay.FirstChild() != nil {
-			return
-		}
-
-		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
-		box.SetFocusable(true)
-		overlay.SetChild(box)
 
 		if val.DragDrop {
 			dd := gtk.NewDragSource()

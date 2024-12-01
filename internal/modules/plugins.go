@@ -18,6 +18,7 @@ import (
 type Plugin struct {
 	Config       config.Plugin
 	cachedOutput []byte
+	entries      []util.Entry
 }
 
 func (e *Plugin) General() *config.GeneralModule {
@@ -55,6 +56,18 @@ func (e *Plugin) SetupData(cfg *config.Config, ctx context.Context) {
 	if e.Config.SrcOnce != "" {
 		e.Config.Src = e.Config.SrcOnce
 		e.cachedOutput = e.getSrcOutput(false, "")
+
+		if e.Config.Cmd == "" {
+			if e.Config.Parser == "json" {
+				e.entries = e.parseJson(e.cachedOutput)
+			} else if e.Config.Parser == "kv" {
+				e.entries = e.parseKv(e.cachedOutput)
+			}
+
+			for k := range e.entries {
+				e.entries[k].Class = e.Config.Name
+			}
+		}
 	}
 
 	e.Config.IsSetup = true
@@ -161,6 +174,10 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 		}
 
 		return entries
+	}
+
+	if len(e.entries) > 0 {
+		return e.entries
 	}
 
 	cmd := exec.Command("sh", "-c", e.Config.Src)

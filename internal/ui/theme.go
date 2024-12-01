@@ -279,7 +279,7 @@ func setupAiScrollTheme() {
 	hScrollbarPolicy = layout.ScrollPolicyMap[layout.Window.Box.AiScroll.HScrollbarPolicy]
 
 	elements.aiScroll.SetOverlayScrolling(layout.Window.Box.AiScroll.OverlayScrolling)
-	elements.aiScroll.SetPolicy(vScrollbarPolicy, hScrollbarPolicy)
+	elements.aiScroll.SetPolicy(hScrollbarPolicy, vScrollbarPolicy)
 }
 
 func setupScrollTheme() {
@@ -291,8 +291,10 @@ func setupScrollTheme() {
 	vScrollbarPolicy = layout.ScrollPolicyMap[layout.Window.Box.Scroll.VScrollbarPolicy]
 	hScrollbarPolicy = layout.ScrollPolicyMap[layout.Window.Box.Scroll.HScrollbarPolicy]
 
+	fmt.Println(vScrollbarPolicy, hScrollbarPolicy)
+
 	elements.scroll.SetOverlayScrolling(layout.Window.Box.Scroll.OverlayScrolling)
-	elements.scroll.SetPolicy(vScrollbarPolicy, hScrollbarPolicy)
+	elements.scroll.SetPolicy(hScrollbarPolicy, vScrollbarPolicy)
 
 	elements.scroll.SetMinContentWidth(layout.Window.Box.Scroll.List.MinWidth)
 	elements.scroll.SetMaxContentWidth(layout.Window.Box.Scroll.List.MaxWidth)

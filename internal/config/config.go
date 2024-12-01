@@ -134,7 +134,6 @@ type GeneralModule struct {
 	AutoSelect         bool        `mapstructure:"auto_select"`
 	Blacklist          []Blacklist `mapstructure:"blacklist"`
 	Delay              int         `mapstructure:"delay"`
-	EagerLoading       bool        `mapstructure:"eager_loading"`
 	History            bool        `mapstructure:"history"`
 	Icon               string      `mapstructure:"icon"`
 	KeepSort           bool        `mapstructure:"keep_sort"`
@@ -169,6 +168,7 @@ type Finder struct {
 	GeneralModule   `mapstructure:",squash"`
 	IgnoreGitIgnore bool `mapstructure:"ignore_gitignore"`
 	Concurrency     int  `mapstructure:"concurrency"`
+	EagerLoading    bool `mapstructure:"eager_loading"`
 }
 
 type Commands struct {

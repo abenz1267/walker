@@ -291,8 +291,6 @@ func setupScrollTheme() {
 	vScrollbarPolicy = layout.ScrollPolicyMap[layout.Window.Box.Scroll.VScrollbarPolicy]
 	hScrollbarPolicy = layout.ScrollPolicyMap[layout.Window.Box.Scroll.HScrollbarPolicy]
 
-	fmt.Println(vScrollbarPolicy, hScrollbarPolicy)
-
 	elements.scroll.SetOverlayScrolling(layout.Window.Box.Scroll.OverlayScrolling)
 	elements.scroll.SetPolicy(hScrollbarPolicy, vScrollbarPolicy)
 

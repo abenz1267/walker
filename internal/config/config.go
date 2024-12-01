@@ -270,6 +270,8 @@ type Plugin struct {
 	Src              string            `mapstructure:"src"`
 	SrcOnce          string            `mapstructure:"src_once"`
 	Terminal         bool              `mapstructure:"terminal"`
+	Parser           string            `mapstructure:"parser"`
+	KvSeparator      string            `mapstructure:"kv_separator"`
 }
 
 type Search struct {

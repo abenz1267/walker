@@ -215,7 +215,7 @@ func setupBarTheme() {
 			controller.SetPropagationPhase(gtk.PropagationPhase(1))
 			controller.Connect("pressed", func(gesture *gtk.GestureClick, n int) {
 				if v.Module == "" && v.Exec != "" {
-					cmd := exec.Command("sh", "-c", v.Exec)
+					cmd := exec.Command("sh", "-c", wrapWithUWSM(v.Exec))
 
 					cmd.SysProcAttr = &syscall.SysProcAttr{
 						Setpgid:    true,

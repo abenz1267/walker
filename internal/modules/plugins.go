@@ -105,7 +105,7 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 			return e.entries
 		}
 
-		cmd := exec.Command("sh", "-c", src)
+		cmd := exec.Command("sh", "-c", wrapWithUWSM(src))
 
 		if !hasExplicitTerm {
 			cmd.Stdin = strings.NewReader(term)
@@ -308,7 +308,7 @@ func (e Plugin) parseJson(out []byte) []util.Entry {
 }
 
 func (e Plugin) getSrcOutput(src string, hasExplicitTerm bool, term string) []byte {
-	cmd := exec.Command("sh", "-c", src)
+	cmd := exec.Command("sh", "-c", wrapWithUWSM(src))
 
 	if !hasExplicitTerm && term != "" {
 		cmd.Stdin = strings.NewReader(term)

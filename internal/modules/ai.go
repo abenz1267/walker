@@ -266,7 +266,7 @@ func (ai *AI) RunLastMessageInTerminal() {
 	shell := os.Getenv("SHELL")
 
 	toRun := fmt.Sprintf("%s --title %s -e sh -c \"%s; exec %s\"", ai.terminal, "WalkerRunner", last, shell)
-	cmd := exec.Command("sh", "-c", toRun)
+	cmd := exec.Command("sh", "-c", wrapWithUWSM(toRun))
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid:    true,

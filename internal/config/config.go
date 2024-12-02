@@ -25,12 +25,12 @@ var Themes embed.FS
 
 type Config struct {
 	ActivationMode      ActivationMode `mapstructure:"activation_mode"`
+	AsWindow            bool           `mapstructure:"as_window"`
 	Bar                 Bar            `mapstructure:"bar"`
 	Builtins            Builtins       `mapstructure:"builtins"`
 	DisableClickToClose bool           `mapstructure:"disable_click_to_close"`
 	Disabled            []string       `mapstructure:"disabled"`
 	ForceKeyboardFocus  bool           `mapstructure:"force_keyboard_focus"`
-	AsWindow            bool           `mapstructure:"as_window"`
 	HotreloadTheme      bool           `mapstructure:"hotreload_theme"`
 	IgnoreMouse         bool           `mapstructure:"ignore_mouse"`
 	List                List           `mapstructure:"list"`
@@ -41,6 +41,7 @@ type Config struct {
 	Theme               string         `mapstructure:"theme"`
 	ThemeBase           []string       `mapstructure:"theme_base"`
 	Timeout             int            `mapstructure:"timeout"`
+	UseUWSM             bool           `mapstructure:"use_uwsm"`
 
 	Available []string `mapstructure:"-"`
 	IsService bool     `mapstructure:"-"`

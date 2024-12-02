@@ -14,6 +14,8 @@ import (
 	"github.com/abenz1267/walker/internal/util"
 )
 
+var UseUWSM = false
+
 type Workable interface {
 	Cleanup()
 	Entries(ctx context.Context, term string) []util.Entry
@@ -65,4 +67,12 @@ func Find(plugins []config.Plugin, name string) (config.Plugin, error) {
 	}
 
 	return config.Plugin{}, errors.New("plugin not found")
+}
+
+func wrapWithUWSM(text string) string {
+	if !UseUWSM {
+		return text
+	}
+
+	return fmt.Sprintf("uwsm app -- %s", text)
 }

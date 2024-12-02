@@ -960,7 +960,7 @@ func processAsync(ctx context.Context, text string) {
 		entries = finalEntries
 	}
 
-	if !appstate.KeepSort && !keepSort {
+	if (!appstate.KeepSort && !keepSort) || text != "" {
 		sortEntries(entries)
 	}
 

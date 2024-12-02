@@ -131,6 +131,7 @@
       "typeahead": true
     },
     "finder": {
+      "use_fd": false,
       "weight": 5,
       "icon": "file",
       "name": "finder",

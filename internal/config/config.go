@@ -167,6 +167,7 @@ type Blacklist struct {
 
 type Finder struct {
 	GeneralModule   `mapstructure:",squash"`
+	UseFD           bool `mapstructure:"use_fd"`
 	IgnoreGitIgnore bool `mapstructure:"ignore_gitignore"`
 	Concurrency     int  `mapstructure:"concurrency"`
 	EagerLoading    bool `mapstructure:"eager_loading"`

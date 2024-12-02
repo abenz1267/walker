@@ -95,6 +95,8 @@ func (f *Finder) Setup(cfg *config.Config) bool {
 func (f *Finder) SetupData(cfg *config.Config, ctx context.Context) {
 	f.config.HasInitialSetup = true
 	f.config.IsSetup = true
+	f.files = []string{}
+	f.hasList = false
 
 	homedir, err := os.UserHomeDir()
 	if err != nil {

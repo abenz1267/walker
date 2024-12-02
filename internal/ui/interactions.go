@@ -815,6 +815,7 @@ func processAsync(ctx context.Context, text string) {
 		}
 
 		if !p[k].General().IsSetup {
+			fmt.Println("setup data")
 			p[k].SetupData(cfg, ctx)
 		}
 

@@ -14,7 +14,9 @@ import (
 
 type Finder struct {
 	config  config.Finder
-	entries []util.Entry
+	files   []string
+	homedir string
+	hasList bool
 }
 
 func (f *Finder) General() *config.GeneralModule {
@@ -24,11 +26,41 @@ func (f *Finder) General() *config.GeneralModule {
 func (f *Finder) Cleanup() {}
 
 func (f *Finder) Refresh() {
-	f.config.IsSetup = !f.config.Refresh
+	f.config.IsSetup = false
 }
 
 func (f *Finder) Entries(ctx context.Context, term string) []util.Entry {
-	return f.entries
+	for !f.hasList {
+	}
+
+	entries := []util.Entry{}
+
+	scoremin := 50.0
+
+	if term == "" {
+		scoremin = 0.
+	}
+
+	for _, v := range f.files {
+		score := util.FuzzyScore(term, v)
+
+		if score >= scoremin {
+			entries = append(entries, util.Entry{
+				Label:            strings.TrimPrefix(strings.TrimPrefix(v, f.homedir), "/"),
+				Sub:              "finder",
+				Exec:             fmt.Sprintf("xdg-open %s", v),
+				RecalculateScore: false,
+				ScoreFinal:       score,
+				DragDrop:         true,
+				DragDropData:     v,
+				Categories:       []string{"finder", "fzf"},
+				Class:            "finder",
+				Matching:         util.Fuzzy,
+			})
+		}
+	}
+
+	return entries
 }
 
 func (f *Finder) Setup(cfg *config.Config) bool {
@@ -42,12 +74,15 @@ func (f *Finder) Setup(cfg *config.Config) bool {
 }
 
 func (f *Finder) SetupData(cfg *config.Config, ctx context.Context) {
-	f.entries = []util.Entry{}
+	f.config.HasInitialSetup = true
+	f.config.IsSetup = true
 
 	homedir, err := os.UserHomeDir()
 	if err != nil {
 		log.Panic(err)
 	}
+
+	f.homedir = homedir
 
 	fileListQueue := make(chan *gocodewalker.File)
 
@@ -59,46 +94,28 @@ func (f *Finder) SetupData(cfg *config.Config, ctx context.Context) {
 	}
 
 	fileWalker.SetConcurrency(f.config.Concurrency)
-
 	fileWalker.SetErrorHandler(errorHandler)
 
-	done := make(chan bool)
+	done := make(chan struct{})
 
-	go func(isWalking chan bool) {
-		err := fileWalker.Start()
-		if err == nil {
-			isWalking <- false
-		}
+	go func(done chan struct{}) {
+		_ = fileWalker.Start()
+		done <- struct{}{}
 	}(done)
 
-	for {
-		select {
-		case <-done:
-			fileWalker.Terminate()
-			f.config.IsSetup = true
-			f.config.HasInitialSetup = true
-			return
-		case <-ctx.Done():
-			fileWalker.Terminate()
-			f.config.IsSetup = true
-			f.config.HasInitialSetup = true
-			return
-		case file := <-fileListQueue:
-			if file == nil {
-				continue
-			}
+	go func(done chan struct{}) {
+		for {
+			select {
+			case <-done:
+				f.hasList = true
+				return
+			case file := <-fileListQueue:
+				if file == nil {
+					continue
+				}
 
-			f.entries = append(f.entries, util.Entry{
-				Label:            strings.TrimPrefix(strings.TrimPrefix(file.Location, homedir), "/"),
-				Sub:              "finder",
-				Exec:             fmt.Sprintf("xdg-open %s", file.Location),
-				RecalculateScore: true,
-				DragDrop:         true,
-				DragDropData:     file.Location,
-				Categories:       []string{"finder", "fzf"},
-				Class:            "finder",
-				Matching:         util.Fuzzy,
-			})
+				f.files = append(f.files, file.Location)
+			}
 		}
-	}
+	}(done)
 }

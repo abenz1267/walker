@@ -9,6 +9,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"strings"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -124,6 +125,8 @@ func (f *Finder) SetupData(cfg *config.Config, ctx context.Context) {
 		for scanner.Scan() {
 			f.files = append(f.files, scanner.Text())
 		}
+
+		slices.Sort(f.files)
 
 		f.hasList = true
 	} else {

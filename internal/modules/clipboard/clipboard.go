@@ -184,10 +184,7 @@ func (c *Clipboard) watch() {
 	go func() {
 		cmd := exec.Command("sh", "-c", "wl-paste --watch walker --update-clipboard")
 
-		err := cmd.Run()
-		if err != nil {
-			log.Panicln(err)
-		}
+		_ = cmd.Run()
 	}()
 
 	l, err := net.ListenUnix("unix", &net.UnixAddr{Name: ClipboardSocketAddrUpdate})
@@ -303,4 +300,23 @@ func itemToEntry(item ClipboardItem, exec string, avoidLineBreaks bool) util.Ent
 	}
 
 	return entry
+}
+
+func (c *Clipboard) Delete(entry util.Entry) {
+	content := entry.Piped.String
+
+	c.entries = []util.Entry{}
+
+	for k, v := range c.items {
+		if v.Content == content {
+			c.items = slices.Delete(c.items, k, k+1)
+			continue
+		}
+	}
+
+	for _, v := range c.items {
+		c.entries = append(c.entries, itemToEntry(v, c.exec, c.avoidLineBreaks))
+	}
+
+	util.ToGob(&c.items, c.file)
 }

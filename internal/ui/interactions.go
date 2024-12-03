@@ -17,6 +17,7 @@ import (
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/history"
 	"github.com/abenz1267/walker/internal/modules"
+	"github.com/abenz1267/walker/internal/modules/clipboard"
 	"github.com/abenz1267/walker/internal/state"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
@@ -240,8 +241,20 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		}
 	case gdk.KEY_BackSpace:
 		if modifier == gdk.ShiftMask {
-			entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
-			hstry.Delete(entry.Identifier())
+			if singleModule == nil {
+
+				entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
+				hstry.Delete(entry.Identifier())
+			} else {
+				switch singleModule.General().Name {
+				case cfg.Builtins.Clipboard.GeneralModule.Name:
+
+					entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
+					singleModule.(*clipboard.Clipboard).Delete(entry)
+					process()
+				}
+			}
+
 			return true
 		}
 	case gdk.KEY_c:

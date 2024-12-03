@@ -254,7 +254,7 @@ AM = Activation Mode
 | `Ctrl + x`                                                              | AI: clear current session                                                |
 | `Ctrl + e`                                                              | AI: run last message in terminal                                         |
 | `Ctrl + Shift + Label`                                                  | Activate item by label without closing                                   |
-| `Shift+Backspace`                                                       | delete entry from history                                                |
+| `Shift+Backspace`                                                       | All: delete entry from history, Clipboard: remove from clipboard         |
 
 ### Activation Mode
 

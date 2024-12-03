@@ -75,9 +75,7 @@ func main() {
 
 			if state.IsService {
 				cfg, err := config.Get(state.ExplicitConfig)
-				if err != nil {
-					log.Fatal("Failed to load config")
-				} else {
+				if err == nil {
 					state.StartServiceableModules(cfg)
 				}
 			}

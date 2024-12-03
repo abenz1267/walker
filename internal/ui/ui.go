@@ -86,9 +86,9 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		var cfgErr error
 		cfg, cfgErr = config.Get(appstate.ExplicitConfig)
 
-		modules.UseUWSM = cfg.UseUWSM
-
 		if cfgErr == nil {
+			modules.UseUWSM = cfg.UseUWSM
+
 			theme := cfg.Theme
 			themeBase := cfg.ThemeBase
 
@@ -189,6 +189,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			}
 		} else {
 			appwin := gtk.NewApplicationWindow(app)
+			fmt.Println("HERE")
 			box := gtk.NewBox(gtk.OrientationVertical, 0)
 
 			label := gtk.NewLabel("Failed to load config. Please check the release notes for possible breaking changes.")

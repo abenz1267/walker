@@ -11,6 +11,7 @@
   cairo,
   pango,
   wrapGAppsHook,
+  vips,
 }:
 buildGoModule {
   pname = "walker";
@@ -28,7 +29,7 @@ buildGoModule {
   };
   subPackages = ["cmd/walker.go"];
 
-  vendorHash = "sha256-nc/WKBhUxhs1aNUg/GM7vhrKd7FrUdl2uKp7MX2VCdE=";
+  vendorHash = "sha256-XE8M6g4a2sV0sFeElsY2sShX8ddGCTZcf/ZQaeenRwk=";
 
   nativeBuildInputs = [
     gobject-introspection
@@ -44,6 +45,7 @@ buildGoModule {
     graphene
     cairo
     pango
+    vips
   ];
 
   meta = with lib; {

@@ -191,7 +191,6 @@ func (c *Clipboard) watch() {
 	if err != nil {
 		panic(err)
 	}
-	defer l.Close()
 
 	for {
 		conn, err := l.AcceptUnix()

@@ -20,6 +20,7 @@ import (
 	"github.com/abenz1267/walker/internal/state"
 	"github.com/abenz1267/walker/internal/ui"
 	"github.com/abenz1267/walker/internal/util"
+	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -31,6 +32,11 @@ var version string
 var now = time.Now().UnixMilli()
 
 func main() {
+	vips.Startup(nil)
+	defer vips.Shutdown()
+
+	vips.LoggingSettings(nil, vips.LogLevelError)
+
 	state := state.Get()
 
 	defer func() {

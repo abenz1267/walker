@@ -16,6 +16,7 @@ import (
 	"github.com/abenz1267/walker/internal/modules"
 	"github.com/abenz1267/walker/internal/state"
 	"github.com/abenz1267/walker/internal/util"
+	"github.com/davidbyttow/govips/v2/vips"
 	ls "github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	coreglib "github.com/diamondburned/gotk4/pkg/core/glib"
@@ -38,6 +39,7 @@ var (
 	available    []modules.Workable
 	hstry        history.History
 	appstate     *state.AppState
+	thumbnails   map[string][]byte
 )
 
 type Common struct {
@@ -72,6 +74,7 @@ type Elements struct {
 
 func Activate(state *state.AppState) func(app *gtk.Application) {
 	appstate = state
+	thumbnails = make(map[string][]byte)
 
 	return func(app *gtk.Application) {
 		if appstate.HasUI {
@@ -189,7 +192,6 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			}
 		} else {
 			appwin := gtk.NewApplicationWindow(app)
-			fmt.Println("HERE")
 			box := gtk.NewBox(gtk.OrientationVertical, 0)
 
 			label := gtk.NewLabel("Failed to load config. Please check the release notes for possible breaking changes.")
@@ -478,7 +480,16 @@ func setupFactory() *gtk.SignalListItemFactory {
 		var icon *gtk.Image
 
 		if val.Image != "" {
-			icon = gtk.NewImageFromFile(val.Image)
+			b, ok := thumbnails[val.Image]
+
+			if ok {
+				t, _ := gdk.NewTextureFromBytes(glib.NewBytes(b))
+				icon = gtk.NewImageFromPaintable(t)
+			} else {
+				createThumbnail(val.Image)
+				t, _ := gdk.NewTextureFromBytes(glib.NewBytes(thumbnails[val.Image]))
+				icon = gtk.NewImageFromPaintable(t)
+			}
 		}
 
 		if !layout.Window.Box.Scroll.List.Item.Icon.Hide {
@@ -851,4 +862,25 @@ func watchTheme() {
 	defer watcher.Close()
 
 	<-make(chan struct{})
+}
+
+func createThumbnail(file string) {
+	image, err := vips.NewImageFromFile(file)
+	if err != nil {
+		slog.Error("thumbnail", "error", err)
+	}
+
+	err = image.Thumbnail(300, 300, vips.InterestingNone)
+	if err != nil {
+		slog.Error("thumbnail", "error", err)
+	}
+
+	ep := vips.NewDefaultJPEGExportParams()
+
+	b, _, _ := image.Export(ep)
+	if err != nil {
+		slog.Error("thumbnail", "error", err)
+	}
+
+	thumbnails[file] = b
 }

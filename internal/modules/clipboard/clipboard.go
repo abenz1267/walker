@@ -6,12 +6,14 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"slices"
 	"strings"
+	"syscall"
 	"time"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -182,7 +184,14 @@ func (c *Clipboard) watch() {
 	os.Remove(ClipboardSocketAddrUpdate)
 
 	go func() {
+		time.Sleep(time.Second * 5)
+
 		cmd := exec.Command("sh", "-c", "wl-paste --watch walker --update-clipboard")
+		cmd.SysProcAttr = &syscall.SysProcAttr{
+			Setpgid:    true,
+			Pgid:       0,
+			Foreground: false,
+		}
 
 		_ = cmd.Run()
 	}()
@@ -195,13 +204,15 @@ func (c *Clipboard) watch() {
 	for {
 		conn, err := l.AcceptUnix()
 		if err != nil {
-			log.Panic(err)
+			slog.Error("clipboard", "error", "accept", err)
 		}
+
 		b := make([]byte, 104_857_600)
+
 		i, err := conn.Read(b)
 		if err != nil {
 			if err.Error() == "EOF" {
-				break
+				continue
 			} else {
 				log.Panic(err)
 			}
@@ -258,13 +269,13 @@ func Update(content []byte) {
 
 	conn, err := net.Dial("unix", ClipboardSocketAddrUpdate)
 	if err != nil {
-		log.Println(err)
+		slog.Error("clipboard", "error", "socket", err)
 		return
 	}
 
 	_, err = conn.Write(content)
 	if err != nil {
-		log.Println(err)
+		slog.Error("clipboard", "error", "write", err)
 	}
 }
 

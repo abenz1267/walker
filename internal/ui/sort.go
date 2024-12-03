@@ -7,7 +7,7 @@ import (
 	"github.com/abenz1267/walker/internal/util"
 )
 
-func sortEntries(entries []util.Entry) {
+func sortEntries(entries []util.Entry, keepSort bool) {
 	slices.SortFunc(entries, func(a, b util.Entry) int {
 		if tahAcceptedIdentifier != "" {
 			if a.Identifier() == tahAcceptedIdentifier {
@@ -87,6 +87,10 @@ func sortEntries(entries []util.Entry) {
 		if a.ScoreFinal == b.ScoreFinal {
 			if !a.LastUsed.IsZero() && !b.LastUsed.IsZero() {
 				return b.LastUsed.Compare(a.LastUsed)
+			}
+
+			if keepSort {
+				return 0
 			}
 
 			return strings.Compare(a.Label, b.Label)

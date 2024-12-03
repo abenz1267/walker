@@ -779,10 +779,10 @@ func processAsync(ctx context.Context, text string) {
 	var wg sync.WaitGroup
 	wg.Add(len(p))
 
-	keepSort := false
+	keepSort := false || appstate.KeepSort
 
 	if len(p) == 1 {
-		keepSort = p[0].General().KeepSort
+		keepSort = p[0].General().KeepSort || appstate.KeepSort
 		appstate.IsSingle = true
 	}
 
@@ -973,8 +973,8 @@ func processAsync(ctx context.Context, text string) {
 		entries = finalEntries
 	}
 
-	if (!appstate.KeepSort && !keepSort) || text != "" {
-		sortEntries(entries)
+	if !keepSort || text != "" {
+		sortEntries(entries, keepSort)
 	}
 
 	if len(entries) > cfg.List.MaxEntries {
@@ -1077,7 +1077,7 @@ func setInitials() {
 		return
 	}
 
-	sortEntries(entries)
+	sortEntries(entries, false)
 
 	common.items.Splice(0, int(common.items.NItems()), entries...)
 }

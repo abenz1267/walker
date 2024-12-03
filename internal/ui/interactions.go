@@ -38,6 +38,8 @@ var (
 	tahAcceptedIdentifier   string
 	isAi                    bool
 	blockTimeout            bool
+	mouseX                  float64
+	mouseY                  float64
 )
 
 func setupCommands() {
@@ -109,6 +111,26 @@ func setupInteractions(appstate *state.AppState) {
 
 	elements.appwin.AddController(globalKeyController)
 	elements.appwin.AddController(globalKeyReleasedController)
+
+	if !cfg.IgnoreMouse {
+		motion := gtk.NewEventControllerMotion()
+
+		motion.ConnectMotion(func(x, y float64) {
+			if mouseX == 0 || mouseY == 0 {
+				mouseX = x
+				mouseY = y
+				return
+			}
+
+			if x != mouseX || y != mouseY {
+				if !elements.grid.CanTarget() {
+					elements.grid.SetCanTarget(true)
+				}
+			}
+		})
+
+		elements.appwin.AddController(motion)
+	}
 
 	if !cfg.IgnoreMouse && !cfg.DisableClickToClose {
 		gesture := gtk.NewGestureClick()
@@ -643,6 +665,10 @@ func closeAfterActivation(keepOpen, next bool) {
 var cancel context.CancelFunc
 
 func process() {
+	mouseX = 0
+	mouseY = 0
+	elements.grid.SetCanTarget(false)
+
 	if isAi {
 		return
 	}

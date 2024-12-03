@@ -66,6 +66,10 @@ func setupTheme(theme string) {
 		layout.InitUnitMaps()
 	}
 
+	if cfg.IgnoreMouse {
+		elements.grid.SetCanTarget(false)
+	}
+
 	if !appstate.Password {
 		if layout.Window.Box.Scroll.List.Item.Icon.Theme != "" {
 			elements.iconTheme = gtk.NewIconTheme()

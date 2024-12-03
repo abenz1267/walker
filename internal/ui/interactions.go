@@ -657,10 +657,6 @@ func process() {
 
 	elements.typeahead.SetText("")
 
-	if cfg.IgnoreMouse {
-		elements.grid.SetCanTarget(false)
-	}
-
 	text := strings.TrimSpace(elements.input.Text())
 
 	if text == "" && cfg.List.ShowInitialEntries && len(explicits) == 0 && !appstate.IsDmenu {
@@ -880,10 +876,6 @@ func processAsync(ctx context.Context, text string) {
 				e[k].Module = g.Name
 				e[k].Weight = g.Weight
 
-				if e[k].DragDrop && !elements.grid.CanTarget() {
-					elements.grid.SetCanTarget(true)
-				}
-
 				toMatch := text
 
 				if e[k].MatchFields > 0 {
@@ -993,6 +985,17 @@ func processAsync(ctx context.Context, text string) {
 		}
 
 		common.items.Splice(0, int(common.items.NItems()), entries...)
+
+		if cfg.IgnoreMouse && !elements.grid.CanTarget() {
+			for _, v := range entries {
+				if v.DragDrop {
+					elements.grid.SetCanTarget(true)
+					break
+				}
+			}
+		} else if cfg.IgnoreMouse {
+			elements.grid.SetCanTarget(false)
+		}
 	})
 
 	tahAcceptedIdentifier = ""

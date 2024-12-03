@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"fmt"
 	"log"
+	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -18,6 +19,8 @@ import (
 )
 
 const ClipboardName = "clipboard"
+
+var ClipboardSocketAddrUpdate = filepath.Join(util.TmpDir(), "walker-clipboard-update.sock")
 
 type Clipboard struct {
 	general         config.GeneralModule
@@ -176,12 +179,45 @@ func (c *Clipboard) watch() {
 
 	c.isWatching = true
 
+	os.Remove(ClipboardSocketAddrUpdate)
+
+	go func() {
+		cmd := exec.Command("sh", "-c", "wl-paste --watch walker --update-clipboard")
+
+		err := cmd.Run()
+		if err != nil {
+			log.Panicln(err)
+		}
+	}()
+
+	l, err := net.ListenUnix("unix", &net.UnixAddr{Name: ClipboardSocketAddrUpdate})
+	if err != nil {
+		panic(err)
+	}
+	defer l.Close()
+
 	for {
-		time.Sleep(500 * time.Millisecond)
+		conn, err := l.AcceptUnix()
+		if err != nil {
+			log.Panic(err)
+		}
+		b := make([]byte, 104_857_600)
+		i, err := conn.Read(b)
+		if err != nil {
+			if err.Error() == "EOF" {
+				break
+			} else {
+				log.Panic(err)
+			}
+			continue
+		}
 
-		content, hash := getContent()
+		content := string(b[:i])
 
-		if c.exists(hash) {
+		hash := md5.Sum([]byte(content))
+		strgHash := hex.EncodeToString(hash[:])
+
+		if c.exists(strgHash) {
 			continue
 		}
 
@@ -194,7 +230,7 @@ func (c *Clipboard) watch() {
 		e := ClipboardItem{
 			Content: content,
 			Time:    time.Now(),
-			Hash:    hash,
+			Hash:    strgHash,
 			IsImg:   false,
 		}
 
@@ -216,6 +252,23 @@ func (c *Clipboard) watch() {
 		}
 
 		util.ToGob(&c.items, c.file)
+	}
+}
+
+func Update(content []byte) {
+	if !util.FileExists(ClipboardSocketAddrUpdate) {
+		return
+	}
+
+	conn, err := net.Dial("unix", ClipboardSocketAddrUpdate)
+	if err != nil {
+		log.Println(err)
+		return
+	}
+
+	_, err = conn.Write(content)
+	if err != nil {
+		log.Println(err)
 	}
 }
 

@@ -3,6 +3,7 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -15,6 +16,7 @@ import (
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/modules"
+	"github.com/abenz1267/walker/internal/modules/clipboard"
 	"github.com/abenz1267/walker/internal/state"
 	"github.com/abenz1267/walker/internal/ui"
 	"github.com/abenz1267/walker/internal/util"
@@ -32,10 +34,6 @@ func main() {
 	state := state.Get()
 
 	defer func() {
-		if state.IsService {
-			os.Remove(modules.DmenuSocketAddrGet)
-		}
-
 		os.Remove(modules.DmenuSocketAddrReply)
 	}()
 
@@ -69,6 +67,17 @@ func main() {
 
 			if slices.Contains(args, "-x") || slices.Contains(args, "--autoselect") {
 				state.AutoSelect = true
+			}
+
+			if slices.Contains(args, "-u") || slices.Contains(args, "--update-clipboard") {
+				b, err := io.ReadAll(os.Stdin)
+				if err != nil {
+					log.Panicln(err)
+				}
+
+				clipboard.Update(b)
+
+				return
 			}
 
 			state.IsService = slices.Contains(args, "--gapplication-service")
@@ -110,6 +119,7 @@ func main() {
 	app.AddMainOption("dmenu", 'd', glib.OptionFlagNone, glib.OptionArgNone, "run in dmenu mode", "")
 	app.AddMainOption("config", 'c', glib.OptionFlagNone, glib.OptionArgString, "config file to use", "")
 	app.AddMainOption("theme", 's', glib.OptionFlagNone, glib.OptionArgString, "theme to use", "")
+	app.AddMainOption("update-clipboard", 'u', glib.OptionFlagNone, glib.OptionArgString, "theme to use", "")
 	app.AddMainOption("placeholder", 'p', glib.OptionFlagNone, glib.OptionArgString, "placeholder text", "")
 	app.AddMainOption("query", 'q', glib.OptionFlagNone, glib.OptionArgString, "initial query", "")
 	app.AddMainOption("labelcolumn", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
@@ -235,6 +245,7 @@ func main() {
 
 				os.Remove(modules.DmenuSocketAddrGet)
 				os.Remove(modules.DmenuSocketAddrReply)
+				os.Remove(clipboard.ClipboardSocketAddrUpdate)
 
 				os.Exit(0)
 			}

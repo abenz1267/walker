@@ -6,6 +6,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"net/url"
 	"os/exec"
 	"strconv"
@@ -100,6 +101,65 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 		src = strings.ReplaceAll(e.Config.Src, "%TERM%", term)
 	}
 
+	hasExplicitResult := false
+	hasExplicitResultAlt := false
+
+	if strings.Contains(e.Config.Cmd, "%RESULT%") {
+		hasExplicitResult = true
+	}
+
+	if strings.Contains(e.Config.CmdAlt, "%RESULT%") {
+		hasExplicitResultAlt = true
+	}
+
+	if e.Config.Output {
+		cmd := exec.Command("sh", "-c", src)
+
+		out, err := cmd.CombinedOutput()
+		if err != nil {
+			slog.Error("plugin", e.Config.Name, "error", err)
+			return nil
+		}
+
+		var score float64
+
+		e.Config.Keywords = append(e.Config.Keywords, e.Config.Name)
+
+		for _, v := range e.Config.Keywords {
+			res := util.FuzzyScore(term, v)
+
+			if res > score {
+				score = res
+			}
+		}
+
+		result := string(out)
+
+		e := util.Entry{
+			Label:            strings.TrimSpace(result),
+			Exec:             strings.ReplaceAll(e.Config.Cmd, "%RESULT%", result),
+			ExecAlt:          strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result),
+			Sub:              e.Config.Name,
+			ScoreFinal:       score,
+			RecalculateScore: false,
+			Categories:       e.Config.Keywords,
+			Matching:         util.AlwaysTop,
+			Icon:             e.Config.Icon,
+		}
+
+		if !hasExplicitResult {
+			e.Piped.String = result
+			e.Piped.Type = "string"
+		}
+
+		if !hasExplicitResultAlt {
+			e.PipedAlt.String = result
+			e.PipedAlt.Type = "string"
+		}
+
+		return []util.Entry{e}
+	}
+
 	if e.Config.Cmd == "" {
 		if len(e.entries) > 0 && e.Config.SrcOnce != "" {
 			return e.entries
@@ -126,17 +186,6 @@ func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
 		for k := range entries {
 			entries[k].Class = e.Config.Name
 		}
-	}
-
-	hasExplicitResult := false
-	hasExplicitResultAlt := false
-
-	if strings.Contains(e.Config.Cmd, "%RESULT%") {
-		hasExplicitResult = true
-	}
-
-	if strings.Contains(e.Config.CmdAlt, "%RESULT%") {
-		hasExplicitResultAlt = true
 	}
 
 	if e.Config.Cmd != "" {

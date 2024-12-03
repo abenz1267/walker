@@ -274,6 +274,8 @@ type Plugin struct {
 	Terminal         bool              `mapstructure:"terminal"`
 	Parser           string            `mapstructure:"parser"`
 	KvSeparator      string            `mapstructure:"kv_separator"`
+	Output           bool              `mapstructure:"output"`
+	Keywords         []string          `mapstructure:"keywords"`
 }
 
 type Search struct {

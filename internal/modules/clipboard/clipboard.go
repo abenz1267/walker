@@ -13,7 +13,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"syscall"
 	"time"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -187,11 +186,6 @@ func (c *Clipboard) watch() {
 		time.Sleep(time.Second * 5)
 
 		cmd := exec.Command("sh", "-c", "wl-paste --watch walker --update-clipboard")
-		cmd.SysProcAttr = &syscall.SysProcAttr{
-			Setpgid:    true,
-			Pgid:       0,
-			Foreground: false,
-		}
 
 		_ = cmd.Run()
 	}()

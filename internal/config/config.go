@@ -15,7 +15,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-var noFoundErr viper.ConfigFileNotFoundError
+var notFoundErr viper.ConfigFileNotFoundError
 
 //go:embed config.default.json
 var defaultConfig []byte
@@ -338,7 +338,7 @@ func Get(config string) (*Config, error) {
 			log.Panicln(dErr)
 		}
 
-		if errors.As(err, &noFoundErr) {
+		if errors.As(err, &notFoundErr) {
 			ft := "json"
 
 			et := os.Getenv("WALKER_CONFIG_TYPE")

@@ -37,7 +37,7 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
   - desktop actions (f.e. `Open a new private window` [Firefox])
   - puts newly installed applications on top
   - context-aware (context = open windows)
-- websearch ()
+- websearch
   - simple websearch
   - google, duckduckgo, ecosia, yandex
   - can open websites directly

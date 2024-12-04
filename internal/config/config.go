@@ -23,6 +23,16 @@ var defaultConfig []byte
 //go:embed themes/*
 var Themes embed.FS
 
+type EventType int
+
+const (
+	EventLaunch EventType = iota
+	EventSelection
+	EventExit
+	EventActivate
+	EventQueryChange
+)
+
 type Config struct {
 	ActivationMode      ActivationMode `mapstructure:"activation_mode"`
 	AsWindow            bool           `mapstructure:"as_window"`
@@ -30,6 +40,7 @@ type Config struct {
 	Builtins            Builtins       `mapstructure:"builtins"`
 	DisableClickToClose bool           `mapstructure:"disable_click_to_close"`
 	Disabled            []string       `mapstructure:"disabled"`
+	Events              Events         `mapstructure:"events"`
 	ForceKeyboardFocus  bool           `mapstructure:"force_keyboard_focus"`
 	HotreloadTheme      bool           `mapstructure:"hotreload_theme"`
 	IgnoreMouse         bool           `mapstructure:"ignore_mouse"`
@@ -45,6 +56,14 @@ type Config struct {
 
 	Available []string `mapstructure:"-"`
 	IsService bool     `mapstructure:"-"`
+}
+
+type Events struct {
+	OnLaunch      string `mapstructure:"on_launch"`
+	OnSelection   string `mapstructure:"on_selection"`
+	OnExit        string `mapstructure:"on_exit"`
+	OnActivate    string `mapstructure:"on_activate"`
+	OnQueryChange string `mapstructure:"on_query_change"`
 }
 
 type Bar struct {

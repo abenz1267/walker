@@ -206,6 +206,8 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			appwin.SetVisible(true)
 		}
 
+		executeEvent(config.EventLaunch, "")
+
 		if appstate.Benchmark {
 			fmt.Println("Visible (first ui)", time.Now().UnixMilli())
 		}
@@ -263,6 +265,10 @@ func setupCommon(app *gtk.Application) {
 
 	selection := gtk.NewSingleSelection(items.ListModel)
 	selection.SetAutoselect(true)
+
+	selection.ConnectSelectionChanged(func(pos, item uint) {
+		executeEvent(config.EventSelection, "")
+	})
 
 	factory := setupFactory()
 	aiFactory := setupAiFactory()
@@ -703,6 +709,7 @@ func reopen() {
 		}
 	}
 
+	executeEvent(config.EventLaunch, "")
 	elements.appwin.SetVisible(true)
 
 	if appstate.Benchmark {

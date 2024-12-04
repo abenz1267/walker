@@ -79,6 +79,8 @@ func setupCommands() {
 	}
 }
 
+var lastQuery = ""
+
 func setupInteractions(appstate *state.AppState) {
 	go setupCommands()
 
@@ -86,7 +88,16 @@ func setupInteractions(appstate *state.AppState) {
 	keycontroller.SetPropagationPhase(gtk.PropagationPhase(1))
 
 	elements.input.AddController(keycontroller)
-	elements.input.Connect("search-changed", process)
+	elements.input.Connect("search-changed", func() {
+		text := elements.input.Text()
+
+		if lastQuery != text {
+			executeEvent(config.EventQueryChange, "")
+			lastQuery = text
+		}
+
+		process()
+	})
 
 	amKey = gdk.KEY_Control_L
 	amModifier = gdk.ControlMask
@@ -137,9 +148,9 @@ func setupInteractions(appstate *state.AppState) {
 		gesture.SetPropagationPhase(gtk.PropagationPhase(3))
 		gesture.Connect("pressed", func(gesture *gtk.GestureClick, n int) {
 			if appstate.IsService {
-				quit()
+				quit(false)
 			} else {
-				exit()
+				exit(false)
 			}
 		})
 
@@ -291,7 +302,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			if isAi {
 				ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
 				ai.RunLastMessageInTerminal()
-				quit()
+				quit(true)
 			}
 		}
 	case gdk.KEY_m:
@@ -331,10 +342,10 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		}
 
 		if cfg.IsService {
-			quit()
+			quit(false)
 			return true
 		} else {
-			exit()
+			exit(false)
 			return true
 		}
 	case gdk.KEY_F1, gdk.KEY_F2, gdk.KEY_F3, gdk.KEY_F4, gdk.KEY_F5, gdk.KEY_F6, gdk.KEY_F7, gdk.KEY_F8:
@@ -481,8 +492,10 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
 
+	executeEvent(config.EventActivate, entry.Label)
+
 	if !keepOpen && entry.Sub != "Walker" && entry.Sub != "switcher" && cfg.IsService && entry.SpecialFunc == nil {
-		go quit()
+		go quit(true)
 	}
 
 	module := findModule(entry.Module, toUse, explicits)
@@ -653,11 +666,11 @@ func setStdin(cmd *exec.Cmd, piped *util.Piped) {
 
 func closeAfterActivation(keepOpen, next bool) {
 	if !cfg.IsService && !keepOpen {
-		exit()
+		exit(true)
 	}
 
 	if !keepOpen && appstate.IsRunning {
-		quit()
+		quit(true)
 		return
 	}
 
@@ -1135,7 +1148,11 @@ func usageModifier(item util.Entry) int {
 	return 0
 }
 
-func quit() {
+func quit(ignoreEvent bool) {
+	if !ignoreEvent {
+		executeEvent(config.EventExit, "")
+	}
+
 	if timeoutTimer != nil {
 		timeoutTimer.Stop()
 	}
@@ -1203,7 +1220,11 @@ func quit() {
 	common.app.Hold()
 }
 
-func exit() {
+func exit(ignoreEvent bool) {
+	if !ignoreEvent {
+		executeEvent(config.EventExit, "")
+	}
+
 	elements.appwin.Close()
 	os.Exit(0)
 }

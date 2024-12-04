@@ -26,7 +26,7 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
   - define different prompts
 - runner
   - parses your shell config for aliases
-  - exlusive list or all binaries
+  - exclusive list or all binaries
   - ignore-list
   - generic runner
   - semi-smart: `shu now` => `shutdown now`
@@ -267,7 +267,7 @@ Activation-Mode can be triggered by holding `LCtrl` ( or `LAlt`). The window wil
 
 Make sure to clean the applications cache by either running the "Clear Applications Cache" command from within Walker (using the `commands` module) or by deleting the `applications.json` file in `$HOME/.cache/walker/`.
 
-Additionally you can diasble the cache completely by setting
+Additionally you can disable the cache completely by setting
 
 ```json
   "applications": {

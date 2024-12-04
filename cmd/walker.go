@@ -32,10 +32,10 @@ var version string
 var now = time.Now().UnixMilli()
 
 func main() {
+	vips.LoggingSettings(nil, vips.LogLevelError)
+
 	vips.Startup(nil)
 	defer vips.Shutdown()
-
-	vips.LoggingSettings(nil, vips.LogLevelError)
 
 	state := state.Get()
 

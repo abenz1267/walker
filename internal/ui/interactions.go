@@ -294,6 +294,16 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				quit()
 			}
 		}
+	case gdk.KEY_m:
+		if modifier == gdk.ControlMask {
+			if strings.HasPrefix(elements.input.Text(), "'") {
+				elements.input.SetText(strings.TrimPrefix(elements.input.Text(), "'"))
+			} else {
+				elements.input.SetText("'" + elements.input.Text())
+			}
+
+			elements.input.SetPosition(-1)
+		}
 	case gdk.KEY_r:
 		if modifier == gdk.ControlMask {
 			if isAi {

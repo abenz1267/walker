@@ -253,6 +253,7 @@ AM = Activation Mode
 | `Ctrl + r`                                                              | All (service-only): resume last query,AI: resume last session for prompt |
 | `Ctrl + x`                                                              | AI: clear current session                                                |
 | `Ctrl + e`                                                              | AI: run last message in terminal                                         |
+| `Ctrl + m`                                                              | toggle exact match search                                                |
 | `Ctrl + Shift + Label`                                                  | Activate item by label without closing                                   |
 | `Shift+Backspace`                                                       | All: delete entry from history, Clipboard: remove from clipboard         |
 

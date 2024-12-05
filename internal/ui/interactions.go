@@ -158,7 +158,7 @@ func setupInteractions(appstate *state.AppState) {
 	}
 }
 
-func selectNext(disableMouse bool) {
+func selectNext() {
 	disableMouseGtk()
 
 	items := common.selection.NItems()
@@ -183,7 +183,7 @@ func selectNext(disableMouse bool) {
 	}
 }
 
-func selectPrev(disableMouse bool) {
+func selectPrev() {
 	disableMouseGtk()
 
 	items := common.selection.NItems()
@@ -396,7 +396,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 
 			return true
 		} else {
-			selectNext(true)
+			selectNext()
 
 			return true
 		}
@@ -405,7 +405,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			return false
 		}
 
-		selectNext(true)
+		selectNext()
 		return true
 	case gdk.KEY_Up:
 		if layout.Window.Box.Scroll.List.Grid {
@@ -414,12 +414,12 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 
 		if common.selection.Selected() == 0 || common.items.NItems() == 0 {
 			if len(toUse) != 1 {
-				selectPrev(true)
+				selectPrev()
 				return true
 			}
 
 			if len(explicits) != 0 && len(explicits) != 1 {
-				selectPrev(true)
+				selectPrev()
 				return true
 			}
 
@@ -444,24 +444,24 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				})
 			}
 		} else {
-			selectPrev(true)
+			selectPrev()
 			return true
 		}
 	case gdk.KEY_ISO_Left_Tab:
-		selectPrev(true)
+		selectPrev()
 		return true
 	default:
 		if (cfg.List.KeyboardScrollStyle == "vim" && val == gdk.KEY_j) || val == gdk.KEY_n {
 			if cfg.ActivationMode.Disabled {
 				if modifier == gdk.ControlMask {
-					selectNext(true)
+					selectNext()
 					return true
 				}
 			}
 		} else if (cfg.List.KeyboardScrollStyle == "vim" && val == gdk.KEY_k) || val == gdk.KEY_p {
 			if cfg.ActivationMode.Disabled {
 				if modifier == gdk.ControlMask {
-					selectPrev(true)
+					selectPrev()
 					return true
 				}
 			}
@@ -688,7 +688,7 @@ func closeAfterActivation(keepOpen, next bool) {
 		}
 
 		if next {
-			selectNext(false)
+			selectNext()
 		}
 	}
 }

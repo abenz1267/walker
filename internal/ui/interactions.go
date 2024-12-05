@@ -699,22 +699,6 @@ func disableMouseGtk() {
 	elements.grid.SetCanTarget(false)
 }
 
-func processThrottle(in chan struct{}) {
-	block := true
-
-	for {
-		select {
-		case <-in:
-			block = false
-		case <-time.After(time.Millisecond * 10):
-			if !block {
-				block = true
-				debouncedProcess(process)
-			}
-		}
-	}
-}
-
 func process() {
 	disableMouseGtk()
 

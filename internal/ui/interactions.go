@@ -158,7 +158,9 @@ func setupInteractions(appstate *state.AppState) {
 	}
 }
 
-func selectNext() {
+func selectNext(disableMouse bool) {
+	disableMouseGtk()
+
 	items := common.selection.NItems()
 
 	if items == 0 {
@@ -181,7 +183,9 @@ func selectNext() {
 	}
 }
 
-func selectPrev() {
+func selectPrev(disableMouse bool) {
+	disableMouseGtk()
+
 	items := common.selection.NItems()
 
 	if items == 0 {
@@ -388,7 +392,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 
 			return true
 		} else {
-			selectNext()
+			selectNext(true)
 
 			return true
 		}
@@ -397,7 +401,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			return false
 		}
 
-		selectNext()
+		selectNext(true)
 		return true
 	case gdk.KEY_Up:
 		if layout.Window.Box.Scroll.List.Grid {
@@ -406,12 +410,12 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 
 		if common.selection.Selected() == 0 || common.items.NItems() == 0 {
 			if len(toUse) != 1 {
-				selectPrev()
+				selectPrev(true)
 				return true
 			}
 
 			if len(explicits) != 0 && len(explicits) != 1 {
-				selectPrev()
+				selectPrev(true)
 				return true
 			}
 
@@ -436,24 +440,24 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				})
 			}
 		} else {
-			selectPrev()
+			selectPrev(true)
 			return true
 		}
 	case gdk.KEY_ISO_Left_Tab:
-		selectPrev()
+		selectPrev(true)
 		return true
 	default:
 		if (cfg.List.KeyboardScrollStyle == "vim" && val == gdk.KEY_j) || val == gdk.KEY_n {
 			if cfg.ActivationMode.Disabled {
 				if modifier == gdk.ControlMask {
-					selectNext()
+					selectNext(true)
 					return true
 				}
 			}
 		} else if (cfg.List.KeyboardScrollStyle == "vim" && val == gdk.KEY_k) || val == gdk.KEY_p {
 			if cfg.ActivationMode.Disabled {
 				if modifier == gdk.ControlMask {
-					selectPrev()
+					selectPrev(true)
 					return true
 				}
 			}
@@ -680,17 +684,21 @@ func closeAfterActivation(keepOpen, next bool) {
 		}
 
 		if next {
-			selectNext()
+			selectNext(false)
 		}
 	}
 }
 
 var cancel context.CancelFunc
 
-func process() {
+func disableMouseGtk() {
 	mouseX = 0
 	mouseY = 0
 	elements.grid.SetCanTarget(false)
+}
+
+func process() {
+	disableMouseGtk()
 
 	if isAi {
 		return

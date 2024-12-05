@@ -2,7 +2,6 @@ package ui
 
 import (
 	"bytes"
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -694,8 +693,6 @@ func closeAfterActivation(keepOpen, next bool) {
 	}
 }
 
-var cancel context.CancelFunc
-
 func disableMouseGtk() {
 	mouseX = 0
 	mouseY = 0
@@ -729,10 +726,6 @@ func process() {
 		elements.listPlaceholder.SetVisible(false)
 	}
 
-	if cancel != nil {
-		cancel()
-	}
-
 	elements.typeahead.SetText("")
 
 	text := strings.TrimSpace(elements.input.Text())
@@ -742,15 +735,12 @@ func process() {
 		return
 	}
 
-	var ctx context.Context
-	ctx, cancel = context.WithCancel(context.Background())
-
 	if (elements.input.Text() != "" || appstate.IsDmenu) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
 		if !layout.Window.Box.Search.Spinner.Hide {
 			elements.spinner.SetVisible(true)
 		}
 
-		go processAsync(ctx, text)
+		go processAsync(text)
 	} else {
 		common.items.Splice(0, int(common.items.NItems()))
 
@@ -808,12 +798,10 @@ func handleTimeout() {
 
 var mut sync.Mutex
 
-func processAsync(ctx context.Context, text string) {
+func processAsync(text string) {
 	entries := []util.Entry{}
 
 	defer func() {
-		cancel()
-
 		if !layout.Window.Box.Search.Spinner.Hide {
 			elements.spinner.SetVisible(false)
 		}
@@ -902,10 +890,10 @@ func processAsync(ctx context.Context, text string) {
 		}
 
 		if !p[k].General().IsSetup {
-			p[k].SetupData(cfg, ctx)
+			p[k].SetupData(cfg)
 		}
 
-		go func(ctx context.Context, wg *sync.WaitGroup, text string, w modules.Workable) {
+		go func(wg *sync.WaitGroup, text string, w modules.Workable) {
 			defer wg.Done()
 
 			mCfg := w.General()
@@ -914,7 +902,7 @@ func processAsync(ctx context.Context, text string) {
 				return
 			}
 
-			e := w.Entries(ctx, text)
+			e := w.Entries(text)
 
 			toPush := []util.Entry{}
 			g := w.General()
@@ -1026,7 +1014,7 @@ func processAsync(ctx context.Context, text string) {
 			mut.Lock()
 			entries = append(entries, toPush...)
 			mut.Unlock()
-		}(ctx, &wg, text, p[k])
+		}(&wg, text, p[k])
 	}
 
 	wg.Wait()
@@ -1131,10 +1119,10 @@ func setInitials() {
 	}
 
 	if !proc.General().IsSetup {
-		proc.SetupData(cfg, nil)
+		proc.SetupData(cfg)
 	}
 
-	e := proc.Entries(nil, "")
+	e := proc.Entries("")
 
 	for _, entry := range e {
 		entry.Module = proc.General().Name

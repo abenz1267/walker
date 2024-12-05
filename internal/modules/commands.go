@@ -1,8 +1,6 @@
 package modules
 
 import (
-	"context"
-
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
 )
@@ -18,7 +16,7 @@ func (c *Commands) General() *config.GeneralModule {
 
 func (c Commands) Cleanup() {}
 
-func (c Commands) Entries(ctx context.Context, term string) []util.Entry {
+func (c Commands) Entries(term string) []util.Entry {
 	return c.entries
 }
 
@@ -28,7 +26,7 @@ func (c *Commands) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (c *Commands) SetupData(cfg *config.Config, ctx context.Context) {
+func (c *Commands) SetupData(cfg *config.Config) {
 	entries := []struct {
 		label string
 		exec  string

@@ -2,7 +2,6 @@ package emojis
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"strings"
 
@@ -29,7 +28,7 @@ func (e *Emojis) General() *config.GeneralModule {
 
 func (e Emojis) Cleanup() {}
 
-func (e Emojis) Entries(ctx context.Context, term string) []util.Entry {
+func (e Emojis) Entries(term string) []util.Entry {
 	return e.entries
 }
 
@@ -42,7 +41,7 @@ func (e *Emojis) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (e *Emojis) SetupData(cfg *config.Config, ctx context.Context) {
+func (e *Emojis) SetupData(cfg *config.Config) {
 	scanner := bufio.NewScanner(strings.NewReader(list))
 
 	entries := []util.Entry{}

@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"context"
 	"log"
 	"os/exec"
 	"strings"
@@ -43,9 +42,9 @@ func (c *Calc) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (c *Calc) SetupData(cfg *config.Config, ctx context.Context) {}
+func (c *Calc) SetupData(cfg *config.Config) {}
 
-func (c Calc) Entries(ctx context.Context, term string) []util.Entry {
+func (c Calc) Entries(term string) []util.Entry {
 	if c.config.RequireNumber {
 		hasNumber := false
 

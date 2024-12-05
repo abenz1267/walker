@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"context"
 	"fmt"
 	"strings"
 
@@ -18,7 +17,7 @@ type Bookmarks struct {
 func (bookmarks *Bookmarks) Cleanup() {
 }
 
-func (bookmarks *Bookmarks) Entries(ctx context.Context, term string) []util.Entry {
+func (bookmarks *Bookmarks) Entries(term string) []util.Entry {
 	hasPrefix := false
 
 	for _, v := range bookmarks.prefixes {
@@ -57,7 +56,7 @@ func (bookmarks *Bookmarks) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (bookmarks *Bookmarks) SetupData(cfg *config.Config, ctx context.Context) {
+func (bookmarks *Bookmarks) SetupData(cfg *config.Config) {
 	bookmarks.entries = []util.Entry{}
 	bookmarks.prefixes = []string{}
 

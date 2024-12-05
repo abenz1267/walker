@@ -2,7 +2,6 @@ package modules
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io/fs"
 	"log"
@@ -34,7 +33,7 @@ func (r *Runner) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (r *Runner) SetupData(cfg *config.Config, ctx context.Context) {
+func (r *Runner) SetupData(cfg *config.Config) {
 	r.parseAliases()
 
 	if len(cfg.Builtins.Runner.Includes) > 0 {
@@ -63,7 +62,7 @@ func (r *Runner) Refresh() {
 	r.config.IsSetup = !r.config.Refresh
 }
 
-func (r Runner) Entries(ctx context.Context, term string) []util.Entry {
+func (r Runner) Entries(term string) []util.Entry {
 	entries := []util.Entry{}
 
 	fields := strings.Fields(term)

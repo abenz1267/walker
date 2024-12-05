@@ -2,7 +2,6 @@ package windows
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io/fs"
 	"os"
@@ -36,7 +35,7 @@ func (w *Windows) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (w *Windows) SetupData(cfg *config.Config, ctx context.Context) {
+func (w *Windows) SetupData(cfg *config.Config) {
 	if !wlr.IsRunning {
 		go wlr.StartWM(nil, nil)
 	}
@@ -102,7 +101,7 @@ func (w *Windows) GetIcons() {
 	}
 }
 
-func (w Windows) Entries(ctx context.Context, term string) []util.Entry {
+func (w Windows) Entries(term string) []util.Entry {
 	entries := []util.Entry{}
 
 	res := wlr.GetWindows()

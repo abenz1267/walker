@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -18,11 +17,11 @@ var UseUWSM = false
 
 type Workable interface {
 	Cleanup()
-	Entries(ctx context.Context, term string) []util.Entry
+	Entries(term string) []util.Entry
 	General() *config.GeneralModule
 	Refresh()
 	Setup(cfg *config.Config) bool
-	SetupData(cfg *config.Config, ctx context.Context)
+	SetupData(cfg *config.Config)
 }
 
 func readCache(name string, data any) bool {

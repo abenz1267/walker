@@ -2,7 +2,6 @@ package modules
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"io/fs"
 	"log"
@@ -53,7 +52,7 @@ func (a *Applications) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (a *Applications) SetupData(cfg *config.Config, ctx context.Context) {
+func (a *Applications) SetupData(cfg *config.Config) {
 	a.entries = a.parse()
 
 	if cfg.IsService {
@@ -174,7 +173,7 @@ func (a *Applications) Refresh() {
 	}
 }
 
-func (a *Applications) Entries(ctx context.Context, term string) []util.Entry {
+func (a *Applications) Entries(term string) []util.Entry {
 	if a.config.Actions.HideWithoutQuery && term == "" {
 		entries := []util.Entry{}
 		added := make(map[string]struct{})

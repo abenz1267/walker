@@ -1,7 +1,6 @@
 package state
 
 import (
-	"context"
 	"os"
 	"slices"
 
@@ -66,10 +65,10 @@ func (app *AppState) StartServiceableModules(cfg *config.Config) {
 
 	if !slices.Contains(cfg.Disabled, clipboard.General().Name) && hasClipboard {
 		app.Clipboard = clipboard
-		app.Clipboard.SetupData(cfg, context.Background())
+		app.Clipboard.SetupData(cfg)
 	}
 
 	if !slices.Contains(cfg.Disabled, app.Dmenu.General().Name) {
-		app.Dmenu.SetupData(cfg, context.Background())
+		app.Dmenu.SetupData(cfg)
 	}
 }

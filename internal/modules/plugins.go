@@ -3,7 +3,6 @@ package modules
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"encoding/json"
 	"log"
 	"log/slog"
@@ -46,7 +45,7 @@ func (e *Plugin) Setup(cfg *config.Config) bool {
 
 func (e Plugin) Cleanup() {}
 
-func (e *Plugin) SetupData(cfg *config.Config, ctx context.Context) {
+func (e *Plugin) SetupData(cfg *config.Config) {
 	if e.Config.Entries != nil {
 		for k := range e.Config.Entries {
 			e.Config.Entries[k].Sub = e.Config.Name
@@ -76,7 +75,7 @@ func (e *Plugin) SetupData(cfg *config.Config, ctx context.Context) {
 	e.Config.HasInitialSetup = true
 }
 
-func (e Plugin) Entries(ctx context.Context, term string) []util.Entry {
+func (e Plugin) Entries(term string) []util.Entry {
 	if e.Config.Entries != nil {
 		for k := range e.Config.Entries {
 			e.Config.Entries[k].ScoreFinal = 0

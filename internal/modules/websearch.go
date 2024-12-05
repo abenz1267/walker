@@ -1,7 +1,6 @@
 package modules
 
 import (
-	"context"
 	"fmt"
 	"log"
 	"net/http"
@@ -38,7 +37,7 @@ func (w *Websearch) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (w *Websearch) SetupData(_ *config.Config, ctx context.Context) {
+func (w *Websearch) SetupData(_ *config.Config) {
 	w.config.IsSetup = true
 	w.config.HasInitialSetup = true
 
@@ -53,7 +52,7 @@ func (w *Websearch) Refresh() {
 	w.config.IsSetup = !w.config.Refresh
 }
 
-func (w Websearch) Entries(ctx context.Context, term string) []util.Entry {
+func (w Websearch) Entries(term string) []util.Entry {
 	entries := []util.Entry{}
 
 	path, _ := exec.LookPath("xdg-open")

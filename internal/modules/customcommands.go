@@ -1,8 +1,6 @@
 package modules
 
 import (
-	"context"
-
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
 )
@@ -18,7 +16,7 @@ func (c *CustomCommands) General() *config.GeneralModule {
 
 func (c CustomCommands) Cleanup() {}
 
-func (c CustomCommands) Entries(ctx context.Context, term string) (_ []util.Entry) {
+func (c CustomCommands) Entries(term string) (_ []util.Entry) {
 	return c.entries
 }
 
@@ -28,7 +26,7 @@ func (c *CustomCommands) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (c *CustomCommands) SetupData(cfg *config.Config, ctx context.Context) {
+func (c *CustomCommands) SetupData(cfg *config.Config) {
 	c.entries = []util.Entry{}
 
 	for _, v := range cfg.Builtins.CustomCommands.Commands {

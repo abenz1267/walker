@@ -1,8 +1,6 @@
 package modules
 
 import (
-	"context"
-
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
 )
@@ -18,7 +16,7 @@ func (s *Switcher) General() *config.GeneralModule {
 
 func (s Switcher) Cleanup() {}
 
-func (s Switcher) Entries(ctx context.Context, term string) []util.Entry {
+func (s Switcher) Entries(term string) []util.Entry {
 	entries := []util.Entry{}
 
 	for _, v := range s.cfg.Available {
@@ -51,7 +49,7 @@ func (s *Switcher) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (s *Switcher) SetupData(cfg *config.Config, ctx context.Context) {
+func (s *Switcher) SetupData(cfg *config.Config) {
 	s.config.HasInitialSetup = true
 }
 

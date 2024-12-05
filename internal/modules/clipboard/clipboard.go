@@ -1,7 +1,6 @@
 package clipboard
 
 import (
-	"context"
 	"crypto/md5"
 	"encoding/hex"
 	"fmt"
@@ -52,7 +51,7 @@ func (c *Clipboard) Refresh() {
 
 func (c Clipboard) Cleanup() {}
 
-func (c Clipboard) Entries(ctx context.Context, term string) []util.Entry {
+func (c Clipboard) Entries(term string) []util.Entry {
 	return c.entries
 }
 
@@ -78,7 +77,7 @@ func (c *Clipboard) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (c *Clipboard) SetupData(cfg *config.Config, ctx context.Context) {
+func (c *Clipboard) SetupData(cfg *config.Config) {
 	current := []ClipboardItem{}
 	_ = util.FromGob(c.file, &current)
 

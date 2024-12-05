@@ -2,7 +2,6 @@ package modules
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -57,7 +56,7 @@ func (ai *AI) Cleanup() {
 	})
 }
 
-func (ai *AI) Entries(ctx context.Context, term string) []util.Entry {
+func (ai *AI) Entries(term string) []util.Entry {
 	return ai.entries
 }
 
@@ -95,7 +94,7 @@ func (ai *AI) ClearCurrent() {
 	ai.items.Splice(0, int(ai.items.NItems()))
 }
 
-func (ai *AI) SetupData(cfg *config.Config, ctx context.Context) {
+func (ai *AI) SetupData(cfg *config.Config) {
 	ai.entries = []util.Entry{}
 
 	ai.anthropicKey = os.Getenv(ANTHROPIC_API_KEY)

@@ -2,7 +2,6 @@ package symbols
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"strconv"
 	"strings"
@@ -27,7 +26,7 @@ func (e *Symbols) General() *config.GeneralModule {
 
 func (e Symbols) Cleanup() {}
 
-func (e Symbols) Entries(ctx context.Context, term string) []util.Entry {
+func (e Symbols) Entries(term string) []util.Entry {
 	return e.entries
 }
 
@@ -37,7 +36,7 @@ func (e *Symbols) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (e *Symbols) SetupData(cfg *config.Config, ctx context.Context) {
+func (e *Symbols) SetupData(cfg *config.Config) {
 	scanner := bufio.NewScanner(strings.NewReader(list))
 
 	entries := []util.Entry{}

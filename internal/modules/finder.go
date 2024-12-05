@@ -3,7 +3,6 @@ package modules
 import (
 	"bufio"
 	"bytes"
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -35,7 +34,7 @@ func (f *Finder) Refresh() {
 	f.config.IsSetup = false
 }
 
-func (f *Finder) Entries(ctx context.Context, term string) []util.Entry {
+func (f *Finder) Entries(term string) []util.Entry {
 	for !f.hasList {
 	}
 
@@ -87,13 +86,13 @@ func (f *Finder) Setup(cfg *config.Config) bool {
 	f.config = cfg.Builtins.Finder
 
 	if cfg.Builtins.Finder.EagerLoading {
-		go f.SetupData(cfg, context.Background())
+		go f.SetupData(cfg)
 	}
 
 	return true
 }
 
-func (f *Finder) SetupData(cfg *config.Config, ctx context.Context) {
+func (f *Finder) SetupData(cfg *config.Config) {
 	f.config.HasInitialSetup = true
 	f.config.IsSetup = true
 	f.files = []string{}

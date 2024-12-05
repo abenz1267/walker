@@ -2,7 +2,6 @@ package modules
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"log"
 	"os"
@@ -28,7 +27,7 @@ func (s *SSH) Refresh() {
 	s.config.IsSetup = !s.config.Refresh
 }
 
-func (s SSH) Entries(ctx context.Context, term string) []util.Entry {
+func (s SSH) Entries(term string) []util.Entry {
 	fields := strings.Fields(term)
 
 	cmd := "ssh"
@@ -52,7 +51,7 @@ func (s *SSH) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (s *SSH) SetupData(cfg *config.Config, ctx context.Context) {
+func (s *SSH) SetupData(cfg *config.Config) {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.Panicln(err)

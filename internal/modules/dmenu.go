@@ -2,7 +2,6 @@ package modules
 
 import (
 	"bufio"
-	"context"
 	"fmt"
 	"log"
 	"net"
@@ -31,7 +30,7 @@ func (d *Dmenu) General() *config.GeneralModule {
 	return &d.Config.GeneralModule
 }
 
-func (d Dmenu) Entries(ctx context.Context, term string) []util.Entry {
+func (d Dmenu) Entries(term string) []util.Entry {
 	entries := []util.Entry{}
 
 	for _, v := range d.Content {
@@ -175,7 +174,7 @@ func (d Dmenu) Send() {
 	}
 }
 
-func (d *Dmenu) SetupData(cfg *config.Config, ctx context.Context) {
+func (d *Dmenu) SetupData(cfg *config.Config) {
 	if cfg.IsService {
 		go d.StartListening()
 		d.IsService = true

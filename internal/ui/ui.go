@@ -28,18 +28,19 @@ import (
 )
 
 var (
-	cfg          *config.Config
-	elements     *Elements
-	startupTheme string
-	layout       *config.UI
-	layouts      map[string]*config.UI
-	common       *Common
-	explicits    []modules.Workable
-	toUse        []modules.Workable
-	available    []modules.Workable
-	hstry        history.History
-	appstate     *state.AppState
-	thumbnails   map[string][]byte
+	cfg              *config.Config
+	elements         *Elements
+	startupTheme     string
+	layout           *config.UI
+	layouts          map[string]*config.UI
+	common           *Common
+	explicits        []modules.Workable
+	toUse            []modules.Workable
+	available        []modules.Workable
+	hstry            history.History
+	appstate         *state.AppState
+	thumbnails       map[string][]byte
+	debouncedProcess func(f func())
 )
 
 type Common struct {
@@ -75,6 +76,7 @@ type Elements struct {
 func Activate(state *state.AppState) func(app *gtk.Application) {
 	appstate = state
 	thumbnails = make(map[string][]byte)
+	debouncedProcess = util.NewDebounce(time.Millisecond * 1)
 
 	return func(app *gtk.Application) {
 		if appstate.HasUI {

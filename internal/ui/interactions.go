@@ -88,6 +88,7 @@ func setupInteractions(appstate *state.AppState) {
 	keycontroller.SetPropagationPhase(gtk.PropagationPhase(1))
 
 	elements.input.AddController(keycontroller)
+
 	elements.input.Connect("search-changed", func() {
 		text := elements.input.Text()
 
@@ -96,7 +97,7 @@ func setupInteractions(appstate *state.AppState) {
 			lastQuery = text
 		}
 
-		process()
+		debouncedProcess(process)
 	})
 
 	amKey = gdk.KEY_Control_L
@@ -288,7 +289,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 
 					entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
 					singleModule.(*clipboard.Clipboard).Delete(entry)
-					process()
+					debouncedProcess(process)
 				}
 			}
 
@@ -311,14 +312,18 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 		}
 	case gdk.KEY_m:
 		if modifier == gdk.ControlMask {
-			if strings.HasPrefix(elements.input.Text(), "'") {
-				elements.input.SetText(strings.TrimPrefix(elements.input.Text(), "'"))
+			text := elements.input.Text()
+
+			if strings.HasPrefix(text, "'") {
+				elements.input.SetText(strings.TrimPrefix(text, "'"))
 			} else {
-				elements.input.SetText("'" + elements.input.Text())
+				elements.input.SetText("'" + text)
 			}
 
 			elements.input.SetPosition(-1)
 		}
+
+		return false
 	case gdk.KEY_r:
 		if modifier == gdk.ControlMask {
 			if isAi {
@@ -629,7 +634,7 @@ func handleSwitcher(module string) {
 			if elements.input.Text() != "" {
 				elements.input.SetText("")
 			} else {
-				process()
+				debouncedProcess(process)
 			}
 
 			elements.input.GrabFocus()
@@ -695,6 +700,22 @@ func disableMouseGtk() {
 	mouseX = 0
 	mouseY = 0
 	elements.grid.SetCanTarget(false)
+}
+
+func processThrottle(in chan struct{}) {
+	block := true
+
+	for {
+		select {
+		case <-in:
+			block = false
+		case <-time.After(time.Millisecond * 10):
+			if !block {
+				block = true
+				debouncedProcess(process)
+			}
+		}
+	}
 }
 
 func process() {

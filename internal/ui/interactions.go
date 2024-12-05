@@ -811,6 +811,7 @@ func processAsync(text string) {
 
 	p := toUse
 
+	query := text
 	hasPrefix := false
 
 	prefixes := []string{}
@@ -1018,6 +1019,10 @@ func processAsync(text string) {
 	}
 
 	wg.Wait()
+
+	if query != lastQuery {
+		return
+	}
 
 	if hasEntryPrefix {
 		finalEntries := []util.Entry{}

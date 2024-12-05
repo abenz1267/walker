@@ -185,7 +185,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			appstate.HasUI = true
 			appstate.IsRunning = true
 
-			handleTimout()
+			handleTimeout()
 
 			if cfg.IsService && cfg.HotreloadTheme {
 				go watchTheme()
@@ -726,7 +726,7 @@ func reopen() {
 		elements.input.SetObjectProperty("placeholder-text", text)
 	}
 
-	handleTimout()
+	handleTimeout()
 
 	if appstate.InitialQuery != "" {
 		glib.IdleAdd(func() {

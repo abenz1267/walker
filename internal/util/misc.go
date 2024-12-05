@@ -73,7 +73,7 @@ type Piped struct {
 	Type   string `mapstructure:"type,omitempty"`
 }
 
-func TrasformSeparator(sep string) string {
+func TransformSeparator(sep string) string {
 	if sep == "" {
 		sep = "'\t'"
 	}

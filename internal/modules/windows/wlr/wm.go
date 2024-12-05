@@ -54,7 +54,7 @@ func StartWM(ac chan string, dc chan string) {
 		log.Fatalf("unable to get global registry object: %v", err)
 	}
 
-	registry.AddGlobalHandler(registryGlobalHander{})
+	registry.AddGlobalHandler(registryGlobalHandler{})
 
 	_ = wlclient.DisplayRoundtrip(display)
 
@@ -74,9 +74,9 @@ func (displayErrorHandler) HandleDisplayError(e wl.DisplayErrorEvent) {
 	log.Fatalf("display error event: %v", e)
 }
 
-type registryGlobalHander struct{}
+type registryGlobalHandler struct{}
 
-func (registryGlobalHander) HandleRegistryGlobal(e wl.RegistryGlobalEvent) {
+func (registryGlobalHandler) HandleRegistryGlobal(e wl.RegistryGlobalEvent) {
 	switch e.Interface {
 	case "zwlr_foreign_toplevel_manager_v1":
 		manager := NewZwlrForeignToplevelManagerV1(display.Context())

@@ -1,4 +1,3 @@
-on
 <object class="GtkApplicationWindow" id="win">
     <property name="title">Walker</property>
     <property name="name">window</property>

@@ -125,7 +125,7 @@ func main() {
 	app.AddMainOption("dmenu", 'd', glib.OptionFlagNone, glib.OptionArgNone, "run in dmenu mode", "")
 	app.AddMainOption("config", 'c', glib.OptionFlagNone, glib.OptionArgString, "config file to use", "")
 	app.AddMainOption("theme", 's', glib.OptionFlagNone, glib.OptionArgString, "theme to use", "")
-	app.AddMainOption("update-clipboard", 'u', glib.OptionFlagNone, glib.OptionArgString, "theme to use", "")
+	app.AddMainOption("update-clipboard", 'u', glib.OptionFlagNone, glib.OptionArgString, "update clipboard content", "")
 	app.AddMainOption("placeholder", 'p', glib.OptionFlagNone, glib.OptionArgString, "placeholder text", "")
 	app.AddMainOption("query", 'q', glib.OptionFlagNone, glib.OptionArgString, "initial query", "")
 	app.AddMainOption("labelcolumn", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")

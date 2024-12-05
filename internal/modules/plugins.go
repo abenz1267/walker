@@ -31,7 +31,7 @@ func (e *Plugin) Refresh() {
 }
 
 func (e *Plugin) Setup(cfg *config.Config) bool {
-	e.Config.Separator = util.TrasformSeparator(e.Config.Separator)
+	e.Config.Separator = util.TransformSeparator(e.Config.Separator)
 
 	if e.Config.Parser == "" {
 		e.Config.Parser = "json"

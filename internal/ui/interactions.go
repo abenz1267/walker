@@ -761,7 +761,7 @@ func timeoutReset() {
 	}
 }
 
-func handleTimout() {
+func handleTimeout() {
 	if cfg.Timeout > 0 {
 		if appstate.Password {
 			elements.password.Connect("changed", timeoutReset)

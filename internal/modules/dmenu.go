@@ -107,7 +107,7 @@ func (d Dmenu) ListenForReply() {
 func (d *Dmenu) Setup(cfg *config.Config) bool {
 	d.Config = cfg.Builtins.Dmenu
 
-	d.Config.Separator = util.TrasformSeparator(d.Config.Separator)
+	d.Config.Separator = util.TransformSeparator(d.Config.Separator)
 
 	d.initialSeparator = d.Config.Separator
 	d.initialLabelColumn = d.Config.LabelColumn

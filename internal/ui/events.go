@@ -8,6 +8,10 @@ import (
 )
 
 func executeEvent(eventType config.EventType, label string) {
+	if cfg == nil {
+		return
+	}
+
 	go func() {
 		cmd := exec.Command("sh", "-c")
 
@@ -26,13 +30,15 @@ func executeEvent(eventType config.EventType, label string) {
 			toRun = cfg.Events.OnQueryChange
 		}
 
+		if toRun == "" {
+			return
+		}
+
 		if label != "" {
 			toRun = strings.ReplaceAll(toRun, "%LABEL%", label)
 		}
 
-		if toRun != "" {
-			cmd.Args = append(cmd.Args, toRun)
-			cmd.Start()
-		}
+		cmd.Args = append(cmd.Args, toRun)
+		cmd.Start()
 	}()
 }

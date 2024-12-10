@@ -1,4 +1,11 @@
 {
+  "events": {
+    "on_activate": "",
+    "on_selection": "",
+    "on_exit": "",
+    "on_launch": "",
+    "on_query_change": ""
+  },
   "use_uwsm": false,
   "theme": "default",
   "monitor": "",

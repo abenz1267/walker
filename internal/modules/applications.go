@@ -436,7 +436,7 @@ func (a *Applications) parse() []util.Entry {
 	}
 
 	for _, v := range apps {
-		if a.config.ShowGeneric || !a.config.Actions.Enabled {
+		if a.config.ShowGeneric || !a.config.Actions.Enabled || len(v.Actions) == 0 {
 			entries = append(entries, v.Generic)
 		}
 

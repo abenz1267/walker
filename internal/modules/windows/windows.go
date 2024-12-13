@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/modules/windows/wlr"
@@ -16,17 +17,18 @@ import (
 )
 
 type Windows struct {
+	mutex     sync.Mutex
 	general   config.GeneralModule
 	entries   []util.Entry
 	functions []func()
 	icons     map[string]string
 }
 
-func (w Windows) General() *config.GeneralModule {
+func (w *Windows) General() *config.GeneralModule {
 	return &w.general
 }
 
-func (w Windows) Cleanup() {
+func (w *Windows) Cleanup() {
 }
 
 func (w *Windows) Setup(cfg *config.Config) bool {
@@ -76,7 +78,9 @@ func (w *Windows) GetIcons() {
 
 				for scanner.Scan() {
 					if icon != "" && class != "" {
+						w.mutex.Lock()
 						w.icons[class] = icon
+						w.mutex.Unlock()
 					}
 
 					line := scanner.Text()
@@ -101,7 +105,7 @@ func (w *Windows) GetIcons() {
 	}
 }
 
-func (w Windows) Entries(term string) []util.Entry {
+func (w *Windows) Entries(term string) []util.Entry {
 	entries := []util.Entry{}
 
 	res := wlr.GetWindows()
@@ -126,7 +130,7 @@ func (w Windows) Entries(term string) []util.Entry {
 func (w *Windows) Refresh() {
 }
 
-func (w Windows) SpecialFunc(args ...interface{}) {
+func (w *Windows) SpecialFunc(args ...interface{}) {
 	id := args[0].(wl.ProxyId)
 
 	wlr.Activate(id)

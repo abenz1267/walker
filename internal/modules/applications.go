@@ -19,6 +19,7 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/djherbis/times"
 	"github.com/fsnotify/fsnotify"
+	"github.com/spf13/viper"
 )
 
 const ApplicationsName = "applications"
@@ -211,19 +212,24 @@ func (a *Applications) parse() []util.Entry {
 	entries := []util.Entry{}
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
 
-	langFull := os.Getenv("LANG")
+	langFull := viper.GetString("locale")
 
-	lang_messages := os.Getenv("LC_MESSAGES")
-	if lang_messages != "" {
-		langFull = lang_messages
+	if langFull == "" {
+		langFull = os.Getenv("LANG")
+
+		lang_messages := os.Getenv("LC_MESSAGES")
+		if lang_messages != "" {
+			langFull = lang_messages
+		}
+
+		lang_all := os.Getenv("LC_ALL")
+		if lang_all != "" {
+			langFull = lang_all
+		}
+
+		langFull = strings.Split(langFull, ".")[0]
 	}
 
-	lang_all := os.Getenv("LC_ALL")
-	if lang_all != "" {
-		langFull = lang_all
-	}
-
-	langFull = strings.Split(langFull, ".")[0]
 	langSingle := strings.Split(langFull, "_")[0]
 
 	nameFull := fmt.Sprintf("Name[%s]=", langFull)

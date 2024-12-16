@@ -45,6 +45,7 @@ type Config struct {
 	HotreloadTheme      bool           `mapstructure:"hotreload_theme"`
 	IgnoreMouse         bool           `mapstructure:"ignore_mouse"`
 	List                List           `mapstructure:"list"`
+	Locale              string         `mapstructure:"locale"`
 	Monitor             string         `mapstructure:"monitor"`
 	Plugins             []Plugin       `mapstructure:"plugins"`
 	Search              Search         `mapstructure:"search"`

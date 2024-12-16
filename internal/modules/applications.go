@@ -211,6 +211,30 @@ func (a *Applications) parse() []util.Entry {
 	entries := []util.Entry{}
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
 
+	langFull := os.Getenv("LANG")
+
+	lang_messages := os.Getenv("LC_MESSAGES")
+	if lang_messages != "" {
+		langFull = lang_messages
+	}
+
+	lang_all := os.Getenv("LC_ALL")
+	if lang_all != "" {
+		langFull = lang_all
+	}
+
+	langFull = strings.Split(langFull, ".")[0]
+	langSingle := strings.Split(langFull, "_")[0]
+
+	nameFull := fmt.Sprintf("Name[%s]=", langFull)
+	nameSingle := fmt.Sprintf("Name[%s]=", langSingle)
+	// commentFull := fmt.Sprintf("Comment[%s]=", langFull)
+	// commentSingle := fmt.Sprintf("Comment[%s]=", langSingle)
+	genericNameFull := fmt.Sprintf("GenericName[%s]=", langFull)
+	genericNameSingle := fmt.Sprintf("GenericName[%s]=", langSingle)
+	keywordsFull := fmt.Sprintf("Keywords[%s]=", langFull)
+	keywordsSingle := fmt.Sprintf("Keywords[%s]=", langSingle)
+
 	if a.config.Cache {
 		ok := readCache(ApplicationsName, &entries)
 		if ok {
@@ -271,6 +295,7 @@ func (a *Applications) parse() []util.Entry {
 
 				isAction := false
 				skip := false
+				keywords := []string{}
 
 				for scanner.Scan() {
 					line := scanner.Text()
@@ -334,6 +359,16 @@ func (a *Applications) parse() []util.Entry {
 							continue
 						}
 
+						if strings.HasPrefix(line, nameSingle) {
+							app.Generic.Label = strings.TrimSpace(strings.TrimPrefix(line, nameSingle))
+							continue
+						}
+
+						if strings.HasPrefix(line, nameFull) {
+							app.Generic.Label = strings.TrimSpace(strings.TrimPrefix(line, nameFull))
+							continue
+						}
+
 						if strings.HasPrefix(line, "Path=") {
 							app.Generic.Path = strings.TrimSpace(strings.TrimPrefix(line, "Path="))
 							continue
@@ -346,13 +381,32 @@ func (a *Applications) parse() []util.Entry {
 						}
 
 						if strings.HasPrefix(line, "Keywords=") {
-							cats := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "Keywords=")), ";")
-							app.Generic.Categories = append(app.Generic.Categories, cats...)
+							keywords = strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "Keywords=")), ";")
+							continue
+						}
+
+						if strings.HasPrefix(line, keywordsSingle) {
+							keywords = strings.Split(strings.TrimSpace(strings.TrimPrefix(line, keywordsSingle)), ";")
+							continue
+						}
+
+						if strings.HasPrefix(line, keywordsFull) {
+							keywords = strings.Split(strings.TrimSpace(strings.TrimPrefix(line, keywordsFull)), ";")
 							continue
 						}
 
 						if strings.HasPrefix(line, "GenericName=") {
 							app.Generic.Sub = strings.TrimSpace(strings.TrimPrefix(line, "GenericName="))
+							continue
+						}
+
+						if strings.HasPrefix(line, genericNameSingle) {
+							app.Generic.Sub = strings.TrimSpace(strings.TrimPrefix(line, genericNameSingle))
+							continue
+						}
+
+						if strings.HasPrefix(line, genericNameFull) {
+							app.Generic.Sub = strings.TrimSpace(strings.TrimPrefix(line, genericNameFull))
 							continue
 						}
 
@@ -399,6 +453,16 @@ func (a *Applications) parse() []util.Entry {
 							app.Actions[len(app.Actions)-1].Label = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
 							continue
 						}
+
+						if strings.HasPrefix(line, nameSingle) {
+							app.Actions[len(app.Actions)-1].Label = strings.TrimSpace(strings.TrimPrefix(line, nameSingle))
+							continue
+						}
+
+						if strings.HasPrefix(line, nameFull) {
+							app.Actions[len(app.Actions)-1].Label = strings.TrimSpace(strings.TrimPrefix(line, nameFull))
+							continue
+						}
 					}
 				}
 
@@ -416,6 +480,7 @@ func (a *Applications) parse() []util.Entry {
 					app.Actions[k].Class = ApplicationsName
 					app.Actions[k].Matching = app.Generic.Matching
 					app.Actions[k].Categories = app.Generic.Categories
+					app.Actions[k].Categories = append(app.Actions[k].Categories, keywords...)
 					app.Actions[k].History = app.Generic.History
 					app.Actions[k].InitialClass = app.Generic.InitialClass
 					app.Actions[k].OpenWindows = app.Generic.OpenWindows
@@ -425,6 +490,8 @@ func (a *Applications) parse() []util.Entry {
 					app.Actions[k].Searchable = path
 					app.Actions[k].IsAction = true
 				}
+
+				app.Generic.Categories = append(app.Generic.Categories, keywords...)
 
 				apps = append(apps, app)
 

@@ -1137,7 +1137,9 @@ func setInitials() {
 
 	sortEntries(entries, false)
 
-	common.items.Splice(0, int(common.items.NItems()), entries...)
+	glib.IdleAdd(func() {
+		common.items.Splice(0, int(common.items.NItems()), entries...)
+	})
 }
 
 func usageModifier(item util.Entry) int {

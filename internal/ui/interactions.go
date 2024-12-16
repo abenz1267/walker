@@ -1255,7 +1255,7 @@ func fuzzyScore(entry util.Entry, text string) float64 {
 	var matchables []string
 
 	if !appstate.IsDmenu {
-		matchables = []string{entry.Label, entry.Sub, entry.Searchable}
+		matchables = []string{entry.Label, entry.Sub, entry.Searchable, entry.Searchable2}
 		matchables = append(matchables, entry.Categories...)
 	} else {
 		matchables = []string{entry.Label}

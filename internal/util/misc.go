@@ -37,6 +37,7 @@ type Entry struct {
 	ScoreFinal       float64      `mapstructure:"score_final,omitempty" json:"score_final,omitempty"`
 	ScoreFuzzy       float64      `mapstructure:"score_fuzzy,omitempty" json:"score_fuzzy,omitempty"`
 	Searchable       string       `mapstructure:"searchable,omitempty" json:"searchable,omitempty"`
+	Searchable2      string       `mapstructure:"searchable2,omitempty" json:"searchable2,omitempty"`
 	Sub              string       `mapstructure:"sub,omitempty" json:"sub,omitempty"`
 	Terminal         bool         `mapstructure:"terminal,omitempty" json:"terminal,omitempty"`
 	Prefer           bool         `mapstructure:"prefer,omitempty" json:"prefer,omitempty"`

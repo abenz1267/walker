@@ -228,8 +228,8 @@ func (a *Applications) parse() []util.Entry {
 
 	nameFull := fmt.Sprintf("Name[%s]=", langFull)
 	nameSingle := fmt.Sprintf("Name[%s]=", langSingle)
-	// commentFull := fmt.Sprintf("Comment[%s]=", langFull)
-	// commentSingle := fmt.Sprintf("Comment[%s]=", langSingle)
+	commentFull := fmt.Sprintf("Comment[%s]=", langFull)
+	commentSingle := fmt.Sprintf("Comment[%s]=", langSingle)
 	genericNameFull := fmt.Sprintf("GenericName[%s]=", langFull)
 	genericNameSingle := fmt.Sprintf("GenericName[%s]=", langSingle)
 	keywordsFull := fmt.Sprintf("Keywords[%s]=", langFull)
@@ -369,6 +369,21 @@ func (a *Applications) parse() []util.Entry {
 							continue
 						}
 
+						if strings.HasPrefix(line, "Comment=") {
+							app.Generic.Searchable2 = strings.TrimSpace(strings.TrimPrefix(line, "Comment="))
+							continue
+						}
+
+						if strings.HasPrefix(line, commentSingle) {
+							app.Generic.Searchable2 = strings.TrimSpace(strings.TrimPrefix(line, commentSingle))
+							continue
+						}
+
+						if strings.HasPrefix(line, commentFull) {
+							app.Generic.Searchable2 = strings.TrimSpace(strings.TrimPrefix(line, commentFull))
+							continue
+						}
+
 						if strings.HasPrefix(line, "Path=") {
 							app.Generic.Path = strings.TrimSpace(strings.TrimPrefix(line, "Path="))
 							continue
@@ -488,6 +503,7 @@ func (a *Applications) parse() []util.Entry {
 					app.Actions[k].RecalculateScore = true
 					app.Actions[k].File = path
 					app.Actions[k].Searchable = path
+					app.Actions[k].Searchable2 = app.Generic.Searchable2
 					app.Actions[k].IsAction = true
 				}
 

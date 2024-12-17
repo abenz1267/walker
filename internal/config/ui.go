@@ -197,6 +197,7 @@ type ListWrapper struct {
 	AlwaysShow  bool           `mapstructure:"always_show"`
 	Grid        bool           `mapstructure:"grid"`
 	Item        ListItemWidget `mapstructure:"item"`
+	MarkerColor string         `mapstructure:"marker_color"`
 	MaxHeight   int            `mapstructure:"max_height"`
 	MaxWidth    int            `mapstructure:"max_width"`
 	MinHeight   int            `mapstructure:"min_height"`

@@ -1115,6 +1115,8 @@ func setInitials() {
 
 	for _, entry := range e {
 		entry.Module = proc.General().Name
+		entry.MatchedLabel = ""
+		entry.MatchedSub = ""
 
 		for _, v := range hstry {
 			if val, ok := v[entry.Identifier()]; ok {
@@ -1242,9 +1244,8 @@ const modifier = 0.10
 func fuzzyScore(entry *util.Entry, text string) float64 {
 	textLength := len(text)
 
-	if cfg.List.DynamicSub {
-		entry.MatchedSub = ""
-	}
+	entry.MatchedLabel = ""
+	entry.MatchedSub = ""
 
 	if entry.Prefix != "" {
 		if strings.HasPrefix(text, entry.Prefix) {
@@ -1267,6 +1268,8 @@ func fuzzyScore(entry *util.Entry, text string) float64 {
 
 	multiplier := 0
 
+	var pos *[]int
+
 	for k, t := range matchables {
 		if t == "" {
 			continue
@@ -1275,9 +1278,10 @@ func fuzzyScore(entry *util.Entry, text string) float64 {
 		var score float64
 
 		if strings.HasPrefix(text, "'") {
-			score = util.ExactScore(text, t)
+			// TODO: pos is not being returned by FZF!!
+			score, pos = util.ExactScore(text, t)
 		} else {
-			score = util.FuzzyScore(text, t)
+			score, pos = util.FuzzyScore(text, t)
 		}
 
 		if score == 0 {
@@ -1287,8 +1291,30 @@ func fuzzyScore(entry *util.Entry, text string) float64 {
 		if score > entry.ScoreFuzzy {
 			multiplier = k
 
+			res := ""
+
 			if cfg.List.DynamicSub && k > 1 {
 				entry.MatchedSub = t
+			}
+
+			color := layout.Window.Box.Scroll.List.MarkerColor
+
+			if color != "" {
+				if pos != nil {
+					for k, v := range t {
+						if slices.Contains(*pos, k) {
+							res = fmt.Sprintf("%s<span color=\"%s\">%s</span>", res, layout.Window.Box.Scroll.List.MarkerColor, string(v))
+						} else {
+							res = fmt.Sprintf("%s%s", res, string(v))
+						}
+					}
+				}
+
+				if k == 0 {
+					entry.MatchedLabel = res
+				} else if k > 0 {
+					entry.MatchedSub = res
+				}
 			}
 
 			entry.ScoreFuzzy = score

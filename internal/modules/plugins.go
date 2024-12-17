@@ -125,7 +125,7 @@ func (e Plugin) Entries(term string) []util.Entry {
 		e.Config.Keywords = append(e.Config.Keywords, e.Config.Name)
 
 		for _, v := range e.Config.Keywords {
-			res := util.FuzzyScore(term, v)
+			res, _ := util.FuzzyScore(term, v)
 
 			if res > score {
 				score = res

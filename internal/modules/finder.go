@@ -53,7 +53,7 @@ func (f *Finder) Entries(term string) []util.Entry {
 	}
 
 	for _, v := range toCheck {
-		score := util.FuzzyScore(term, v)
+		score, _ := util.FuzzyScore(term, v)
 
 		ddd := v
 		label := strings.TrimPrefix(strings.TrimPrefix(v, f.homedir), "/")

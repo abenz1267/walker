@@ -30,6 +30,7 @@ type Entry struct {
 	Image            string       `mapstructure:"image,omitempty" json:"image,omitempty"`
 	InitialClass     string       `mapstructure:"initial_class,omitempty" json:"initial_class,omitempty"`
 	Label            string       `mapstructure:"label,omitempty" json:"label,omitempty"`
+	MatchedLabel     string       `mapstructure:"matched_label,omitempty" json:"matched_label,omitempty"`
 	MatchFields      int          `mapstructure:"match_fields,omitempty" json:"match_fields,omitempty"`
 	Matching         MatchingType `mapstructure:"matching,omitempty" json:"matching,omitempty"`
 	Path             string       `mapstructure:"path,omitempty" json:"path,omitempty"`

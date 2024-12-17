@@ -203,6 +203,7 @@
           "h_scrollbar_policy": "automatic",
           "v_scrollbar_policy": "automatic",
           "list": {
+            "marker_color": "#1BFFE1",
             "name": "list",
             "v_align": "start",
             "v_expand": false,

@@ -677,6 +677,14 @@ func reopen() {
 	timeoutReset()
 
 	if appstate.IsRunning {
+		if cfg.CloseWhenOpen {
+			if appstate.IsService {
+				quit(false)
+			} else {
+				exit(false)
+			}
+		}
+
 		return
 	}
 

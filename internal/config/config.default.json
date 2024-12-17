@@ -1,5 +1,6 @@
 {
   "locale": "",
+  "close_when_open": false,
   "events": {
     "on_activate": "",
     "on_selection": "",

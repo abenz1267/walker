@@ -38,6 +38,7 @@ type Config struct {
 	AsWindow            bool           `mapstructure:"as_window"`
 	Bar                 Bar            `mapstructure:"bar"`
 	Builtins            Builtins       `mapstructure:"builtins"`
+	CloseWhenOpen       bool           `mapstructure:"close_when_open"`
 	DisableClickToClose bool           `mapstructure:"disable_click_to_close"`
 	Disabled            []string       `mapstructure:"disabled"`
 	Events              Events         `mapstructure:"events"`

@@ -531,7 +531,11 @@ func setupFactory() *gtk.SignalListItemFactory {
 		}
 
 		label := gtk.NewLabel(val.Label)
+
 		sub := gtk.NewLabel(val.Sub)
+		if val.MatchedSub != "" {
+			sub.SetText(val.MatchedSub)
+		}
 
 		var activationLabel *gtk.Label
 

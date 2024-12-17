@@ -946,12 +946,12 @@ func processAsync(text string) {
 					switch e[k].Matching {
 					case util.AlwaysTopOnEmptySearch:
 						if text != "" {
-							e[k].ScoreFinal = fuzzyScore(e[k], toMatch)
+							e[k].ScoreFinal = fuzzyScore(&e[k], toMatch)
 						} else {
 							e[k].ScoreFinal = 1000
 						}
 					case util.Fuzzy:
-						e[k].ScoreFinal = fuzzyScore(e[k], toMatch)
+						e[k].ScoreFinal = fuzzyScore(&e[k], toMatch)
 					case util.AlwaysTop:
 						if e[k].ScoreFinal == 0 {
 							e[k].ScoreFinal = 1000
@@ -1126,7 +1126,7 @@ func setInitials() {
 			}
 		}
 
-		entry.ScoreFinal = float64(usageModifier(entry))
+		entry.ScoreFinal = float64(usageModifier(&entry))
 
 		entries = append(entries, entry)
 	}
@@ -1142,7 +1142,7 @@ func setInitials() {
 	})
 }
 
-func usageModifier(item util.Entry) int {
+func usageModifier(item *util.Entry) int {
 	base := 10
 
 	if item.Used > 0 {
@@ -1239,8 +1239,12 @@ func exit(ignoreEvent bool) {
 
 const modifier = 0.10
 
-func fuzzyScore(entry util.Entry, text string) float64 {
+func fuzzyScore(entry *util.Entry, text string) float64 {
 	textLength := len(text)
+
+	if cfg.List.DynamicSub {
+		entry.MatchedSub = ""
+	}
 
 	if entry.Prefix != "" {
 		if strings.HasPrefix(text, entry.Prefix) {
@@ -1264,7 +1268,6 @@ func fuzzyScore(entry util.Entry, text string) float64 {
 	multiplier := 0
 
 	for k, t := range matchables {
-
 		if t == "" {
 			continue
 		}
@@ -1283,6 +1286,11 @@ func fuzzyScore(entry util.Entry, text string) float64 {
 
 		if score > entry.ScoreFuzzy {
 			multiplier = k
+
+			if cfg.List.DynamicSub && k > 1 {
+				entry.MatchedSub = t
+			}
+
 			entry.ScoreFuzzy = score
 		}
 	}

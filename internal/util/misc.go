@@ -39,6 +39,7 @@ type Entry struct {
 	Searchable       string       `mapstructure:"searchable,omitempty" json:"searchable,omitempty"`
 	Searchable2      string       `mapstructure:"searchable2,omitempty" json:"searchable2,omitempty"`
 	Sub              string       `mapstructure:"sub,omitempty" json:"sub,omitempty"`
+	MatchedSub       string       `mapstructure:"matched_sub,omitempty" json:"matched_sub,omitempty"`
 	Terminal         bool         `mapstructure:"terminal,omitempty" json:"terminal,omitempty"`
 	Prefer           bool         `mapstructure:"prefer,omitempty" json:"prefer,omitempty"`
 

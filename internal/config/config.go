@@ -306,6 +306,7 @@ type Search struct {
 
 type List struct {
 	Cycle               bool   `mapstructure:"cycle"`
+	DynamicSub          bool   `mapstructure:"dynamic_sub"`
 	KeyboardScrollStyle string `mapstructure:"keyboard_scroll_style"`
 	MaxEntries          int    `mapstructure:"max_entries"`
 	Placeholder         string `mapstructure:"placeholder"`

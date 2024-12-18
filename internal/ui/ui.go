@@ -361,7 +361,7 @@ func setupElements(app *gtk.Application) *Elements {
 	}
 
 	ui.grid.ConnectActivate(func(pos uint) {
-		activateItem(false, false, false)
+		activateItem(false, false)
 	})
 
 	ui.spinner.SetSpinning(true)

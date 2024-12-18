@@ -13,7 +13,6 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
 - non-blocking async handling of results
 - typeahead
 - start with explicit modules, style or config
-- arrow-up history
 - drag&drop support
 - dmenu-mode
 - run as password input
@@ -237,6 +236,8 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 | `--query`, `-q`       | To set initial query                         |
 
 ## Keybinds
+
+The keybinds are customizable, check the wiki.
 
 AM = Activation Mode
 

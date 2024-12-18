@@ -16,7 +16,6 @@ import (
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/history"
 	"github.com/abenz1267/walker/internal/modules"
-	"github.com/abenz1267/walker/internal/modules/clipboard"
 	"github.com/abenz1267/walker/internal/state"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
@@ -27,9 +26,6 @@ import (
 
 var (
 	activationEnabled       bool
-	amKey                   uint
-	cmdAltModifier          gdk.ModifierType
-	amModifier              gdk.ModifierType
 	amLabel                 string
 	commands                map[string]func() bool
 	singleModule            modules.Workable
@@ -82,6 +78,7 @@ var lastQuery = ""
 
 func setupInteractions(appstate *state.AppState) {
 	go setupCommands()
+	parseKeybinds()
 
 	keycontroller := gtk.NewEventControllerKey()
 	keycontroller.SetPropagationPhase(gtk.PropagationPhase(1))
@@ -98,19 +95,6 @@ func setupInteractions(appstate *state.AppState) {
 
 		debouncedProcess(process)
 	})
-
-	amKey = gdk.KEY_Control_L
-	amModifier = gdk.ControlMask
-	amLabel = "Ctrl + "
-
-	cmdAltModifier = gdk.AltMask
-
-	if cfg.ActivationMode.UseAlt {
-		amKey = gdk.KEY_Alt_L
-		amModifier = gdk.AltMask
-		amLabel = "Alt + "
-		cmdAltModifier = gdk.ControlMask
-	}
 
 	globalKeyReleasedController := gtk.NewEventControllerKey()
 	globalKeyReleasedController.ConnectKeyReleased(handleGlobalKeysReleased)
@@ -158,13 +142,13 @@ func setupInteractions(appstate *state.AppState) {
 	}
 }
 
-func selectNext() {
+func selectNext() bool {
 	disableMouseGtk()
 
 	items := common.selection.NItems()
 
 	if items == 0 {
-		return
+		return false
 	}
 
 	current := common.selection.Selected()
@@ -173,23 +157,25 @@ func selectNext() {
 	if next < items {
 		common.selection.SetSelected(current + 1)
 		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
-		return
+		return true
 	}
 
 	if next >= items && cfg.List.Cycle {
 		common.selection.SetSelected(0)
 		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
-		return
+		return true
 	}
+
+	return false
 }
 
-func selectPrev() {
+func selectPrev() bool {
 	disableMouseGtk()
 
 	items := common.selection.NItems()
 
 	if items == 0 {
-		return
+		return false
 	}
 
 	current := common.selection.Selected()
@@ -197,14 +183,16 @@ func selectPrev() {
 	if current > 0 {
 		common.selection.SetSelected(current - 1)
 		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
-		return
+		return true
 	}
 
 	if current == 0 && cfg.List.Cycle {
 		common.selection.SetSelected(items - 1)
 		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
-		return
+		return true
 	}
+
+	return false
 }
 
 var fkeys = []uint{65470, 65471, 65472, 65473, 65474, 65475, 65476, 65477}
@@ -215,11 +203,11 @@ func selectActivationMode(keepOpen bool, isFKey bool, target uint) {
 	}
 
 	if keepOpen {
-		activateItem(true, false, false)
+		activateItem(true, false)
 		return
 	}
 
-	activateItem(false, false, false)
+	activateItem(false, false)
 }
 
 func enableAM() {
@@ -256,7 +244,7 @@ func disableAM() {
 
 func handleGlobalKeysReleased(val, code uint, state gdk.ModifierType) {
 	switch val {
-	case amKey:
+	case uint(labelTrigger):
 		disableAM()
 	}
 }
@@ -264,228 +252,45 @@ func handleGlobalKeysReleased(val, code uint, state gdk.ModifierType) {
 func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	timeoutReset()
 
-	switch val {
-	case amKey:
-		if cfg.ActivationMode.Disabled {
-			return false
-		}
+	if val == uint(labelTrigger) && !cfg.ActivationMode.Disabled {
+		enableAM()
+		return true
+	} else {
+		switch val {
+		case gdk.KEY_F1, gdk.KEY_F2, gdk.KEY_F3, gdk.KEY_F4, gdk.KEY_F5, gdk.KEY_F6, gdk.KEY_F7, gdk.KEY_F8:
+			index := slices.Index(fkeys, val)
 
-		if common.selection.NItems() != 0 {
-			if val == amKey {
-				enableAM()
+			if index != -1 {
+				isShift := modifier == gdk.ShiftMask
+				selectActivationMode(isShift, true, uint(index))
 				return true
 			}
-		}
-	case gdk.KEY_BackSpace:
-		if modifier == gdk.ShiftMask {
-			if singleModule == nil {
+		default:
+			if !cfg.ActivationMode.Disabled && activationEnabled {
+				uc := gdk.KeyvalToUnicode(gdk.KeyvalToLower(val))
 
-				entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
-				hstry.Delete(entry.Identifier())
-			} else {
-				switch singleModule.General().Name {
-				case cfg.Builtins.Clipboard.GeneralModule.Name:
+				if uc != 0 {
+					index := slices.Index(appstate.UsedLabels, string(uc))
 
-					entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
-					singleModule.(*clipboard.Clipboard).Delete(entry)
-					debouncedProcess(process)
+					if index != -1 {
+						keepOpen := modifier == (keepOpenModifier | labelModifier)
+
+						selectActivationMode(keepOpen, false, uint(index))
+						return true
+					}
 				}
 			}
 
-			return true
-		}
-	case gdk.KEY_c:
-		if modifier == gdk.ControlMask {
-			if isAi {
-				ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
-				ai.CopyLastResponse()
-			}
-		}
-	case gdk.KEY_e:
-		if modifier == gdk.ControlMask {
-			if isAi {
-				ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
-				ai.RunLastMessageInTerminal()
-				quit(true)
-			}
-		}
-	case gdk.KEY_m:
-		if modifier == gdk.ControlMask {
-			text := elements.input.Text()
+			hasBind := binds.execute(int(val), modifier)
 
-			if strings.HasPrefix(text, "'") {
-				elements.input.SetText(strings.TrimPrefix(text, "'"))
-			} else {
-				elements.input.SetText("'" + text)
-			}
-
-			elements.input.SetPosition(-1)
-		}
-
-		return false
-	case gdk.KEY_r:
-		if modifier == gdk.ControlMask {
-			if isAi {
-				ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
-				ai.ResumeLastMessages()
-			} else {
-				if appstate.IsService {
-					elements.input.SetText(appstate.LastQuery)
-					elements.input.SetPosition(-1)
-					elements.input.GrabFocus()
-				}
-			}
-		}
-	case gdk.KEY_x:
-		if modifier == gdk.ControlMask {
-			if isAi {
-				ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
-				elements.input.SetText("")
-				ai.ClearCurrent()
-			}
-		}
-	case gdk.KEY_Escape:
-		if appstate.IsDmenu {
-			handleDmenuResult("")
-		}
-
-		if cfg.IsService {
-			quit(false)
-			return true
-		} else {
-			exit(false)
-			return true
-		}
-	case gdk.KEY_F1, gdk.KEY_F2, gdk.KEY_F3, gdk.KEY_F4, gdk.KEY_F5, gdk.KEY_F6, gdk.KEY_F7, gdk.KEY_F8:
-		index := slices.Index(fkeys, val)
-
-		if index != -1 {
-			isShift := modifier == gdk.ShiftMask
-			selectActivationMode(isShift, true, uint(index))
-			return true
-		}
-	case gdk.KEY_Return:
-		isShift := modifier == gdk.ShiftMask
-		isAlt := modifier == cmdAltModifier
-
-		isAltShift := modifier == (gdk.ShiftMask | cmdAltModifier)
-
-		if isAltShift {
-			isShift = true
-			isAlt = true
-		}
-
-		if appstate.ForcePrint && elements.grid.Model().NItems() == 0 {
-			if appstate.IsDmenu {
-				handleDmenuResult(elements.input.Text())
-			}
-
-			closeAfterActivation(isShift, false)
-			return true
-		}
-
-		activateItem(isShift, isShift, isAlt)
-		return true
-	case gdk.KEY_Tab:
-		if elements.typeahead.Text() != "" {
-			tahAcceptedIdentifier = tahSuggestionIdentifier
-			tahSuggestionIdentifier = ""
-
-			elements.input.SetText(elements.typeahead.Text())
-			elements.input.SetPosition(-1)
-
-			return true
-		} else {
-			selectNext()
-
-			return true
-		}
-	case gdk.KEY_Down:
-		if layout.Window.Box.Scroll.List.Grid {
-			return false
-		}
-
-		selectNext()
-		return true
-	case gdk.KEY_Up:
-		if layout.Window.Box.Scroll.List.Grid {
-			return false
-		}
-
-		if common.selection.Selected() == 0 || common.items.NItems() == 0 {
-			if len(toUse) != 1 {
-				selectPrev()
+			if hasBind {
 				return true
 			}
 
-			if len(explicits) != 0 && len(explicits) != 1 {
-				selectPrev()
-				return true
-			}
+			elements.input.GrabFocus()
 
-			var inputhstry []history.InputHistoryItem
-
-			if len(explicits) == 1 {
-				inputhstry = history.GetInputHistory(explicits[0].General().Name)
-			} else {
-				inputhstry = history.GetInputHistory(toUse[0].General().Name)
-			}
-
-			if len(inputhstry) > 0 {
-				historyIndex++
-
-				if historyIndex == len(inputhstry) {
-					historyIndex = 0
-				}
-
-				glib.IdleAdd(func() {
-					elements.input.SetText(inputhstry[historyIndex].Term)
-					elements.input.SetPosition(-1)
-				})
-			}
-		} else {
-			selectPrev()
-			return true
+			return false
 		}
-	case gdk.KEY_ISO_Left_Tab:
-		selectPrev()
-		return true
-	default:
-		if (cfg.List.KeyboardScrollStyle == "vim" && val == gdk.KEY_j) || val == gdk.KEY_n {
-			if cfg.ActivationMode.Disabled {
-				if modifier == gdk.ControlMask {
-					selectNext()
-					return true
-				}
-			}
-		} else if (cfg.List.KeyboardScrollStyle == "vim" && val == gdk.KEY_k) || val == gdk.KEY_p {
-			if cfg.ActivationMode.Disabled {
-				if modifier == gdk.ControlMask {
-					selectPrev()
-					return true
-				}
-			}
-		}
-
-		if !cfg.ActivationMode.Disabled && activationEnabled {
-			uc := gdk.KeyvalToUnicode(gdk.KeyvalToLower(val))
-
-			if uc != 0 {
-				index := slices.Index(appstate.UsedLabels, string(uc))
-
-				if index != -1 {
-					isAmShift := modifier == (gdk.ShiftMask | amModifier)
-
-					selectActivationMode(isAmShift, false, uint(index))
-					return true
-				} else {
-					return false
-				}
-			}
-		}
-
-		elements.input.GrabFocus()
-		return false
 	}
 
 	return false
@@ -493,7 +298,9 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 
 var historyIndex = 0
 
-func activateItem(keepOpen, selectNext, alt bool) {
+func activateItem(keepOpen, alt bool) {
+	selectNext := !activationEnabled && keepOpen
+
 	if elements.grid.Model().NItems() == 0 {
 		return
 	}
@@ -1062,7 +869,7 @@ func processAsync(text string) {
 
 		if common.items.NItems() == 1 && appstate.AutoSelect {
 			common.selection.SelectItem(0, true)
-			activateItem(false, false, false)
+			activateItem(false, false)
 		}
 	})
 }

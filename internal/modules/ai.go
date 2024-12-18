@@ -18,6 +18,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/spf13/viper"
 )
 
 const (
@@ -264,7 +265,7 @@ func (ai *AI) RunLastMessageInTerminal() {
 	last := ai.currentMessages[len(ai.currentMessages)-1].Content
 	shell := os.Getenv("SHELL")
 
-	toRun := fmt.Sprintf("%s --title %s -e sh -c \"%s; exec %s\"", ai.terminal, "WalkerRunner", last, shell)
+	toRun := fmt.Sprintf("%s %s -e sh -c \"%s; exec %s\"", ai.terminal, viper.GetString("terminal_title_flag"), last, shell)
 	cmd := exec.Command("sh", "-c", wrapWithUWSM(toRun))
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{

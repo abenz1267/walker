@@ -51,6 +51,7 @@ type Config struct {
 	Plugins             []Plugin       `mapstructure:"plugins"`
 	Search              Search         `mapstructure:"search"`
 	Terminal            string         `mapstructure:"terminal"`
+	TerminalTitleFlag   string         `mapstructure:"terminal_title_flag"`
 	Theme               string         `mapstructure:"theme"`
 	ThemeBase           []string       `mapstructure:"theme_base"`
 	Timeout             int            `mapstructure:"timeout"`

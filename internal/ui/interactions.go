@@ -570,7 +570,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 
 	if cfg.Terminal != "" {
 		if entry.Terminal || forceTerminal {
-			toRun = fmt.Sprintf("%s --title %s -e %s", cfg.Terminal, "WalkerRunner", toRun)
+			toRun = fmt.Sprintf("%s %s -e %s", cfg.Terminal, cfg.TerminalTitleFlag, toRun)
 		}
 	} else {
 		log.Println("terminal is not set")

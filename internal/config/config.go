@@ -45,6 +45,7 @@ type Config struct {
 	ForceKeyboardFocus  bool           `mapstructure:"force_keyboard_focus"`
 	HotreloadTheme      bool           `mapstructure:"hotreload_theme"`
 	IgnoreMouse         bool           `mapstructure:"ignore_mouse"`
+	AppLaunchPrefix     string         `mapstructure:"app_launch_prefix"`
 	List                List           `mapstructure:"list"`
 	Locale              string         `mapstructure:"locale"`
 	Monitor             string         `mapstructure:"monitor"`
@@ -55,7 +56,6 @@ type Config struct {
 	Theme               string         `mapstructure:"theme"`
 	ThemeBase           []string       `mapstructure:"theme_base"`
 	Timeout             int            `mapstructure:"timeout"`
-	UseUWSM             bool           `mapstructure:"use_uwsm"`
 
 	Available []string `mapstructure:"-"`
 	IsService bool     `mapstructure:"-"`

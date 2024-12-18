@@ -11,9 +11,8 @@ import (
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
+	"github.com/spf13/viper"
 )
-
-var UseUWSM = false
 
 type Workable interface {
 	Cleanup()
@@ -68,10 +67,10 @@ func Find(plugins []config.Plugin, name string) (config.Plugin, error) {
 	return config.Plugin{}, errors.New("plugin not found")
 }
 
-func wrapWithUWSM(text string) string {
-	if !UseUWSM {
+func wrapWithPrefix(text string) string {
+	if viper.GetString("app_launch_prefix") == "" {
 		return text
 	}
 
-	return fmt.Sprintf("uwsm app -- %s", text)
+	return fmt.Sprintf("%s%s", viper.GetString("app_launch_prefix"), text)
 }

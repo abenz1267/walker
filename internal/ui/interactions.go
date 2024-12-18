@@ -65,7 +65,7 @@ func setupCommands() {
 
 		cssFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.css", cfg.Theme))
 
-		cmd := exec.Command("sh", "-c", wrapWithUWSM(fmt.Sprintf("xdg-open %s", cssFile)))
+		cmd := exec.Command("sh", "-c", wrapWithPrefix(fmt.Sprintf("xdg-open %s", cssFile)))
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Setpgid:    true,
 			Pgid:       0,
@@ -577,7 +577,7 @@ func activateItem(keepOpen, selectNext, alt bool) {
 		return
 	}
 
-	cmd := exec.Command("sh", "-c", wrapWithUWSM(toRun))
+	cmd := exec.Command("sh", "-c", wrapWithPrefix(toRun))
 
 	if entry.Path != "" {
 		cmd.Dir = entry.Path
@@ -1362,10 +1362,10 @@ func fuzzyScore(entry *util.Entry, text string) float64 {
 	return score
 }
 
-func wrapWithUWSM(text string) string {
-	if !cfg.UseUWSM {
+func wrapWithPrefix(text string) string {
+	if cfg.AppLaunchPrefix == "" {
 		return text
 	}
 
-	return fmt.Sprintf("uwsm app -- %s", text)
+	return fmt.Sprintf("%s%s", cfg.AppLaunchPrefix, text)
 }

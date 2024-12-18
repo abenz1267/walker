@@ -1,4 +1,5 @@
 {
+  "app_launch_prefix": "",
   "terminal_title_flag": "",
   "locale": "",
   "close_when_open": false,
@@ -9,7 +10,6 @@
     "on_launch": "",
     "on_query_change": ""
   },
-  "use_uwsm": false,
   "theme": "default",
   "monitor": "",
   "hotreload_theme": false,

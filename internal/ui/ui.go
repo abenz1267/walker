@@ -92,8 +92,6 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		cfg, cfgErr = config.Get(appstate.ExplicitConfig)
 
 		if cfgErr == nil {
-			modules.UseUWSM = cfg.UseUWSM
-
 			theme := cfg.Theme
 			themeBase := cfg.ThemeBase
 

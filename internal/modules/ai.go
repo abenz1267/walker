@@ -266,7 +266,7 @@ func (ai *AI) RunLastMessageInTerminal() {
 	shell := os.Getenv("SHELL")
 
 	toRun := fmt.Sprintf("%s %s -e sh -c \"%s; exec %s\"", ai.terminal, viper.GetString("terminal_title_flag"), last, shell)
-	cmd := exec.Command("sh", "-c", wrapWithUWSM(toRun))
+	cmd := exec.Command("sh", "-c", wrapWithPrefix(toRun))
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid:    true,

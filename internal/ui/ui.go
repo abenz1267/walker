@@ -221,8 +221,7 @@ func setupElementsPassword(app *gtk.Application) *Elements {
 
 	controller := gtk.NewEventControllerKey()
 	controller.ConnectKeyPressed(func(val uint, code uint, modifier gdk.ModifierType) bool {
-		switch val {
-		case gdk.KEY_Escape:
+		if val == gdk.KEY_Escape || (cfg.UseVimEscKey && modifier == gdk.ControlMask && val == gdk.KEY_bracketleft) {
 			elements.appwin.Close()
 			return true
 		}

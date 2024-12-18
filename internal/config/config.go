@@ -55,6 +55,7 @@ type Config struct {
 	ThemeBase           []string       `mapstructure:"theme_base"`
 	Timeout             int            `mapstructure:"timeout"`
 	UseUWSM             bool           `mapstructure:"use_uwsm"`
+	UseVimEscKey        bool           `mapstructure:"use_vim_esc_key"`
 
 	Available []string `mapstructure:"-"`
 	IsService bool     `mapstructure:"-"`

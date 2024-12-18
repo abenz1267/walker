@@ -254,6 +254,18 @@ func disableAM() {
 	}
 }
 
+func handleExitKey() {
+	if appstate.IsDmenu {
+		handleDmenuResult("")
+	}
+
+	if cfg.IsService {
+		quit(false)
+	} else {
+		exit(false)
+	}
+}
+
 func handleGlobalKeysReleased(val, code uint, state gdk.ModifierType) {
 	switch val {
 	case amKey:
@@ -345,17 +357,8 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			}
 		}
 	case gdk.KEY_Escape:
-		if appstate.IsDmenu {
-			handleDmenuResult("")
-		}
-
-		if cfg.IsService {
-			quit(false)
-			return true
-		} else {
-			exit(false)
-			return true
-		}
+		handleExitKey()
+		return true
 	case gdk.KEY_F1, gdk.KEY_F2, gdk.KEY_F3, gdk.KEY_F4, gdk.KEY_F5, gdk.KEY_F6, gdk.KEY_F7, gdk.KEY_F8:
 		index := slices.Index(fkeys, val)
 
@@ -465,6 +468,10 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 					return true
 				}
 			}
+		}
+		if cfg.UseVimEscKey && modifier == gdk.ControlMask && val == gdk.KEY_bracketleft {
+			handleExitKey()
+			return true
 		}
 
 		if !cfg.ActivationMode.Disabled && activationEnabled {

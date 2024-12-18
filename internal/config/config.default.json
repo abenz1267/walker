@@ -16,6 +16,7 @@
   "timeout": 0,
   "disable_click_to_close": false,
   "force_keyboard_focus": false,
+  "use_vim_esc_key": false,
   "list": {
     "dynamic_sub": true,
     "keyboard_scroll_style": "emacs",

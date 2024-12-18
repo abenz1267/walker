@@ -79,8 +79,6 @@ func setupTheme(theme string) {
 		}
 	}
 
-	fmt.Println(layout.Window.Box.Scroll.List.MarkerColor)
-
 	setupWidgetStyle(&elements.appwin.Widget, &layout.Window.Widget, true)
 
 	setupBarTheme()

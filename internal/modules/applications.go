@@ -276,11 +276,13 @@ func (a *Applications) parse() []util.Entry {
 
 				if a.config.PrioritizeNew {
 					if info, err := times.Stat(path); err == nil {
-						target := time.Now().Add(-time.Minute * 5)
+						if info.HasBirthTime() {
+							target := time.Now().Add(-time.Minute * 5)
+							bt := info.BirthTime()
 
-						mod := info.BirthTime()
-						if mod.After(target) {
-							matching = util.AlwaysTopOnEmptySearch
+							if bt.After(target) {
+								matching = util.AlwaysTopOnEmptySearch
+							}
 						}
 					}
 				}

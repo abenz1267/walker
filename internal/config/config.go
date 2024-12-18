@@ -40,6 +40,7 @@ type Config struct {
 	Builtins            Builtins       `mapstructure:"builtins"`
 	CloseWhenOpen       bool           `mapstructure:"close_when_open"`
 	DisableClickToClose bool           `mapstructure:"disable_click_to_close"`
+	Keys                Keys           `mapstructure:"keys"`
 	Disabled            []string       `mapstructure:"disabled"`
 	Events              Events         `mapstructure:"events"`
 	ForceKeyboardFocus  bool           `mapstructure:"force_keyboard_focus"`
@@ -59,6 +60,36 @@ type Config struct {
 
 	Available []string `mapstructure:"-"`
 	IsService bool     `mapstructure:"-"`
+}
+
+type Keys struct {
+	Activate            string        `mapstructure:"activate"`
+	ActivationModifiers string        `mapstructure:"activation_modifiers"`
+	AiKeys              AiKeys        `mapstructure:"ai_keys"`
+	ClipboardKeys       ClipboardKeys `mapstructure:"clipboard_keys"`
+	Close               string        `mapstructure:"close"`
+	Next                string        `mapstructure:"next"`
+	Prev                string        `mapstructure:"prev"`
+	RemoveFromHistory   string        `mapstructure:"remove_from_history"`
+	ResumeQuery         string        `mapstructure:"resume_query"`
+	ToggleExactSearch   string        `mapstructure:"toggle_exact_search"`
+}
+
+type ClipboardKeys struct {
+	Delete string `mapstructure:"delete"`
+}
+
+type ActivationModifiers struct {
+	ActivateAlternate string `mapstructure:"activate_alternate"`
+	NoClose           string `mapstructure:"no_close"`
+	ToggleLabels      string `mapstructure:"toggle_labels"`
+}
+
+type AiKeys struct {
+	ClearSession     string `mapstructure:"clear_session"`
+	CopyLastResponse string `mapstructure:"copy_last_response"`
+	ResumeSession    string `mapstructure:"resume_session"`
+	RunLastResponse  string `mapstructure:"run_last_response"`
 }
 
 type Events struct {

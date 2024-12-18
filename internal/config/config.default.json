@@ -1,4 +1,28 @@
 {
+  "keys": {
+    "accept_typeahead": "tab",
+    "activate": "enter",
+    "activate_modifiers": {
+      "alternate": "ctrl",
+      "keep_open": "shift",
+      "use_labels": "alt"
+    },
+    "ai": {
+      "clear_session": "ctrl x",
+      "copy_last_response": "ctrl c",
+      "resume_session": "ctrl r",
+      "run_last_response": "ctrl e"
+    },
+    "clipboard": {
+      "delete": "shift backspace"
+    },
+    "next": "ctrl j",
+    "prev": "ctrl k",
+    "close": "esc",
+    "remove_from_history": "shift backspace",
+    "resume_query": "ctrl r",
+    "toggle_exact_search": "ctrl m"
+  },
   "app_launch_prefix": "",
   "terminal_title_flag": "",
   "locale": "",

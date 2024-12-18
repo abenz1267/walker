@@ -13,7 +13,6 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
 - non-blocking async handling of results
 - typeahead
 - start with explicit modules, style or config
-- arrow-up history
 - drag&drop support
 - dmenu-mode
 - run as password input

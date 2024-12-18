@@ -63,26 +63,27 @@ type Config struct {
 }
 
 type Keys struct {
-	Activate            string        `mapstructure:"activate"`
-	ActivationModifiers string        `mapstructure:"activation_modifiers"`
-	AiKeys              AiKeys        `mapstructure:"ai_keys"`
-	ClipboardKeys       ClipboardKeys `mapstructure:"clipboard_keys"`
-	Close               string        `mapstructure:"close"`
-	Next                string        `mapstructure:"next"`
-	Prev                string        `mapstructure:"prev"`
-	RemoveFromHistory   string        `mapstructure:"remove_from_history"`
-	ResumeQuery         string        `mapstructure:"resume_query"`
-	ToggleExactSearch   string        `mapstructure:"toggle_exact_search"`
+	AcceptTypeahead   string            `mapstructure:"accept_typeahead"`
+	Activate          string            `mapstructure:"activate"`
+	ActivateModifiers ActivateModifiers `mapstructure:"activate_modifiers"`
+	Ai                AiKeys            `mapstructure:"ai"`
+	Clipboard         ClipboardKeys     `mapstructure:"clipboard"`
+	Close             string            `mapstructure:"close"`
+	Next              string            `mapstructure:"next"`
+	Prev              string            `mapstructure:"prev"`
+	RemoveFromHistory string            `mapstructure:"remove_from_history"`
+	ResumeQuery       string            `mapstructure:"resume_query"`
+	ToggleExactSearch string            `mapstructure:"toggle_exact_search"`
 }
 
 type ClipboardKeys struct {
 	Delete string `mapstructure:"delete"`
 }
 
-type ActivationModifiers struct {
-	ActivateAlternate string `mapstructure:"activate_alternate"`
-	NoClose           string `mapstructure:"no_close"`
-	ToggleLabels      string `mapstructure:"toggle_labels"`
+type ActivateModifiers struct {
+	Alternate string `mapstructure:"alternate"`
+	KeepOpen  string `mapstructure:"keep_open"`
+	UseLabels string `mapstructure:"use_labels"`
 }
 
 type AiKeys struct {

@@ -1,18 +1,13 @@
-:root {
-  --main-color: rgba(255, 255, 255, 0.8);
-  --main-border-color: #232d3f;
-  --main-background: linear-gradient(
-    to bottom,
-    hsla(240, 12.7%, 13.9%, 0.98),
-    hsla(219, 28.6%, 19.2%, 0.96)
-  );
-  --search-background: hsla(219, 28.6%, 19.2%, 0.8);
-  --search-icon-color: rgba(255, 255, 255, 0.8);
-  --typeahead-color: hsl(174, 89.7%, 32.7%);
-  --selected-background: hsla(172, 100%, 25.3%, 0.6);
-  --ai-color: rgba(255, 255, 255, 0.8);
-  --ai-response-background: hsla(219, 28.6%, 19.2%, 0.8);
-}
+@define-color main_color rgba(255, 255, 255, 0.8);
+@define-color main_border_color #232d3f;
+@define-color gradient_start hsla(240, 12.7%, 13.9%, 0.98);
+@define-color gradient_end hsla(219, 28.6%, 19.2%, 0.96);
+@define-color search_background hsla(219, 28.6%, 19.2%, 0.8);
+@define-color search_icon_color rgba(255, 255, 255, 0.8);
+@define-color typeahead_color hsl(174, 89.7%, 32.7%);
+@define-color selected_background hsla(172, 100%, 25.3%, 0.6);
+@define-color ai_color rgba(255, 255, 255, 0.8);
+@define-color ai_response_background hsla(219, 28.6%, 19.2%, 0.8);
 
 #window,
 #box,
@@ -36,14 +31,14 @@ slider,
 }
 
 #window {
-  color: var(--main-color);
+  color: @main_color;
 }
 
 #box {
   border-radius: 2px;
-  background: var(--main-background);
+  background: linear-gradient(to bottom, @gradient_start, @gradient_end);
   padding: 32px;
-  border: 1px solid var(--main-border-color);
+  border: 1px solid @main_border_color;
   box-shadow:
     0 19px 38px rgba(0, 0, 0, 0.3),
     0 15px 12px rgba(0, 0, 0, 0.22);
@@ -53,7 +48,7 @@ slider,
   box-shadow:
     0 1px 3px rgba(0, 0, 0, 0.1),
     0 1px 2px rgba(0, 0, 0, 0.22);
-  background: var(--search-background);
+  background: @search_background;
 }
 
 #prompt {
@@ -80,7 +75,7 @@ slider,
 }
 
 #typeahead {
-  color: var(--typeahead-color);
+  color: @typeahead_color;
 }
 
 #input placeholder {
@@ -91,7 +86,7 @@ slider,
 #typeahead > *:first-child {
   margin-right: 16px;
   margin-left: 4px;
-  color: var(--search-icon-color);
+  color: @search_icon_color;
   opacity: 0.2;
 }
 
@@ -111,7 +106,7 @@ child {
 
 child:selected,
 child:hover {
-  background: var(--selected-background);
+  background: @selected_background;
 }
 
 #item {
@@ -154,7 +149,7 @@ child:hover {
 .aiItem {
   padding: 10px;
   border-radius: 2px;
-  color: var(--ai-color);
+  color: @ai_color;
 }
 
 .aiItem.user {
@@ -164,5 +159,5 @@ child:hover {
 }
 
 .aiItem.assistant {
-  background: var(--ai-response-background);
+  background: @ai_response_background;
 }

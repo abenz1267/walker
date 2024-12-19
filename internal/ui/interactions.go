@@ -1297,9 +1297,7 @@ func fuzzyScore(entry *util.Entry, text string) float64 {
 				entry.MatchedSub = t
 			}
 
-			color := layout.Window.Box.Scroll.List.MarkerColor
-
-			if color != "" {
+			if layout.Window.Box.Scroll.List.MarkerColor != "" {
 				if pos != nil {
 					for k, v := range t {
 						if slices.Contains(*pos, k) {

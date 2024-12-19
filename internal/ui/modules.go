@@ -91,7 +91,7 @@ func setAvailables(cfg *config.Config) {
 		&modules.Calc{},
 		&modules.Commands{},
 		&modules.SSH{},
-		&modules.Finder{},
+		&modules.Finder{MarkerColor: layout.Window.Box.Scroll.List.MarkerColor},
 		&modules.Switcher{},
 		&emojis.Emojis{},
 		&symbols.Symbols{},

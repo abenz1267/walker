@@ -18,10 +18,11 @@ import (
 )
 
 type Finder struct {
-	config  config.Finder
-	files   []string
-	homedir string
-	hasList bool
+	config      config.Finder
+	files       []string
+	homedir     string
+	hasList     bool
+	MarkerColor string
 }
 
 func (f *Finder) General() *config.GeneralModule {
@@ -53,7 +54,7 @@ func (f *Finder) Entries(term string) []util.Entry {
 	}
 
 	for _, v := range toCheck {
-		score, _ := util.FuzzyScore(term, v)
+		score, pos := util.FuzzyScore(term, v)
 
 		ddd := v
 		label := strings.TrimPrefix(strings.TrimPrefix(v, f.homedir), "/")
@@ -64,7 +65,7 @@ func (f *Finder) Entries(term string) []util.Entry {
 		}
 
 		if score >= scoremin {
-			entries = append(entries, util.Entry{
+			entry := util.Entry{
 				Label:            label,
 				Sub:              "finder",
 				Exec:             fmt.Sprintf("xdg-open %s", v),
@@ -75,7 +76,25 @@ func (f *Finder) Entries(term string) []util.Entry {
 				Categories:       []string{"finder", "fzf"},
 				Class:            "finder",
 				Matching:         util.Fuzzy,
-			})
+			}
+
+			res := ""
+
+			if f.MarkerColor != "" {
+				if pos != nil {
+					for k, v := range label {
+						if slices.Contains(*pos, k) {
+							res = fmt.Sprintf("%s<span color=\"%s\">%s</span>", res, f.MarkerColor, string(v))
+						} else {
+							res = fmt.Sprintf("%s%s", res, string(v))
+						}
+					}
+				}
+
+				entry.MatchedLabel = res
+			}
+
+			entries = append(entries, entry)
 		}
 	}
 

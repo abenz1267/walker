@@ -107,6 +107,10 @@ func (r Runner) Entries(term string) []util.Entry {
 		exec = fmt.Sprintf("%s %s", bin, strings.Join(fields[1:], " "))
 	}
 
+	if strings.HasPrefix(term, "'") {
+		term = strings.TrimPrefix(term, "'")
+	}
+
 	if r.config.GenericEntry {
 		n := util.Entry{
 			Label:            fmt.Sprintf("run: %s", term),

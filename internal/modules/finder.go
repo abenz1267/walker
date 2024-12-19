@@ -45,6 +45,13 @@ func (f *Finder) Entries(term string) []util.Entry {
 
 	toCheck := f.files
 
+	exact := false
+
+	if strings.HasPrefix(term, "'") {
+		exact = true
+		term = strings.TrimPrefix(term, "'")
+	}
+
 	if term == "" {
 		scoremin = 0.
 
@@ -54,7 +61,25 @@ func (f *Finder) Entries(term string) []util.Entry {
 	}
 
 	for _, v := range toCheck {
-		score, pos := util.FuzzyScore(term, v)
+		var score float64
+		var pos *[]int
+
+		if exact {
+			score, _ = util.ExactScore(term, v)
+			f := strings.Index(strings.ToLower(v), strings.ToLower(term))
+
+			if f != -1 {
+				poss := []int{}
+
+				for i := f; i < f+len(term); i++ {
+					poss = append(poss, i)
+				}
+
+				pos = &poss
+			}
+		} else {
+			score, pos = util.FuzzyScore(term, v)
+		}
 
 		ddd := v
 		label := strings.TrimPrefix(strings.TrimPrefix(v, f.homedir), "/")

@@ -1275,6 +1275,13 @@ func fuzzyScore(entry *util.Entry, text string) float64 {
 			continue
 		}
 
+		remember := ""
+
+		if k == 0 && singleModule != nil && singleModule.General().Name == cfg.Builtins.Emojis.Name {
+			remember = strings.Fields(t)[0]
+			t = entry.Searchable
+		}
+
 		var score float64
 
 		if strings.HasPrefix(text, "'") {
@@ -1306,6 +1313,10 @@ func fuzzyScore(entry *util.Entry, text string) float64 {
 							res = fmt.Sprintf("%s%s", res, string(v))
 						}
 					}
+				}
+
+				if remember != "" {
+					res = fmt.Sprintf("%s %s", remember, res)
 				}
 
 				if k == 0 {

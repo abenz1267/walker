@@ -1285,8 +1285,21 @@ func fuzzyScore(entry *util.Entry, text string) float64 {
 		var score float64
 
 		if strings.HasPrefix(text, "'") {
-			// TODO: pos is not being returned by FZF!!
-			score, pos = util.ExactScore(text, t)
+			text = strings.TrimPrefix(text, "'")
+
+			score, _ = util.ExactScore(text, t)
+
+			f := strings.Index(strings.ToLower(t), strings.ToLower(text))
+
+			if f != -1 {
+				poss := []int{}
+
+				for i := f; i < f+len(text); i++ {
+					poss = append(poss, i)
+				}
+
+				pos = &poss
+			}
 		} else {
 			score, pos = util.FuzzyScore(text, t)
 		}

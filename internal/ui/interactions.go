@@ -456,7 +456,7 @@ func handleDmenuResult(result string) {
 			}
 		}
 	} else {
-		if result != "" {
+		if result != "CNCLD" {
 			fmt.Println(result)
 		}
 	}

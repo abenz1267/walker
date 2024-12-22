@@ -100,11 +100,9 @@ func (d Dmenu) ListenForReply() bool {
 
 		res := string(b[:i])
 
-		if res != "" && res != "CNCLD" {
+		if res != "CNCLD" {
 			fmt.Println(res)
-		}
-
-		if res == "CNCLD" {
+		} else {
 			return true
 		}
 

@@ -12,8 +12,8 @@
       "resume_session": "ctrl r",
       "run_last_response": "ctrl e"
     },
-    "next": "ctrl j",
-    "prev": "ctrl k",
+    "next": "down",
+    "prev": "up",
     "close": "esc",
     "remove_from_history": "shift backspace",
     "resume_query": "ctrl r",

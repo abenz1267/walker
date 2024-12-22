@@ -281,7 +281,6 @@ type Windows struct {
 type ActivationMode struct {
 	Disabled bool   `mapstructure:"disabled"`
 	Labels   string `mapstructure:"labels"`
-	UseAlt   bool   `mapstructure:"use_alt"`
 	UseFKeys bool   `mapstructure:"use_f_keys"`
 }
 

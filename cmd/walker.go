@@ -47,6 +47,8 @@ func main() {
 
 	var wg sync.WaitGroup
 
+	var cancelled bool
+
 	if len(os.Args) > 1 {
 		args := os.Args[1:]
 
@@ -103,7 +105,7 @@ func main() {
 					dmenu.Send()
 
 					go func(wg *sync.WaitGroup) {
-						dmenu.ListenForReply()
+						cancelled = dmenu.ListenForReply()
 						wg.Done()
 					}(&wg)
 				}
@@ -265,6 +267,10 @@ func main() {
 	code := app.Run(os.Args)
 
 	wg.Wait()
+
+	if cancelled {
+		code = 2
+	}
 
 	if code > 0 {
 		os.Exit(code)

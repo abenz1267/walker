@@ -305,14 +305,14 @@ func activateKeepOpenFunctionKeys(val uint) bool {
 
 func quitKeybind() bool {
 	if appstate.IsDmenu {
-		handleDmenuResult("")
+		handleDmenuResult("CNCLD")
 	}
 
 	if cfg.IsService {
 		quit(false)
 		return true
 	} else {
-		exit(false)
+		exit(false, true)
 		return true
 	}
 }

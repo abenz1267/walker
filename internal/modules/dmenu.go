@@ -72,7 +72,7 @@ func (Dmenu) Reply(res string) {
 	}
 }
 
-func (d Dmenu) ListenForReply() {
+func (d Dmenu) ListenForReply() bool {
 	os.Remove(DmenuSocketAddrReply)
 
 	l, err := net.ListenUnix("unix", &net.UnixAddr{Name: DmenuSocketAddrReply})
@@ -98,9 +98,20 @@ func (d Dmenu) ListenForReply() {
 			continue
 		}
 
-		fmt.Print(string(b[:i]))
+		res := string(b[:i])
+
+		if res != "" && res != "CNCLD" {
+			fmt.Print(res)
+		}
+
+		if res == "CNCLD" {
+			return true
+		}
+
 		break
 	}
+
+	return false
 }
 
 func (d *Dmenu) Setup(cfg *config.Config) bool {

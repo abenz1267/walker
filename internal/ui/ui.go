@@ -686,7 +686,7 @@ func reopen() {
 			if appstate.IsService {
 				quit(false)
 			} else {
-				exit(false)
+				exit(false, false)
 			}
 		}
 

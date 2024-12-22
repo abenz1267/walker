@@ -134,7 +134,7 @@ func setupInteractions(appstate *state.AppState) {
 			if appstate.IsService {
 				quit(false)
 			} else {
-				exit(false)
+				exit(false, false)
 			}
 		})
 
@@ -456,7 +456,9 @@ func handleDmenuResult(result string) {
 			}
 		}
 	} else {
-		fmt.Print(result)
+		if result != "" {
+			fmt.Print(result)
+		}
 	}
 }
 
@@ -481,7 +483,7 @@ func setStdin(cmd *exec.Cmd, piped *util.Piped) {
 
 func closeAfterActivation(keepOpen, next bool) {
 	if !cfg.IsService && !keepOpen {
-		exit(true)
+		exit(true, false)
 	}
 
 	if !keepOpen && appstate.IsRunning {
@@ -1037,13 +1039,20 @@ func quit(ignoreEvent bool) {
 	common.app.Hold()
 }
 
-func exit(ignoreEvent bool) {
+func exit(ignoreEvent bool, cancel bool) {
+	code := 0
+
+	if cancel {
+		code = 2
+	}
+
 	if !ignoreEvent {
 		executeEvent(config.EventExit, "")
 	}
 
 	elements.appwin.Close()
-	os.Exit(0)
+
+	os.Exit(code)
 }
 
 const modifier = 0.10

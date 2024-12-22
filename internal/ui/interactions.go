@@ -457,7 +457,7 @@ func handleDmenuResult(result string) {
 		}
 	} else {
 		if result != "" {
-			fmt.Print(result)
+			fmt.Println(result)
 		}
 	}
 }

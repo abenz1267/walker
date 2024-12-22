@@ -164,10 +164,10 @@ func (keybinds) validate(bind string) {
 
 	for _, v := range fields {
 		if len(v) > 1 {
-			_, exists := modifiers[v]
-			_, exists = specialKeys[v]
+			_, existsMod := modifiers[v]
+			_, existsSpecial := specialKeys[v]
 
-			if !exists {
+			if !existsMod && !existsSpecial {
 				slog.Error("invalid keybind", bind, "key", v)
 			}
 		}
@@ -178,7 +178,7 @@ func (keybinds) validateTriggerLabels(bind string) {
 	fields := strings.Fields(bind)
 	_, exists := modifiersInt[fields[0]]
 
-	if !exists || len(fields[0]) != 1 {
+	if !exists || len(fields[0]) == 1 {
 		slog.Error("invalid trigger_label keybind", bind)
 	}
 }

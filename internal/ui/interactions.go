@@ -1007,7 +1007,7 @@ func quit(ignoreEvent bool) {
 
 	explicits = []modules.Workable{}
 
-	if appstate.IsService {
+	if appstate.IsService && elements.input.Text() != "" {
 		appstate.LastQuery = elements.input.Text()
 	}
 

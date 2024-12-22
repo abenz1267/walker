@@ -304,6 +304,9 @@ func (a *Applications) parse() []util.Entry {
 				isAction := false
 				skip := false
 				keywords := []string{}
+				name := ""
+				localizedNameSingle := ""
+				localizedNameFull := ""
 
 				for scanner.Scan() {
 					line := scanner.Text()
@@ -363,17 +366,20 @@ func (a *Applications) parse() []util.Entry {
 
 					if !isAction {
 						if strings.HasPrefix(line, "Name=") {
-							app.Generic.Label = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
+							name = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
+
 							continue
 						}
 
 						if strings.HasPrefix(line, nameSingle) {
-							app.Generic.Label = strings.TrimSpace(strings.TrimPrefix(line, nameSingle))
+							localizedNameSingle = strings.TrimSpace(strings.TrimPrefix(line, nameSingle))
+
 							continue
 						}
 
 						if strings.HasPrefix(line, nameFull) {
-							app.Generic.Label = strings.TrimSpace(strings.TrimPrefix(line, nameFull))
+							localizedNameFull = strings.TrimSpace(strings.TrimPrefix(line, nameFull))
+
 							continue
 						}
 
@@ -487,6 +493,16 @@ func (a *Applications) parse() []util.Entry {
 							continue
 						}
 					}
+				}
+
+				app.Generic.Label = name
+
+				if localizedNameSingle != "" {
+					app.Generic.Label = localizedNameSingle
+				}
+
+				if localizedNameFull != "" {
+					app.Generic.Label = localizedNameFull
 				}
 
 				for k := range app.Actions {

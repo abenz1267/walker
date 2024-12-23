@@ -63,16 +63,16 @@ type Config struct {
 }
 
 type Keys struct {
-	AcceptTypeahead     string              `mapstructure:"accept_typeahead"`
+	AcceptTypeahead     []string            `mapstructure:"accept_typeahead"`
 	ActivationModifiers ActivationModifiers `mapstructure:"activation_modifiers"`
 	TriggerLabels       string              `mapstructure:"trigger_labels"`
 	Ai                  AiKeys              `mapstructure:"ai"`
-	Close               string              `mapstructure:"close"`
-	Next                string              `mapstructure:"next"`
-	Prev                string              `mapstructure:"prev"`
-	RemoveFromHistory   string              `mapstructure:"remove_from_history"`
-	ResumeQuery         string              `mapstructure:"resume_query"`
-	ToggleExactSearch   string              `mapstructure:"toggle_exact_search"`
+	Close               []string            `mapstructure:"close"`
+	Next                []string            `mapstructure:"next"`
+	Prev                []string            `mapstructure:"prev"`
+	RemoveFromHistory   []string            `mapstructure:"remove_from_history"`
+	ResumeQuery         []string            `mapstructure:"resume_query"`
+	ToggleExactSearch   []string            `mapstructure:"toggle_exact_search"`
 }
 
 type ActivationModifiers struct {
@@ -81,10 +81,10 @@ type ActivationModifiers struct {
 }
 
 type AiKeys struct {
-	ClearSession     string `mapstructure:"clear_session"`
-	CopyLastResponse string `mapstructure:"copy_last_response"`
-	ResumeSession    string `mapstructure:"resume_session"`
-	RunLastResponse  string `mapstructure:"run_last_response"`
+	ClearSession     []string `mapstructure:"clear_session"`
+	CopyLastResponse []string `mapstructure:"copy_last_response"`
+	ResumeSession    []string `mapstructure:"resume_session"`
+	RunLastResponse  []string `mapstructure:"run_last_response"`
 }
 
 type Events struct {

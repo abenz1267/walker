@@ -59,26 +59,40 @@ func parseKeybinds() {
 	binds = make(keybinds)
 	aibinds = make(keybinds)
 
-	binds.validate(cfg.Keys.AcceptTypeahead)
-	binds.bind(binds, cfg.Keys.AcceptTypeahead, acceptTypeahead)
+	for _, v := range cfg.Keys.AcceptTypeahead {
+		binds.validate(v)
+		binds.bind(binds, v, acceptTypeahead)
+	}
 
-	binds.validate(cfg.Keys.Close)
-	binds.bind(binds, cfg.Keys.Close, quitKeybind)
+	for _, v := range cfg.Keys.Close {
+		binds.validate(v)
+		binds.bind(binds, v, quitKeybind)
+	}
 
-	binds.validate(cfg.Keys.Next)
-	binds.bind(binds, cfg.Keys.Next, selectNext)
+	for _, v := range cfg.Keys.Next {
+		binds.validate(v)
+		binds.bind(binds, v, selectNext)
+	}
 
-	binds.validate(cfg.Keys.Prev)
-	binds.bind(binds, cfg.Keys.Prev, selectPrev)
+	for _, v := range cfg.Keys.Prev {
+		binds.validate(v)
+		binds.bind(binds, v, selectPrev)
+	}
 
-	binds.validate(cfg.Keys.RemoveFromHistory)
-	binds.bind(binds, cfg.Keys.RemoveFromHistory, deleteFromHistory)
+	for _, v := range cfg.Keys.RemoveFromHistory {
+		binds.validate(v)
+		binds.bind(binds, v, deleteFromHistory)
+	}
 
-	binds.validate(cfg.Keys.ResumeQuery)
-	binds.bind(binds, cfg.Keys.ResumeQuery, resume)
+	for _, v := range cfg.Keys.ResumeQuery {
+		binds.validate(v)
+		binds.bind(binds, v, resume)
+	}
 
-	binds.validate(cfg.Keys.ToggleExactSearch)
-	binds.bind(binds, cfg.Keys.ToggleExactSearch, toggleExactMatch)
+	for _, v := range cfg.Keys.ToggleExactSearch {
+		binds.validate(v)
+		binds.bind(binds, v, toggleExactMatch)
+	}
 
 	binds.bind(binds, "enter", func() bool { return activate(false, false) })
 	binds.bind(binds, strings.Join([]string{cfg.Keys.ActivationModifiers.KeepOpen, "enter"}, " "), func() bool { return activate(true, false) })
@@ -91,17 +105,25 @@ func parseKeybinds() {
 	labelTrigger = modifiersInt[strings.Fields(cfg.Keys.TriggerLabels)[0]]
 	labelModifier = modifiers[strings.Fields(cfg.Keys.TriggerLabels)[0]]
 
-	binds.validate(cfg.Keys.Ai.ClearSession)
-	binds.bind(aibinds, cfg.Keys.Ai.ClearSession, aiClearSession)
+	for _, v := range cfg.Keys.Ai.ClearSession {
+		binds.validate(v)
+		binds.bind(aibinds, v, aiClearSession)
+	}
 
-	binds.validate(cfg.Keys.Ai.CopyLastResponse)
-	binds.bind(aibinds, cfg.Keys.Ai.CopyLastResponse, aiCopyLast)
+	for _, v := range cfg.Keys.Ai.CopyLastResponse {
+		binds.validate(v)
+		binds.bind(aibinds, v, aiCopyLast)
+	}
 
-	binds.validate(cfg.Keys.Ai.ResumeSession)
-	binds.bind(aibinds, cfg.Keys.Ai.ResumeSession, aiResume)
+	for _, v := range cfg.Keys.Ai.ResumeSession {
+		binds.validate(v)
+		binds.bind(aibinds, v, aiResume)
+	}
 
-	binds.validate(cfg.Keys.Ai.RunLastResponse)
-	binds.bind(aibinds, cfg.Keys.Ai.RunLastResponse, aiExecuteLast)
+	for _, v := range cfg.Keys.Ai.RunLastResponse {
+		binds.validate(v)
+		binds.bind(aibinds, v, aiExecuteLast)
+	}
 }
 
 func (keybinds) bind(binds keybinds, val string, fn func() bool) {

@@ -1,23 +1,23 @@
 {
   "keys": {
-    "accept_typeahead": "tab",
+    "accept_typeahead": ["tab"],
     "activation_modifiers": {
       "keep_open": "shift",
       "alternate": "alt"
     },
     "trigger_labels": "lalt",
     "ai": {
-      "clear_session": "ctrl x",
-      "copy_last_response": "ctrl c",
-      "resume_session": "ctrl r",
-      "run_last_response": "ctrl e"
+      "clear_session": ["ctrl x"],
+      "copy_last_response": ["ctrl c"],
+      "resume_session": ["ctrl r"],
+      "run_last_response": ["ctrl e"]
     },
-    "next": "down",
-    "prev": "up",
-    "close": "esc",
-    "remove_from_history": "shift backspace",
-    "resume_query": "ctrl r",
-    "toggle_exact_search": "ctrl m"
+    "next": ["down"],
+    "prev": ["up"],
+    "close": ["esc"],
+    "remove_from_history": ["shift backspace"],
+    "resume_query": ["ctrl r"],
+    "toggle_exact_search": ["ctrl m"]
   },
   "app_launch_prefix": "",
   "terminal_title_flag": "",

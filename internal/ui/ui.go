@@ -529,16 +529,16 @@ func setupFactory() *gtk.SignalListItemFactory {
 		}
 
 		label := gtk.NewLabel(val.Label)
+		label.SetUseMarkup(true)
 
 		if val.MatchedLabel != "" {
-			label.SetUseMarkup(true)
 			label.SetMarkup(val.MatchedLabel)
 		}
 
 		sub := gtk.NewLabel(val.Sub)
+		sub.SetUseMarkup(true)
 
 		if val.MatchedSub != "" {
-			sub.SetUseMarkup(true)
 			sub.SetMarkup(val.MatchedSub)
 		}
 

@@ -1101,11 +1101,11 @@ func fuzzyScore(entry *util.Entry, text string) float64 {
 		var score float64
 
 		if strings.HasPrefix(text, "'") {
-			text = strings.TrimPrefix(text, "'")
+			cleanText := strings.TrimPrefix(text, "'")
 
-			score, _ = util.ExactScore(text, t)
+			score, _ = util.ExactScore(cleanText, t)
 
-			f := strings.Index(strings.ToLower(t), strings.ToLower(text))
+			f := strings.Index(strings.ToLower(t), strings.ToLower(cleanText))
 
 			if f != -1 {
 				poss := []int{}

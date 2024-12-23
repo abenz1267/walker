@@ -15,8 +15,6 @@ func FuzzyScore(input, target string) (float64, *[]int) {
 }
 
 func ExactScore(input, target string) (float64, *[]int) {
-	input = strings.TrimPrefix(input, "'")
-
 	chars := util.ToChars([]byte(target))
 	res, pos := algo.ExactMatchNaive(false, true, true, &chars, []rune(strings.ToLower(input)), true, nil)
 

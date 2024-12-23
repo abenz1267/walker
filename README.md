@@ -158,7 +158,13 @@ nix.settings = {
 
 ## Running as a service
 
-This depends on your system. You simply need to autostart Walker with `walker --gapplication-service` and it will run in the background. Then just run `walker` to bring it up.
+This depends on your system:
+
+Option 1: Autostart Walker with `walker --gapplication-service` and it will run in the background.
+
+Option 2: You can let Walker create an autostart desktop file for you by running `walker --enableautostart`.
+
+Then just run `walker` to bring it up.
 
 Example for Hyprland:
 

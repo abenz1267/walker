@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"slices"
 	"strconv"
 	"strings"
@@ -20,6 +21,7 @@ import (
 	"github.com/abenz1267/walker/internal/state"
 	"github.com/abenz1267/walker/internal/ui"
 	"github.com/abenz1267/walker/internal/util"
+	"github.com/adrg/xdg"
 	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
@@ -111,6 +113,34 @@ func main() {
 				}
 			}
 
+			if slices.Contains(args, "-A") || slices.Contains(args, "--enableautostart") {
+				content := `
+[Desktop Entry]
+Name=Walker
+Comment=Walker Service
+Exec=walker --gapplication-service
+StartupNotify=false
+Terminal=false
+Type=Application
+				`
+
+				err := os.WriteFile(filepath.Join(xdg.ConfigHome, "autostart", "walker-service.desktop"), []byte(strings.TrimSpace(content)), 0644)
+				if err != nil {
+					log.Panicln(err)
+				}
+
+				return
+			}
+
+			if slices.Contains(args, "-D") || slices.Contains(args, "--disableautostart") {
+				err := os.Remove(filepath.Join(xdg.ConfigHome, "autostart", "walker-service.desktop"))
+				if err != nil {
+					log.Panicln(err)
+				}
+
+				return
+			}
+
 			if isNew {
 				appName = fmt.Sprintf("%s-%d", appName, time.Now().Unix())
 			}
@@ -136,6 +166,8 @@ func main() {
 	app.AddMainOption("forceprint", 'f', glib.OptionFlagNone, glib.OptionArgNone, "forces printing input if no item is selected", "")
 	app.AddMainOption("bench", 'b', glib.OptionFlagNone, glib.OptionArgNone, "prints nanoseconds for start and displaying in both service and client", "")
 	app.AddMainOption("active", 'a', glib.OptionFlagNone, glib.OptionArgString, "active item", "")
+	app.AddMainOption("enableautostart", 'A', glib.OptionFlagNone, glib.OptionArgNone, "creates a desktop file for autostarting on login", "")
+	app.AddMainOption("disableautostart", 'D', glib.OptionFlagNone, glib.OptionArgNone, "removes the autostart desktop file", "")
 
 	app.Connect("activate", ui.Activate(state))
 

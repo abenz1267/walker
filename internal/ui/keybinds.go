@@ -12,7 +12,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 )
 
-type keybinds map[int]map[gdk.ModifierType]func() bool
+type keybinds map[int]map[gdk.ModifierType][]func() bool
 
 var (
 	binds   keybinds
@@ -159,22 +159,30 @@ func (keybinds) bind(binds keybinds, val string, fn func() bool) {
 
 	_, ok := binds[key]
 	if !ok {
-		binds[key] = make(map[gdk.ModifierType]func() bool)
+		binds[key] = make(map[gdk.ModifierType][]func() bool)
 	}
 
-	binds[key][modifier] = fn
+	binds[key][modifier] = append(binds[key][modifier], fn)
 }
 
 func (keybinds) execute(key int, modifier gdk.ModifierType) bool {
 	if isAi {
-		fn, ok := aibinds[key][modifier]
+		fns, ok := aibinds[key][modifier]
 		if ok {
-			return fn()
+			for _, fn := range fns {
+				if fn() {
+					return true
+				}
+			}
 		}
 	}
 
-	if fn, ok := binds[key][modifier]; ok {
-		return fn()
+	if fns, ok := binds[key][modifier]; ok {
+		for _, fn := range fns {
+			if fn() {
+				return true
+			}
+		}
 	}
 
 	return false

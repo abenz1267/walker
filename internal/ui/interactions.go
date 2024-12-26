@@ -143,56 +143,48 @@ func setupInteractions(appstate *state.AppState) {
 }
 
 func selectNext() bool {
-	disableMouseGtk()
-
 	items := common.selection.NItems()
 
 	if items == 0 {
 		return false
 	}
+
+	disableMouseGtk()
 
 	current := common.selection.Selected()
 	next := current + 1
 
 	if next < items {
 		common.selection.SetSelected(current + 1)
-		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
-		return true
 	}
 
 	if next >= items && cfg.List.Cycle {
 		common.selection.SetSelected(0)
-		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
-		return true
 	}
 
-	return false
+	return true
 }
 
 func selectPrev() bool {
-	disableMouseGtk()
-
 	items := common.selection.NItems()
 
 	if items == 0 {
 		return false
 	}
 
+	disableMouseGtk()
+
 	current := common.selection.Selected()
 
 	if current > 0 {
 		common.selection.SetSelected(current - 1)
-		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
-		return true
 	}
 
 	if current == 0 && cfg.List.Cycle {
 		common.selection.SetSelected(items - 1)
-		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
-		return true
 	}
 
-	return false
+	return true
 }
 
 var fkeys = []uint{65470, 65471, 65472, 65473, 65474, 65475, 65476, 65477}
@@ -279,6 +271,10 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 						return true
 					}
 				}
+			}
+
+			if val == gdk.KEY_ISO_Left_Tab {
+				val = gdk.KEY_Tab
 			}
 
 			hasBind := binds.execute(int(val), modifier)

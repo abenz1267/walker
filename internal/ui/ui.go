@@ -268,6 +268,8 @@ func setupCommon(app *gtk.Application) {
 
 	selection.ConnectSelectionChanged(func(pos, item uint) {
 		executeEvent(config.EventSelection, "")
+
+		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
 	})
 
 	factory := setupFactory()

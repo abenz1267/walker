@@ -15,6 +15,8 @@ type AppState struct {
 	AutoSelect          bool
 	AutoSelectOld       bool
 	Clipboard           modules.Workable
+	Config              *config.Config
+	ConfigError         error
 	IsDebug             bool
 	IsDmenu             bool
 	Dmenu               *modules.Dmenu

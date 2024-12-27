@@ -89,7 +89,13 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		hstry = history.Get()
 
 		var cfgErr error
-		cfg, cfgErr = config.Get(appstate.ExplicitConfig)
+
+		if appstate.IsService {
+			cfg = appstate.Config
+			cfgErr = appstate.ConfigError
+		} else {
+			cfg, cfgErr = config.Get(appstate.ExplicitConfig)
+		}
 
 		if cfgErr == nil {
 			theme := cfg.Theme

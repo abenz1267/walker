@@ -99,6 +99,10 @@ func setAvailables(cfg *config.Config) {
 		&windows.Windows{},
 	}
 
+	if os.Getenv("XDG_CURRENT_DESKTOP") == "Hyprland" {
+		res = append(res, &modules.XdphPicker{})
+	}
+
 	if !appstate.IsService {
 		res = append(res, &modules.Dmenu{})
 	}

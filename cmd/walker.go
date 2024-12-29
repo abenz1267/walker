@@ -304,7 +304,5 @@ Type=Application
 		code = 2
 	}
 
-	if code > 0 {
-		os.Exit(code)
-	}
+	os.Exit(code)
 }

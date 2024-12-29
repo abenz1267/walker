@@ -86,6 +86,13 @@
         }
       ]
     },
+    "xdph_picker": {
+      "weight": 5,
+      "placeholder": "Screen/Window Picker",
+      "show_sub_when_single": true,
+      "name": "xdphpicker",
+      "switcher_only": true
+    },
     "ai": {
       "weight": 5,
       "placeholder": "AI",

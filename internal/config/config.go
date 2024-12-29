@@ -123,6 +123,11 @@ type Builtins struct {
 	Symbols        Symbols        `mapstructure:"symbols"`
 	Websearch      Websearch      `mapstructure:"websearch"`
 	Windows        Windows        `mapstructure:"windows"`
+	XdphPicker     XdphPicker     `mapstructure:"xdph_picker"`
+}
+
+type XdphPicker struct {
+	GeneralModule `mapstructure:",squash"`
 }
 
 type Bookmarks struct {

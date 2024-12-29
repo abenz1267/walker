@@ -62,6 +62,8 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
   - lets you define and run simple one-off commands
   - f.e. `toggle window floating`
   - no need to create keybinds for commands you don't run often
+- xdg-desktop-portal-hyprland share picker
+  - lets you select windows/monitors/region for sharing
 
 ## Requirements
 

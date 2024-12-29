@@ -47,7 +47,10 @@ var (
 		"enter":     int(gdk.KEY_Return),
 		"down":      int(gdk.KEY_Down),
 		"up":        int(gdk.KEY_Up),
+		"left":      int(gdk.KEY_Left),
+		"right":     int(gdk.KEY_Right),
 	}
+
 	labelTrigger        = gdk.KEY_Alt_L
 	keepOpenModifier    = gdk.ShiftMask
 	labelModifier       = gdk.AltMask

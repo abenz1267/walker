@@ -44,14 +44,12 @@ func getCSS(theme string) []byte {
 			log.Panicln(err)
 		}
 	} else {
-		if theme == "default" {
-			css, err = config.Themes.ReadFile("themes/default.css")
-			if err != nil {
-				log.Panicln(err)
-			}
-
-			createThemeFile(css)
+		css, err = config.Themes.ReadFile("themes/default.css")
+		if err != nil {
+			log.Panicln(err)
 		}
+
+		createThemeFile(css)
 	}
 
 	return css

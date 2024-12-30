@@ -348,14 +348,9 @@ func getLayout(theme string) ([]byte, string) {
 	} else {
 		layoutFt = "json"
 
-		if theme == "default" {
-			layout, err = Themes.ReadFile("themes/default.json")
-			if err != nil {
-				log.Panicln(err)
-			}
-		} else {
-			log.Printf("layout file for theme '%s' not found\n", theme)
-			os.Exit(1)
+		layout, err = Themes.ReadFile("themes/default.json")
+		if err != nil {
+			log.Panicln(err)
 		}
 
 		createLayoutFile(layout)

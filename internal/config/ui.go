@@ -322,7 +322,7 @@ func getLayout(theme string) ([]byte, string) {
 
 	filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
 		if d.IsDir() {
-			return nil
+			return filepath.SkipDir
 		}
 
 		switch d.Name() {

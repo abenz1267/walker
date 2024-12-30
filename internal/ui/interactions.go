@@ -922,6 +922,7 @@ func setInitials() {
 		entry.Module = proc.General().Name
 		entry.MatchedLabel = ""
 		entry.MatchedSub = ""
+		entry.ScoreFinal = 0
 
 		if proc.General().History {
 			for _, v := range hstry {

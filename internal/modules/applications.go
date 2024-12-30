@@ -182,16 +182,14 @@ func (a *Applications) Entries(term string) []util.Entry {
 		for _, entry := range a.entries {
 			if entry.IsAction {
 				for _, v := range a.Hstry {
-					if val, ok := v[entry.Identifier()]; ok {
-						if val.LastUsed.After(entry.LastUsed) {
-							if _, ok := added[entry.Identifier()]; ok {
-								continue
-							}
-
-							entries = append(entries, entry)
-							added[entry.Identifier()] = struct{}{}
+					if _, ok := v[entry.Identifier()]; ok {
+						if _, ok := added[entry.Identifier()]; ok {
 							continue
 						}
+
+						entries = append(entries, entry)
+						added[entry.Identifier()] = struct{}{}
+						continue
 					}
 				}
 
@@ -292,7 +290,7 @@ func (a *Applications) parse() []util.Entry {
 				app := Application{
 					Generic: util.Entry{
 						Class:            ApplicationsName,
-						History:          true,
+						History:          a.config.History,
 						Matching:         matching,
 						RecalculateScore: true,
 						File:             path,

@@ -232,6 +232,8 @@ type TextWrapper struct {
 }
 
 func GetLayout(theme string, base []string) *UI {
+	checkForDefaultLayout()
+
 	layout, layoutFt := getLayout(theme)
 
 	layoutCfg := viper.New()
@@ -355,9 +357,20 @@ func getLayout(theme string) ([]byte, string) {
 		if err != nil {
 			log.Panicln(err)
 		}
-
-		createLayoutFile(layout)
 	}
 
 	return layout, layoutFt
+}
+
+func checkForDefaultLayout() {
+	if util.FileExists(filepath.Join(util.ThemeDir(), "default.json")) {
+		return
+	}
+
+	layout, err := Themes.ReadFile("themes/default.json")
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	createLayoutFile(layout)
 }

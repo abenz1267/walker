@@ -17,18 +17,61 @@ import (
 
 var barHasItems = false
 
+func checkForDefaultCss() {
+	file := filepath.Join(util.ThemeDir(), "default.css")
+
+	if util.FileExists(file) {
+		return
+	}
+
+	css, err := config.Themes.ReadFile("themes/default.css")
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	err = os.WriteFile(file, css, 0o600)
+	if err != nil {
+		log.Panicln(err)
+	}
+}
+
 func setupCss(theme string, base []string) {
 	var css []byte
 
+	checkForDefaultCss()
+
+	hasCss := false
+
 	if base != nil && len(base) > 0 {
 		for _, v := range base {
-			css = append(css, '\n')
-			css = append(css, getCSS(v)...)
+			toPut := getCSS(v)
+
+			if len(toPut) > 0 {
+				hasCss = true
+
+				css = append(css, '\n')
+				css = append(css, toPut...)
+			}
+		}
+	}
+
+	toPut := getCSS(theme)
+
+	if len(toPut) > 0 {
+		hasCss = true
+	}
+
+	if !hasCss {
+		var err error
+
+		toPut, err = config.Themes.ReadFile("themes/default.css")
+		if err != nil {
+			log.Panicln(err)
 		}
 	}
 
 	css = append(css, '\n')
-	css = append(css, getCSS(theme)...)
+	css = append(css, toPut...)
 
 	common.cssProvider.LoadFromBytes(glib.NewBytes(css))
 }
@@ -43,13 +86,6 @@ func getCSS(theme string) []byte {
 		if err != nil {
 			log.Panicln(err)
 		}
-	} else {
-		css, err = config.Themes.ReadFile("themes/default.css")
-		if err != nil {
-			log.Panicln(err)
-		}
-
-		createThemeFile(css)
 	}
 
 	return css

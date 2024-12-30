@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -775,13 +774,6 @@ func reopen() {
 		elements.input.GrabFocus()
 		process()
 	})
-}
-
-func createThemeFile(data []byte) {
-	err := os.WriteFile(filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.css", cfg.Theme)), data, 0o600)
-	if err != nil {
-		log.Panicln(err)
-	}
 }
 
 func afterUI() {

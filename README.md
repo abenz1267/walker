@@ -89,6 +89,8 @@ Make sure you have the following dependencies installed:
 - gtk4
 - gtk4-layer-shell
 - gobject-introspection
+- libvips
+- libvips-dev
 
 ```bash
 git clone https://github.com/abenz1267/walker /tmp/walker

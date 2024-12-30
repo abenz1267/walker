@@ -57,7 +57,7 @@ func getCSS(theme string) []byte {
 	return css
 }
 
-func setupTheme(theme string) {
+func setupTheme() {
 	if layout == nil || elements == nil {
 		return
 	}

@@ -855,7 +855,7 @@ func setupLayerShellAnchors() {
 }
 
 func setupLayout(theme string, base []string) {
-	setupTheme(theme)
+	setupTheme()
 	setupCss(theme, base)
 	setupLayerShellAnchors()
 }

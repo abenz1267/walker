@@ -70,7 +70,8 @@
       "refresh": true,
       "show_sub_when_single": true,
       "show_icon_when_single": true,
-      "show_generic": true
+      "show_generic": true,
+      "history": true
     },
     "bookmarks": {
       "weight": 5,

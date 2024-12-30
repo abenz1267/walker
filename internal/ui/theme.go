@@ -343,21 +343,58 @@ func setupInputTheme() {
 		}
 	}
 
-	if layout.Window.Box.Search.Prompt.Text != "" {
-		setupLabelWidgetStyle(elements.prompt, &layout.Window.Box.Search.Prompt.LabelWidget)
-		elements.prompt.SetText(layout.Window.Box.Search.Prompt.Text)
-		elements.search.Prepend(elements.prompt)
+	if layout.Window.Box.Search.Prompt.Text != "" && layout.Window.Box.Search.Prompt.Icon == "" {
+		prompt := gtk.NewLabel(layout.Window.Box.Search.Prompt.Text)
+		setupLabelWidgetStyle(prompt, &layout.Window.Box.Search.Prompt.LabelWidget)
+		elements.search.Prepend(prompt)
+	}
+
+	if layout.Window.Box.Search.Prompt.Icon != "" && layout.Window.Box.Search.Prompt.Text == "" {
+		var icon *gtk.Image
+		if filepath.IsAbs(layout.Window.Box.Search.Prompt.Icon) {
+			icon = gtk.NewImageFromFile(layout.Window.Box.Search.Prompt.Icon)
+		} else {
+			i := elements.iconTheme.LookupIcon(layout.Window.Box.Search.Prompt.Icon, []string{}, layout.IconSizeIntMap[layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
+
+			icon = gtk.NewImageFromPaintable(i)
+		}
+
+		setupIconWidgetStyle(icon, &layout.Window.Box.Search.Prompt.ImageWidget)
+		elements.search.Prepend(icon)
 	}
 
 	setupWidgetStyle(&elements.input.Widget, &layout.Window.Box.Search.Input.Widget, false)
 	setupWidgetStyle(&elements.typeahead.Widget, &layout.Window.Box.Search.Input.Widget, false)
 
-	elements.typeahead.SetName("typeahead")
+	if layout.Window.Box.Search.Clear.Icon != "" {
+		var icon *gtk.Image
 
-	elements.input.FirstChild().(*gtk.Image).SetVisible(layout.Window.Box.Search.Input.Icons)
-	elements.input.LastChild().(*gtk.Image).SetVisible(layout.Window.Box.Search.Input.Icons)
-	elements.typeahead.FirstChild().(*gtk.Image).SetVisible(layout.Window.Box.Search.Input.Icons)
-	elements.typeahead.LastChild().(*gtk.Image).SetVisible(layout.Window.Box.Search.Input.Icons)
+		if filepath.IsAbs(layout.Window.Box.Search.Clear.Icon) {
+			icon = gtk.NewImageFromFile(layout.Window.Box.Search.Clear.Icon)
+		} else {
+			i := elements.iconTheme.LookupIcon(layout.Window.Box.Search.Clear.Icon, []string{}, layout.IconSizeIntMap[layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
+
+			icon = gtk.NewImageFromPaintable(i)
+		}
+
+		setupIconWidgetStyle(icon, &layout.Window.Box.Search.Clear)
+
+		icon.SetVisible(false)
+
+		controller := gtk.NewGestureClick()
+		controller.ConnectPressed(func(press int, x, y float64) {
+			elements.input.SetText("")
+			elements.typeahead.SetText("")
+		})
+
+		icon.AddController(controller)
+
+		elements.clear = icon
+
+		elements.search.Append(elements.clear)
+	}
+
+	elements.typeahead.SetName("typeahead")
 }
 
 func setupBoxWidgetStyle(box *gtk.Box, style *config.BoxWidget) {

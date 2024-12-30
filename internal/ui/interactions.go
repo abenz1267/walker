@@ -80,12 +80,7 @@ func setupInteractions(appstate *state.AppState) {
 	go setupCommands()
 	parseKeybinds()
 
-	keycontroller := gtk.NewEventControllerKey()
-	keycontroller.SetPropagationPhase(gtk.PropagationPhase(1))
-
-	elements.input.AddController(keycontroller)
-
-	elements.input.Connect("search-changed", func() {
+	elements.input.Connect("changed", func() {
 		text := elements.input.Text()
 
 		if lastQuery != text {
@@ -93,19 +88,25 @@ func setupInteractions(appstate *state.AppState) {
 			lastQuery = text
 		}
 
+		if elements.clear != nil {
+			if text == "" {
+				elements.clear.SetVisible(false)
+			} else {
+				elements.clear.SetVisible(true)
+			}
+		}
+
 		debouncedProcess(process)
+
+		return
 	})
 
-	globalKeyReleasedController := gtk.NewEventControllerKey()
-	globalKeyReleasedController.ConnectKeyReleased(handleGlobalKeysReleased)
-	globalKeyReleasedController.SetPropagationPhase(gtk.PropagationPhase(1))
-
 	globalKeyController := gtk.NewEventControllerKey()
+	globalKeyController.ConnectKeyReleased(handleGlobalKeysReleased)
 	globalKeyController.ConnectKeyPressed(handleGlobalKeysPressed)
 	globalKeyController.SetPropagationPhase(gtk.PropagationPhase(1))
 
 	elements.appwin.AddController(globalKeyController)
-	elements.appwin.AddController(globalKeyReleasedController)
 
 	if !cfg.IgnoreMouse {
 		motion := gtk.NewEventControllerMotion()
@@ -283,7 +284,12 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				return true
 			}
 
-			elements.input.GrabFocus()
+			// fmt.Println(elements.input.HasFocus())
+			// fmt.Println(elements.typeahead.HasFocus())
+			// if !elements.input.HasFocus() {
+			// 	fmt.Println("focus")
+			// 	elements.input.GrabFocus()
+			// }
 
 			return false
 		}

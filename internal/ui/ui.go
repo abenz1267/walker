@@ -59,12 +59,12 @@ type Elements struct {
 	spinner         *gtk.Spinner
 	search          *gtk.Box
 	bar             *gtk.Box
-	prompt          *gtk.Label
 	box             *gtk.Box
 	appwin          *gtk.ApplicationWindow
 	aiScroll        *gtk.ScrolledWindow
-	typeahead       *gtk.SearchEntry
-	input           *gtk.SearchEntry
+	typeahead       *gtk.Entry
+	input           *gtk.Entry
+	clear           *gtk.Image
 	grid            *gtk.GridView
 	aiList          *gtk.ListView
 	prefixClasses   map[string][]string
@@ -76,7 +76,6 @@ type Elements struct {
 func Activate(state *state.AppState) func(app *gtk.Application) {
 	appstate = state
 	thumbnails = make(map[string][]byte)
-	debouncedProcess = util.NewDebounce(time.Millisecond * 1)
 
 	return func(app *gtk.Application) {
 		if appstate.HasUI {
@@ -84,6 +83,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			return
 		}
 
+		now := time.Now()
 		layouts = make(map[string]*config.UI)
 
 		hstry = history.Get()
@@ -98,6 +98,14 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		}
 
 		if cfgErr == nil {
+			t := 1
+
+			if cfg.Search.Delay > 0 {
+				t = cfg.Search.Delay
+			}
+
+			debouncedProcess = util.NewDebounce(time.Millisecond * time.Duration(t))
+
 			theme := cfg.Theme
 			themeBase := cfg.ThemeBase
 
@@ -142,6 +150,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 				elements = setupElementsPassword(app)
 
+				fmt.Println(time.Since(now))
 				setupLayerShell()
 			} else {
 				setupCommon(app)
@@ -216,6 +225,10 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 		if appstate.Benchmark {
 			fmt.Println("Visible (first ui)", time.Now().UnixMilli())
+		}
+
+		if !appstate.Password {
+			debouncedProcess(process)
 		}
 	}
 }
@@ -300,11 +313,9 @@ func setupElements(app *gtk.Application) *Elements {
 	spinner.SetName("spinner")
 
 	search := gtk.NewBox(gtk.OrientationHorizontal, 0)
-	typeahead := gtk.NewSearchEntry()
+	typeahead := gtk.NewEntry()
 	typeahead.SetCanFocus(false)
 	typeahead.SetCanTarget(false)
-
-	prompt := gtk.NewLabel("")
 
 	scroll := gtk.NewScrolledWindow()
 
@@ -317,7 +328,7 @@ func setupElements(app *gtk.Application) *Elements {
 	appwin := gtk.NewApplicationWindow(app)
 	appwin.SetApplication(app)
 
-	input := gtk.NewSearchEntry()
+	input := gtk.NewEntry()
 
 	grid := gtk.NewGridView(common.selection, &common.factory.ListItemFactory)
 	scroll.SetChild(grid)
@@ -352,7 +363,6 @@ func setupElements(app *gtk.Application) *Elements {
 		overlay:         overlay,
 		spinner:         spinner,
 		search:          search,
-		prompt:          prompt,
 		typeahead:       typeahead,
 		scroll:          scroll,
 		box:             box,

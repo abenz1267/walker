@@ -105,6 +105,7 @@ type LabelWidget struct {
 
 type ImageWidget struct {
 	Widget    `mapstructure:",squash"`
+	Icon      string `mapstructure:"icon"`
 	IconSize  string `mapstructure:"icon_size"`
 	PixelSize int    `mapstructure:"pixel_size"`
 	Theme     string `mapstructure:"theme"`
@@ -176,17 +177,19 @@ type SearchWrapper struct {
 	Revert    bool          `mapstructure:"revert"`
 	Input     SearchWidget  `mapstructure:"input"`
 	Prompt    PromptWidget  `mapstructure:"prompt"`
+	Clear     ImageWidget   `mapstructure:"clear"`
 	Spinner   SpinnerWidget `mapstructure:"spinner"`
 }
 
 type PromptWidget struct {
 	LabelWidget `mapstructure:",squash"`
+	ImageWidget `mapstructure:",squash"`
 	Text        string `mapstructure:"text"`
+	Icon        string `mapstructure:"icon"`
 }
 
 type SearchWidget struct {
 	Widget `mapstructure:",squash"`
-	Icons  bool `mapstructure:"icons"`
 }
 
 type SpinnerWidget struct {

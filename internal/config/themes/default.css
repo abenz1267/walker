@@ -16,6 +16,8 @@
 #search,
 #password,
 #input,
+#prompt,
+#clear,
 #typeahead,
 #list,
 child,
@@ -49,17 +51,24 @@ slider,
     0 1px 3px rgba(0, 0, 0, 0.1),
     0 1px 2px rgba(0, 0, 0, 0.22);
   background: @search_background;
+  padding: 8px;
 }
 
 #prompt {
+  margin-left: 4px;
+  margin-right: 12px;
+  color: @search_icon_color;
+  opacity: 0.2;
+}
+
+#clear {
+  color: @search_icon_color;
+  opacity: 0.8;
 }
 
 #password,
 #input,
 #typeahead {
-  padding: 8px;
-  padding-top: 4px;
-  padding-bottom: 4px;
   border-radius: 2px;
 }
 
@@ -82,14 +91,6 @@ slider,
   opacity: 0.5;
 }
 
-#input > *:first-child,
-#typeahead > *:first-child {
-  margin-right: 16px;
-  margin-left: 4px;
-  color: @search_icon_color;
-  opacity: 0.2;
-}
-
 #input > *:last-child,
 #typeahead > *:last-child {
   color: var(--search-icon-color);
@@ -100,7 +101,7 @@ slider,
 }
 
 child {
-  padding: 9px;
+  padding: 8px;
   border-radius: 2px;
 }
 

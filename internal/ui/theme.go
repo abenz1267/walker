@@ -360,7 +360,12 @@ func setupInputTheme() {
 		}
 
 		setupIconWidgetStyle(icon, &layout.Window.Box.Search.Prompt.ImageWidget)
-		elements.search.Prepend(icon)
+
+		firstChild := elements.search.FirstChild()
+
+		if _, ok := firstChild.(*gtk.Image); !ok {
+			elements.search.Prepend(icon)
+		}
 	}
 
 	setupWidgetStyle(&elements.input.Widget, &layout.Window.Box.Search.Input.Widget, false)
@@ -391,7 +396,11 @@ func setupInputTheme() {
 
 		elements.clear = icon
 
-		elements.search.Append(elements.clear)
+		lastChild := elements.search.LastChild()
+
+		if _, ok := lastChild.(*gtk.Image); !ok {
+			elements.search.Append(elements.clear)
+		}
 	}
 
 	elements.typeahead.SetName("typeahead")

@@ -83,7 +83,6 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			return
 		}
 
-		now := time.Now()
 		layouts = make(map[string]*config.UI)
 
 		hstry = history.Get()
@@ -150,7 +149,6 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 				elements = setupElementsPassword(app)
 
-				fmt.Println(time.Since(now))
 				setupLayerShell()
 			} else {
 				setupCommon(app)

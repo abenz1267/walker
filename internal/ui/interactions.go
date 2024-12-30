@@ -751,12 +751,12 @@ func processAsync(text string) {
 					switch e[k].Matching {
 					case util.AlwaysTopOnEmptySearch:
 						if text != "" {
-							e[k].ScoreFinal = fuzzyScore(&e[k], toMatch)
+							e[k].ScoreFinal = fuzzyScore(&e[k], toMatch, g.History)
 						} else {
 							e[k].ScoreFinal = 1000
 						}
 					case util.Fuzzy:
-						e[k].ScoreFinal = fuzzyScore(&e[k], toMatch)
+						e[k].ScoreFinal = fuzzyScore(&e[k], toMatch, g.History)
 					case util.AlwaysTop:
 						if e[k].ScoreFinal == 0 {
 							e[k].ScoreFinal = 1000
@@ -923,17 +923,19 @@ func setInitials() {
 		entry.MatchedLabel = ""
 		entry.MatchedSub = ""
 
-		for _, v := range hstry {
-			if val, ok := v[entry.Identifier()]; ok {
-				if entry.LastUsed.IsZero() || val.LastUsed.After(entry.LastUsed) {
-					entry.Used = val.Used
-					entry.DaysSinceUsed = val.DaysSinceUsed
-					entry.LastUsed = val.LastUsed
+		if proc.General().History {
+			for _, v := range hstry {
+				if val, ok := v[entry.Identifier()]; ok {
+					if entry.LastUsed.IsZero() || val.LastUsed.After(entry.LastUsed) {
+						entry.Used = val.Used
+						entry.DaysSinceUsed = val.DaysSinceUsed
+						entry.LastUsed = val.LastUsed
+					}
 				}
 			}
-		}
 
-		entry.ScoreFinal = float64(usageModifier(&entry))
+			entry.ScoreFinal = float64(usageModifier(&entry))
+		}
 
 		entries = append(entries, entry)
 	}
@@ -1053,7 +1055,7 @@ func exit(ignoreEvent bool, cancel bool) {
 
 const modifier = 0.10
 
-func fuzzyScore(entry *util.Entry, text string) float64 {
+func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 	textLength := len(text)
 
 	entry.MatchedLabel = ""
@@ -1167,19 +1169,23 @@ func fuzzyScore(entry *util.Entry, text string) float64 {
 
 	entry.ScoreFuzzy = entry.ScoreFuzzy * m
 
-	for k, v := range hstry {
-		if strings.HasPrefix(k, text) {
-			if val, ok := v[entry.Identifier()]; ok {
-				if entry.LastUsed.IsZero() || val.LastUsed.After(entry.LastUsed) {
-					entry.Used = val.Used
-					entry.DaysSinceUsed = val.DaysSinceUsed
-					entry.LastUsed = val.LastUsed
+	usageScore := 0
+
+	if useHistory {
+		for k, v := range hstry {
+			if strings.HasPrefix(k, text) {
+				if val, ok := v[entry.Identifier()]; ok {
+					if entry.LastUsed.IsZero() || val.LastUsed.After(entry.LastUsed) {
+						entry.Used = val.Used
+						entry.DaysSinceUsed = val.DaysSinceUsed
+						entry.LastUsed = val.LastUsed
+					}
 				}
 			}
 		}
-	}
 
-	usageScore := usageModifier(entry)
+		usageScore = usageModifier(entry)
+	}
 
 	if textLength == 0 {
 		textLength = 1

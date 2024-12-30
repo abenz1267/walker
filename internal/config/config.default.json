@@ -88,6 +88,7 @@
       ]
     },
     "xdph_picker": {
+      "hidden": true,
       "weight": 5,
       "placeholder": "Screen/Window Picker",
       "show_sub_when_single": true,
@@ -234,6 +235,7 @@
       ]
     },
     "dmenu": {
+      "hidden": true,
       "weight": 5,
       "name": "dmenu",
       "placeholder": "Dmenu",

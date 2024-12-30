@@ -59,6 +59,7 @@ type Config struct {
 	Timeout             int            `mapstructure:"timeout"`
 
 	Available []string `mapstructure:"-"`
+	Hidden    []string `mapstructure:"-"`
 	IsService bool     `mapstructure:"-"`
 }
 
@@ -188,6 +189,7 @@ type GeneralModule struct {
 	AutoSelect         bool        `mapstructure:"auto_select"`
 	Blacklist          []Blacklist `mapstructure:"blacklist"`
 	Delay              int         `mapstructure:"delay"`
+	Hidden             bool        `mapstructure:"hidden"`
 	History            bool        `mapstructure:"history"`
 	Icon               string      `mapstructure:"icon"`
 	KeepSort           bool        `mapstructure:"keep_sort"`

@@ -1,6 +1,8 @@
 package modules
 
 import (
+	"slices"
+
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
 )
@@ -20,7 +22,7 @@ func (s Switcher) Entries(term string) []util.Entry {
 	entries := []util.Entry{}
 
 	for _, v := range s.cfg.Available {
-		if v == "switcher" {
+		if v == "switcher" || slices.Contains(s.cfg.Hidden, v) {
 			continue
 		}
 

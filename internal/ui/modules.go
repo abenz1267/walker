@@ -115,6 +115,7 @@ func setAvailables(cfg *config.Config) {
 	}
 
 	available = []modules.Workable{}
+	cfg.Hidden = []string{}
 
 	for _, v := range res {
 		if v == nil {
@@ -132,6 +133,10 @@ func setAvailables(cfg *config.Config) {
 
 			available = append(available, v)
 			cfg.Available = append(cfg.Available, v.General().Name)
+
+			if v.General().Hidden {
+				cfg.Hidden = append(cfg.Hidden, v.General().Name)
+			}
 		}
 	}
 

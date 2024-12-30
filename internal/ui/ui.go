@@ -382,8 +382,6 @@ func setupElements(app *gtk.Application) *Elements {
 
 	ui.spinner.SetSpinning(true)
 
-	ui.input.SetObjectProperty("search-delay", cfg.Search.Delay)
-
 	if cfg.Search.Placeholder != "" {
 		ui.input.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
 	}

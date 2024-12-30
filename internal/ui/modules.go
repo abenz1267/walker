@@ -6,12 +6,14 @@ import (
 	"os"
 	"regexp"
 	"slices"
+	"time"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/modules"
 	"github.com/abenz1267/walker/internal/modules/emojis"
 	"github.com/abenz1267/walker/internal/modules/symbols"
 	"github.com/abenz1267/walker/internal/modules/windows"
+	"github.com/abenz1267/walker/internal/util"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 )
 
@@ -205,11 +207,17 @@ func setupSingleModule() {
 	}
 
 	glib.IdleAdd(func() {
-		elements.input.SetObjectProperty("search-delay", singleModule.General().Delay)
+		debouncedProcess = util.NewDebounce(time.Millisecond * time.Duration(singleModule.General().Delay))
 	})
 }
 
 func resetSingleModule() {
-	elements.input.SetObjectProperty("search-delay", cfg.Search.Delay)
+	t := 1
+
+	if cfg.Search.Delay > 0 {
+		t = cfg.Search.Delay
+	}
+
+	debouncedProcess = util.NewDebounce(time.Millisecond * time.Duration(t))
 	singleModule = nil
 }

@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-//go:embed layout.default.json
+//go:embed layout.default.toml
 var defaultLayout []byte
 
 type UICfg struct {
@@ -239,7 +239,7 @@ func GetLayout(theme string, base []string) *UI {
 	layoutCfg := viper.New()
 
 	defs := viper.New()
-	defs.SetConfigType("json")
+	defs.SetConfigType("toml")
 
 	err := defs.ReadConfig(bytes.NewBuffer(defaultLayout))
 	if err != nil {
@@ -290,7 +290,7 @@ func inherit(themes []string, cfg *viper.Viper) {
 }
 
 func createLayoutFile(data []byte) {
-	ft := "json"
+	ft := "toml"
 
 	et := os.Getenv("WALKER_CONFIG_TYPE")
 
@@ -299,7 +299,7 @@ func createLayoutFile(data []byte) {
 	}
 
 	layout := viper.New()
-	layout.SetConfigType("json")
+	layout.SetConfigType("toml")
 
 	err := layout.ReadConfig(bytes.NewBuffer(data))
 	if err != nil {
@@ -319,9 +319,9 @@ func createLayoutFile(data []byte) {
 
 func getLayout(theme string) ([]byte, string) {
 	var layout []byte
-	layoutFt := "json"
+	layoutFt := "toml"
 
-	file := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.json", theme))
+	file := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.toml", theme))
 
 	path := fmt.Sprintf("%s/", util.ThemeDir())
 
@@ -351,9 +351,9 @@ func getLayout(theme string) ([]byte, string) {
 			log.Panicln(err)
 		}
 	} else {
-		layoutFt = "json"
+		layoutFt = "toml"
 
-		layout, err = Themes.ReadFile("themes/default.json")
+		layout, err = Themes.ReadFile("themes/default.toml")
 		if err != nil {
 			log.Panicln(err)
 		}
@@ -363,11 +363,11 @@ func getLayout(theme string) ([]byte, string) {
 }
 
 func checkForDefaultLayout() {
-	if util.FileExists(filepath.Join(util.ThemeDir(), "default.json")) {
+	if util.FileExists(filepath.Join(util.ThemeDir(), "default.toml")) {
 		return
 	}
 
-	layout, err := Themes.ReadFile("themes/default.json")
+	layout, err := Themes.ReadFile("themes/default.toml")
 	if err != nil {
 		log.Panicln(err)
 	}

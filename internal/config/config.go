@@ -17,7 +17,7 @@ import (
 
 var notFoundErr viper.ConfigFileNotFoundError
 
-//go:embed config.default.json
+//go:embed config.default.toml
 var defaultConfig []byte
 
 //go:embed themes/*
@@ -323,7 +323,7 @@ type Plugin struct {
 	Entries          []util.Entry      `mapstructure:"entries"`
 	LabelColumn      int               `mapstructure:"label_column"`
 	Matching         util.MatchingType `mapstructure:"matching"`
-	RecalculateScore bool              `mapstructure:"recalculate_score,omitempty" json:"recalculate_score,omitempty"`
+	RecalculateScore bool              `mapstructure:"recalculate_score,omitempty"`
 	ResultColumn     int               `mapstructure:"result_column"`
 	Separator        string            `mapstructure:"separator"`
 	Src              string            `mapstructure:"src"`
@@ -357,7 +357,7 @@ func Get(config string) (*Config, error) {
 	os.MkdirAll(util.ThemeDir(), 0755)
 
 	defs := viper.New()
-	defs.SetConfigType("json")
+	defs.SetConfigType("toml")
 
 	err := defs.ReadConfig(bytes.NewBuffer(defaultConfig))
 	if err != nil {
@@ -379,7 +379,7 @@ func Get(config string) (*Config, error) {
 		}
 
 		if errors.As(err, &notFoundErr) {
-			ft := "json"
+			ft := "toml"
 
 			et := os.Getenv("WALKER_CONFIG_TYPE")
 

@@ -198,16 +198,11 @@ If you have typeahead enabled, make sure that your `#search` has no background, 
 
 If you want to extend walker with your own modules, you can do that in the config.
 
-```json
-{
-  "plugins": [
-    {
-      "prefix": "!",
-      "name": "mymodule",
-      "src": "node /path/to/myscript.js"
-    }
-  ]
-}
+```toml
+[[plugins]]
+prefix = "!"
+name = "mymodule"
+src = "node /path/to/myscript.js"
 ```
 
 See the wiki for more information.
@@ -280,10 +275,9 @@ Make sure to clean the applications cache by either running the "Clear Applicati
 
 Additionally you can disable the cache completely by setting
 
-```json
-  "applications": {
-    "cache": false
-  },
+```toml
+[applications]
+cache = false
 ```
 
 in your config.

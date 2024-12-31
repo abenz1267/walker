@@ -4,6 +4,7 @@ import (
 	"context"
 	_ "embed"
 	"fmt"
+	"html"
 	"log"
 	"log/slog"
 	"path/filepath"
@@ -541,17 +542,19 @@ func setupFactory() *gtk.SignalListItemFactory {
 			}
 		}
 
-		label := gtk.NewLabel(val.Label)
+		label := gtk.NewLabel(html.EscapeString(val.Label))
 		label.SetUseMarkup(true)
 
 		if val.MatchedLabel != "" {
+			val.MatchedLabel = strings.ReplaceAll(val.MatchedLabel, "&", "&amp;")
 			label.SetMarkup(val.MatchedLabel)
 		}
 
-		sub := gtk.NewLabel(val.Sub)
+		sub := gtk.NewLabel(html.EscapeString(val.Sub))
 		sub.SetUseMarkup(true)
 
 		if val.MatchedSub != "" {
+			val.MatchedSub = strings.ReplaceAll(val.MatchedSub, "&", "&amp;")
 			sub.SetMarkup(val.MatchedSub)
 		}
 

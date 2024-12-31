@@ -1132,13 +1132,13 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 		if score > entry.ScoreFuzzy {
 			multiplier = k
 
-			res := ""
-
 			if cfg.List.DynamicSub && k > 1 {
 				entry.MatchedSub = t
 			}
 
 			if layout.Window.Box.Scroll.List.MarkerColor != "" {
+				res := ""
+
 				if pos != nil {
 					for k, v := range t {
 						if slices.Contains(*pos, k) {

@@ -8,6 +8,7 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"time"
 
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -231,23 +232,29 @@ type TextWrapper struct {
 	Sub       LabelWidget `mapstructure:"sub"`
 }
 
-func GetLayout(theme string, base []string) *UI {
+var defs *viper.Viper
+
+func init() {
 	checkForDefaultLayout()
 
-	layout, layoutFt := getLayout(theme)
-
-	layoutCfg := viper.New()
-
-	defs := viper.New()
+	defs = viper.New()
 	defs.SetConfigType("toml")
 
 	err := defs.ReadConfig(bytes.NewBuffer(defaultLayout))
 	if err != nil {
 		log.Panicln(err)
 	}
+}
+
+func GetLayout(theme string, base []string) *UI {
+	now := time.Now()
+
+	layout, layoutFt := getLayout(theme)
+
+	layoutCfg := viper.New()
 
 	if base != nil && len(base) > 0 {
-		inherit(base, defs)
+		inherit(base)
 	}
 
 	for k, v := range defs.AllSettings() {
@@ -256,7 +263,7 @@ func GetLayout(theme string, base []string) *UI {
 
 	layoutCfg.SetConfigType(layoutFt)
 
-	err = layoutCfg.ReadConfig(bytes.NewBuffer(layout))
+	err := layoutCfg.ReadConfig(bytes.NewBuffer(layout))
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -269,11 +276,12 @@ func GetLayout(theme string, base []string) *UI {
 	if err != nil {
 		log.Panic(err)
 	}
+	fmt.Println(time.Since(now))
 
 	return &ui.UI
 }
 
-func inherit(themes []string, cfg *viper.Viper) {
+func inherit(themes []string) {
 	for _, v := range themes {
 		layout, layoutFt := getLayout(v)
 
@@ -285,7 +293,7 @@ func inherit(themes []string, cfg *viper.Viper) {
 			log.Panicln(err)
 		}
 
-		cfg.MergeConfig(bytes.NewBuffer(layout))
+		defs.MergeConfig(bytes.NewBuffer(layout))
 	}
 }
 

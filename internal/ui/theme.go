@@ -17,6 +17,10 @@ import (
 
 var barHasItems = false
 
+func init() {
+	checkForDefaultCss()
+}
+
 func checkForDefaultCss() {
 	file := filepath.Join(util.ThemeDir(), "default.css")
 
@@ -37,8 +41,6 @@ func checkForDefaultCss() {
 
 func setupCss(theme string, base []string) {
 	var css []byte
-
-	checkForDefaultCss()
 
 	hasCss := false
 

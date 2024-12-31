@@ -327,6 +327,9 @@ func setupElements(app *gtk.Application) *Elements {
 	appwin.SetApplication(app)
 
 	input := gtk.NewEntry()
+	input.SetCanFocus(true)
+	input.SetCanTarget(true)
+	input.SetFocusable(true)
 
 	grid := gtk.NewGridView(common.selection, &common.factory.ListItemFactory)
 	scroll.SetChild(grid)

@@ -286,12 +286,24 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				return true
 			}
 
-			// fmt.Println(elements.input.HasFocus())
-			// fmt.Println(elements.typeahead.HasFocus())
-			// if !elements.input.HasFocus() {
-			// 	fmt.Println("focus")
-			// 	elements.input.GrabFocus()
-			// }
+			hasFocus := false
+
+			focused := elements.appwin.Window.Focus()
+			widget, ok := focused.(*gtk.Text)
+
+			if ok {
+				_, ok := widget.Parent().(*gtk.Entry)
+				if ok {
+					hasFocus = true
+				}
+			}
+
+			if !hasFocus {
+				elements.input.GrabFocus()
+				char := gdk.KeyvalToUnicode(val)
+				elements.input.SetText(elements.input.Text() + string(char))
+				elements.input.SetPosition(-1)
+			}
 
 			return false
 		}

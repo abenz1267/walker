@@ -333,9 +333,10 @@ type Plugin struct {
 }
 
 type Search struct {
-	Delay           int    `mapstructure:"delay"`
-	Placeholder     string `mapstructure:"placeholder"`
-	ResumeLastQuery bool   `mapstructure:"resume_last_query"`
+	ArgumentDelimiter string `mapstructure:"argument_delimiter"`
+	Delay             int    `mapstructure:"delay"`
+	Placeholder       string `mapstructure:"placeholder"`
+	ResumeLastQuery   bool   `mapstructure:"resume_last_query"`
 }
 
 type List struct {

@@ -47,6 +47,7 @@
     "placeholder": "No Results"
   },
   "search": {
+    "argument_delimiter": "#",
     "placeholder": "Search...",
     "delay": 0,
     "resume_last_query": false

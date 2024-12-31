@@ -83,6 +83,8 @@ func setupInteractions(appstate *state.AppState) {
 	elements.input.Connect("changed", func() {
 		text := elements.input.Text()
 
+		text = trimArgumentDelimiter(text)
+
 		if lastQuery != text {
 			executeEvent(config.EventQueryChange, "")
 			lastQuery = text
@@ -386,6 +388,14 @@ func activateItem(keepOpen, alt bool) {
 		return
 	}
 
+	input := elements.input.Text()
+
+	if strings.Contains(input, cfg.Search.ArgumentDelimiter) {
+		split := strings.Split(input, cfg.Search.ArgumentDelimiter)
+		input = split[0]
+		toRun = fmt.Sprintf("%s %s", toRun, split[1])
+	}
+
 	cmd := exec.Command("sh", "-c", wrapWithPrefix(toRun))
 
 	if entry.Path != "" {
@@ -525,12 +535,14 @@ func process() {
 
 	text := strings.TrimSpace(elements.input.Text())
 
+	text = trimArgumentDelimiter(text)
+
 	if text == "" && cfg.List.ShowInitialEntries && len(explicits) == 0 && !appstate.IsDmenu {
 		setInitials()
 		return
 	}
 
-	if (elements.input.Text() != "" || appstate.IsDmenu) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
+	if (text != "" || appstate.IsDmenu) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
 		if !layout.Window.Box.Search.Spinner.Hide {
 			elements.spinner.SetVisible(true)
 		}
@@ -1215,4 +1227,18 @@ func wrapWithPrefix(text string) string {
 	}
 
 	return fmt.Sprintf("%s%s", cfg.AppLaunchPrefix, text)
+}
+
+func trimArgumentDelimiter(text string) string {
+	if strings.Contains(text, cfg.Search.ArgumentDelimiter) {
+		split := strings.Split(text, cfg.Search.ArgumentDelimiter)
+
+		text = split[0]
+
+		if text == "" && len(split) > 1 {
+			text = split[1]
+		}
+	}
+
+	return text
 }

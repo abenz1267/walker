@@ -31,15 +31,16 @@ func (c *CustomCommands) SetupData(cfg *config.Config) {
 
 	for _, v := range cfg.Builtins.CustomCommands.Commands {
 		c.entries = append(c.entries, util.Entry{
-			Label:            v.Name,
-			Sub:              "Commands",
-			Exec:             v.Cmd,
-			ExecAlt:          v.CmdAlt,
-			Terminal:         v.Terminal,
-			Matching:         util.Fuzzy,
-			Path:             v.Path,
-			Env:              v.Env,
-			RecalculateScore: true,
+			Label:             v.Name,
+			Sub:               "Commands",
+			Exec:              v.Cmd,
+			ExecAlt:           v.CmdAlt,
+			Terminal:          v.Terminal,
+			Matching:          util.Fuzzy,
+			Path:              v.Path,
+			TerminalTitleFlag: v.TerminalTitleFlag,
+			Env:               v.Env,
+			RecalculateScore:  true,
 		})
 	}
 

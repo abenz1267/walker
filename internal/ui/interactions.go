@@ -381,7 +381,17 @@ func activateItem(keepOpen, alt bool) {
 
 	if cfg.Terminal != "" {
 		if entry.Terminal || forceTerminal {
-			toRun = fmt.Sprintf("%s %s -e %s", cfg.Terminal, cfg.TerminalTitleFlag, toRun)
+			if cfg.TerminalTitleFlag != "" || entry.TerminalTitleFlag != "" {
+				flag := cfg.TerminalTitleFlag
+
+				if flag == "" {
+					flag = entry.TerminalTitleFlag
+				}
+
+				toRun = fmt.Sprintf("%s %s -e %s", cfg.Terminal, flag, toRun)
+			} else {
+				toRun = fmt.Sprintf("%s -e %s", cfg.Terminal, toRun)
+			}
 		}
 	} else {
 		log.Println("terminal is not set")

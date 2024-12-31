@@ -8,7 +8,6 @@ import (
 	"log"
 	"os"
 	"path/filepath"
-	"time"
 
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -247,8 +246,6 @@ func init() {
 }
 
 func GetLayout(theme string, base []string) *UI {
-	now := time.Now()
-
 	layout, layoutFt := getLayout(theme)
 
 	layoutCfg := viper.New()
@@ -276,7 +273,6 @@ func GetLayout(theme string, base []string) *UI {
 	if err != nil {
 		log.Panic(err)
 	}
-	fmt.Println(time.Since(now))
 
 	return &ui.UI
 }

@@ -23,6 +23,7 @@ type Entry struct {
 	Class            string       `mapstructure:"class,omitempty" json:"class,omitempty"`
 	DragDrop         bool         `mapstructure:"drag_drop,omitempty" json:"drag_drop,omitempty"`
 	DragDropData     string       `mapstructure:"drag_drop_data,omitempty" json:"drag_drop_data,omitempty"`
+	Env              []string     `mapstructure:"env,omitempty" json:"env,omitempty"`
 	Exec             string       `mapstructure:"exec,omitempty" json:"exec,omitempty"`
 	ExecAlt          string       `mapstructure:"exec_alt,omitempty" json:"exec_alt,omitempty"`
 	HideText         bool         `mapstructure:"hide_text,omitempty" json:"hide_text,omitempty"`

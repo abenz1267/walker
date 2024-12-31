@@ -402,6 +402,10 @@ func activateItem(keepOpen, alt bool) {
 		cmd.Dir = entry.Path
 	}
 
+	if len(entry.Env) > 0 {
+		cmd.Env = append(os.Environ(), entry.Env...)
+	}
+
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid:    true,
 		Pgid:       0,

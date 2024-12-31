@@ -179,10 +179,12 @@ type CustomCommands struct {
 }
 
 type CustomCommand struct {
-	Cmd      string `mapstructure:"cmd"`
-	CmdAlt   string `mapstructure:"cmd_alt"`
-	Name     string `mapstructure:"name"`
-	Terminal bool   `mapstructure:"terminal"`
+	Cmd      string   `mapstructure:"cmd"`
+	CmdAlt   string   `mapstructure:"cmd_alt"`
+	Env      []string `mapstructure:"env"`
+	Name     string   `mapstructure:"name"`
+	Path     string   `mapstructure:"path"`
+	Terminal bool     `mapstructure:"terminal"`
 }
 
 type GeneralModule struct {

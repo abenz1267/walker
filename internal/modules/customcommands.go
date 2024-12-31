@@ -37,6 +37,8 @@ func (c *CustomCommands) SetupData(cfg *config.Config) {
 			ExecAlt:          v.CmdAlt,
 			Terminal:         v.Terminal,
 			Matching:         util.Fuzzy,
+			Path:             v.Path,
+			Env:              v.Env,
 			RecalculateScore: true,
 		})
 	}

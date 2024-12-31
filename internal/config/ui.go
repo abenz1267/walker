@@ -279,15 +279,7 @@ func GetLayout(theme string, base []string) *UI {
 
 func inherit(themes []string) {
 	for _, v := range themes {
-		layout, layoutFt := getLayout(v)
-
-		defs := viper.New()
-		defs.SetConfigType(layoutFt)
-
-		err := defs.ReadConfig(bytes.NewBuffer(layout))
-		if err != nil {
-			log.Panicln(err)
-		}
+		layout, _ := getLayout(v)
 
 		defs.MergeConfig(bytes.NewBuffer(layout))
 	}

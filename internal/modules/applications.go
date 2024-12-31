@@ -240,7 +240,7 @@ func (a *Applications) parse() []util.Entry {
 	keywordsSingle := fmt.Sprintf("Keywords[%s]=", langSingle)
 
 	if a.config.Cache {
-		ok := readCache(ApplicationsName, &entries)
+		ok := util.FromGob(filepath.Join(util.CacheDir(), fmt.Sprintf("%s.gob", ApplicationsName)), &entries)
 		if ok {
 			return entries
 		}
@@ -551,7 +551,7 @@ func (a *Applications) parse() []util.Entry {
 	}
 
 	if a.config.Cache {
-		util.ToJson(&entries, filepath.Join(util.CacheDir(), fmt.Sprintf("%s.json", ApplicationsName)))
+		util.ToGob(&entries, filepath.Join(util.CacheDir(), fmt.Sprintf("%s.gob", ApplicationsName)))
 	}
 
 	return entries

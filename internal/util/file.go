@@ -3,7 +3,6 @@ package util
 import (
 	"bytes"
 	"encoding/gob"
-	"encoding/json"
 	"io"
 	"log"
 	"os"
@@ -51,40 +50,6 @@ func FromGob[T any](src string, dest *T) bool {
 		}
 
 		return false
-	}
-
-	return true
-}
-
-func ToJson[T any](src *T, dest string) {
-	b, err := json.Marshal(src)
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	writeFile(b, dest)
-}
-
-func FromJson[T any](src string, dest *T) bool {
-	if _, err := os.Stat(src); err != nil {
-		return false
-	}
-
-	file, err := os.Open(src)
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	defer file.Close()
-
-	b, err := io.ReadAll(file)
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	err = json.Unmarshal(b, dest)
-	if err != nil {
-		log.Panicln(err)
 	}
 
 	return true

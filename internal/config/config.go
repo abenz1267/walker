@@ -392,12 +392,14 @@ func Get(config string) error {
 		}
 	}
 
-	Cfg = &Config{}
+	parsed := &Config{}
 
-	err = defaults.Unmarshal("", Cfg)
+	err = defaults.Unmarshal("", parsed)
 	if err != nil {
 		return err
 	}
+
+	Cfg = parsed
 
 	go setTerminal()
 

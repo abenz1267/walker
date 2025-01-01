@@ -217,14 +217,16 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			appwin.SetVisible(true)
 		}
 
-		executeEvent(config.EventLaunch, "")
-
 		if appstate.Benchmark {
 			fmt.Println("Visible (first ui)", time.Now().UnixMilli())
 		}
 
-		if !appstate.Password {
-			debouncedProcess(process)
+		if config.Cfg != nil {
+			executeEvent(config.EventLaunch, "")
+
+			if !appstate.Password {
+				debouncedProcess(process)
+			}
 		}
 	}
 }

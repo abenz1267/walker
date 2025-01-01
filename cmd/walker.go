@@ -100,16 +100,18 @@ func main() {
 			}
 
 			if slices.Contains(args, "-d") || slices.Contains(args, "--dmenu") {
-				if !isNew && !state.IsService && util.FileExists(modules.DmenuSocketAddrGet) {
-					wg.Add(1)
+				if !isNew && !state.IsService {
+					if util.FileExists(modules.DmenuSocketAddrGet) {
+						wg.Add(1)
 
-					dmenu := modules.Dmenu{}
-					dmenu.Send()
+						dmenu := modules.Dmenu{}
+						dmenu.Send()
 
-					go func(wg *sync.WaitGroup) {
-						cancelled = dmenu.ListenForReply()
-						wg.Done()
-					}(&wg)
+						go func(wg *sync.WaitGroup) {
+							cancelled = dmenu.ListenForReply()
+							wg.Done()
+						}(&wg)
+					}
 				}
 			}
 

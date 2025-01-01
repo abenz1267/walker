@@ -21,6 +21,9 @@ import (
 //go:embed layout.default.toml
 var defaultLayout []byte
 
+//go:embed themes/default.toml
+var defaultThemeLayout []byte
+
 type UICfg struct {
 	UI UI `koanf:"ui"`
 }
@@ -237,7 +240,7 @@ type TextWrapper struct {
 
 func init() {
 	os.MkdirAll(util.ThemeDir(), 0755)
-	os.WriteFile(filepath.Join(util.ThemeDir(), "default.toml"), defaultLayout, 0o600)
+	os.WriteFile(filepath.Join(util.ThemeDir(), "default.toml"), defaultThemeLayout, 0o600)
 }
 
 func GetLayout(theme string, base []string) *UI {

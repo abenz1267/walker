@@ -545,7 +545,13 @@ func setupFactory() *gtk.SignalListItemFactory {
 			}
 		}
 
-		label := gtk.NewLabel(html.EscapeString(val.Label))
+		labelTxt := html.EscapeString(val.Label)
+
+		if appstate.IsDmenu {
+			labelTxt = val.Label
+		}
+
+		label := gtk.NewLabel(labelTxt)
 		label.SetUseMarkup(true)
 
 		if val.MatchedLabel != "" {

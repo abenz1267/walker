@@ -98,6 +98,16 @@ func (ai *AI) SetupData() {
 	ai.entries = []util.Entry{}
 
 	ai.anthropicKey = os.Getenv(ANTHROPIC_API_KEY)
+	if ai.anthropicKey == "" {
+		log.Println("ai: no anthropic api key set in environment, checking config folder for api key file")
+		apiFile := filepath.Join(util.ConfigDir(), "api.key")
+		apiKey, err := os.ReadFile(apiFile)
+		if err != nil {
+			log.Println("ai: no api.key file found in config folder")
+		} else {
+			ai.anthropicKey = strings.TrimSpace(string(apiKey))
+		}
+	}
 
 	if ai.anthropicKey != "" {
 		for _, v := range ai.config.Anthropic.Prompts {
@@ -193,8 +203,10 @@ func (ai *AI) anthropic(query string) {
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
 		log.Panicln(err)
+	} else if resp.StatusCode >= 400 {
+		log.Println("ai: anthropic request failed with status code", resp.StatusCode)
+		return
 	}
-
 	var anthropicResp AnthropicResponse
 
 	err = json.NewDecoder(resp.Body).Decode(&anthropicResp)

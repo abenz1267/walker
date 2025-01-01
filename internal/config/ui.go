@@ -1,39 +1,43 @@
 package config
 
 import (
-	"bytes"
 	_ "embed"
 	"fmt"
-	"io/fs"
 	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/spf13/viper"
+	"github.com/knadh/koanf/parsers/json"
+	"github.com/knadh/koanf/parsers/toml/v2"
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/providers/rawbytes"
+	"github.com/knadh/koanf/v2"
 )
 
 //go:embed layout.default.toml
 var defaultLayout []byte
 
 type UICfg struct {
-	UI UI `mapstructure:"ui"`
+	UI UI `koanf:"ui"`
 }
 
 type UI struct {
-	Anchors         Anchors `mapstructure:"anchors"`
-	Fullscreen      bool    `mapstructure:"fullscreen"`
-	IgnoreExclusive bool    `mapstructure:"ignore_exclusive"`
-	Window          Window  `mapstructure:"window"`
+	Anchors         Anchors `koanf:"anchors"`
+	Fullscreen      bool    `koanf:"fullscreen"`
+	IgnoreExclusive bool    `koanf:"ignore_exclusive"`
+	Window          Window  `koanf:"window"`
 
 	// internal
-	AlignMap        map[string]gtk.Align         `mapstructure:"-"`
-	IconSizeMap     map[string]gtk.IconSize      `mapstructure:"-"`
-	IconSizeIntMap  map[string]int               `mapstructure:"-"`
-	JustifyMap      map[string]gtk.Justification `mapstructure:"-"`
-	OrientationMap  map[string]gtk.Orientation   `mapstructure:"-"`
-	ScrollPolicyMap map[string]gtk.PolicyType    `mapstructure:"-"`
+	AlignMap        map[string]gtk.Align         `koanf:"-"`
+	IconSizeMap     map[string]gtk.IconSize      `koanf:"-"`
+	IconSizeIntMap  map[string]int               `koanf:"-"`
+	JustifyMap      map[string]gtk.Justification `koanf:"-"`
+	OrientationMap  map[string]gtk.Orientation   `koanf:"-"`
+	ScrollPolicyMap map[string]gtk.PolicyType    `koanf:"-"`
 }
 
 func (u *UI) InitUnitMaps() {
@@ -76,297 +80,212 @@ func (u *UI) InitUnitMaps() {
 }
 
 type Widget struct {
-	CssClasses []string `mapstructure:"css_classes"`
-	HAlign     string   `mapstructure:"h_align"`
-	HExpand    bool     `mapstructure:"h_expand"`
-	Height     int      `mapstructure:"height"`
-	Hide       bool     `mapstructure:"hide"`
-	Margins    Margins  `mapstructure:"margins"`
-	Name       string   `mapstructure:"name"`
-	Opacity    float64  `mapstructure:"opacity"`
-	VAlign     string   `mapstructure:"v_align"`
-	VExpand    bool     `mapstructure:"h_expand"`
-	Width      int      `mapstructure:"width"`
+	CssClasses []string `koanf:"css_classes"`
+	HAlign     string   `koanf:"h_align"`
+	HExpand    bool     `koanf:"h_expand"`
+	Height     int      `koanf:"height"`
+	Hide       bool     `koanf:"hide"`
+	Margins    Margins  `koanf:"margins"`
+	Name       string   `koanf:"name"`
+	Opacity    float64  `koanf:"opacity"`
+	VAlign     string   `koanf:"v_align"`
+	VExpand    bool     `koanf:"h_expand"`
+	Width      int      `koanf:"width"`
 }
 
 type BoxWidget struct {
-	Widget      `mapstructure:",squash"`
-	Orientation string `mapstructure:"orientation"`
-	Spacing     int    `mapstructure:"spacing"`
+	Widget      `koanf:",squash"`
+	Orientation string `koanf:"orientation"`
+	Spacing     int    `koanf:"spacing"`
 }
 
 type LabelWidget struct {
-	Widget  `mapstructure:",squash"`
-	Justify string  `mapstructure:"justify"`
-	XAlign  float32 `mapstructure:"x_align"`
-	YAlign  float32 `mapstructure:"y_align"`
-	Wrap    bool    `mapstructure:"wrap"`
+	Widget  `koanf:",squash"`
+	Justify string  `koanf:"justify"`
+	XAlign  float32 `koanf:"x_align"`
+	YAlign  float32 `koanf:"y_align"`
+	Wrap    bool    `koanf:"wrap"`
 }
 
 type ImageWidget struct {
-	Widget    `mapstructure:",squash"`
-	Icon      string `mapstructure:"icon"`
-	IconSize  string `mapstructure:"icon_size"`
-	PixelSize int    `mapstructure:"pixel_size"`
-	Theme     string `mapstructure:"theme"`
+	Widget    `koanf:",squash"`
+	Icon      string `koanf:"icon"`
+	IconSize  string `koanf:"icon_size"`
+	PixelSize int    `koanf:"pixel_size"`
+	Theme     string `koanf:"theme"`
 }
 
 type Anchors struct {
-	Bottom bool `mapstructure:"bottom"`
-	Left   bool `mapstructure:"left"`
-	Right  bool `mapstructure:"right"`
-	Top    bool `mapstructure:"top"`
+	Bottom bool `koanf:"bottom"`
+	Left   bool `koanf:"left"`
+	Right  bool `koanf:"right"`
+	Top    bool `koanf:"top"`
 }
 
 type Margins struct {
-	Bottom int `mapstructure:"bottom"`
-	End    int `mapstructure:"end"`
-	Start  int `mapstructure:"start"`
-	Top    int `mapstructure:"top"`
+	Bottom int `koanf:"bottom"`
+	End    int `koanf:"end"`
+	Start  int `koanf:"start"`
+	Top    int `koanf:"top"`
 }
 
 type Window struct {
-	Widget `mapstructure:",squash"`
-	Box    Box `mapstructure:"box"`
+	Widget `koanf:",squash"`
+	Box    Box `koanf:"box"`
 }
 
 type Box struct {
-	BoxWidget `mapstructure:",squash"`
-	Scroll    Scroll        `mapstructure:"scroll"`
-	AiScroll  AiScroll      `mapstructure:"ai_scroll"`
-	Revert    bool          `mapstructure:"revert"`
-	Search    SearchWrapper `mapstructure:"search"`
-	Bar       BarWrapper    `mapstructure:"bar"`
+	BoxWidget `koanf:",squash"`
+	Scroll    Scroll        `koanf:"scroll"`
+	AiScroll  AiScroll      `koanf:"ai_scroll"`
+	Revert    bool          `koanf:"revert"`
+	Search    SearchWrapper `koanf:"search"`
+	Bar       BarWrapper    `koanf:"bar"`
 }
 
 type AiScroll struct {
-	Widget           `mapstructure:",squash"`
-	List             AiListWrapper `mapstructure:"list"`
-	OverlayScrolling bool          `mapstructure:"overlay_scrolling"`
-	HScrollbarPolicy string        `mapstructure:"h_scrollbar_policy"`
-	VScrollbarPolicy string        `mapstructure:"v_scrollbar_policy"`
+	Widget           `koanf:",squash"`
+	List             AiListWrapper `koanf:"list"`
+	OverlayScrolling bool          `koanf:"overlay_scrolling"`
+	HScrollbarPolicy string        `koanf:"h_scrollbar_policy"`
+	VScrollbarPolicy string        `koanf:"v_scrollbar_policy"`
 }
 
 type AiListWrapper struct {
-	BoxWidget `mapstructure:",squash"`
-	Item      LabelWidget `mapstructure:"item"`
+	BoxWidget `koanf:",squash"`
+	Item      LabelWidget `koanf:"item"`
 }
 
 type BarWrapper struct {
-	BoxWidget `mapstructure:",squash"`
-	Position  string          `mapstructure:"position"`
-	Entry     BarEntryWrapper `mapstructure:"entry"`
+	BoxWidget `koanf:",squash"`
+	Position  string          `koanf:"position"`
+	Entry     BarEntryWrapper `koanf:"entry"`
 }
 
 type BarEntryWrapper struct {
-	BoxWidget `mapstructure:",squash"`
-	Icon      ImageWidget `mapstructure:"icon"`
-	Label     LabelWidget `mapstructure:"label"`
+	BoxWidget `koanf:",squash"`
+	Icon      ImageWidget `koanf:"icon"`
+	Label     LabelWidget `koanf:"label"`
 }
 
 type Scroll struct {
-	Widget           `mapstructure:",squash"`
-	List             ListWrapper `mapstructure:"list"`
-	OverlayScrolling bool        `mapstructure:"overlay_scrolling"`
-	HScrollbarPolicy string      `mapstructure:"h_scrollbar_policy"`
-	VScrollbarPolicy string      `mapstructure:"v_scrollbar_policy"`
+	Widget           `koanf:",squash"`
+	List             ListWrapper `koanf:"list"`
+	OverlayScrolling bool        `koanf:"overlay_scrolling"`
+	HScrollbarPolicy string      `koanf:"h_scrollbar_policy"`
+	VScrollbarPolicy string      `koanf:"v_scrollbar_policy"`
 }
 
 type SearchWrapper struct {
-	BoxWidget `mapstructure:",squash"`
-	Revert    bool          `mapstructure:"revert"`
-	Input     SearchWidget  `mapstructure:"input"`
-	Prompt    PromptWidget  `mapstructure:"prompt"`
-	Clear     ImageWidget   `mapstructure:"clear"`
-	Spinner   SpinnerWidget `mapstructure:"spinner"`
+	BoxWidget `koanf:",squash"`
+	Revert    bool          `koanf:"revert"`
+	Input     SearchWidget  `koanf:"input"`
+	Prompt    PromptWidget  `koanf:"prompt"`
+	Clear     ImageWidget   `koanf:"clear"`
+	Spinner   SpinnerWidget `koanf:"spinner"`
 }
 
 type PromptWidget struct {
-	LabelWidget `mapstructure:",squash"`
-	ImageWidget `mapstructure:",squash"`
-	Text        string `mapstructure:"text"`
-	Icon        string `mapstructure:"icon"`
+	LabelWidget `koanf:",squash"`
+	ImageWidget `koanf:",squash"`
+	Text        string `koanf:"text"`
+	Icon        string `koanf:"icon"`
 }
 
 type SearchWidget struct {
-	Widget `mapstructure:",squash"`
+	Widget `koanf:",squash"`
 }
 
 type SpinnerWidget struct {
-	Widget `mapstructure:",squash"`
+	Widget `koanf:",squash"`
 }
 
 type ListWrapper struct {
-	AlwaysShow  bool           `mapstructure:"always_show"`
-	Grid        bool           `mapstructure:"grid"`
-	Item        ListItemWidget `mapstructure:"item"`
-	MarkerColor string         `mapstructure:"marker_color"`
-	MaxHeight   int            `mapstructure:"max_height"`
-	MaxWidth    int            `mapstructure:"max_width"`
-	MinHeight   int            `mapstructure:"min_height"`
-	MinWidth    int            `mapstructure:"min_width"`
-	Orientation string         `mapstructure:"orientation"`
-	Placeholder LabelWidget    `mapstructure:"placeholder"`
-	Widget      `mapstructure:",squash"`
+	AlwaysShow  bool           `koanf:"always_show"`
+	Grid        bool           `koanf:"grid"`
+	Item        ListItemWidget `koanf:"item"`
+	MarkerColor string         `koanf:"marker_color"`
+	MaxHeight   int            `koanf:"max_height"`
+	MaxWidth    int            `koanf:"max_width"`
+	MinHeight   int            `koanf:"min_height"`
+	MinWidth    int            `koanf:"min_width"`
+	Orientation string         `koanf:"orientation"`
+	Placeholder LabelWidget    `koanf:"placeholder"`
+	Widget      `koanf:",squash"`
 }
 
 type ListItemWidget struct {
-	BoxWidget       `mapstructure:",squash"`
-	Revert          bool                  `mapstructure:"revert"`
-	ActivationLabel ActivationLabelWidget `mapstructure:"activation_label"`
-	Icon            ImageWidget           `mapstructure:"icon"`
-	Text            TextWrapper           `mapstructure:"text"`
+	BoxWidget       `koanf:",squash"`
+	Revert          bool                  `koanf:"revert"`
+	ActivationLabel ActivationLabelWidget `koanf:"activation_label"`
+	Icon            ImageWidget           `koanf:"icon"`
+	Text            TextWrapper           `koanf:"text"`
 }
 
 type ActivationLabelWidget struct {
-	LabelWidget  `mapstructure:",squash"`
-	Overlay      bool `mapstructure:"overlay"`
-	HideModifier bool `mapstructure:"hide_modifier"`
+	LabelWidget  `koanf:",squash"`
+	Overlay      bool `koanf:"overlay"`
+	HideModifier bool `koanf:"hide_modifier"`
 }
 
 type TextWrapper struct {
-	BoxWidget `mapstructure:",squash"`
-	Label     LabelWidget `mapstructure:"label"`
-	Revert    bool        `mapstructure:"revert"`
-	Sub       LabelWidget `mapstructure:"sub"`
+	BoxWidget `koanf:",squash"`
+	Label     LabelWidget `koanf:"label"`
+	Revert    bool        `koanf:"revert"`
+	Sub       LabelWidget `koanf:"sub"`
 }
 
-var defs *viper.Viper
-
 func init() {
-	checkForDefaultLayout()
-
-	defs = viper.New()
-	defs.SetConfigType("toml")
-
-	err := defs.ReadConfig(bytes.NewBuffer(defaultLayout))
-	if err != nil {
-		log.Panicln(err)
-	}
+	os.MkdirAll(util.ThemeDir(), 0755)
+	os.WriteFile(filepath.Join(util.ThemeDir(), "default.toml"), defaultLayout, 0o600)
 }
 
 func GetLayout(theme string, base []string) *UI {
-	layout, layoutFt := getLayout(theme)
+	layout := koanf.New(".")
 
-	layoutCfg := viper.New()
-
-	if base != nil && len(base) > 0 {
-		inherit(base)
-	}
-
-	for k, v := range defs.AllSettings() {
-		layoutCfg.SetDefault(k, v)
-	}
-
-	layoutCfg.SetConfigType(layoutFt)
-
-	err := layoutCfg.ReadConfig(bytes.NewBuffer(layout))
+	err := layout.Load(rawbytes.Provider(defaultLayout), toml.Parser())
 	if err != nil {
 		log.Panicln(err)
 	}
 
-	layoutCfg.AutomaticEnv()
+	if base == nil {
+		base = []string{}
+	}
+
+	base = append(base, theme)
+
+	for _, v := range base {
+		tomlFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.toml", v))
+		jsonFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.json", v))
+		yamlFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.yaml", v))
+
+		if util.FileExists(tomlFile) {
+			err := layout.Load(file.Provider(tomlFile), toml.Parser())
+			if err != nil {
+				return nil
+			}
+		} else if util.FileExists(jsonFile) {
+			err := layout.Load(file.Provider(jsonFile), json.Parser())
+			if err != nil {
+				return nil
+			}
+		} else if util.FileExists(yamlFile) {
+			err := layout.Load(file.Provider(yamlFile), yaml.Parser())
+			if err != nil {
+				return nil
+			}
+		} else {
+			slog.Error("layout", "not found", v)
+		}
+	}
 
 	ui := &UICfg{}
 
-	err = layoutCfg.Unmarshal(ui)
+	err = layout.Unmarshal("", ui)
 	if err != nil {
-		log.Panic(err)
+		slog.Error("layout", "error", err)
+		return nil
 	}
 
 	return &ui.UI
-}
-
-func inherit(themes []string) {
-	for _, v := range themes {
-		layout, _ := getLayout(v)
-
-		defs.MergeConfig(bytes.NewBuffer(layout))
-	}
-}
-
-func createLayoutFile(data []byte) {
-	ft := "toml"
-
-	et := os.Getenv("WALKER_CONFIG_TYPE")
-
-	if et != "" {
-		ft = et
-	}
-
-	layout := viper.New()
-	layout.SetConfigType("toml")
-
-	err := layout.ReadConfig(bytes.NewBuffer(data))
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	layout.AddConfigPath(util.ThemeDir())
-
-	layout.SetConfigType(ft)
-	layout.SetConfigName(viper.GetString("theme"))
-
-	wErr := layout.SafeWriteConfig()
-	if wErr != nil {
-		log.Println(wErr)
-	}
-}
-
-func getLayout(theme string) ([]byte, string) {
-	var layout []byte
-	layoutFt := "toml"
-
-	file := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.toml", theme))
-
-	path := fmt.Sprintf("%s/", util.ThemeDir())
-
-	filepath.WalkDir(path, func(path string, d fs.DirEntry, err error) error {
-		if d.IsDir() {
-			return filepath.SkipDir
-		}
-
-		switch d.Name() {
-		case fmt.Sprintf("%s.json", theme):
-			layoutFt = "json"
-			file = path
-		case fmt.Sprintf("%s.toml", theme):
-			layoutFt = "toml"
-			file = path
-		case fmt.Sprintf("%s.yaml", theme):
-			layoutFt = "yaml"
-			file = path
-		}
-
-		return nil
-	})
-
-	if _, err := os.Stat(file); err == nil {
-		layout, err = os.ReadFile(file)
-		if err != nil {
-			log.Panicln(err)
-		}
-	} else {
-		layoutFt = "toml"
-
-		layout, err = Themes.ReadFile("themes/default.toml")
-		if err != nil {
-			log.Panicln(err)
-		}
-	}
-
-	return layout, layoutFt
-}
-
-func checkForDefaultLayout() {
-	if util.FileExists(filepath.Join(util.ThemeDir(), "default.toml")) {
-		return
-	}
-
-	layout, err := Themes.ReadFile("themes/default.toml")
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	createLayoutFile(layout)
 }

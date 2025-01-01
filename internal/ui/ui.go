@@ -96,6 +96,8 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			cfg, cfgErr = config.Get(appstate.ExplicitConfig)
 		}
 
+		modules.Cfg = cfg
+
 		if cfgErr == nil {
 			t := 1
 

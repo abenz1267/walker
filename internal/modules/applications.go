@@ -19,7 +19,6 @@ import (
 	"github.com/adrg/xdg"
 	"github.com/djherbis/times"
 	"github.com/fsnotify/fsnotify"
-	"github.com/spf13/viper"
 )
 
 const ApplicationsName = "applications"
@@ -210,7 +209,7 @@ func (a *Applications) parse() []util.Entry {
 	entries := []util.Entry{}
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
 
-	langFull := viper.GetString("locale")
+	langFull := Cfg.Locale
 
 	if langFull == "" {
 		langFull = os.Getenv("LANG")

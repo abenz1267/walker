@@ -18,15 +18,12 @@ import (
 var barHasItems = false
 
 func init() {
+	os.MkdirAll(util.ThemeDir(), 0755)
 	checkForDefaultCss()
 }
 
 func checkForDefaultCss() {
 	file := filepath.Join(util.ThemeDir(), "default.css")
-
-	if util.FileExists(file) {
-		return
-	}
 
 	css, err := config.Themes.ReadFile("themes/default.css")
 	if err != nil {

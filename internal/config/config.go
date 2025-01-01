@@ -1,21 +1,21 @@
 package config
 
 import (
-	"bytes"
 	"embed"
 	_ "embed"
-	"errors"
-	"log"
-	"log/slog"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"regexp"
 
 	"github.com/abenz1267/walker/internal/util"
-	"github.com/spf13/viper"
+	"github.com/knadh/koanf/parsers/json"
+	"github.com/knadh/koanf/parsers/toml/v2"
+	"github.com/knadh/koanf/parsers/yaml"
+	"github.com/knadh/koanf/providers/file"
+	"github.com/knadh/koanf/providers/rawbytes"
+	"github.com/knadh/koanf/v2"
 )
-
-var notFoundErr viper.ConfigFileNotFoundError
 
 //go:embed config.default.toml
 var defaultConfig []byte
@@ -34,376 +34,366 @@ const (
 )
 
 type Config struct {
-	ActivationMode      ActivationMode `mapstructure:"activation_mode"`
-	AsWindow            bool           `mapstructure:"as_window"`
-	Bar                 Bar            `mapstructure:"bar"`
-	Builtins            Builtins       `mapstructure:"builtins"`
-	CloseWhenOpen       bool           `mapstructure:"close_when_open"`
-	DisableClickToClose bool           `mapstructure:"disable_click_to_close"`
-	Keys                Keys           `mapstructure:"keys"`
-	Disabled            []string       `mapstructure:"disabled"`
-	Events              Events         `mapstructure:"events"`
-	ForceKeyboardFocus  bool           `mapstructure:"force_keyboard_focus"`
-	HotreloadTheme      bool           `mapstructure:"hotreload_theme"`
-	IgnoreMouse         bool           `mapstructure:"ignore_mouse"`
-	AppLaunchPrefix     string         `mapstructure:"app_launch_prefix"`
-	List                List           `mapstructure:"list"`
-	Locale              string         `mapstructure:"locale"`
-	Monitor             string         `mapstructure:"monitor"`
-	Plugins             []Plugin       `mapstructure:"plugins"`
-	Search              Search         `mapstructure:"search"`
-	Terminal            string         `mapstructure:"terminal"`
-	TerminalTitleFlag   string         `mapstructure:"terminal_title_flag"`
-	Theme               string         `mapstructure:"theme"`
-	ThemeBase           []string       `mapstructure:"theme_base"`
-	Timeout             int            `mapstructure:"timeout"`
+	ActivationMode      ActivationMode `koanf:"activation_mode"`
+	AsWindow            bool           `koanf:"as_window"`
+	Bar                 Bar            `koanf:"bar"`
+	Builtins            Builtins       `koanf:"builtins"`
+	CloseWhenOpen       bool           `koanf:"close_when_open"`
+	DisableClickToClose bool           `koanf:"disable_click_to_close"`
+	Keys                Keys           `koanf:"keys"`
+	Disabled            []string       `koanf:"disabled"`
+	Events              Events         `koanf:"events"`
+	ForceKeyboardFocus  bool           `koanf:"force_keyboard_focus"`
+	HotreloadTheme      bool           `koanf:"hotreload_theme"`
+	IgnoreMouse         bool           `koanf:"ignore_mouse"`
+	AppLaunchPrefix     string         `koanf:"app_launch_prefix"`
+	List                List           `koanf:"list"`
+	Locale              string         `koanf:"locale"`
+	Monitor             string         `koanf:"monitor"`
+	Plugins             []Plugin       `koanf:"plugins"`
+	Search              Search         `koanf:"search"`
+	Terminal            string         `koanf:"terminal"`
+	TerminalTitleFlag   string         `koanf:"terminal_title_flag"`
+	Theme               string         `koanf:"theme"`
+	ThemeBase           []string       `koanf:"theme_base"`
+	Timeout             int            `koanf:"timeout"`
 
-	Available []string `mapstructure:"-"`
-	Hidden    []string `mapstructure:"-"`
-	IsService bool     `mapstructure:"-"`
+	Available []string `koanf:"-"`
+	Hidden    []string `koanf:"-"`
+	IsService bool     `koanf:"-"`
 }
 
 type Keys struct {
-	AcceptTypeahead     []string            `mapstructure:"accept_typeahead"`
-	ActivationModifiers ActivationModifiers `mapstructure:"activation_modifiers"`
-	TriggerLabels       string              `mapstructure:"trigger_labels"`
-	Ai                  AiKeys              `mapstructure:"ai"`
-	Close               []string            `mapstructure:"close"`
-	Next                []string            `mapstructure:"next"`
-	Prev                []string            `mapstructure:"prev"`
-	RemoveFromHistory   []string            `mapstructure:"remove_from_history"`
-	ResumeQuery         []string            `mapstructure:"resume_query"`
-	ToggleExactSearch   []string            `mapstructure:"toggle_exact_search"`
+	AcceptTypeahead     []string            `koanf:"accept_typeahead"`
+	ActivationModifiers ActivationModifiers `koanf:"activation_modifiers"`
+	TriggerLabels       string              `koanf:"trigger_labels"`
+	Ai                  AiKeys              `koanf:"ai"`
+	Close               []string            `koanf:"close"`
+	Next                []string            `koanf:"next"`
+	Prev                []string            `koanf:"prev"`
+	RemoveFromHistory   []string            `koanf:"remove_from_history"`
+	ResumeQuery         []string            `koanf:"resume_query"`
+	ToggleExactSearch   []string            `koanf:"toggle_exact_search"`
 }
 
 type ActivationModifiers struct {
-	KeepOpen  string `mapstructure:"keep_open"`
-	Alternate string `mapstructure:"alternate"`
+	KeepOpen  string `koanf:"keep_open"`
+	Alternate string `koanf:"alternate"`
 }
 
 type AiKeys struct {
-	ClearSession     []string `mapstructure:"clear_session"`
-	CopyLastResponse []string `mapstructure:"copy_last_response"`
-	ResumeSession    []string `mapstructure:"resume_session"`
-	RunLastResponse  []string `mapstructure:"run_last_response"`
+	ClearSession     []string `koanf:"clear_session"`
+	CopyLastResponse []string `koanf:"copy_last_response"`
+	ResumeSession    []string `koanf:"resume_session"`
+	RunLastResponse  []string `koanf:"run_last_response"`
 }
 
 type Events struct {
-	OnLaunch      string `mapstructure:"on_launch"`
-	OnSelection   string `mapstructure:"on_selection"`
-	OnExit        string `mapstructure:"on_exit"`
-	OnActivate    string `mapstructure:"on_activate"`
-	OnQueryChange string `mapstructure:"on_query_change"`
+	OnLaunch      string `koanf:"on_launch"`
+	OnSelection   string `koanf:"on_selection"`
+	OnExit        string `koanf:"on_exit"`
+	OnActivate    string `koanf:"on_activate"`
+	OnQueryChange string `koanf:"on_query_change"`
 }
 
 type Bar struct {
-	Entries []BarEntry `mapstructure:"entries"`
+	Entries []BarEntry `koanf:"entries"`
 }
 
 type BarEntry struct {
-	Exec   string `mapstructure:"exec"`
-	Icon   string `mapstructure:"icon"`
-	Label  string `mapstructure:"label"`
-	Module string `mapstructure:"module"`
+	Exec   string `koanf:"exec"`
+	Icon   string `koanf:"icon"`
+	Label  string `koanf:"label"`
+	Module string `koanf:"module"`
 }
 
 type Builtins struct {
-	Applications   Applications   `mapstructure:"applications"`
-	AI             AI             `mapstructure:"ai"`
-	Bookmarks      Bookmarks      `mapstructure:"bookmarks"`
-	Calc           Calc           `mapstructure:"calc"`
-	Clipboard      Clipboard      `mapstructure:"clipboard"`
-	Commands       Commands       `mapstructure:"commands"`
-	CustomCommands CustomCommands `mapstructure:"custom_commands"`
-	Dmenu          Dmenu          `mapstructure:"dmenu"`
-	Emojis         Emojis         `mapstructure:"emojis"`
-	Finder         Finder         `mapstructure:"finder"`
-	Runner         Runner         `mapstructure:"runner"`
-	SSH            SSH            `mapstructure:"ssh"`
-	Switcher       Switcher       `mapstructure:"switcher"`
-	Symbols        Symbols        `mapstructure:"symbols"`
-	Websearch      Websearch      `mapstructure:"websearch"`
-	Windows        Windows        `mapstructure:"windows"`
-	XdphPicker     XdphPicker     `mapstructure:"xdph_picker"`
+	Applications   Applications   `koanf:"applications"`
+	AI             AI             `koanf:"ai"`
+	Bookmarks      Bookmarks      `koanf:"bookmarks"`
+	Calc           Calc           `koanf:"calc"`
+	Clipboard      Clipboard      `koanf:"clipboard"`
+	Commands       Commands       `koanf:"commands"`
+	CustomCommands CustomCommands `koanf:"custom_commands"`
+	Dmenu          Dmenu          `koanf:"dmenu"`
+	Emojis         Emojis         `koanf:"emojis"`
+	Finder         Finder         `koanf:"finder"`
+	Runner         Runner         `koanf:"runner"`
+	SSH            SSH            `koanf:"ssh"`
+	Switcher       Switcher       `koanf:"switcher"`
+	Symbols        Symbols        `koanf:"symbols"`
+	Websearch      Websearch      `koanf:"websearch"`
+	Windows        Windows        `koanf:"windows"`
+	XdphPicker     XdphPicker     `koanf:"xdph_picker"`
 }
 
 type XdphPicker struct {
-	GeneralModule `mapstructure:",squash"`
+	GeneralModule `koanf:",squash"`
 }
 
 type Bookmarks struct {
-	GeneralModule `mapstructure:",squash"`
-	Groups        []BookmarkGroup `mapstructure:"groups"`
-	Entries       []BookmarkEntry `mapstructure:"entries"`
+	GeneralModule `koanf:",squash"`
+	Groups        []BookmarkGroup `koanf:"groups"`
+	Entries       []BookmarkEntry `koanf:"entries"`
 }
 
 type BookmarkGroup struct {
-	Label            string          `mapstructure:"label"`
-	Prefix           string          `mapstructure:"prefix"`
-	IgnoreUnprefixed bool            `mapstructure:"ignore_unprefixed"`
-	Entries          []BookmarkEntry `mapstructure:"entries"`
+	Label            string          `koanf:"label"`
+	Prefix           string          `koanf:"prefix"`
+	IgnoreUnprefixed bool            `koanf:"ignore_unprefixed"`
+	Entries          []BookmarkEntry `koanf:"entries"`
 }
 
 type BookmarkEntry struct {
-	Label    string   `mapstructure:"label"`
-	Url      string   `mapstructure:"url"`
-	Keywords []string `mapstructure:"keywords"`
+	Label    string   `koanf:"label"`
+	Url      string   `koanf:"url"`
+	Keywords []string `koanf:"keywords"`
 }
 
 type AI struct {
-	GeneralModule `mapstructure:",squash"`
-	Anthropic     Anthropic `mapstructure:"anthropic"`
+	GeneralModule `koanf:",squash"`
+	Anthropic     Anthropic `koanf:"anthropic"`
 }
 
 type Anthropic struct {
-	Prompts []AnthropicPrompt `mapstructure:"prompts"`
+	Prompts []AnthropicPrompt `koanf:"prompts"`
 }
 
 type AnthropicPrompt struct {
-	Model            string  `mapstructure:"model"`
-	MaxTokens        int     `mapstructure:"max_tokens"`
-	Temperature      float64 `mapstructure:"temperature"`
-	Label            string  `mapstructure:"label"`
-	Prompt           string  `mapstructure:"prompt"`
-	SingleModuleOnly bool    `mapstructure:"single_module_only"`
+	Model            string  `koanf:"model"`
+	MaxTokens        int     `koanf:"max_tokens"`
+	Temperature      float64 `koanf:"temperature"`
+	Label            string  `koanf:"label"`
+	Prompt           string  `koanf:"prompt"`
+	SingleModuleOnly bool    `koanf:"single_module_only"`
 }
 
 type Calc struct {
-	GeneralModule `mapstructure:",squash"`
-	RequireNumber bool `mapstructure:"require_number"`
+	GeneralModule `koanf:",squash"`
+	RequireNumber bool `koanf:"require_number"`
 }
 
 type CustomCommands struct {
-	GeneralModule `mapstructure:",squash"`
-	Commands      []CustomCommand `mapstructure:"commands"`
+	GeneralModule `koanf:",squash"`
+	Commands      []CustomCommand `koanf:"commands"`
 }
 
 type CustomCommand struct {
-	Cmd               string   `mapstructure:"cmd"`
-	CmdAlt            string   `mapstructure:"cmd_alt"`
-	Env               []string `mapstructure:"env"`
-	Name              string   `mapstructure:"name"`
-	Path              string   `mapstructure:"path"`
-	Terminal          bool     `mapstructure:"terminal"`
-	TerminalTitleFlag string   `mapstructure:"terminal_title_flag"`
+	Cmd               string   `koanf:"cmd"`
+	CmdAlt            string   `koanf:"cmd_alt"`
+	Env               []string `koanf:"env"`
+	Name              string   `koanf:"name"`
+	Path              string   `koanf:"path"`
+	Terminal          bool     `koanf:"terminal"`
+	TerminalTitleFlag string   `koanf:"terminal_title_flag"`
 }
 
 type GeneralModule struct {
-	AutoSelect         bool        `mapstructure:"auto_select"`
-	Blacklist          []Blacklist `mapstructure:"blacklist"`
-	Delay              int         `mapstructure:"delay"`
-	Hidden             bool        `mapstructure:"hidden"`
-	History            bool        `mapstructure:"history"`
-	Icon               string      `mapstructure:"icon"`
-	KeepSort           bool        `mapstructure:"keep_sort"`
-	MinChars           int         `mapstructure:"min_chars"`
-	Name               string      `mapstructure:"name"`
-	Placeholder        string      `mapstructure:"placeholder"`
-	Prefix             string      `mapstructure:"prefix"`
-	Refresh            bool        `mapstructure:"refresh"`
-	ShowIconWhenSingle bool        `mapstructure:"show_icon_when_single"`
-	ShowSubWhenSingle  bool        `mapstructure:"show_sub_when_single"`
-	SwitcherOnly       bool        `mapstructure:"switcher_only"`
-	Theme              string      `mapstructure:"theme"`
-	ThemeBase          []string    `mapstructure:"theme_base"`
-	Typeahead          bool        `mapstructure:"typeahead"`
-	Weight             int         `mapstructure:"weight"`
+	AutoSelect         bool        `koanf:"auto_select"`
+	Blacklist          []Blacklist `koanf:"blacklist"`
+	Delay              int         `koanf:"delay"`
+	Hidden             bool        `koanf:"hidden"`
+	History            bool        `koanf:"history"`
+	Icon               string      `koanf:"icon"`
+	KeepSort           bool        `koanf:"keep_sort"`
+	MinChars           int         `koanf:"min_chars"`
+	Name               string      `koanf:"name"`
+	Placeholder        string      `koanf:"placeholder"`
+	Prefix             string      `koanf:"prefix"`
+	Refresh            bool        `koanf:"refresh"`
+	ShowIconWhenSingle bool        `koanf:"show_icon_when_single"`
+	ShowSubWhenSingle  bool        `koanf:"show_sub_when_single"`
+	SwitcherOnly       bool        `koanf:"switcher_only"`
+	Theme              string      `koanf:"theme"`
+	ThemeBase          []string    `koanf:"theme_base"`
+	Typeahead          bool        `koanf:"typeahead"`
+	Weight             int         `koanf:"weight"`
 
 	// internal
-	HasInitialSetup bool `mapstructure:"-"`
-	IsSetup         bool `mapstructure:"-"`
+	HasInitialSetup bool `koanf:"-"`
+	IsSetup         bool `koanf:"-"`
 }
 
 type Blacklist struct {
-	Regexp string `mapstructure:"regexp"`
-	Label  bool   `mapstructure:"label"`
-	Sub    bool   `mapstructure:"sub"`
+	Regexp string `koanf:"regexp"`
+	Label  bool   `koanf:"label"`
+	Sub    bool   `koanf:"sub"`
 
 	// internal
-	Reg *regexp.Regexp `mapstructure:"-"`
+	Reg *regexp.Regexp `koanf:"-"`
 }
 
 type Finder struct {
-	GeneralModule   `mapstructure:",squash"`
-	UseFD           bool `mapstructure:"use_fd"`
-	IgnoreGitIgnore bool `mapstructure:"ignore_gitignore"`
-	Concurrency     int  `mapstructure:"concurrency"`
-	EagerLoading    bool `mapstructure:"eager_loading"`
+	GeneralModule   `koanf:",squash"`
+	UseFD           bool `koanf:"use_fd"`
+	IgnoreGitIgnore bool `koanf:"ignore_gitignore"`
+	Concurrency     int  `koanf:"concurrency"`
+	EagerLoading    bool `koanf:"eager_loading"`
 }
 
 type Commands struct {
-	GeneralModule `mapstructure:",squash"`
+	GeneralModule `koanf:",squash"`
 }
 
 type Switcher struct {
-	GeneralModule `mapstructure:",squash"`
+	GeneralModule `koanf:",squash"`
 }
 
 type Emojis struct {
-	GeneralModule   `mapstructure:",squash"`
-	Exec            string `mapstructure:"exec"`
-	ExecAlt         string `mapstructure:"exec_alt"`
-	ShowUnqualified bool   `mapstructure:"show_unqualified"`
+	GeneralModule   `koanf:",squash"`
+	Exec            string `koanf:"exec"`
+	ExecAlt         string `koanf:"exec_alt"`
+	ShowUnqualified bool   `koanf:"show_unqualified"`
 }
 
 type Symbols struct {
-	GeneralModule `mapstructure:",squash"`
-	AfterCopy     string `mapstructure:"after_copy"`
+	GeneralModule `koanf:",squash"`
+	AfterCopy     string `koanf:"after_copy"`
 }
 
 type SSH struct {
-	GeneralModule `mapstructure:",squash"`
-	ConfigFile    string `mapstructure:"config_file"`
-	HostFile      string `mapstructure:"host_file"`
+	GeneralModule `koanf:",squash"`
+	ConfigFile    string `koanf:"config_file"`
+	HostFile      string `koanf:"host_file"`
 }
 
 type Websearch struct {
-	GeneralModule `mapstructure:",squash"`
-	Entries       []WebsearchEntry `mapstructure:"entries"`
+	GeneralModule `koanf:",squash"`
+	Entries       []WebsearchEntry `koanf:"entries"`
 }
 
 type WebsearchEntry struct {
-	Name         string `mapstructure:"name"`
-	Url          string `mapstructure:"url"`
-	Prefix       string `mapstructure:"prefix"`
-	SwitcherOnly bool   `mapstructure:"switcher_only"`
+	Name         string `koanf:"name"`
+	Url          string `koanf:"url"`
+	Prefix       string `koanf:"prefix"`
+	SwitcherOnly bool   `koanf:"switcher_only"`
 }
 
 type Applications struct {
-	GeneralModule `mapstructure:",squash"`
-	Actions       ApplicationActions `mapstructure:"actions"`
-	Cache         bool               `mapstructure:"cache"`
-	ContextAware  bool               `mapstructure:"context_aware"`
-	PrioritizeNew bool               `mapstructure:"prioritize_new"`
-	ShowGeneric   bool               `mapstructure:"show_generic"`
+	GeneralModule `koanf:",squash"`
+	Actions       ApplicationActions `koanf:"actions"`
+	Cache         bool               `koanf:"cache"`
+	ContextAware  bool               `koanf:"context_aware"`
+	PrioritizeNew bool               `koanf:"prioritize_new"`
+	ShowGeneric   bool               `koanf:"show_generic"`
 }
 
 type ApplicationActions struct {
-	Enabled          bool `mapstructure:"enabled"`
-	HideCategory     bool `mapstructure:"hide_category"`
-	HideWithoutQuery bool `mapstructure:"hide_without_query"`
+	Enabled          bool `koanf:"enabled"`
+	HideCategory     bool `koanf:"hide_category"`
+	HideWithoutQuery bool `koanf:"hide_without_query"`
 }
 
 type Windows struct {
-	GeneralModule `mapstructure:",squash"`
+	GeneralModule `koanf:",squash"`
 }
 
 type ActivationMode struct {
-	Disabled bool   `mapstructure:"disabled"`
-	Labels   string `mapstructure:"labels"`
-	UseFKeys bool   `mapstructure:"use_f_keys"`
+	Disabled bool   `koanf:"disabled"`
+	Labels   string `koanf:"labels"`
+	UseFKeys bool   `koanf:"use_f_keys"`
 }
 
 type Clipboard struct {
-	GeneralModule   `mapstructure:",squash"`
-	AvoidLineBreaks bool   `mapstructure:"avoid_line_breaks"`
-	ImageHeight     int    `mapstructure:"image_height"`
-	MaxEntries      int    `mapstructure:"max_entries"`
-	Exec            string `mapstructure:"exec"`
+	GeneralModule   `koanf:",squash"`
+	AvoidLineBreaks bool   `koanf:"avoid_line_breaks"`
+	ImageHeight     int    `koanf:"image_height"`
+	MaxEntries      int    `koanf:"max_entries"`
+	Exec            string `koanf:"exec"`
 }
 
 type Dmenu struct {
-	GeneralModule `mapstructure:",squash"`
-	Separator     string `mapstructure:"separator"`
-	LabelColumn   int    `mapstructure:"label_column"`
+	GeneralModule `koanf:",squash"`
+	Separator     string `koanf:"separator"`
+	LabelColumn   int    `koanf:"label_column"`
 }
 
 type Runner struct {
-	GeneralModule `mapstructure:",squash"`
-	Excludes      []string `mapstructure:"excludes"`
-	Includes      []string `mapstructure:"includes"`
-	ShellConfig   string   `mapstructure:"shell_config"`
-	GenericEntry  bool     `mapstructure:"generic_entry"`
+	GeneralModule `koanf:",squash"`
+	Excludes      []string `koanf:"excludes"`
+	Includes      []string `koanf:"includes"`
+	ShellConfig   string   `koanf:"shell_config"`
+	GenericEntry  bool     `koanf:"generic_entry"`
 }
 
 type Plugin struct {
-	GeneralModule    `mapstructure:",squash"`
-	Cmd              string            `mapstructure:"cmd"`
-	CmdAlt           string            `mapstructure:"cmd_alt"`
-	Entries          []util.Entry      `mapstructure:"entries"`
-	LabelColumn      int               `mapstructure:"label_column"`
-	Matching         util.MatchingType `mapstructure:"matching"`
-	RecalculateScore bool              `mapstructure:"recalculate_score,omitempty"`
-	ResultColumn     int               `mapstructure:"result_column"`
-	Separator        string            `mapstructure:"separator"`
-	Src              string            `mapstructure:"src"`
-	SrcOnce          string            `mapstructure:"src_once"`
-	Terminal         bool              `mapstructure:"terminal"`
-	Parser           string            `mapstructure:"parser"`
-	KvSeparator      string            `mapstructure:"kv_separator"`
-	Output           bool              `mapstructure:"output"`
-	Keywords         []string          `mapstructure:"keywords"`
+	GeneralModule    `koanf:",squash"`
+	Cmd              string            `koanf:"cmd"`
+	CmdAlt           string            `koanf:"cmd_alt"`
+	Entries          []util.Entry      `koanf:"entries"`
+	LabelColumn      int               `koanf:"label_column"`
+	Matching         util.MatchingType `koanf:"matching"`
+	RecalculateScore bool              `koanf:"recalculate_score,omitempty"`
+	ResultColumn     int               `koanf:"result_column"`
+	Separator        string            `koanf:"separator"`
+	Src              string            `koanf:"src"`
+	SrcOnce          string            `koanf:"src_once"`
+	Terminal         bool              `koanf:"terminal"`
+	Parser           string            `koanf:"parser"`
+	KvSeparator      string            `koanf:"kv_separator"`
+	Output           bool              `koanf:"output"`
+	Keywords         []string          `koanf:"keywords"`
 }
 
 type Search struct {
-	ArgumentDelimiter string `mapstructure:"argument_delimiter"`
-	Delay             int    `mapstructure:"delay"`
-	Placeholder       string `mapstructure:"placeholder"`
-	ResumeLastQuery   bool   `mapstructure:"resume_last_query"`
+	ArgumentDelimiter string `koanf:"argument_delimiter"`
+	Delay             int    `koanf:"delay"`
+	Placeholder       string `koanf:"placeholder"`
+	ResumeLastQuery   bool   `koanf:"resume_last_query"`
 }
 
 type List struct {
-	Cycle               bool   `mapstructure:"cycle"`
-	DynamicSub          bool   `mapstructure:"dynamic_sub"`
-	KeyboardScrollStyle string `mapstructure:"keyboard_scroll_style"`
-	MaxEntries          int    `mapstructure:"max_entries"`
-	Placeholder         string `mapstructure:"placeholder"`
-	ShowInitialEntries  bool   `mapstructure:"show_initial_entries"`
-	SingleClick         bool   `mapstructure:"single_click"`
-	VisibilityThreshold int    `mapstructure:"visibility_threshold"`
+	Cycle               bool   `koanf:"cycle"`
+	DynamicSub          bool   `koanf:"dynamic_sub"`
+	KeyboardScrollStyle string `koanf:"keyboard_scroll_style"`
+	MaxEntries          int    `koanf:"max_entries"`
+	Placeholder         string `koanf:"placeholder"`
+	ShowInitialEntries  bool   `koanf:"show_initial_entries"`
+	SingleClick         bool   `koanf:"single_click"`
+	VisibilityThreshold int    `koanf:"visibility_threshold"`
+}
+
+func init() {
+	os.MkdirAll(util.ConfigDir(), 0755)
 }
 
 func Get(config string) (*Config, error) {
-	os.MkdirAll(util.ThemeDir(), 0755)
-
-	defs := viper.New()
-	defs.SetConfigType("toml")
-
-	err := defs.ReadConfig(bytes.NewBuffer(defaultConfig))
+	defaults := koanf.New(".")
+	err := defaults.Load(rawbytes.Provider(defaultConfig), toml.Parser())
 	if err != nil {
-		log.Panicln(err)
+		return nil, err
 	}
 
-	for k, v := range defs.AllSettings() {
-		viper.SetDefault(k, v)
-	}
+	tomlFile := filepath.Join(util.ConfigDir(), "config.toml")
+	jsonFile := filepath.Join(util.ConfigDir(), "config.json")
+	yamlFile := filepath.Join(util.ConfigDir(), "config.yaml")
 
-	viper.SetConfigName("config")
-	viper.AddConfigPath(util.ConfigDir())
-
-	err = viper.ReadInConfig()
-	if err != nil {
-		dErr := os.MkdirAll(util.ConfigDir(), 0755)
-		if dErr != nil {
-			log.Panicln(dErr)
+	if util.FileExists(tomlFile) {
+		err := defaults.Load(file.Provider(tomlFile), toml.Parser())
+		if err != nil {
+			return nil, err
 		}
-
-		if errors.As(err, &notFoundErr) {
-			ft := "toml"
-
-			et := os.Getenv("WALKER_CONFIG_TYPE")
-
-			if et != "" {
-				ft = et
-			}
-
-			viper.SetConfigType(ft)
-			wErr := viper.SafeWriteConfig()
-			if wErr != nil {
-				log.Println(wErr)
-			}
-		} else {
-			log.Panicln(err)
+	} else if util.FileExists(jsonFile) {
+		err := defaults.Load(file.Provider(jsonFile), json.Parser())
+		if err != nil {
+			return nil, err
+		}
+	} else if util.FileExists(yamlFile) {
+		err := defaults.Load(file.Provider(yamlFile), yaml.Parser())
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		err := os.WriteFile(tomlFile, defaultConfig, 0o600)
+		if err != nil {
+			return nil, err
 		}
 	}
 
 	cfg := &Config{}
 
-	viper.AutomaticEnv()
-
-	err = viper.Unmarshal(cfg)
+	err = defaults.Unmarshal("", cfg)
 	if err != nil {
-		slog.Error("config", "error", err)
 		return nil, err
 	}
 

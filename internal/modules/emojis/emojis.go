@@ -32,16 +32,16 @@ func (e Emojis) Entries(term string) []util.Entry {
 	return e.entries
 }
 
-func (e *Emojis) Setup(cfg *config.Config) bool {
-	e.general = cfg.Builtins.Emojis.GeneralModule
-	e.showUnqualified = cfg.Builtins.Emojis.ShowUnqualified
-	e.exec = cfg.Builtins.Emojis.Exec
-	e.execAlt = cfg.Builtins.Emojis.ExecAlt
+func (e *Emojis) Setup() bool {
+	e.general = config.Cfg.Builtins.Emojis.GeneralModule
+	e.showUnqualified = config.Cfg.Builtins.Emojis.ShowUnqualified
+	e.exec = config.Cfg.Builtins.Emojis.Exec
+	e.execAlt = config.Cfg.Builtins.Emojis.ExecAlt
 
 	return true
 }
 
-func (e *Emojis) SetupData(cfg *config.Config) {
+func (e *Emojis) SetupData() {
 	scanner := bufio.NewScanner(strings.NewReader(list))
 
 	entries := []util.Entry{}

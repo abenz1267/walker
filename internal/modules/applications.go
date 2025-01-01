@@ -44,18 +44,18 @@ func (a *Applications) General() *config.GeneralModule {
 
 func (a *Applications) Cleanup() {}
 
-func (a *Applications) Setup(cfg *config.Config) bool {
-	a.config = cfg.Builtins.Applications
+func (a *Applications) Setup() bool {
+	a.config = config.Cfg.Builtins.Applications
 
 	a.openWindows = make(map[string]uint)
 
 	return true
 }
 
-func (a *Applications) SetupData(cfg *config.Config) {
+func (a *Applications) SetupData() {
 	a.entries = a.parse()
 
-	if cfg.IsService {
+	if config.Cfg.IsService {
 		go a.Watch()
 	}
 
@@ -209,7 +209,7 @@ func (a *Applications) parse() []util.Entry {
 	entries := []util.Entry{}
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
 
-	langFull := Cfg.Locale
+	langFull := config.Cfg.Locale
 
 	if langFull == "" {
 		langFull = os.Getenv("LANG")

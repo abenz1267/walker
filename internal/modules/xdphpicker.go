@@ -32,8 +32,8 @@ func (x *XdphPicker) Refresh() {
 	x.config.IsSetup = !x.config.Refresh
 }
 
-func (x *XdphPicker) Setup(cfg *config.Config) bool {
-	x.config = &cfg.Builtins.XdphPicker
+func (x *XdphPicker) Setup() bool {
+	x.config = &config.Cfg.Builtins.XdphPicker
 
 	return true
 }
@@ -44,7 +44,7 @@ type Window struct {
 	Title string
 }
 
-func (x *XdphPicker) SetupData(cfg *config.Config) {
+func (x *XdphPicker) SetupData() {
 	x.entries = []util.Entry{}
 
 	windows := parseWindows(os.Getenv("XDPH_WINDOW_SHARING_LIST"))

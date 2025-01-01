@@ -50,29 +50,29 @@ func (bookmarks *Bookmarks) Refresh() {
 	bookmarks.config.IsSetup = !bookmarks.config.Refresh
 }
 
-func (bookmarks *Bookmarks) Setup(cfg *config.Config) bool {
-	bookmarks.config = &cfg.Builtins.Bookmarks
+func (bookmarks *Bookmarks) Setup() bool {
+	bookmarks.config = &config.Cfg.Builtins.Bookmarks
 
 	return true
 }
 
-func (bookmarks *Bookmarks) SetupData(cfg *config.Config) {
+func (bookmarks *Bookmarks) SetupData() {
 	bookmarks.entries = []util.Entry{}
 	bookmarks.prefixes = []string{}
 
-	for _, v := range cfg.Builtins.Bookmarks.Entries {
+	for _, v := range config.Cfg.Builtins.Bookmarks.Entries {
 		bookmarks.entries = append(bookmarks.entries, util.Entry{
 			Label:            v.Label,
 			Sub:              v.Url,
 			Categories:       v.Keywords,
-			Icon:             cfg.Builtins.Bookmarks.GeneralModule.Icon,
+			Icon:             config.Cfg.Builtins.Bookmarks.GeneralModule.Icon,
 			Exec:             fmt.Sprintf("xdg-open '%s'", v.Url),
 			Matching:         util.Fuzzy,
 			RecalculateScore: true,
 		})
 	}
 
-	for _, v := range cfg.Builtins.Bookmarks.Groups {
+	for _, v := range config.Cfg.Builtins.Bookmarks.Groups {
 		if v.Prefix != "" {
 			bookmarks.prefixes = append(bookmarks.prefixes, v.Prefix)
 		}
@@ -82,7 +82,7 @@ func (bookmarks *Bookmarks) SetupData(cfg *config.Config) {
 				Label:            entry.Label,
 				Sub:              fmt.Sprintf("%s: %s", v.Label, entry.Url),
 				Categories:       entry.Keywords,
-				Icon:             cfg.Builtins.Bookmarks.GeneralModule.Icon,
+				Icon:             config.Cfg.Builtins.Bookmarks.GeneralModule.Icon,
 				Exec:             fmt.Sprintf("xdg-open '%s'", entry.Url),
 				Matching:         util.Fuzzy,
 				RecalculateScore: true,

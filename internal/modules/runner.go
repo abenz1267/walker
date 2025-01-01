@@ -27,26 +27,26 @@ func (r *Runner) General() *config.GeneralModule {
 	return &r.config.GeneralModule
 }
 
-func (r *Runner) Setup(cfg *config.Config) bool {
-	r.config = cfg.Builtins.Runner
+func (r *Runner) Setup() bool {
+	r.config = config.Cfg.Builtins.Runner
 
 	return true
 }
 
-func (r *Runner) SetupData(cfg *config.Config) {
+func (r *Runner) SetupData() {
 	r.parseAliases()
 
-	if len(cfg.Builtins.Runner.Includes) > 0 {
-		r.bins = cfg.Builtins.Runner.Includes
+	if len(config.Cfg.Builtins.Runner.Includes) > 0 {
+		r.bins = config.Cfg.Builtins.Runner.Includes
 	} else {
 		r.getBins()
 	}
 
 	filtered := []string{}
 
-	if len(cfg.Builtins.Runner.Excludes) > 0 {
+	if len(config.Cfg.Builtins.Runner.Excludes) > 0 {
 		for _, v := range r.bins {
-			if !slices.Contains(cfg.Builtins.Runner.Excludes, v) {
+			if !slices.Contains(config.Cfg.Builtins.Runner.Excludes, v) {
 				filtered = append(filtered, v)
 			}
 		}

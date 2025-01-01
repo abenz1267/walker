@@ -8,7 +8,7 @@ import (
 )
 
 func executeEvent(eventType config.EventType, label string) {
-	if cfg == nil {
+	if config.Cfg == nil {
 		return
 	}
 
@@ -19,15 +19,15 @@ func executeEvent(eventType config.EventType, label string) {
 
 		switch eventType {
 		case config.EventLaunch:
-			toRun = cfg.Events.OnLaunch
+			toRun = config.Cfg.Events.OnLaunch
 		case config.EventSelection:
-			toRun = cfg.Events.OnSelection
+			toRun = config.Cfg.Events.OnSelection
 		case config.EventExit:
-			toRun = cfg.Events.OnExit
+			toRun = config.Cfg.Events.OnExit
 		case config.EventActivate:
-			toRun = cfg.Events.OnActivate
+			toRun = config.Cfg.Events.OnActivate
 		case config.EventQueryChange:
-			toRun = cfg.Events.OnQueryChange
+			toRun = config.Cfg.Events.OnQueryChange
 		}
 
 		if toRun == "" {

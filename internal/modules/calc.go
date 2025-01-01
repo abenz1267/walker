@@ -21,7 +21,7 @@ func (c *Calc) General() *config.GeneralModule {
 
 func (c Calc) Cleanup() {}
 
-func (c *Calc) Setup(cfg *config.Config) bool {
+func (c *Calc) Setup() bool {
 	pth, _ := exec.LookPath("qalc")
 	if pth == "" {
 		log.Println("Calc disabled: currently 'qalc' only.")
@@ -33,7 +33,7 @@ func (c *Calc) Setup(cfg *config.Config) bool {
 		c.hasClip = true
 	}
 
-	c.config = cfg.Builtins.Calc
+	c.config = config.Cfg.Builtins.Calc
 
 	// to update exchange rates
 	cmd := exec.Command("qalc", "-e", "1+1")
@@ -42,7 +42,7 @@ func (c *Calc) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (c *Calc) SetupData(cfg *config.Config) {}
+func (c *Calc) SetupData() {}
 
 func (c Calc) Entries(term string) []util.Entry {
 	if c.config.RequireNumber {

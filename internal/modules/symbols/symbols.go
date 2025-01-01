@@ -30,13 +30,13 @@ func (e Symbols) Entries(term string) []util.Entry {
 	return e.entries
 }
 
-func (e *Symbols) Setup(cfg *config.Config) bool {
-	e.config = cfg.Builtins.Symbols
+func (e *Symbols) Setup() bool {
+	e.config = config.Cfg.Builtins.Symbols
 
 	return true
 }
 
-func (e *Symbols) SetupData(cfg *config.Config) {
+func (e *Symbols) SetupData() {
 	scanner := bufio.NewScanner(strings.NewReader(list))
 
 	entries := []util.Entry{}

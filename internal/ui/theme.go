@@ -99,7 +99,7 @@ func setupTheme() {
 		layout.InitUnitMaps()
 	}
 
-	if cfg.IgnoreMouse {
+	if config.Cfg.IgnoreMouse {
 		elements.grid.SetCanTarget(false)
 	}
 
@@ -181,7 +181,7 @@ func setupBoxTheme() {
 		return
 	}
 
-	if cfg.List.Placeholder != "" {
+	if config.Cfg.List.Placeholder != "" {
 		setupLabelWidgetStyle(elements.listPlaceholder, &layout.Window.Box.Scroll.List.Placeholder)
 	}
 
@@ -190,7 +190,7 @@ func setupBoxTheme() {
 			elements.box.Append(elements.bar)
 		}
 
-		if cfg.List.Placeholder != "" {
+		if config.Cfg.List.Placeholder != "" {
 			elements.box.Append(elements.listPlaceholder)
 		}
 
@@ -220,7 +220,7 @@ func setupBoxTheme() {
 		elements.box.Append(elements.scroll)
 		elements.box.Append(elements.aiScroll)
 
-		if cfg.List.Placeholder != "" {
+		if config.Cfg.List.Placeholder != "" {
 			elements.box.Append(elements.listPlaceholder)
 		}
 
@@ -231,7 +231,7 @@ func setupBoxTheme() {
 }
 
 func setupBarTheme() {
-	if len(cfg.Bar.Entries) == 0 {
+	if len(config.Cfg.Bar.Entries) == 0 {
 		return
 	}
 
@@ -242,7 +242,7 @@ func setupBarTheme() {
 	setupBoxWidgetStyle(elements.bar, &layout.Window.Box.Bar.BoxWidget)
 
 	if !barHasItems {
-		for _, v := range cfg.Bar.Entries {
+		for _, v := range config.Cfg.Bar.Entries {
 			box := gtk.NewBox(gtk.OrientationHorizontal, 0)
 			box.SetCSSClasses([]string{"barentry"})
 

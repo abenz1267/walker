@@ -20,16 +20,16 @@ func (c CustomCommands) Entries(term string) (_ []util.Entry) {
 	return c.entries
 }
 
-func (c *CustomCommands) Setup(cfg *config.Config) bool {
-	c.config = cfg.Builtins.CustomCommands
+func (c *CustomCommands) Setup() bool {
+	c.config = config.Cfg.Builtins.CustomCommands
 
 	return true
 }
 
-func (c *CustomCommands) SetupData(cfg *config.Config) {
+func (c *CustomCommands) SetupData() {
 	c.entries = []util.Entry{}
 
-	for _, v := range cfg.Builtins.CustomCommands.Commands {
+	for _, v := range config.Cfg.Builtins.CustomCommands.Commands {
 		c.entries = append(c.entries, util.Entry{
 			Label:             v.Name,
 			Sub:               "Commands",

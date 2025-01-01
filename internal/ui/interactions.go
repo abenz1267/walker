@@ -59,7 +59,7 @@ func setupCommands() {
 	commands["adjusttheme"] = func() bool {
 		blockTimeout = true
 
-		cssFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.css", cfg.Theme))
+		cssFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.css", config.Cfg.Theme))
 
 		cmd := exec.Command("sh", "-c", wrapWithPrefix(fmt.Sprintf("xdg-open %s", cssFile)))
 		cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -110,7 +110,7 @@ func setupInteractions(appstate *state.AppState) {
 
 	elements.appwin.AddController(globalKeyController)
 
-	if !cfg.IgnoreMouse {
+	if !config.Cfg.IgnoreMouse {
 		motion := gtk.NewEventControllerMotion()
 
 		motion.ConnectMotion(func(x, y float64) {
@@ -130,7 +130,7 @@ func setupInteractions(appstate *state.AppState) {
 		elements.appwin.AddController(motion)
 	}
 
-	if !cfg.IgnoreMouse && !cfg.DisableClickToClose {
+	if !config.Cfg.IgnoreMouse && !config.Cfg.DisableClickToClose {
 		gesture := gtk.NewGestureClick()
 		gesture.SetPropagationPhase(gtk.PropagationPhase(3))
 		gesture.Connect("pressed", func(gesture *gtk.GestureClick, n int) {
@@ -161,7 +161,7 @@ func selectNext() bool {
 		common.selection.SetSelected(current + 1)
 	}
 
-	if next >= items && cfg.List.Cycle {
+	if next >= items && config.Cfg.List.Cycle {
 		common.selection.SetSelected(0)
 	}
 
@@ -183,7 +183,7 @@ func selectPrev() bool {
 		common.selection.SetSelected(current - 1)
 	}
 
-	if current == 0 && cfg.List.Cycle {
+	if current == 0 && config.Cfg.List.Cycle {
 		common.selection.SetSelected(items - 1)
 	}
 
@@ -220,7 +220,7 @@ func enableAM() {
 }
 
 func disableAM() {
-	if !cfg.ActivationMode.Disabled && activationEnabled {
+	if !config.Cfg.ActivationMode.Disabled && activationEnabled {
 		activationEnabled = false
 		elements.input.SetFocusable(false)
 
@@ -247,7 +247,7 @@ func handleGlobalKeysReleased(val, code uint, state gdk.ModifierType) {
 func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) bool {
 	timeoutReset()
 
-	if val == uint(labelTrigger) && !cfg.ActivationMode.Disabled {
+	if val == uint(labelTrigger) && !config.Cfg.ActivationMode.Disabled {
 		enableAM()
 		return true
 	} else {
@@ -261,7 +261,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				return true
 			}
 		default:
-			if !cfg.ActivationMode.Disabled && activationEnabled {
+			if !config.Cfg.ActivationMode.Disabled && activationEnabled {
 				uc := gdk.KeyvalToUnicode(gdk.KeyvalToLower(val))
 
 				if uc != 0 {
@@ -325,7 +325,7 @@ func activateItem(keepOpen, alt bool) {
 
 	executeEvent(config.EventActivate, entry.Label)
 
-	if !keepOpen && entry.Sub != "Walker" && entry.Sub != "switcher" && cfg.IsService && entry.SpecialFunc == nil {
+	if !keepOpen && entry.Sub != "Walker" && entry.Sub != "switcher" && config.Cfg.IsService && entry.SpecialFunc == nil {
 		go quit(true)
 	}
 
@@ -336,7 +336,7 @@ func activateItem(keepOpen, alt bool) {
 		args = append(args, entry.SpecialFuncArgs...)
 		args = append(args, elements.input.Text())
 
-		if module.General().Name == cfg.Builtins.AI.Name {
+		if module.General().Name == config.Cfg.Builtins.AI.Name {
 			elements.input.SetObjectProperty("placeholder-text", entry.Label)
 
 			isAi = true
@@ -391,18 +391,18 @@ func activateItem(keepOpen, alt bool) {
 		return
 	}
 
-	if cfg.Terminal != "" {
+	if config.Cfg.Terminal != "" {
 		if entry.Terminal || forceTerminal {
-			if cfg.TerminalTitleFlag != "" || entry.TerminalTitleFlag != "" {
-				flag := cfg.TerminalTitleFlag
+			if config.Cfg.TerminalTitleFlag != "" || entry.TerminalTitleFlag != "" {
+				flag := config.Cfg.TerminalTitleFlag
 
 				if flag == "" {
 					flag = entry.TerminalTitleFlag
 				}
 
-				toRun = fmt.Sprintf("%s %s -e %s", cfg.Terminal, flag, toRun)
+				toRun = fmt.Sprintf("%s %s -e %s", config.Cfg.Terminal, flag, toRun)
 			} else {
-				toRun = fmt.Sprintf("%s -e %s", cfg.Terminal, toRun)
+				toRun = fmt.Sprintf("%s -e %s", config.Cfg.Terminal, toRun)
 			}
 		}
 	} else {
@@ -412,8 +412,8 @@ func activateItem(keepOpen, alt bool) {
 
 	input := elements.input.Text()
 
-	if strings.Contains(input, cfg.Search.ArgumentDelimiter) {
-		split := strings.Split(input, cfg.Search.ArgumentDelimiter)
+	if strings.Contains(input, config.Cfg.Search.ArgumentDelimiter) {
+		split := strings.Split(input, config.Cfg.Search.ArgumentDelimiter)
 		input = split[0]
 		toRun = fmt.Sprintf("%s %s", toRun, split[1])
 	}
@@ -520,7 +520,7 @@ func setStdin(cmd *exec.Cmd, piped *util.Piped) {
 }
 
 func closeAfterActivation(keepOpen, next bool) {
-	if !cfg.IsService && !keepOpen {
+	if !config.Cfg.IsService && !keepOpen {
 		exit(true, false)
 	}
 
@@ -553,7 +553,7 @@ func process() {
 		return
 	}
 
-	if cfg.List.Placeholder != "" {
+	if config.Cfg.List.Placeholder != "" {
 		elements.listPlaceholder.SetVisible(false)
 	}
 
@@ -563,12 +563,12 @@ func process() {
 
 	text = trimArgumentDelimiter(text)
 
-	if text == "" && cfg.List.ShowInitialEntries && len(explicits) == 0 && !appstate.IsDmenu {
+	if text == "" && config.Cfg.List.ShowInitialEntries && len(explicits) == 0 && !appstate.IsDmenu {
 		setInitials()
 		return
 	}
 
-	if (text != "" || appstate.IsDmenu) || (len(explicits) > 0 && cfg.List.ShowInitialEntries) {
+	if (text != "" || appstate.IsDmenu) || (len(explicits) > 0 && config.Cfg.List.ShowInitialEntries) {
 		if !layout.Window.Box.Search.Spinner.Hide {
 			elements.spinner.SetVisible(true)
 		}
@@ -586,12 +586,12 @@ func process() {
 var timeoutTimer *time.Timer
 
 func timeoutReset() {
-	if cfg.Timeout > 0 {
+	if config.Cfg.Timeout > 0 {
 		if timeoutTimer != nil {
 			timeoutTimer.Stop()
 		}
 
-		timeoutTimer = time.AfterFunc(time.Duration(cfg.Timeout)*time.Second, func() {
+		timeoutTimer = time.AfterFunc(time.Duration(config.Cfg.Timeout)*time.Second, func() {
 			if appstate.IsRunning {
 				if appstate.Password {
 					fmt.Print("")
@@ -614,7 +614,7 @@ func timeoutReset() {
 }
 
 func handleTimeout() {
-	if cfg.Timeout > 0 {
+	if config.Cfg.Timeout > 0 {
 		if appstate.Password {
 			elements.password.Connect("changed", timeoutReset)
 			return
@@ -724,7 +724,7 @@ func processAsync(text string) {
 		}
 
 		if !p[k].General().IsSetup {
-			p[k].SetupData(cfg)
+			p[k].SetupData()
 		}
 
 		go func(wg *sync.WaitGroup, text string, w modules.Workable) {
@@ -829,7 +829,7 @@ func processAsync(text string) {
 						}
 					}
 				} else {
-					if e[k].ScoreFinal > float64(cfg.List.VisibilityThreshold) {
+					if e[k].ScoreFinal > float64(config.Cfg.List.VisibilityThreshold) {
 						if e[k].Prefix != "" && strings.HasPrefix(text, e[k].Prefix) {
 							hasEntryPrefix = true
 
@@ -873,8 +873,8 @@ func processAsync(text string) {
 		sortEntries(entries, keepSort)
 	}
 
-	if len(entries) > cfg.List.MaxEntries {
-		entries = entries[:cfg.List.MaxEntries]
+	if len(entries) > config.Cfg.List.MaxEntries {
+		entries = entries[:config.Cfg.List.MaxEntries]
 	}
 
 	if appstate.IsDebug {
@@ -884,20 +884,20 @@ func processAsync(text string) {
 	}
 
 	glib.IdleAdd(func() {
-		if cfg.List.Placeholder != "" && len(entries) == 0 {
+		if config.Cfg.List.Placeholder != "" && len(entries) == 0 {
 			elements.listPlaceholder.SetVisible(true)
 		}
 
 		common.items.Splice(0, int(common.items.NItems()), entries...)
 
-		if cfg.IgnoreMouse && !elements.grid.CanTarget() {
+		if config.Cfg.IgnoreMouse && !elements.grid.CanTarget() {
 			for _, v := range entries {
 				if v.DragDrop {
 					elements.grid.SetCanTarget(true)
 					break
 				}
 			}
-		} else if cfg.IgnoreMouse {
+		} else if config.Cfg.IgnoreMouse {
 			elements.grid.SetCanTarget(false)
 		}
 	})
@@ -957,7 +957,7 @@ func setInitials() {
 	}
 
 	if !proc.General().IsSetup {
-		proc.SetupData(cfg)
+		proc.SetupData()
 	}
 
 	e := proc.Entries("")
@@ -1024,8 +1024,8 @@ func quit(ignoreEvent bool) {
 	if singleModule != nil {
 		if _, ok := layouts[singleModule.General().Name]; ok {
 			glib.IdleAdd(func() {
-				layout = config.GetLayout(cfg.Theme, cfg.ThemeBase)
-				setupLayout(cfg.Theme, cfg.ThemeBase)
+				layout = config.GetLayout(config.Cfg.Theme, config.Cfg.ThemeBase)
+				setupLayout(config.Cfg.Theme, config.Cfg.ThemeBase)
 			})
 		}
 
@@ -1063,9 +1063,9 @@ func quit(ignoreEvent bool) {
 			}
 		}
 
-		if !cfg.Search.ResumeLastQuery {
+		if !config.Cfg.Search.ResumeLastQuery {
 			elements.input.SetText("")
-			elements.input.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
+			elements.input.SetObjectProperty("placeholder-text", config.Cfg.Search.Placeholder)
 		} else {
 			elements.input.SelectRegion(0, -1)
 		}
@@ -1136,7 +1136,7 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 
 		remember := ""
 
-		if k == 0 && singleModule != nil && singleModule.General().Name == cfg.Builtins.Emojis.Name {
+		if k == 0 && singleModule != nil && singleModule.General().Name == config.Cfg.Builtins.Emojis.Name {
 			remember = strings.Fields(t)[0]
 			t = entry.Searchable
 		}
@@ -1170,7 +1170,7 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 		if score > entry.ScoreFuzzy {
 			multiplier = k
 
-			if cfg.List.DynamicSub && k > 1 {
+			if config.Cfg.List.DynamicSub && k > 1 {
 				entry.MatchedSub = t
 			}
 
@@ -1248,16 +1248,16 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 }
 
 func wrapWithPrefix(text string) string {
-	if cfg.AppLaunchPrefix == "" {
+	if config.Cfg.AppLaunchPrefix == "" {
 		return text
 	}
 
-	return fmt.Sprintf("%s%s", cfg.AppLaunchPrefix, text)
+	return fmt.Sprintf("%s%s", config.Cfg.AppLaunchPrefix, text)
 }
 
 func trimArgumentDelimiter(text string) string {
-	if strings.Contains(text, cfg.Search.ArgumentDelimiter) {
-		split := strings.Split(text, cfg.Search.ArgumentDelimiter)
+	if strings.Contains(text, config.Cfg.Search.ArgumentDelimiter) {
+		split := strings.Split(text, config.Cfg.Search.ArgumentDelimiter)
 
 		text = split[0]
 

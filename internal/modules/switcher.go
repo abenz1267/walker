@@ -9,7 +9,6 @@ import (
 
 type Switcher struct {
 	config config.Switcher
-	cfg    *config.Config
 }
 
 func (s *Switcher) General() *config.GeneralModule {
@@ -21,8 +20,8 @@ func (s Switcher) Cleanup() {}
 func (s Switcher) Entries(term string) []util.Entry {
 	entries := []util.Entry{}
 
-	for _, v := range s.cfg.Available {
-		if v == "switcher" || slices.Contains(s.cfg.Hidden, v) {
+	for _, v := range config.Cfg.Available {
+		if v == "switcher" || slices.Contains(config.Cfg.Hidden, v) {
 			continue
 		}
 
@@ -41,17 +40,15 @@ func (s Switcher) Entries(term string) []util.Entry {
 	return entries
 }
 
-func (s *Switcher) Setup(cfg *config.Config) bool {
-	s.config = cfg.Builtins.Switcher
-
-	s.cfg = cfg
+func (s *Switcher) Setup() bool {
+	s.config = config.Cfg.Builtins.Switcher
 
 	s.config.IsSetup = true
 
 	return true
 }
 
-func (s *Switcher) SetupData(cfg *config.Config) {
+func (s *Switcher) SetupData() {
 	s.config.HasInitialSetup = true
 }
 

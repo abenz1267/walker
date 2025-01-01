@@ -126,17 +126,17 @@ func (f *Finder) Entries(term string) []util.Entry {
 	return entries
 }
 
-func (f *Finder) Setup(cfg *config.Config) bool {
-	f.config = cfg.Builtins.Finder
+func (f *Finder) Setup() bool {
+	f.config = config.Cfg.Builtins.Finder
 
-	if cfg.Builtins.Finder.EagerLoading {
-		go f.SetupData(cfg)
+	if config.Cfg.Builtins.Finder.EagerLoading {
+		go f.SetupData()
 	}
 
 	return true
 }
 
-func (f *Finder) SetupData(cfg *config.Config) {
+func (f *Finder) SetupData() {
 	f.config.HasInitialSetup = true
 	f.config.IsSetup = true
 	f.files = []string{}
@@ -176,7 +176,7 @@ func (f *Finder) SetupData(cfg *config.Config) {
 		fileListQueue := make(chan *gocodewalker.File)
 
 		fileWalker := gocodewalker.NewFileWalker(homedir, fileListQueue)
-		fileWalker.IgnoreGitIgnore = cfg.Builtins.Finder.IgnoreGitIgnore
+		fileWalker.IgnoreGitIgnore = config.Cfg.Builtins.Finder.IgnoreGitIgnore
 
 		errorHandler := func(e error) bool {
 			return true

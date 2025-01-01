@@ -29,7 +29,7 @@ func (e *Plugin) Refresh() {
 	e.Config.IsSetup = !e.Config.Refresh
 }
 
-func (e *Plugin) Setup(cfg *config.Config) bool {
+func (e *Plugin) Setup() bool {
 	e.Config.Separator = util.TransformSeparator(e.Config.Separator)
 
 	if e.Config.Parser == "" {
@@ -45,7 +45,7 @@ func (e *Plugin) Setup(cfg *config.Config) bool {
 
 func (e Plugin) Cleanup() {}
 
-func (e *Plugin) SetupData(cfg *config.Config) {
+func (e *Plugin) SetupData() {
 	if e.Config.Entries != nil {
 		for k := range e.Config.Entries {
 			e.Config.Entries[k].Sub = e.Config.Name

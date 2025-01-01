@@ -28,7 +28,6 @@ import (
 )
 
 var (
-	cfg              *config.Config
 	elements         *Elements
 	startupTheme     string
 	layout           *config.UI
@@ -90,25 +89,22 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		var cfgErr error
 
 		if appstate.IsService {
-			cfg = appstate.Config
 			cfgErr = appstate.ConfigError
 		} else {
-			cfg, cfgErr = config.Get(appstate.ExplicitConfig)
+			cfgErr = config.Get(appstate.ExplicitConfig)
 		}
-
-		modules.Cfg = cfg
 
 		if cfgErr == nil {
 			t := 1
 
-			if cfg.Search.Delay > 0 {
-				t = cfg.Search.Delay
+			if config.Cfg.Search.Delay > 0 {
+				t = config.Cfg.Search.Delay
 			}
 
 			debouncedProcess = util.NewDebounce(time.Millisecond * time.Duration(t))
 
-			theme := cfg.Theme
-			themeBase := cfg.ThemeBase
+			theme := config.Cfg.Theme
+			themeBase := config.Cfg.ThemeBase
 
 			if appstate.ExplicitTheme != "" {
 				theme = appstate.ExplicitTheme
@@ -117,28 +113,28 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 			layout = config.GetLayout(theme, themeBase)
 
-			appstate.Labels = strings.Split(cfg.ActivationMode.Labels, "")
+			appstate.Labels = strings.Split(config.Cfg.ActivationMode.Labels, "")
 			appstate.LabelsF = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
 			appstate.UsedLabels = appstate.Labels
 
-			if cfg.ActivationMode.UseFKeys {
+			if config.Cfg.ActivationMode.UseFKeys {
 				appstate.UsedLabels = appstate.LabelsF
 			}
 
-			cfg.IsService = appstate.IsService
+			config.Cfg.IsService = appstate.IsService
 
 			if appstate.Dmenu == nil {
 				if appstate.DmenuSeparator != "" {
-					cfg.Builtins.Dmenu.Separator = appstate.DmenuSeparator
+					config.Cfg.Builtins.Dmenu.Separator = appstate.DmenuSeparator
 				}
 
 				if appstate.DmenuLabelColumn != 0 {
-					cfg.Builtins.Dmenu.LabelColumn = appstate.DmenuLabelColumn
+					config.Cfg.Builtins.Dmenu.LabelColumn = appstate.DmenuLabelColumn
 				}
 			}
 
 			if appstate.ExplicitPlaceholder != "" {
-				cfg.Search.Placeholder = appstate.ExplicitPlaceholder
+				config.Cfg.Search.Placeholder = appstate.ExplicitPlaceholder
 			}
 
 			if appstate.Password {
@@ -202,7 +198,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 			handleTimeout()
 
-			if cfg.IsService && cfg.HotreloadTheme {
+			if config.Cfg.IsService && config.Cfg.HotreloadTheme {
 				go watchTheme()
 			}
 		} else {
@@ -347,8 +343,8 @@ func setupElements(app *gtk.Application) *Elements {
 
 	var listPlaceholder *gtk.Label
 
-	if cfg.List.Placeholder != "" {
-		listPlaceholder = gtk.NewLabel(cfg.List.Placeholder)
+	if config.Cfg.List.Placeholder != "" {
+		listPlaceholder = gtk.NewLabel(config.Cfg.List.Placeholder)
 		listPlaceholder.SetVisible(false)
 	}
 
@@ -377,7 +373,7 @@ func setupElements(app *gtk.Application) *Elements {
 		prefixClasses:   make(map[string][]string),
 	}
 
-	if cfg.List.SingleClick {
+	if config.Cfg.List.SingleClick {
 		ui.grid.SetSingleClickActivate(true)
 	}
 
@@ -387,8 +383,8 @@ func setupElements(app *gtk.Application) *Elements {
 
 	ui.spinner.SetSpinning(true)
 
-	if cfg.Search.Placeholder != "" {
-		ui.input.SetObjectProperty("placeholder-text", cfg.Search.Placeholder)
+	if config.Cfg.Search.Placeholder != "" {
+		ui.input.SetObjectProperty("placeholder-text", config.Cfg.Search.Placeholder)
 	}
 
 	return ui
@@ -565,11 +561,11 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		var activationLabel *gtk.Label
 
-		if !cfg.ActivationMode.Disabled {
+		if !config.Cfg.ActivationMode.Disabled {
 			if item.Position()+1 <= uint(len(appstate.Labels)) {
 				aml := appstate.UsedLabels[item.Position()]
 
-				if !cfg.ActivationMode.UseFKeys && !layout.Window.Box.Scroll.List.Item.ActivationLabel.HideModifier {
+				if !config.Cfg.ActivationMode.UseFKeys && !layout.Window.Box.Scroll.List.Item.ActivationLabel.HideModifier {
 					aml = fmt.Sprintf("%s%s", amLabel, aml)
 				}
 
@@ -703,7 +699,7 @@ func reopen() {
 	timeoutReset()
 
 	if appstate.IsRunning {
-		if cfg.CloseWhenOpen {
+		if config.Cfg.CloseWhenOpen {
 			if appstate.IsService {
 				quit(false)
 			} else {
@@ -805,7 +801,7 @@ func afterUI() {
 }
 
 func setupLayerShell() {
-	if cfg.AsWindow {
+	if config.Cfg.AsWindow {
 		return
 	}
 
@@ -816,19 +812,19 @@ func setupLayerShell() {
 	ls.InitForWindow(&elements.appwin.Window)
 	ls.SetNamespace(&elements.appwin.Window, "walker")
 
-	if cfg.Monitor != "" {
+	if config.Cfg.Monitor != "" {
 		monitors := gdk.DisplayManagerGet().DefaultDisplay().Monitors()
 
 		for i := 0; i < int(monitors.NItems()); i++ {
 			monitor := monitors.Item(uint(i)).Cast().(*gdk.Monitor)
 
-			if monitor.Connector() == cfg.Monitor {
+			if monitor.Connector() == config.Cfg.Monitor {
 				ls.SetMonitor(&elements.appwin.Window, monitor)
 			}
 		}
 	}
 
-	if !cfg.ForceKeyboardFocus {
+	if !config.Cfg.ForceKeyboardFocus {
 		ls.SetKeyboardMode(&elements.appwin.Window, ls.LayerShellKeyboardModeOnDemand)
 	} else {
 		ls.SetKeyboardMode(&elements.appwin.Window, ls.LayerShellKeyboardModeExclusive)
@@ -848,7 +844,7 @@ func setupLayerShell() {
 }
 
 func setupLayerShellAnchors() {
-	if cfg.AsWindow {
+	if config.Cfg.AsWindow {
 		return
 	}
 
@@ -889,7 +885,7 @@ func watchTheme() {
 				}
 
 				glib.IdleAdd(func() {
-					setupLayout(cfg.Theme, cfg.ThemeBase)
+					setupLayout(config.Cfg.Theme, config.Cfg.ThemeBase)
 				})
 			case _, ok := <-watcher.Errors:
 				if !ok {

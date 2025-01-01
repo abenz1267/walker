@@ -20,13 +20,13 @@ func (c Commands) Entries(term string) []util.Entry {
 	return c.entries
 }
 
-func (c *Commands) Setup(cfg *config.Config) bool {
-	c.config = cfg.Builtins.Commands
+func (c *Commands) Setup() bool {
+	c.config = config.Cfg.Builtins.Commands
 
 	return true
 }
 
-func (c *Commands) SetupData(cfg *config.Config) {
+func (c *Commands) SetupData() {
 	entries := []struct {
 		label string
 		exec  string

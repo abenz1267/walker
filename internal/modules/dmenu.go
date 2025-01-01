@@ -112,8 +112,8 @@ func (d Dmenu) ListenForReply() bool {
 	return false
 }
 
-func (d *Dmenu) Setup(cfg *config.Config) bool {
-	d.Config = cfg.Builtins.Dmenu
+func (d *Dmenu) Setup() bool {
+	d.Config = config.Cfg.Builtins.Dmenu
 
 	d.Config.Separator = util.TransformSeparator(d.Config.Separator)
 
@@ -183,8 +183,8 @@ func (d Dmenu) Send() {
 	}
 }
 
-func (d *Dmenu) SetupData(cfg *config.Config) {
-	if cfg.IsService {
+func (d *Dmenu) SetupData() {
+	if config.Cfg.IsService {
 		go d.StartListening()
 		d.IsService = true
 	}

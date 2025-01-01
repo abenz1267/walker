@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/modules"
 	"github.com/abenz1267/walker/internal/modules/clipboard"
 	"github.com/abenz1267/walker/internal/util"
@@ -61,68 +62,68 @@ func parseKeybinds() {
 	binds = make(keybinds)
 	aibinds = make(keybinds)
 
-	for _, v := range cfg.Keys.AcceptTypeahead {
+	for _, v := range config.Cfg.Keys.AcceptTypeahead {
 		binds.validate(v)
 		binds.bind(binds, v, acceptTypeahead)
 	}
 
-	for _, v := range cfg.Keys.Close {
+	for _, v := range config.Cfg.Keys.Close {
 		binds.validate(v)
 		binds.bind(binds, v, quitKeybind)
 	}
 
-	for _, v := range cfg.Keys.Next {
+	for _, v := range config.Cfg.Keys.Next {
 		binds.validate(v)
 		binds.bind(binds, v, selectNext)
 	}
 
-	for _, v := range cfg.Keys.Prev {
+	for _, v := range config.Cfg.Keys.Prev {
 		binds.validate(v)
 		binds.bind(binds, v, selectPrev)
 	}
 
-	for _, v := range cfg.Keys.RemoveFromHistory {
+	for _, v := range config.Cfg.Keys.RemoveFromHistory {
 		binds.validate(v)
 		binds.bind(binds, v, deleteFromHistory)
 	}
 
-	for _, v := range cfg.Keys.ResumeQuery {
+	for _, v := range config.Cfg.Keys.ResumeQuery {
 		binds.validate(v)
 		binds.bind(binds, v, resume)
 	}
 
-	for _, v := range cfg.Keys.ToggleExactSearch {
+	for _, v := range config.Cfg.Keys.ToggleExactSearch {
 		binds.validate(v)
 		binds.bind(binds, v, toggleExactMatch)
 	}
 
 	binds.bind(binds, "enter", func() bool { return activate(false, false) })
-	binds.bind(binds, strings.Join([]string{cfg.Keys.ActivationModifiers.KeepOpen, "enter"}, " "), func() bool { return activate(true, false) })
-	binds.bind(binds, strings.Join([]string{cfg.Keys.ActivationModifiers.Alternate, "enter"}, " "), func() bool { return activate(false, true) })
+	binds.bind(binds, strings.Join([]string{config.Cfg.Keys.ActivationModifiers.KeepOpen, "enter"}, " "), func() bool { return activate(true, false) })
+	binds.bind(binds, strings.Join([]string{config.Cfg.Keys.ActivationModifiers.Alternate, "enter"}, " "), func() bool { return activate(false, true) })
 
-	keepOpenModifier = modifiers[cfg.Keys.ActivationModifiers.KeepOpen]
-	activateAltModifier = modifiers[cfg.Keys.ActivationModifiers.Alternate]
+	keepOpenModifier = modifiers[config.Cfg.Keys.ActivationModifiers.KeepOpen]
+	activateAltModifier = modifiers[config.Cfg.Keys.ActivationModifiers.Alternate]
 
-	binds.validateTriggerLabels(cfg.Keys.TriggerLabels)
-	labelTrigger = modifiersInt[strings.Fields(cfg.Keys.TriggerLabels)[0]]
-	labelModifier = modifiers[strings.Fields(cfg.Keys.TriggerLabels)[0]]
+	binds.validateTriggerLabels(config.Cfg.Keys.TriggerLabels)
+	labelTrigger = modifiersInt[strings.Fields(config.Cfg.Keys.TriggerLabels)[0]]
+	labelModifier = modifiers[strings.Fields(config.Cfg.Keys.TriggerLabels)[0]]
 
-	for _, v := range cfg.Keys.Ai.ClearSession {
+	for _, v := range config.Cfg.Keys.Ai.ClearSession {
 		binds.validate(v)
 		binds.bind(aibinds, v, aiClearSession)
 	}
 
-	for _, v := range cfg.Keys.Ai.CopyLastResponse {
+	for _, v := range config.Cfg.Keys.Ai.CopyLastResponse {
 		binds.validate(v)
 		binds.bind(aibinds, v, aiCopyLast)
 	}
 
-	for _, v := range cfg.Keys.Ai.ResumeSession {
+	for _, v := range config.Cfg.Keys.Ai.ResumeSession {
 		binds.validate(v)
 		binds.bind(aibinds, v, aiResume)
 	}
 
-	for _, v := range cfg.Keys.Ai.RunLastResponse {
+	for _, v := range config.Cfg.Keys.Ai.RunLastResponse {
 		binds.validate(v)
 		binds.bind(aibinds, v, aiExecuteLast)
 	}
@@ -216,7 +217,7 @@ func (keybinds) validateTriggerLabels(bind string) {
 }
 
 func toggleAM() bool {
-	if cfg.ActivationMode.Disabled {
+	if config.Cfg.ActivationMode.Disabled {
 		return false
 	}
 
@@ -230,7 +231,7 @@ func toggleAM() bool {
 }
 
 func deleteFromHistory() bool {
-	if singleModule != nil && singleModule.General().Name == cfg.Builtins.Clipboard.Name {
+	if singleModule != nil && singleModule.General().Name == config.Cfg.Builtins.Clipboard.Name {
 		entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
 		singleModule.(*clipboard.Clipboard).Delete(entry)
 		debouncedProcess(process)
@@ -248,7 +249,7 @@ func aiCopyLast() bool {
 		return false
 	}
 
-	ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
+	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
 	ai.CopyLastResponse()
 
 	return true
@@ -259,7 +260,7 @@ func aiExecuteLast() bool {
 		return false
 	}
 
-	ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
+	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
 	ai.RunLastMessageInTerminal()
 	quit(true)
 
@@ -295,7 +296,7 @@ func aiResume() bool {
 		return false
 	}
 
-	ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
+	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
 	ai.ResumeLastMessages()
 
 	return true
@@ -306,7 +307,7 @@ func aiClearSession() bool {
 		return false
 	}
 
-	ai := findModule(cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
+	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
 	elements.input.SetText("")
 	ai.ClearCurrent()
 
@@ -340,7 +341,7 @@ func quitKeybind() bool {
 		handleDmenuResult("CNCLD")
 	}
 
-	if cfg.IsService {
+	if config.Cfg.IsService {
 		quit(false)
 		return true
 	} else {

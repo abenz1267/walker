@@ -30,14 +30,14 @@ func (w *Websearch) General() *config.GeneralModule {
 
 func (w Websearch) Cleanup() {}
 
-func (w *Websearch) Setup(cfg *config.Config) bool {
-	w.config = cfg.Builtins.Websearch
-	w.threshold = cfg.List.VisibilityThreshold
+func (w *Websearch) Setup() bool {
+	w.config = config.Cfg.Builtins.Websearch
+	w.threshold = config.Cfg.List.VisibilityThreshold
 
 	return true
 }
 
-func (w *Websearch) SetupData(_ *config.Config) {
+func (w *Websearch) SetupData() {
 	w.config.IsSetup = true
 	w.config.HasInitialSetup = true
 

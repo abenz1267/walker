@@ -55,19 +55,19 @@ func (c Clipboard) Entries(term string) []util.Entry {
 	return c.entries
 }
 
-func (c *Clipboard) Setup(cfg *config.Config) bool {
+func (c *Clipboard) Setup() bool {
 	pth, _ := exec.LookPath("wl-copy")
 	if pth == "" {
 		log.Println("Clipboard disabled: currently wl-clipboard only.")
 		return false
 	}
 
-	c.general = cfg.Builtins.Clipboard.GeneralModule
+	c.general = config.Cfg.Builtins.Clipboard.GeneralModule
 
 	c.file = filepath.Join(util.CacheDir(), "clipboard.gob")
-	c.max = cfg.Builtins.Clipboard.MaxEntries
-	c.exec = cfg.Builtins.Clipboard.Exec
-	c.avoidLineBreaks = cfg.Builtins.Clipboard.AvoidLineBreaks
+	c.max = config.Cfg.Builtins.Clipboard.MaxEntries
+	c.exec = config.Cfg.Builtins.Clipboard.Exec
+	c.avoidLineBreaks = config.Cfg.Builtins.Clipboard.AvoidLineBreaks
 
 	c.imgTypes = make(map[string]string)
 	c.imgTypes["image/png"] = "png"
@@ -77,7 +77,7 @@ func (c *Clipboard) Setup(cfg *config.Config) bool {
 	return true
 }
 
-func (c *Clipboard) SetupData(cfg *config.Config) {
+func (c *Clipboard) SetupData() {
 	current := []ClipboardItem{}
 	_ = util.FromGob(c.file, &current)
 

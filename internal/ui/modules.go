@@ -18,7 +18,7 @@ import (
 )
 
 func setupModules() {
-	setAvailables(cfg)
+	setAvailables()
 	toUse = []modules.Workable{}
 
 	if len(appstate.ExplicitModules) > 0 {
@@ -77,13 +77,13 @@ func prepareBlacklists() {
 func setupLayouts(modules []modules.Workable) {
 	for _, v := range modules {
 		g := v.General()
-		if v != nil && g.Theme != "" && g.Theme != cfg.Theme {
+		if v != nil && g.Theme != "" && g.Theme != config.Cfg.Theme {
 			layouts[g.Name] = config.GetLayout(g.Theme, g.ThemeBase)
 		}
 	}
 }
 
-func setAvailables(cfg *config.Config) {
+func setAvailables() {
 	res := []modules.Workable{
 		&modules.Applications{Hstry: hstry},
 		&modules.Bookmarks{},
@@ -109,7 +109,7 @@ func setAvailables(cfg *config.Config) {
 		res = append(res, &modules.Dmenu{})
 	}
 
-	for _, v := range cfg.Plugins {
+	for _, v := range config.Cfg.Plugins {
 		e := &modules.Plugin{}
 		e.Config = v
 
@@ -117,27 +117,27 @@ func setAvailables(cfg *config.Config) {
 	}
 
 	available = []modules.Workable{}
-	cfg.Hidden = []string{}
+	config.Cfg.Hidden = []string{}
 
 	for _, v := range res {
 		if v == nil {
 			continue
 		}
 
-		if ok := v.Setup(cfg); ok {
+		if ok := v.Setup(); ok {
 			if v.General().Name == "" {
 				log.Panicln("module has no name\n")
 			}
 
-			if slices.Contains(cfg.Disabled, v.General().Name) {
+			if slices.Contains(config.Cfg.Disabled, v.General().Name) {
 				continue
 			}
 
 			available = append(available, v)
-			cfg.Available = append(cfg.Available, v.General().Name)
+			config.Cfg.Available = append(config.Cfg.Available, v.General().Name)
 
 			if v.General().Hidden {
-				cfg.Hidden = append(cfg.Hidden, v.General().Name)
+				config.Cfg.Hidden = append(config.Cfg.Hidden, v.General().Name)
 			}
 		}
 	}
@@ -145,12 +145,12 @@ func setAvailables(cfg *config.Config) {
 	if appstate.IsService {
 		if appstate.Dmenu != nil {
 			available = append(available, appstate.Dmenu)
-			cfg.Available = append(cfg.Available, appstate.Dmenu.General().Name)
+			config.Cfg.Available = append(config.Cfg.Available, appstate.Dmenu.General().Name)
 		}
 
 		if appstate.Clipboard != nil {
 			available = append(available, appstate.Clipboard)
-			cfg.Available = append(cfg.Available, appstate.Clipboard.General().Name)
+			config.Cfg.Available = append(config.Cfg.Available, appstate.Clipboard.General().Name)
 		}
 	}
 }
@@ -171,7 +171,7 @@ func setExplicits() {
 	explicits = []modules.Workable{}
 
 	for _, v := range appstate.ExplicitModules {
-		if slices.Contains(cfg.Available, v) {
+		if slices.Contains(config.Cfg.Available, v) {
 			for k, m := range available {
 				if m.General().Name == v {
 					explicits = append(explicits, available[k])
@@ -214,8 +214,8 @@ func setupSingleModule() {
 func resetSingleModule() {
 	t := 1
 
-	if cfg.Search.Delay > 0 {
-		t = cfg.Search.Delay
+	if config.Cfg.Search.Delay > 0 {
+		t = config.Cfg.Search.Delay
 	}
 
 	debouncedProcess = util.NewDebounce(time.Millisecond * time.Duration(t))

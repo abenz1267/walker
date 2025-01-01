@@ -31,13 +31,13 @@ func (w *Windows) General() *config.GeneralModule {
 func (w *Windows) Cleanup() {
 }
 
-func (w *Windows) Setup(cfg *config.Config) bool {
-	w.general = cfg.Builtins.Windows.GeneralModule
+func (w *Windows) Setup() bool {
+	w.general = config.Cfg.Builtins.Windows.GeneralModule
 
 	return true
 }
 
-func (w *Windows) SetupData(cfg *config.Config) {
+func (w *Windows) SetupData() {
 	if !wlr.IsRunning {
 		go wlr.StartWM(nil, nil)
 	}

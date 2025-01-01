@@ -353,15 +353,17 @@ type List struct {
 	VisibilityThreshold int    `koanf:"visibility_threshold"`
 }
 
+var Cfg *Config
+
 func init() {
 	os.MkdirAll(util.ConfigDir(), 0755)
 }
 
-func Get(config string) (*Config, error) {
+func Get(config string) error {
 	defaults := koanf.New(".")
 	err := defaults.Load(rawbytes.Provider(defaultConfig), toml.Parser())
 	if err != nil {
-		return nil, err
+		return err
 	}
 
 	tomlFile := filepath.Join(util.ConfigDir(), "config.toml")
@@ -371,43 +373,43 @@ func Get(config string) (*Config, error) {
 	if util.FileExists(tomlFile) {
 		err := defaults.Load(file.Provider(tomlFile), toml.Parser())
 		if err != nil {
-			return nil, err
+			return err
 		}
 	} else if util.FileExists(jsonFile) {
 		err := defaults.Load(file.Provider(jsonFile), json.Parser())
 		if err != nil {
-			return nil, err
+			return err
 		}
 	} else if util.FileExists(yamlFile) {
 		err := defaults.Load(file.Provider(yamlFile), yaml.Parser())
 		if err != nil {
-			return nil, err
+			return err
 		}
 	} else {
 		err := os.WriteFile(tomlFile, defaultConfig, 0o600)
 		if err != nil {
-			return nil, err
+			return err
 		}
 	}
 
-	cfg := &Config{}
+	Cfg = &Config{}
 
-	err = defaults.Unmarshal("", cfg)
+	err = defaults.Unmarshal("", Cfg)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	go setTerminal(cfg)
+	go setTerminal()
 
-	return cfg, nil
+	return nil
 }
 
-func setTerminal(cfg *Config) {
-	if cfg.Terminal != "" {
-		path, _ := exec.LookPath(cfg.Terminal)
+func setTerminal() {
+	if Cfg.Terminal != "" {
+		path, _ := exec.LookPath(Cfg.Terminal)
 
 		if path != "" {
-			cfg.Terminal = path
+			Cfg.Terminal = path
 		}
 
 		return
@@ -421,7 +423,7 @@ func setTerminal(cfg *Config) {
 			path, _ := exec.LookPath(term)
 
 			if path != "" {
-				cfg.Terminal = path
+				Cfg.Terminal = path
 				return
 			}
 		}
@@ -463,7 +465,7 @@ func setTerminal(cfg *Config) {
 		path, _ := exec.LookPath(v)
 
 		if path != "" {
-			cfg.Terminal = path
+			Cfg.Terminal = path
 			break
 		}
 	}

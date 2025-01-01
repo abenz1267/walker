@@ -15,7 +15,6 @@ type AppState struct {
 	AutoSelect          bool
 	AutoSelectOld       bool
 	Clipboard           modules.Workable
-	Config              *config.Config
 	ConfigError         error
 	IsDebug             bool
 	IsDmenu             bool
@@ -55,22 +54,22 @@ func Get() *AppState {
 	}
 }
 
-func (app *AppState) StartServiceableModules(cfg *config.Config) {
-	cfg.IsService = true
+func (app *AppState) StartServiceableModules() {
+	config.Cfg.IsService = true
 
 	app.Dmenu = &modules.Dmenu{}
 
 	clipboard := &clipboard.Clipboard{}
-	hasClipboard := clipboard.Setup(cfg)
+	hasClipboard := clipboard.Setup()
 
-	app.Dmenu.Setup(cfg)
+	app.Dmenu.Setup()
 
-	if !slices.Contains(cfg.Disabled, clipboard.General().Name) && hasClipboard {
+	if !slices.Contains(config.Cfg.Disabled, clipboard.General().Name) && hasClipboard {
 		app.Clipboard = clipboard
-		app.Clipboard.SetupData(cfg)
+		app.Clipboard.SetupData()
 	}
 
-	if !slices.Contains(cfg.Disabled, app.Dmenu.General().Name) {
-		app.Dmenu.SetupData(cfg)
+	if !slices.Contains(config.Cfg.Disabled, app.Dmenu.General().Name) {
+		app.Dmenu.SetupData()
 	}
 }

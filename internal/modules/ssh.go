@@ -45,13 +45,13 @@ func (s SSH) Entries(term string) []util.Entry {
 	return s.entries
 }
 
-func (s *SSH) Setup(cfg *config.Config) bool {
-	s.config = cfg.Builtins.SSH
+func (s *SSH) Setup() bool {
+	s.config = config.Cfg.Builtins.SSH
 
 	return true
 }
 
-func (s *SSH) SetupData(cfg *config.Config) {
+func (s *SSH) SetupData() {
 	home, err := os.UserHomeDir()
 	if err != nil {
 		log.Panicln(err)
@@ -59,13 +59,13 @@ func (s *SSH) SetupData(cfg *config.Config) {
 	}
 
 	sshCfg := filepath.Join(home, ".ssh", "config")
-	if cfg.Builtins.SSH.ConfigFile != "" {
-		sshCfg = cfg.Builtins.SSH.ConfigFile
+	if config.Cfg.Builtins.SSH.ConfigFile != "" {
+		sshCfg = config.Cfg.Builtins.SSH.ConfigFile
 	}
 
 	hosts := filepath.Join(home, ".ssh", "known_hosts")
-	if cfg.Builtins.SSH.HostFile != "" {
-		hosts = cfg.Builtins.SSH.HostFile
+	if config.Cfg.Builtins.SSH.HostFile != "" {
+		hosts = config.Cfg.Builtins.SSH.HostFile
 	}
 
 	s.entries = append(s.entries, getHostFileEntries(hosts)...)

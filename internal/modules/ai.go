@@ -67,9 +67,9 @@ func (ai *AI) General() *config.GeneralModule {
 func (ai *AI) Refresh() {
 }
 
-func (ai *AI) Setup(cfg *config.Config) bool {
-	ai.config = cfg.Builtins.AI
-	ai.terminal = cfg.Terminal
+func (ai *AI) Setup() bool {
+	ai.config = config.Cfg.Builtins.AI
+	ai.terminal = config.Cfg.Terminal
 
 	file := filepath.Join(util.CacheDir(), aiHistoryFile)
 
@@ -94,7 +94,7 @@ func (ai *AI) ClearCurrent() {
 	ai.items.Splice(0, int(ai.items.NItems()))
 }
 
-func (ai *AI) SetupData(cfg *config.Config) {
+func (ai *AI) SetupData() {
 	ai.entries = []util.Entry{}
 
 	ai.anthropicKey = os.Getenv(ANTHROPIC_API_KEY)
@@ -264,7 +264,7 @@ func (ai *AI) RunLastMessageInTerminal() {
 	last := ai.currentMessages[len(ai.currentMessages)-1].Content
 	shell := os.Getenv("SHELL")
 
-	toRun := fmt.Sprintf("%s %s -e sh -c \"%s; exec %s\"", ai.terminal, Cfg.TerminalTitleFlag, last, shell)
+	toRun := fmt.Sprintf("%s %s -e sh -c \"%s; exec %s\"", ai.terminal, config.Cfg.TerminalTitleFlag, last, shell)
 	cmd := exec.Command("sh", "-c", wrapWithPrefix(toRun))
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{

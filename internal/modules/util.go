@@ -8,15 +8,13 @@ import (
 	"github.com/abenz1267/walker/internal/util"
 )
 
-var Cfg *config.Config
-
 type Workable interface {
 	Cleanup()
 	Entries(term string) []util.Entry
 	General() *config.GeneralModule
 	Refresh()
-	Setup(cfg *config.Config) bool
-	SetupData(cfg *config.Config)
+	Setup() bool
+	SetupData()
 }
 
 func Find(plugins []config.Plugin, name string) (config.Plugin, error) {
@@ -30,9 +28,9 @@ func Find(plugins []config.Plugin, name string) (config.Plugin, error) {
 }
 
 func wrapWithPrefix(text string) string {
-	if Cfg.AppLaunchPrefix == "" {
+	if config.Cfg.AppLaunchPrefix == "" {
 		return text
 	}
 
-	return fmt.Sprintf("%s%s", Cfg.AppLaunchPrefix, text)
+	return fmt.Sprintf("%s%s", config.Cfg.AppLaunchPrefix, text)
 }

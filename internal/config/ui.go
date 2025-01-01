@@ -240,7 +240,11 @@ type TextWrapper struct {
 
 func init() {
 	os.MkdirAll(util.ThemeDir(), 0755)
-	os.WriteFile(filepath.Join(util.ThemeDir(), "default.toml"), defaultThemeLayout, 0o600)
+
+	file := filepath.Join(util.ThemeDir(), "default.toml")
+
+	os.Remove(file)
+	os.WriteFile(file, defaultThemeLayout, 0o600)
 }
 
 func GetLayout(theme string, base []string) *UI {

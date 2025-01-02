@@ -462,6 +462,7 @@ func setTerminal() {
 		"x-terminal-emulator",
 		"xfce4-terminal",
 		"xterm",
+		"ghostty",
 	}
 
 	for _, v := range t {

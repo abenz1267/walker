@@ -35,6 +35,8 @@ var version string
 var now = time.Now().UnixMilli()
 
 func main() {
+	os.MkdirAll(util.ThumbnailsDir(), 0755)
+
 	vips.LoggingSettings(nil, vips.LogLevelError)
 
 	vips.Startup(nil)

@@ -81,6 +81,10 @@ func CacheDir() string {
 	return filepath.Join(dir, "walker")
 }
 
+func ThumbnailsDir() string {
+	return filepath.Join(CacheDir(), "thumbnails")
+}
+
 func writeFile(b []byte, dest string) {
 	err := os.MkdirAll(filepath.Dir(dest), 0755)
 	if err != nil {

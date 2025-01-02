@@ -5,10 +5,13 @@ import (
 	_ "embed"
 	"fmt"
 	"html"
+	"io/fs"
 	"log"
 	"log/slog"
+	"os"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -39,6 +42,7 @@ var (
 	hstry             history.History
 	appstate          *state.AppState
 	thumbnails        map[string][]byte
+	thumbnailsMutex   sync.Mutex
 	debouncedProcess  func(f func())
 	debouncedOnSelect func(f func())
 )
@@ -76,6 +80,8 @@ type Elements struct {
 func Activate(state *state.AppState) func(app *gtk.Application) {
 	appstate = state
 	thumbnails = make(map[string][]byte)
+
+	go setupThumbnails()
 
 	return func(app *gtk.Application) {
 		if appstate.HasUI {
@@ -514,19 +520,16 @@ func setupFactory() *gtk.SignalListItemFactory {
 		var icon *gtk.Image
 
 		if val.Image != "" {
-			b, ok := thumbnails[val.Image]
+			hash := util.GetMD5Hash(val.Image)
 
-			if ok {
-				t, _ := gdk.NewTextureFromBytes(glib.NewBytes(b))
-				icon = gtk.NewImageFromPaintable(t)
-			} else {
-				if _, ok := thumbnails[val.Image]; !ok {
-					createThumbnail(val.Image)
-				}
+			b, ok := thumbnails[hash]
 
-				t, _ := gdk.NewTextureFromBytes(glib.NewBytes(thumbnails[val.Image]))
-				icon = gtk.NewImageFromPaintable(t)
+			if !ok {
+				b = createThumbnail(val.Image)
 			}
+
+			t, _ := gdk.NewTextureFromBytes(glib.NewBytes(b))
+			icon = gtk.NewImageFromPaintable(t)
 		}
 
 		if !layout.Window.Box.Scroll.List.Item.Icon.Hide {
@@ -935,7 +938,7 @@ func watchTheme() {
 	<-make(chan struct{})
 }
 
-func createThumbnail(file string) {
+func createThumbnail(file string) []byte {
 	image, err := vips.NewImageFromFile(file)
 	if err != nil {
 		slog.Error("thumbnail", "error", err)
@@ -953,5 +956,37 @@ func createThumbnail(file string) {
 		slog.Error("thumbnail", "error", err)
 	}
 
-	thumbnails[file] = b
+	hash := util.GetMD5Hash(file)
+
+	err = os.WriteFile(filepath.Join(util.ThumbnailsDir(), hash), b, 0o600)
+	if err != nil {
+		slog.Error("thumbnail", "error", err)
+		return b
+	}
+
+	thumbnailsMutex.Lock()
+	thumbnails[hash] = b
+	thumbnailsMutex.Unlock()
+
+	return b
+}
+
+func setupThumbnails() {
+	filepath.WalkDir(util.ThumbnailsDir(), func(path string, d fs.DirEntry, err error) error {
+		if d.IsDir() {
+			return nil
+		}
+
+		b, err := os.ReadFile(path)
+		if err != nil {
+			slog.Error("thumbnail", "error", err)
+			return nil
+		}
+
+		thumbnailsMutex.Lock()
+		thumbnails[d.Name()] = b
+		thumbnailsMutex.Unlock()
+
+		return nil
+	})
 }

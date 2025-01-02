@@ -1264,6 +1264,10 @@ func trimArgumentDelimiter(text string) string {
 }
 
 func executeOnSelect(entry util.Entry) {
+	if singleModule == nil || !appstate.IsRunning {
+		return
+	}
+
 	if singleModule.General().OnSelect != "" {
 		val := entry.Label
 

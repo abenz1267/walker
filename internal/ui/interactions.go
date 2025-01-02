@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -391,23 +392,23 @@ func activateItem(keepOpen, alt bool) {
 		return
 	}
 
-	if config.Cfg.Terminal != "" {
-		if entry.Terminal || forceTerminal {
-			if config.Cfg.TerminalTitleFlag != "" || entry.TerminalTitleFlag != "" {
-				flag := config.Cfg.TerminalTitleFlag
-
-				if flag == "" {
-					flag = entry.TerminalTitleFlag
-				}
-
-				toRun = fmt.Sprintf("%s %s -e %s", config.Cfg.Terminal, flag, toRun)
-			} else {
-				toRun = fmt.Sprintf("%s -e %s", config.Cfg.Terminal, toRun)
-			}
+	if entry.Terminal || forceTerminal {
+		if config.Cfg.Terminal == "" {
+			slog.Error("terminal", "error", "terminal is not set")
+			return
 		}
-	} else {
-		log.Println("terminal is not set")
-		return
+
+		if config.Cfg.TerminalTitleFlag != "" || entry.TerminalTitleFlag != "" {
+			flag := config.Cfg.TerminalTitleFlag
+
+			if flag == "" {
+				flag = entry.TerminalTitleFlag
+			}
+
+			toRun = fmt.Sprintf("%s %s -e %s", config.Cfg.Terminal, flag, toRun)
+		} else {
+			toRun = fmt.Sprintf("%s -e %s", config.Cfg.Terminal, toRun)
+		}
 	}
 
 	input := elements.input.Text()

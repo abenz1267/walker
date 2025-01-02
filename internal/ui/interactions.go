@@ -1043,7 +1043,6 @@ func quit(ignoreEvent bool) {
 	appstate.ExplicitPlaceholder = ""
 	appstate.ExplicitTheme = ""
 	appstate.IsDmenu = false
-	thumbnails = make(map[string][]byte)
 
 	explicits = []modules.Workable{}
 

@@ -520,7 +520,10 @@ func setupFactory() *gtk.SignalListItemFactory {
 				t, _ := gdk.NewTextureFromBytes(glib.NewBytes(b))
 				icon = gtk.NewImageFromPaintable(t)
 			} else {
-				createThumbnail(val.Image)
+				if _, ok := thumbnails[val.Image]; !ok {
+					createThumbnail(val.Image)
+				}
+
 				t, _ := gdk.NewTextureFromBytes(glib.NewBytes(thumbnails[val.Image]))
 				icon = gtk.NewImageFromPaintable(t)
 			}

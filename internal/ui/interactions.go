@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"fmt"
 	"log"
-	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -393,11 +392,6 @@ func activateItem(keepOpen, alt bool) {
 	}
 
 	if entry.Terminal || forceTerminal {
-		if config.Cfg.Terminal == "" {
-			slog.Error("terminal", "error", "terminal is not set")
-			return
-		}
-
 		if config.Cfg.TerminalTitleFlag != "" || entry.TerminalTitleFlag != "" {
 			flag := config.Cfg.TerminalTitleFlag
 

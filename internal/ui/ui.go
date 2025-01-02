@@ -229,7 +229,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			fmt.Println("Visible (first ui)", time.Now().UnixMilli())
 		}
 
-		if config.Cfg != nil {
+		if config.Cfg != nil && cfgErr == nil {
 			executeEvent(config.EventLaunch, "")
 
 			if !appstate.Password {

@@ -3,6 +3,7 @@ package config
 import (
 	"embed"
 	_ "embed"
+	"errors"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -403,6 +404,10 @@ func Get(config string) error {
 	Cfg = parsed
 
 	go setTerminal()
+
+	if Cfg.Terminal == "" {
+		return errors.New("Couldn't determine terminal, try setting terminal explicitly in config")
+	}
 
 	return nil
 }

@@ -26,6 +26,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/joho/godotenv"
 )
 
 //go:embed version.txt
@@ -38,6 +39,15 @@ func main() {
 
 	vips.Startup(nil)
 	defer vips.Shutdown()
+
+	envFile := filepath.Join(util.ConfigDir(), ".env")
+
+	if util.FileExists(envFile) {
+		err := godotenv.Load(envFile)
+		if err != nil {
+			log.Fatal(err)
+		}
+	}
 
 	state := state.Get()
 

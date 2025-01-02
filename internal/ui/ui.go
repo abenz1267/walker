@@ -28,18 +28,19 @@ import (
 )
 
 var (
-	elements         *Elements
-	startupTheme     string
-	layout           *config.UI
-	layouts          map[string]*config.UI
-	common           *Common
-	explicits        []modules.Workable
-	toUse            []modules.Workable
-	available        []modules.Workable
-	hstry            history.History
-	appstate         *state.AppState
-	thumbnails       map[string][]byte
-	debouncedProcess func(f func())
+	elements          *Elements
+	startupTheme      string
+	layout            *config.UI
+	layouts           map[string]*config.UI
+	common            *Common
+	explicits         []modules.Workable
+	toUse             []modules.Workable
+	available         []modules.Workable
+	hstry             history.History
+	appstate          *state.AppState
+	thumbnails        map[string][]byte
+	debouncedProcess  func(f func())
+	debouncedOnSelect func(f func())
 )
 
 type Common struct {
@@ -102,6 +103,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			}
 
 			debouncedProcess = util.NewDebounce(time.Millisecond * time.Duration(t))
+			debouncedOnSelect = util.NewDebounce(time.Millisecond * 5)
 
 			theme := config.Cfg.Theme
 			themeBase := config.Cfg.ThemeBase
@@ -285,6 +287,15 @@ func setupCommon(app *gtk.Application) {
 
 	selection.ConnectSelectionChanged(func(pos, item uint) {
 		executeEvent(config.EventSelection, "")
+
+		if singleModule != nil {
+			valObj := common.items.Item(common.selection.Selected())
+			entry := gioutil.ObjectValue[util.Entry](valObj)
+
+			debouncedOnSelect(func() {
+				executeOnSelect(entry)
+			})
+		}
 
 		elements.grid.ScrollTo(common.selection.Selected(), gtk.ListScrollNone, nil)
 	})
@@ -801,7 +812,20 @@ func afterUI() {
 	common.selection.ConnectItemsChanged(func(p, r, a uint) {
 		if common.selection.NItems() > 0 {
 			common.selection.SetSelected(0)
+
+			if common.items.NItems() == 1 && appstate.AutoSelect {
+				activateItem(false, false)
+			}
+
 			elements.grid.ScrollTo(0, gtk.ListScrollNone, nil)
+
+			if singleModule != nil {
+				entry := gioutil.ObjectValue[util.Entry](common.items.Item(0))
+
+				debouncedOnSelect(func() {
+					executeOnSelect(entry)
+				})
+			}
 		}
 
 		handleListVisibility()

@@ -332,6 +332,8 @@ func (e Plugin) parseKv(out []byte) []util.Entry {
 				entry.DragDropData = pair[1]
 			case pair[0] == "hide_text":
 				entry.HideText, _ = strconv.ParseBool(pair[1])
+			case pair[0] == "value":
+				entry.Value = pair[1]
 			}
 		}
 

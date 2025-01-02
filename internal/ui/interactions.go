@@ -908,11 +908,6 @@ func processAsync(text string) {
 		if !layout.Window.Box.Search.Spinner.Hide {
 			elements.spinner.SetVisible(false)
 		}
-
-		if common.items.NItems() == 1 && appstate.AutoSelect {
-			common.selection.SelectItem(0, true)
-			activateItem(false, false)
-		}
 	})
 }
 
@@ -1267,4 +1262,34 @@ func trimArgumentDelimiter(text string) string {
 	}
 
 	return text
+}
+
+func executeOnSelect(entry util.Entry) {
+	if singleModule.General().OnSelect != "" {
+		val := entry.Label
+
+		if entry.Value != "" {
+			val = entry.Value
+		}
+
+		toRun := singleModule.General().OnSelect
+
+		explicit := false
+
+		if strings.Contains(singleModule.General().OnSelect, "%RESULT%") {
+			toRun = strings.ReplaceAll(singleModule.General().OnSelect, "%RESULT%", val)
+			explicit = true
+		}
+
+		cmd := exec.Command("sh", "-c", toRun)
+
+		if !explicit {
+			setStdin(cmd, &util.Piped{String: val, Type: "string"})
+		}
+
+		err := cmd.Start()
+		if err != nil {
+			log.Println(err)
+		}
+	}
 }

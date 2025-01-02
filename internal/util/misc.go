@@ -31,20 +31,21 @@ type Entry struct {
 	Image             string       `mapstructure:"image,omitempty" json:"image,omitempty"`
 	InitialClass      string       `mapstructure:"initial_class,omitempty" json:"initial_class,omitempty"`
 	Label             string       `mapstructure:"label,omitempty" json:"label,omitempty"`
-	MatchedLabel      string       `mapstructure:"matched_label,omitempty" json:"matched_label,omitempty"`
 	MatchFields       int          `mapstructure:"match_fields,omitempty" json:"match_fields,omitempty"`
+	MatchedLabel      string       `mapstructure:"matched_label,omitempty" json:"matched_label,omitempty"`
+	MatchedSub        string       `mapstructure:"matched_sub,omitempty" json:"matched_sub,omitempty"`
 	Matching          MatchingType `mapstructure:"matching,omitempty" json:"matching,omitempty"`
 	Path              string       `mapstructure:"path,omitempty" json:"path,omitempty"`
+	Prefer            bool         `mapstructure:"prefer,omitempty" json:"prefer,omitempty"`
 	RecalculateScore  bool         `mapstructure:"recalculate_score,omitempty" json:"recalculate_score,omitempty"`
 	ScoreFinal        float64      `mapstructure:"score_final,omitempty" json:"score_final,omitempty"`
 	ScoreFuzzy        float64      `mapstructure:"score_fuzzy,omitempty" json:"score_fuzzy,omitempty"`
 	Searchable        string       `mapstructure:"searchable,omitempty" json:"searchable,omitempty"`
 	Searchable2       string       `mapstructure:"searchable2,omitempty" json:"searchable2,omitempty"`
 	Sub               string       `mapstructure:"sub,omitempty" json:"sub,omitempty"`
-	MatchedSub        string       `mapstructure:"matched_sub,omitempty" json:"matched_sub,omitempty"`
 	Terminal          bool         `mapstructure:"terminal,omitempty" json:"terminal,omitempty"`
 	TerminalTitleFlag string       `mapstructure:"terminal_title_flag,omitempty" json:"terminal_title_flag,omitempty"`
-	Prefer            bool         `mapstructure:"prefer,omitempty" json:"prefer,omitempty"`
+	Value             string       `mapstructure:"value,omitempty" json:"value,omitempty"`
 
 	// internal
 	DaysSinceUsed    int                       `mapstructure:"-"`
@@ -57,6 +58,7 @@ type Entry struct {
 	OpenWindows      uint                      `mapstructure:"-"`
 	Piped            Piped                     `mapstructure:"-"`
 	PipedAlt         Piped                     `mapstructure:"-"`
+	OnSelectPiped    Piped                     `mapstructure:"-"`
 	Prefix           string                    `mapstructure:"-"`
 	SingleModuleOnly bool                      `mapstructure:"-"`
 	SpecialFunc      func(args ...interface{}) `mapstructure:"-"`

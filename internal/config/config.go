@@ -208,6 +208,7 @@ type GeneralModule struct {
 	ThemeBase          []string    `koanf:"theme_base"`
 	Typeahead          bool        `koanf:"typeahead"`
 	Weight             int         `koanf:"weight"`
+	OnSelect           string      `koanf:"on_select"`
 
 	// internal
 	HasInitialSetup bool `koanf:"-"`

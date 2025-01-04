@@ -823,8 +823,13 @@ func afterUI() {
 
 			common.selection.SetSelected(0)
 
-			if common.items.NItems() == 1 && appstate.AutoSelect {
-				activateItem(false, false)
+			if common.items.NItems() == 1 {
+				entry := gioutil.ObjectValue[util.Entry](common.items.Item(0))
+				module := findModule(entry.Module, toUse)
+
+				if module.General().AutoSelect || appstate.AutoSelect {
+					activateItem(false, false)
+				}
 			}
 
 			elements.grid.ScrollTo(0, gtk.ListScrollNone, nil)

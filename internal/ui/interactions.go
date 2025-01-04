@@ -459,24 +459,25 @@ func handleSwitcher(module string) {
 			explicits = []modules.Workable{}
 			explicits = append(explicits, m)
 
-			common.items.Splice(0, int(common.items.NItems()))
-			elements.input.SetObjectProperty("placeholder-text", m.General().Placeholder)
-			setupSingleModule()
+			glib.IdleAdd(func() {
+				common.items.Splice(0, int(common.items.NItems()))
+				elements.input.SetObjectProperty("placeholder-text", m.General().Placeholder)
 
-			if val, ok := layouts[singleModule.General().Name]; ok {
-				glib.IdleAdd(func() {
+				setupSingleModule()
+
+				if val, ok := layouts[singleModule.General().Name]; ok {
 					layout = val
 					setupLayout(singleModule.General().Theme, singleModule.General().ThemeBase)
-				})
-			}
+				}
 
-			if elements.input.Text() != "" {
-				elements.input.SetText("")
-			} else {
-				debouncedProcess(process)
-			}
+				if elements.input.Text() != "" {
+					elements.input.SetText("")
+				} else {
+					debouncedProcess(process)
+				}
 
-			elements.input.GrabFocus()
+				elements.input.GrabFocus()
+			})
 		}
 	}
 }
@@ -1014,7 +1015,7 @@ func quit(ignoreEvent bool) {
 
 	appstate.IsRunning = false
 	appstate.IsSingle = false
-	appstate.AutoSelect = appstate.AutoSelectOld
+	appstate.AutoSelect = false
 
 	historyIndex = 0
 

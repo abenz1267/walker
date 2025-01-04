@@ -13,7 +13,6 @@ import (
 type AppState struct {
 	ActiveItem          *int
 	AutoSelect          bool
-	AutoSelectOld       bool
 	Clipboard           modules.Workable
 	ConfigError         error
 	IsDebug             bool

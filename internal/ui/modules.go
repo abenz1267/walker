@@ -200,12 +200,6 @@ func setupSingleModule() {
 		singleModule = toUse[0]
 	}
 
-	appstate.AutoSelectOld = appstate.AutoSelect
-
-	if !appstate.AutoSelect {
-		appstate.AutoSelect = singleModule.General().AutoSelect
-	}
-
 	glib.IdleAdd(func() {
 		debouncedProcess = util.NewDebounce(time.Millisecond * time.Duration(singleModule.General().Delay))
 	})

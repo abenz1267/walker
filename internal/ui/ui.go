@@ -817,6 +817,10 @@ func afterUI() {
 
 	common.selection.ConnectItemsChanged(func(p, r, a uint) {
 		if common.selection.NItems() > 0 {
+			if elements.listPlaceholder.Visible() {
+				elements.listPlaceholder.SetVisible(false)
+			}
+
 			common.selection.SetSelected(0)
 
 			if common.items.NItems() == 1 && appstate.AutoSelect {
@@ -831,6 +835,10 @@ func afterUI() {
 				debouncedOnSelect(func() {
 					executeOnSelect(entry)
 				})
+			}
+		} else {
+			if config.Cfg.List.Placeholder != "" {
+				elements.listPlaceholder.SetVisible(true)
 			}
 		}
 

@@ -548,10 +548,6 @@ func process() {
 		return
 	}
 
-	if config.Cfg.List.Placeholder != "" {
-		elements.listPlaceholder.SetVisible(false)
-	}
-
 	elements.typeahead.SetText("")
 
 	text := strings.TrimSpace(elements.input.Text())
@@ -879,10 +875,6 @@ func processAsync(text string) {
 	}
 
 	glib.IdleAdd(func() {
-		if config.Cfg.List.Placeholder != "" && len(entries) == 0 {
-			elements.listPlaceholder.SetVisible(true)
-		}
-
 		common.items.Splice(0, int(common.items.NItems()), entries...)
 
 		if config.Cfg.IgnoreMouse && !elements.grid.CanTarget() {
@@ -895,15 +887,13 @@ func processAsync(text string) {
 		} else if config.Cfg.IgnoreMouse {
 			elements.grid.SetCanTarget(false)
 		}
-	})
 
-	tahAcceptedIdentifier = ""
-
-	glib.IdleAdd(func() {
 		if !layout.Window.Box.Search.Spinner.Hide {
 			elements.spinner.SetVisible(false)
 		}
 	})
+
+	tahAcceptedIdentifier = ""
 }
 
 func setTypeahead(modules []modules.Workable) {

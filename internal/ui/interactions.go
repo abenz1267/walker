@@ -1152,7 +1152,7 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 			score, pos = util.FuzzyScore(text, t)
 		}
 
-		if score == 0 {
+		if score < 2 {
 			continue
 		}
 

@@ -7,15 +7,17 @@
       url = "github:hercules-ci/flake-parts";
       inputs.nixpkgs-lib.follows = "nixpkgs";
     };
+    systems.url = "github:nix-systems/default-linux";
   };
 
   outputs = inputs @ {
     flake-parts,
     self,
+    systems,
     ...
   }:
     flake-parts.lib.mkFlake {inherit inputs;} {
-      systems = ["x86_64-linux" "aarch64-linux"];
+      systems = import systems;
 
       perSystem = {pkgs, ...}: let
         walker = pkgs.callPackage ./nix/package.nix {};

@@ -463,6 +463,10 @@ func (a *Applications) parse() []util.Entry {
 								app.Generic.Exec = strings.ReplaceAll(app.Generic.Exec, v, "")
 							}
 
+							if strings.Contains(app.Generic.Exec, "wine C:") {
+								app.Generic.Exec = transformWineExec(app.Generic.Exec)
+							}
+
 							continue
 						}
 					} else {
@@ -472,6 +476,11 @@ func (a *Applications) parse() []util.Entry {
 							for _, v := range flags {
 								app.Actions[len(app.Actions)-1].Exec = strings.ReplaceAll(app.Actions[len(app.Actions)-1].Exec, v, "")
 							}
+
+							if strings.Contains(app.Actions[len(app.Actions)-1].Exec, "wine C:") {
+								app.Actions[len(app.Actions)-1].Exec = transformWineExec(app.Actions[len(app.Actions)-1].Exec)
+							}
+
 							continue
 						}
 
@@ -554,4 +563,17 @@ func (a *Applications) parse() []util.Entry {
 	}
 
 	return entries
+}
+
+func transformWineExec(in string) string {
+	splits := strings.Split(in, "wine ")
+	prefix := splits[0]
+	path := splits[1]
+
+	path = strings.ReplaceAll(path, "\\\\", "\\")
+	path = strings.ReplaceAll(path, "\\ ", " ")
+
+	result := fmt.Sprintf("%s wine '%s'", prefix, path)
+
+	return result
 }

@@ -403,7 +403,7 @@ func Get(config string) error {
 
 	Cfg = parsed
 
-	go setTerminal()
+	setTerminal()
 
 	if Cfg.Terminal == "" {
 		return errors.New("Couldn't determine terminal, try setting terminal explicitly in config")

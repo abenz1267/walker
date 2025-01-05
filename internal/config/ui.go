@@ -57,6 +57,8 @@ func (u *UI) InitUnitMaps() {
 	u.IconSizeMap["inherit"] = gtk.IconSizeInherit
 	u.IconSizeMap["normal"] = gtk.IconSizeNormal
 	u.IconSizeMap["large"] = gtk.IconSizeLarge
+	u.IconSizeMap["larger"] = gtk.IconSizeLarge
+	u.IconSizeMap["largest"] = gtk.IconSizeLarge
 
 	u.IconSizeIntMap = make(map[string]int)
 	u.IconSizeIntMap["inherit"] = -1

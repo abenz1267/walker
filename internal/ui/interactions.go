@@ -711,8 +711,6 @@ func processAsync(text string) {
 				wg.Done()
 				continue
 			}
-
-			text = strings.TrimPrefix(text, prefix)
 		}
 
 		if !p[k].General().IsSetup {
@@ -727,6 +725,8 @@ func processAsync(text string) {
 			if len(text) < mCfg.MinChars {
 				return
 			}
+
+			text = strings.TrimPrefix(text, w.General().Prefix)
 
 			e := w.Entries(text)
 

@@ -111,21 +111,23 @@ func (r Runner) Entries(term string) []util.Entry {
 		term = strings.TrimPrefix(term, "'")
 	}
 
-	if path, _ := exec.LookPath(fields[0]); path != "" {
-		if r.config.GenericEntry {
-			n := util.Entry{
-				Label:            fmt.Sprintf("run: %s", term),
-				Sub:              "Runner",
-				Exec:             toRun,
-				Class:            "runner",
-				History:          true,
-				RecalculateScore: true,
-				MatchFields:      1,
-				Matching:         util.Fuzzy,
-				Terminal:         true,
-			}
+	if term != "" {
+		if path, _ := exec.LookPath(fields[0]); path != "" {
+			if r.config.GenericEntry {
+				n := util.Entry{
+					Label:            fmt.Sprintf("run: %s", term),
+					Sub:              "Runner",
+					Exec:             toRun,
+					Class:            "runner",
+					History:          true,
+					RecalculateScore: true,
+					MatchFields:      1,
+					Matching:         util.Fuzzy,
+					Terminal:         true,
+				}
 
-			entries = append(entries, n)
+				entries = append(entries, n)
+			}
 		}
 	}
 

@@ -23,6 +23,13 @@ slider,
   all: unset;
 }
 
+#cfgerr {
+  background: rgba(255, 0, 0, 0.4);
+  margin-top: 20px;
+  padding: 8px;
+  font-size: 1.2em;
+}
+
 #window {
   color: @foreground;
 }

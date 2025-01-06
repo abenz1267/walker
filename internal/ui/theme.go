@@ -197,7 +197,6 @@ func setupBoxTheme() {
 	}
 
 	if first != nil && last != nil {
-
 		if layout.Window.Box.Revert {
 			if !scrolledIsFirst {
 				elements.box.ReorderChildAfter(last, first)
@@ -257,6 +256,14 @@ func setupBoxTheme() {
 		if layout.Window.Box.Bar.Position == "end" {
 			elements.box.Append(elements.bar)
 		}
+	}
+
+	if cfgErr != nil {
+		elements.box.Append(elements.cfgErr)
+	}
+
+	if layoutErr != nil {
+		elements.box.Append(elements.layoutErr)
 	}
 }
 

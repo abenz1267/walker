@@ -191,8 +191,8 @@ wrap = true
 [ui.window.box.scroll]
 v_align = "start"
 v_expand = false
-h_expand = false
-h_align = "start"
+h_expand = true
+h_align = "fill"
 height = -1
 width = -1
 hide = false

@@ -249,7 +249,7 @@ func init() {
 	os.WriteFile(file, defaultThemeLayout, 0o600)
 }
 
-func GetLayout(theme string, base []string) *UI {
+func GetLayout(theme string, base []string) (*UI, error) {
 	layout := koanf.New(".")
 
 	err := layout.Load(rawbytes.Provider(defaultLayout), toml.Parser())
@@ -263,26 +263,19 @@ func GetLayout(theme string, base []string) *UI {
 
 	base = append(base, theme)
 
+	var cfgErr error
+
 	for _, v := range base {
 		tomlFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.toml", v))
 		jsonFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.json", v))
 		yamlFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.yaml", v))
 
 		if util.FileExists(tomlFile) {
-			err := layout.Load(file.Provider(tomlFile), toml.Parser())
-			if err != nil {
-				return nil
-			}
+			cfgErr = layout.Load(file.Provider(tomlFile), toml.Parser())
 		} else if util.FileExists(jsonFile) {
-			err := layout.Load(file.Provider(jsonFile), json.Parser())
-			if err != nil {
-				return nil
-			}
+			cfgErr = layout.Load(file.Provider(jsonFile), json.Parser())
 		} else if util.FileExists(yamlFile) {
-			err := layout.Load(file.Provider(yamlFile), yaml.Parser())
-			if err != nil {
-				return nil
-			}
+			cfgErr = layout.Load(file.Provider(yamlFile), yaml.Parser())
 		} else {
 			slog.Error("layout", "not found", v)
 		}
@@ -290,11 +283,18 @@ func GetLayout(theme string, base []string) *UI {
 
 	ui := &UICfg{}
 
-	err = layout.Unmarshal("", ui)
-	if err != nil {
-		slog.Error("layout", "error", err)
-		return nil
+	marshallErr := layout.Unmarshal("", ui)
+
+	if marshallErr != nil || cfgErr != nil {
+		layout = koanf.New(".")
+		_ = layout.Load(rawbytes.Provider(defaultLayout), toml.Parser())
+		_ = layout.Load(rawbytes.Provider(defaultThemeLayout), toml.Parser())
+		_ = layout.Unmarshal("", ui)
 	}
 
-	return &ui.UI
+	if marshallErr == nil {
+		return &ui.UI, cfgErr
+	}
+
+	return &ui.UI, marshallErr
 }

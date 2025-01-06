@@ -106,9 +106,7 @@ func main() {
 
 			if state.IsService {
 				state.ConfigError = config.Get(state.ExplicitConfig)
-				if state.ConfigError == nil {
-					state.StartServiceableModules()
-				}
+				state.StartServiceableModules()
 			}
 
 			if slices.Contains(args, "-d") || slices.Contains(args, "--dmenu") {

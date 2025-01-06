@@ -373,21 +373,14 @@ func Get(config string) error {
 	jsonFile := filepath.Join(util.ConfigDir(), "config.json")
 	yamlFile := filepath.Join(util.ConfigDir(), "config.yaml")
 
+	var usrCfgErr error
+
 	if util.FileExists(tomlFile) {
-		err := defaults.Load(file.Provider(tomlFile), toml.Parser())
-		if err != nil {
-			return err
-		}
+		usrCfgErr = defaults.Load(file.Provider(tomlFile), toml.Parser())
 	} else if util.FileExists(jsonFile) {
-		err := defaults.Load(file.Provider(jsonFile), json.Parser())
-		if err != nil {
-			return err
-		}
+		usrCfgErr = defaults.Load(file.Provider(jsonFile), json.Parser())
 	} else if util.FileExists(yamlFile) {
-		err := defaults.Load(file.Provider(yamlFile), yaml.Parser())
-		if err != nil {
-			return err
-		}
+		usrCfgErr = defaults.Load(file.Provider(yamlFile), yaml.Parser())
 	} else {
 		err := os.WriteFile(tomlFile, defaultConfig, 0o600)
 		if err != nil {
@@ -397,9 +390,12 @@ func Get(config string) error {
 
 	parsed := &Config{}
 
-	err = defaults.Unmarshal("", parsed)
-	if err != nil {
-		return err
+	marshallErr := defaults.Unmarshal("", parsed)
+
+	if marshallErr != nil || usrCfgErr != nil {
+		defaults = koanf.New(".")
+		_ = defaults.Load(rawbytes.Provider(defaultConfig), toml.Parser())
+		_ = defaults.Unmarshal("", parsed)
 	}
 
 	Cfg = parsed
@@ -410,7 +406,11 @@ func Get(config string) error {
 		return errors.New("Couldn't determine terminal, try setting terminal explicitly in config")
 	}
 
-	return nil
+	if marshallErr == nil {
+		return usrCfgErr
+	}
+
+	return marshallErr
 }
 
 func setTerminal() {

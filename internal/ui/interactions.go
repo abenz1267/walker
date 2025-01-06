@@ -1005,7 +1005,7 @@ func quit(ignoreEvent bool) {
 	if singleModule != nil {
 		if _, ok := layouts[singleModule.General().Name]; ok {
 			glib.IdleAdd(func() {
-				layout = config.GetLayout(config.Cfg.Theme, config.Cfg.ThemeBase)
+				layout, _ = config.GetLayout(config.Cfg.Theme, config.Cfg.ThemeBase)
 				setupLayout(config.Cfg.Theme, config.Cfg.ThemeBase)
 			})
 		}

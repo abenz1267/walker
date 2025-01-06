@@ -78,7 +78,7 @@ func setupLayouts(modules []modules.Workable) {
 	for _, v := range modules {
 		g := v.General()
 		if v != nil && g.Theme != "" && g.Theme != config.Cfg.Theme {
-			layouts[g.Name] = config.GetLayout(g.Theme, g.ThemeBase)
+			layouts[g.Name], layoutErr = config.GetLayout(g.Theme, g.ThemeBase)
 		}
 	}
 }

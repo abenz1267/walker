@@ -9,6 +9,7 @@ import (
 	"log"
 	"log/slog"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -570,6 +571,38 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 		label := gtk.NewLabel(labelTxt)
 		label.SetUseMarkup(true)
+
+		if val.Output != "" {
+			go func() {
+				run := val.Output
+
+				text := elements.input.Text()
+				text = strings.TrimPrefix(text, "'")
+
+				module := findModule(val.Module, toUse)
+
+				if module.General().Prefix != "" {
+					text = strings.TrimPrefix(text, module.General().Prefix)
+				}
+
+				if strings.Contains(run, "%TERM%") {
+					run = strings.ReplaceAll(run, "%TERM%", text)
+				}
+
+				run = trimArgumentDelimiter(run)
+
+				cmd := exec.Command("sh", "-c", run)
+
+				out, err := cmd.CombinedOutput()
+				if err != nil {
+					log.Println(err)
+				}
+
+				glib.IdleAdd(func() {
+					label.SetText(strings.TrimSpace(string(out)))
+				})
+			}()
+		}
 
 		if val.MatchedLabel != "" {
 			val.MatchedLabel = strings.ReplaceAll(val.MatchedLabel, "&", "&amp;")

@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
-	"log/slog"
 	"net/url"
 	"os/exec"
 	"strconv"
@@ -112,21 +111,7 @@ func (e Plugin) Entries(term string) []util.Entry {
 	}
 
 	if e.Config.Output {
-		var out []byte
-
-		if len(e.cachedOutput) > 0 {
-			out = e.cachedOutput
-		} else {
-			cmd := exec.Command("sh", "-c", src)
-
-			var err error
-
-			out, err = cmd.CombinedOutput()
-			if err != nil {
-				slog.Error("plugin", e.Config.Name, "error", err)
-				return nil
-			}
-		}
+		out := e.cachedOutput
 
 		var score float64
 
@@ -142,11 +127,20 @@ func (e Plugin) Entries(term string) []util.Entry {
 
 		result := string(out)
 
+		if result == "" {
+			result = e.Config.OutputPlaceholder
+		}
+
+		if result == "" {
+			result = "Running command..."
+		}
+
 		e := util.Entry{
 			Label:            strings.TrimSpace(result),
 			Exec:             strings.ReplaceAll(e.Config.Cmd, "%RESULT%", result),
 			ExecAlt:          strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result),
 			Sub:              e.Config.Name,
+			Output:           e.Config.Src,
 			ScoreFinal:       score,
 			RecalculateScore: false,
 			Categories:       e.Config.Keywords,

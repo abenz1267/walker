@@ -210,6 +210,7 @@ type GeneralModule struct {
 	Typeahead          bool        `koanf:"typeahead"`
 	Weight             int         `koanf:"weight"`
 	OnSelect           string      `koanf:"on_select"`
+	OutputPlaceholder  string      `koanf:"output_placeholder"`
 
 	// internal
 	HasInitialSetup bool `koanf:"-"`

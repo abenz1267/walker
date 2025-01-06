@@ -59,6 +59,7 @@ type Entry struct {
 	Piped            Piped                     `mapstructure:"-"`
 	PipedAlt         Piped                     `mapstructure:"-"`
 	OnSelectPiped    Piped                     `mapstructure:"-"`
+	Output           string                    `mapstructure:"-"`
 	Prefix           string                    `mapstructure:"-"`
 	SingleModuleOnly bool                      `mapstructure:"-"`
 	SpecialFunc      func(args ...interface{}) `mapstructure:"-"`

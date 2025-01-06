@@ -112,12 +112,20 @@ func (e Plugin) Entries(term string) []util.Entry {
 	}
 
 	if e.Config.Output {
-		cmd := exec.Command("sh", "-c", src)
+		var out []byte
 
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			slog.Error("plugin", e.Config.Name, "error", err)
-			return nil
+		if len(e.cachedOutput) > 0 {
+			out = e.cachedOutput
+		} else {
+			cmd := exec.Command("sh", "-c", src)
+
+			var err error
+
+			out, err = cmd.CombinedOutput()
+			if err != nil {
+				slog.Error("plugin", e.Config.Name, "error", err)
+				return nil
+			}
 		}
 
 		var score float64

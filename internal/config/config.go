@@ -4,6 +4,8 @@ import (
 	"embed"
 	_ "embed"
 	"errors"
+	"fmt"
+	"log/slog"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -193,6 +195,7 @@ type GeneralModule struct {
 	AutoSelect         bool        `koanf:"auto_select"`
 	Blacklist          []Blacklist `koanf:"blacklist"`
 	Delay              int         `koanf:"delay"`
+	ExternalConfig     bool        `koanf:"external_config"`
 	Hidden             bool        `koanf:"hidden"`
 	History            bool        `koanf:"history"`
 	Icon               string      `koanf:"icon"`
@@ -358,8 +361,21 @@ type List struct {
 
 var Cfg *Config
 
+var (
+	tomlFile = filepath.Join(util.ConfigDir(), "config.toml")
+	jsonFile = filepath.Join(util.ConfigDir(), "config.json")
+	yamlFile = filepath.Join(util.ConfigDir(), "config.yaml")
+)
+
 func init() {
 	os.MkdirAll(util.ConfigDir(), 0755)
+
+	if !util.FileExists(tomlFile) && !util.FileExists(jsonFile) && !util.FileExists(yamlFile) {
+		err := os.WriteFile(tomlFile, defaultConfig, 0o600)
+		if err != nil {
+			slog.Error("Couldn't create config file", "err", err)
+		}
+	}
 }
 
 func Get(config string) error {
@@ -369,22 +385,28 @@ func Get(config string) error {
 		return err
 	}
 
-	tomlFile := filepath.Join(util.ConfigDir(), "config.toml")
-	jsonFile := filepath.Join(util.ConfigDir(), "config.json")
-	yamlFile := filepath.Join(util.ConfigDir(), "config.yaml")
+	usrCfg, usrCfgErr := parseConfigFile("config")
 
-	var usrCfgErr error
+	defaults.Merge(usrCfg)
 
-	if util.FileExists(tomlFile) {
-		usrCfgErr = defaults.Load(file.Provider(tomlFile), toml.Parser())
-	} else if util.FileExists(jsonFile) {
-		usrCfgErr = defaults.Load(file.Provider(jsonFile), json.Parser())
-	} else if util.FileExists(yamlFile) {
-		usrCfgErr = defaults.Load(file.Provider(yamlFile), yaml.Parser())
-	} else {
-		err := os.WriteFile(tomlFile, defaultConfig, 0o600)
-		if err != nil {
-			return err
+	b := defaults.Get("builtins")
+
+	if builtins, ok := b.(map[string]interface{}); ok {
+		for module, v := range builtins {
+			if gm, ok := v.(map[string]interface{}); ok {
+				for k, v := range gm {
+					if k == "external_config" {
+						if v == true {
+							var cfgFile *koanf.Koanf
+
+							cfgFile, usrCfgErr = parseConfigFile(module)
+							if err == nil {
+								defaults.MergeAt(cfgFile, fmt.Sprintf("builtins.%s", module))
+							}
+						}
+					}
+				}
+			}
 		}
 	}
 
@@ -479,4 +501,26 @@ func setTerminal() {
 			break
 		}
 	}
+}
+
+func parseConfigFile(name string) (*koanf.Koanf, error) {
+	tomlFile := filepath.Join(util.ConfigDir(), fmt.Sprintf("%s.toml", name))
+	jsonFile := filepath.Join(util.ConfigDir(), fmt.Sprintf("%s.json", name))
+	yamlFile := filepath.Join(util.ConfigDir(), fmt.Sprintf("%s.yaml", name))
+
+	var usrCfgErr error
+
+	config := koanf.New(".")
+
+	if util.FileExists(tomlFile) {
+		usrCfgErr = config.Load(file.Provider(tomlFile), toml.Parser())
+	} else if util.FileExists(jsonFile) {
+		usrCfgErr = config.Load(file.Provider(jsonFile), json.Parser())
+	} else if util.FileExists(yamlFile) {
+		usrCfgErr = config.Load(file.Provider(yamlFile), yaml.Parser())
+	} else {
+		return nil, errors.New("Couldn't find config file")
+	}
+
+	return config, usrCfgErr
 }

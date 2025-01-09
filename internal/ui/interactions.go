@@ -265,7 +265,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				uc := gdk.KeyvalToUnicode(gdk.KeyvalToLower(val))
 
 				if uc != 0 {
-					index := slices.Index(appstate.UsedLabels, string(uc))
+					index := slices.Index(appstate.UsedLabels, string(rune(uc)))
 
 					if index != -1 {
 						keepOpen := modifier == (keepOpenModifier | labelModifier)
@@ -301,7 +301,7 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 			if !hasFocus {
 				elements.input.GrabFocus()
 				char := gdk.KeyvalToUnicode(val)
-				elements.input.SetText(elements.input.Text() + string(char))
+				elements.input.SetText(elements.input.Text() + string(rune(char)))
 				elements.input.SetPosition(-1)
 			}
 

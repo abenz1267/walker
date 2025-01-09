@@ -126,7 +126,7 @@ func setAvailables() {
 
 		if ok := v.Setup(); ok {
 			if v.General().Name == "" {
-				log.Panicln("module has no name\n")
+				log.Panicln("module has no name")
 			}
 
 			if slices.Contains(config.Cfg.Disabled, v.General().Name) {

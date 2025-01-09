@@ -966,7 +966,7 @@ func watchTheme() {
 
 	err = watcher.Add(themes)
 	if err != nil {
-		slog.Error("watcher add error", err)
+		slog.Error("watcher", "add", err)
 		return
 	}
 

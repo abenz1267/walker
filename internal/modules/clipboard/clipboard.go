@@ -197,7 +197,7 @@ func (c *Clipboard) watch() {
 	for {
 		conn, err := l.AcceptUnix()
 		if err != nil {
-			slog.Error("clipboard", "error", "accept", err)
+			slog.Error("clipboard", "socket", err)
 		}
 
 		b := make([]byte, 104_857_600)
@@ -262,13 +262,13 @@ func Update(content []byte) {
 
 	conn, err := net.Dial("unix", ClipboardSocketAddrUpdate)
 	if err != nil {
-		slog.Error("clipboard", "error", "socket", err)
+		slog.Error("clipboard", "socket", err)
 		return
 	}
 
 	_, err = conn.Write(content)
 	if err != nil {
-		slog.Error("clipboard", "error", "write", err)
+		slog.Error("clipboard", "socket", err)
 	}
 }
 

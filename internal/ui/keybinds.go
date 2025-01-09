@@ -201,7 +201,7 @@ func (keybinds) validate(bind string) {
 			_, existsSpecial := specialKeys[v]
 
 			if !existsMod && !existsSpecial {
-				slog.Error("invalid keybind", bind, "key", v)
+				slog.Error("keybinds", "bind", bind, "key", v)
 			}
 		}
 	}
@@ -212,7 +212,7 @@ func (keybinds) validateTriggerLabels(bind string) {
 	_, exists := modifiersInt[fields[0]]
 
 	if !exists || len(fields[0]) == 1 {
-		slog.Error("invalid trigger_label keybind", bind)
+		slog.Error("keybinds", "invalid trigger_label keybind", bind)
 	}
 }
 

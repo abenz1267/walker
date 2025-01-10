@@ -854,7 +854,7 @@ func afterUI() {
 
 	common.selection.ConnectItemsChanged(func(p, r, a uint) {
 		if common.selection.NItems() > 0 {
-			if elements.listPlaceholder.Visible() {
+			if elements.listPlaceholder != nil && elements.listPlaceholder.Visible() {
 				elements.listPlaceholder.SetVisible(false)
 			}
 

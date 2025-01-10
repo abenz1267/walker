@@ -212,6 +212,8 @@ func setupBoxTheme() {
 
 	if config.Cfg.List.Placeholder != "" {
 		setupLabelWidgetStyle(elements.listPlaceholder, &layout.Window.Box.Scroll.List.Placeholder)
+
+		elements.listPlaceholder.SetVisible(false)
 	}
 
 	if layout.Window.Box.Revert {

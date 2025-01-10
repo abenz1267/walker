@@ -879,7 +879,7 @@ func afterUI() {
 				})
 			}
 		} else {
-			if config.Cfg.List.Placeholder != "" {
+			if config.Cfg.List.Placeholder != "" && elements.input.Text() != "" {
 				elements.listPlaceholder.SetVisible(true)
 			}
 		}

@@ -13,7 +13,18 @@ type InputHistoryItem struct {
 
 type InputHistory map[string][]InputHistoryItem
 
-var inputhstry InputHistory
+var (
+	inputhstry InputHistory
+	file       = filepath.Join(util.CacheDir(), "inputhistory_0.7.6.gob")
+)
+
+func init() {
+	if inputhstry == nil {
+		inputhstry = make(InputHistory)
+	}
+
+	_ = util.FromGob(file, &inputhstry)
+}
 
 func SaveInputHistory(module string, input string, identifier string) {
 	if inputhstry == nil {
@@ -31,15 +42,13 @@ func SaveInputHistory(module string, input string, identifier string) {
 
 	inputhstry[module] = append([]InputHistoryItem{n}, inputhstry[module]...)
 
-	util.ToGob(&inputhstry, filepath.Join(util.CacheDir(), "inputhistory_0.7.6.gob"))
+	util.ToGob(&inputhstry, file)
 }
 
 func GetInputHistory(module string) []InputHistoryItem {
 	if inputhstry != nil {
 		return inputhstry[module]
 	}
-
-	file := filepath.Join(util.CacheDir(), "inputhistory_0.7.6.gob")
 
 	if inputhstry == nil {
 		inputhstry = make(InputHistory)

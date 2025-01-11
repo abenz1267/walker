@@ -441,7 +441,7 @@ func activateItem(keepOpen, alt bool) {
 		hstry.Save(identifier, strings.TrimSpace(elements.input.Text()))
 	}
 
-	if module != nil && (module.General().History || module.General().Typeahead) {
+	if module != nil && module.General().Typeahead {
 		history.SaveInputHistory(module.General().Name, elements.input.Text(), identifier)
 	}
 

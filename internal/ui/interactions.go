@@ -336,7 +336,9 @@ func activateItem(keepOpen, alt bool) {
 		args = append(args, entry.SpecialFuncArgs...)
 		args = append(args, elements.input.Text())
 
-		if module.General().Name == config.Cfg.Builtins.AI.Name {
+		switch module.General().Name {
+		case config.Cfg.Builtins.AI.Name:
+
 			elements.input.SetObjectProperty("placeholder-text", entry.Label)
 
 			isAi = true
@@ -350,7 +352,10 @@ func activateItem(keepOpen, alt bool) {
 
 				go entry.SpecialFunc(args...)
 			})
-		} else {
+		case config.Cfg.Builtins.Translation.Name:
+			entry.SpecialFunc(entry.Label)
+			closeAfterActivation(keepOpen, selectNext)
+		default:
 			entry.SpecialFunc(args...)
 			closeAfterActivation(keepOpen, selectNext)
 		}

@@ -232,3 +232,11 @@ weight = 5
 name = "dmenu"
 placeholder = "Dmenu"
 switcher_only = true
+
+[builtins.translation]
+delay = 1000
+weight = 5
+name = "translation"
+placeholder = "Translation"
+switcher_only = true
+providers = ["googlefree"]

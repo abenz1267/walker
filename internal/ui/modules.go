@@ -12,6 +12,7 @@ import (
 	"github.com/abenz1267/walker/internal/modules"
 	"github.com/abenz1267/walker/internal/modules/emojis"
 	"github.com/abenz1267/walker/internal/modules/symbols"
+	"github.com/abenz1267/walker/internal/modules/translation"
 	"github.com/abenz1267/walker/internal/modules/windows"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
@@ -99,6 +100,7 @@ func setAvailables() {
 		&symbols.Symbols{},
 		&modules.CustomCommands{},
 		&windows.Windows{},
+		&translation.Translation{},
 	}
 
 	if os.Getenv("XDG_CURRENT_DESKTOP") == "Hyprland" {

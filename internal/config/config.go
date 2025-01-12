@@ -128,6 +128,7 @@ type Builtins struct {
 	Websearch      Websearch      `koanf:"websearch"`
 	Windows        Windows        `koanf:"windows"`
 	XdphPicker     XdphPicker     `koanf:"xdph_picker"`
+	Translation    Translation    `koanf:"translation"`
 }
 
 type XdphPicker struct {
@@ -273,6 +274,11 @@ type WebsearchEntry struct {
 	Url          string `koanf:"url"`
 	Prefix       string `koanf:"prefix"`
 	SwitcherOnly bool   `koanf:"switcher_only"`
+}
+
+type Translation struct {
+	GeneralModule `koanf:",squash"`
+	Providers     []string `koanf:"providers"`
 }
 
 type Applications struct {

@@ -12,6 +12,7 @@ import (
 
 var providers = map[string]Provider{
 	"googlefree": &GoogleFree{},
+	"deeplfree":  &DeeplFree{},
 }
 
 type Provider interface {
@@ -21,7 +22,7 @@ type Provider interface {
 
 type Translation struct {
 	config     config.Translation
-	providers  []Provider
+	provider   Provider
 	systemLang string
 }
 
@@ -59,23 +60,21 @@ func (translation *Translation) Entries(term string) []util.Entry {
 		term = splits[1]
 	}
 
-	for _, v := range translation.providers {
-		res := v.Translate(term, src, dest)
+	res := translation.provider.Translate(term, src, dest)
 
-		if res == "" {
-			continue
-		}
-
-		entries = append(entries, util.Entry{
-			Label:            strings.TrimSpace(res),
-			Sub:              "Translation",
-			Exec:             "",
-			Class:            "translation",
-			Matching:         util.AlwaysTop,
-			RecalculateScore: true,
-			SpecialFunc:      translation.SpecialFunc,
-		})
+	if res == "" {
+		return entries
 	}
+
+	entries = append(entries, util.Entry{
+		Label:            strings.TrimSpace(res),
+		Sub:              "Translation",
+		Exec:             "",
+		Class:            "translation",
+		Matching:         util.AlwaysTop,
+		RecalculateScore: true,
+		SpecialFunc:      translation.SpecialFunc,
+	})
 
 	return entries
 }
@@ -92,10 +91,12 @@ func (translation *Translation) Setup() bool {
 	translation.config = config.Cfg.Builtins.Translation
 	translation.config.IsSetup = true
 
-	for _, v := range translation.config.Providers {
-		if provider, ok := providers[v]; ok {
-			translation.providers = append(translation.providers, provider)
-		}
+	if provider, ok := providers[translation.config.Provider]; ok {
+		translation.provider = provider
+	}
+
+	if translation.provider == nil {
+		return true
 	}
 
 	langFull := config.Cfg.Locale

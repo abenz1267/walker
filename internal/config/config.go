@@ -279,7 +279,7 @@ type WebsearchEntry struct {
 
 type Translation struct {
 	GeneralModule `koanf:",squash"`
-	Providers     []string `koanf:"providers"`
+	Provider      string `koanf:"provider"`
 }
 
 type Applications struct {

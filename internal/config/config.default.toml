@@ -240,4 +240,4 @@ weight = 5
 name = "translation"
 placeholder = "Translation"
 switcher_only = true
-providers = ["googlefree"]
+provider = "googlefree"

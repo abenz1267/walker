@@ -39,15 +39,23 @@ func (translation *Translation) Entries(term string) []util.Entry {
 		if len(splits[0]) == 2 {
 			src = splits[0]
 			term = splits[1]
-		} else {
+		}
+
+		if len(splits[1]) == 2 {
 			dest = splits[1]
 			term = splits[0]
 		}
 	}
 
 	if len(splits) == 3 {
-		src = splits[0]
-		dest = splits[2]
+		if len(splits[0]) == 2 {
+			src = splits[0]
+		}
+
+		if len(splits[2]) == 2 {
+			dest = splits[2]
+		}
+
 		term = splits[1]
 	}
 

@@ -537,7 +537,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 			icon = gtk.NewImageFromPaintable(t)
 		}
 
-		if !layout.Window.Box.Scroll.List.Item.Icon.Hide {
+		if !layout.Window.Box.Scroll.List.Item.Icon.Hide && icon == nil {
 			if singleModule == nil || singleModule.General().ShowIconWhenSingle {
 				ii := val.Icon
 

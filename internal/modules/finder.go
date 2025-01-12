@@ -17,6 +17,8 @@ import (
 	"golang.org/x/exp/slog"
 )
 
+var imgExtensions = []string{".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp"}
+
 type Finder struct {
 	config      config.Finder
 	files       []string
@@ -101,6 +103,15 @@ func (f *Finder) Entries(term string) []util.Entry {
 				Categories:       []string{"finder", "fzf"},
 				Class:            "finder",
 				Matching:         util.Fuzzy,
+			}
+
+			if f.config.PreviewImages {
+				ext := filepath.Ext(v)
+
+				if slices.Contains(imgExtensions, ext) {
+					path := filepath.Join(f.homedir, v)
+					entry.Image = path
+				}
 			}
 
 			res := ""

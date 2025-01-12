@@ -236,6 +236,7 @@ type Finder struct {
 	IgnoreGitIgnore bool `koanf:"ignore_gitignore"`
 	Concurrency     int  `koanf:"concurrency"`
 	EagerLoading    bool `koanf:"eager_loading"`
+	PreviewImages   bool `koanf:"preview_images"`
 }
 
 type Commands struct {

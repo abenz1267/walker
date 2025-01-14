@@ -21,8 +21,14 @@ import (
 //go:embed layout.default.toml
 var defaultLayout []byte
 
+//go:embed layout_window.default.toml
+var defaultWindowLayout []byte
+
 //go:embed themes/default.toml
 var defaultThemeLayout []byte
+
+//go:embed themes/default_window.toml
+var defaultWindowThemeLayout []byte
 
 type UICfg struct {
 	UI UI `koanf:"ui"`
@@ -252,7 +258,13 @@ func init() {
 func GetLayout(theme string, base []string) (*UI, error) {
 	layout := koanf.New(".")
 
-	err := layout.Load(rawbytes.Provider(defaultLayout), toml.Parser())
+	defLayout := defaultLayout
+
+	if Cfg.AsWindow {
+		defLayout = defaultWindowLayout
+	}
+
+	err := layout.Load(rawbytes.Provider(defLayout), toml.Parser())
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -266,6 +278,18 @@ func GetLayout(theme string, base []string) (*UI, error) {
 	var cfgErr error
 
 	for _, v := range base {
+		if v == "default" {
+			defTheme := defaultThemeLayout
+
+			if Cfg.AsWindow {
+				defTheme = defaultWindowThemeLayout
+			}
+
+			cfgErr = layout.Load(rawbytes.Provider(defTheme), toml.Parser())
+
+			continue
+		}
+
 		tomlFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.toml", v))
 		jsonFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.json", v))
 		yamlFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.yaml", v))
@@ -287,8 +311,15 @@ func GetLayout(theme string, base []string) (*UI, error) {
 
 	if marshallErr != nil || cfgErr != nil {
 		layout = koanf.New(".")
-		_ = layout.Load(rawbytes.Provider(defaultLayout), toml.Parser())
-		_ = layout.Load(rawbytes.Provider(defaultThemeLayout), toml.Parser())
+		_ = layout.Load(rawbytes.Provider(defLayout), toml.Parser())
+
+		defTheme := defaultThemeLayout
+
+		if Cfg.AsWindow {
+			defTheme = defaultWindowThemeLayout
+		}
+
+		_ = layout.Load(rawbytes.Provider(defTheme), toml.Parser())
 		_ = layout.Unmarshal("", ui)
 	}
 

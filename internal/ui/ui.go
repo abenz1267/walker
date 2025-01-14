@@ -890,6 +890,7 @@ func afterUI() {
 
 func setupLayerShell() {
 	if config.Cfg.AsWindow {
+		elements.appwin.SetTitlebar(nil)
 		return
 	}
 

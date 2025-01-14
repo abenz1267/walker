@@ -147,12 +147,20 @@ func (r *Runner) getBins() {
 				return nil
 			}
 
-			exec, _ := exec.LookPath(filepath.Base(path))
-			if exec == "" {
+			info, err := os.Stat("file/directory name")
+
+			if info == nil {
 				return nil
 			}
 
-			bins = append(bins, filepath.Base(path))
+			if info.Mode()&0111 != 0 {
+				exec, _ := exec.LookPath(filepath.Base(path))
+				if exec == "" {
+					return nil
+				}
+
+				bins = append(bins, filepath.Base(path))
+			}
 
 			return nil
 		})

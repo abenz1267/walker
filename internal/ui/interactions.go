@@ -990,7 +990,13 @@ func usageModifier(item *util.Entry) int {
 			base -= item.DaysSinceUsed
 		}
 
-		return base * item.Used
+		res := base * item.Used
+
+		if res < 1 {
+			res = 1
+		}
+
+		return res
 	}
 
 	return 0
@@ -1097,98 +1103,96 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 		}
 	}
 
-	if textLength == 0 {
-		return 1
-	}
-
-	var matchables []string
-
-	if !appstate.IsDmenu {
-		matchables = []string{entry.Label, entry.Sub, entry.Searchable, entry.Searchable2}
-		matchables = append(matchables, entry.Categories...)
-	} else {
-		matchables = []string{entry.Label}
-	}
-
 	multiplier := 0
 
-	var pos *[]int
+	if textLength != 0 {
+		var matchables []string
 
-	for k, t := range matchables {
-		if t == "" {
-			continue
+		if !appstate.IsDmenu {
+			matchables = []string{entry.Label, entry.Sub, entry.Searchable, entry.Searchable2}
+			matchables = append(matchables, entry.Categories...)
+		} else {
+			matchables = []string{entry.Label}
 		}
 
-		remember := ""
+		var pos *[]int
 
-		if k == 0 && singleModule != nil && singleModule.General().Name == config.Cfg.Builtins.Emojis.Name {
-			remember = strings.Fields(t)[0]
-			t = entry.Searchable
-		}
+		for k, t := range matchables {
+			if t == "" {
+				continue
+			}
 
-		var score float64
+			remember := ""
 
-		if strings.HasPrefix(text, "'") {
-			cleanText := strings.TrimPrefix(text, "'")
+			if k == 0 && singleModule != nil && singleModule.General().Name == config.Cfg.Builtins.Emojis.Name {
+				remember = strings.Fields(t)[0]
+				t = entry.Searchable
+			}
 
-			score, _ = util.ExactScore(cleanText, t)
+			var score float64
 
-			f := strings.Index(strings.ToLower(t), strings.ToLower(cleanText))
+			if strings.HasPrefix(text, "'") {
+				cleanText := strings.TrimPrefix(text, "'")
 
-			if f != -1 {
-				poss := []int{}
+				score, _ = util.ExactScore(cleanText, t)
 
-				for i := f; i < f+len(text); i++ {
-					poss = append(poss, i)
+				f := strings.Index(strings.ToLower(t), strings.ToLower(cleanText))
+
+				if f != -1 {
+					poss := []int{}
+
+					for i := f; i < f+len(text); i++ {
+						poss = append(poss, i)
+					}
+
+					pos = &poss
+				}
+			} else {
+				score, pos = util.FuzzyScore(text, t)
+			}
+
+			if score < 2 {
+				continue
+			}
+
+			if score > entry.ScoreFuzzy {
+				multiplier = k
+
+				if config.Cfg.List.DynamicSub && k > 1 {
+					entry.MatchedSub = t
 				}
 
-				pos = &poss
-			}
-		} else {
-			score, pos = util.FuzzyScore(text, t)
-		}
+				if layout.Window.Box.Scroll.List.MarkerColor != "" {
+					res := ""
 
-		if score < 2 {
-			continue
-		}
-
-		if score > entry.ScoreFuzzy {
-			multiplier = k
-
-			if config.Cfg.List.DynamicSub && k > 1 {
-				entry.MatchedSub = t
-			}
-
-			if layout.Window.Box.Scroll.List.MarkerColor != "" {
-				res := ""
-
-				if pos != nil {
-					for k, v := range t {
-						if slices.Contains(*pos, k) {
-							res = fmt.Sprintf("%s<span color=\"%s\">%s</span>", res, layout.Window.Box.Scroll.List.MarkerColor, string(v))
-						} else {
-							res = fmt.Sprintf("%s%s", res, string(v))
+					if pos != nil {
+						for k, v := range t {
+							if slices.Contains(*pos, k) {
+								res = fmt.Sprintf("%s<span color=\"%s\">%s</span>", res, layout.Window.Box.Scroll.List.MarkerColor, string(v))
+							} else {
+								res = fmt.Sprintf("%s%s", res, string(v))
+							}
 						}
+					}
+
+					if remember != "" {
+						res = fmt.Sprintf("%s %s", remember, res)
+					}
+
+					if k == 0 {
+						entry.MatchedLabel = res
+					} else if k > 0 {
+						entry.MatchedSub = res
 					}
 				}
 
-				if remember != "" {
-					res = fmt.Sprintf("%s %s", remember, res)
-				}
-
-				if k == 0 {
-					entry.MatchedLabel = res
-				} else if k > 0 {
-					entry.MatchedSub = res
-				}
+				entry.ScoreFuzzy = score
 			}
-
-			entry.ScoreFuzzy = score
 		}
-	}
 
-	if entry.ScoreFuzzy == 0 {
-		return 0
+		if entry.ScoreFuzzy == 0 {
+			return 0
+		}
 	}
 
 	m := (1 - modifier*float64(multiplier))
@@ -1215,6 +1219,10 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 		}
 
 		usageScore = usageModifier(entry)
+
+		if textLength == 0 {
+			return float64(usageScore)
+		}
 	}
 
 	if textLength == 0 {

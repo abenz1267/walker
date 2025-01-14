@@ -846,9 +846,10 @@ func afterUI() {
 	handleListVisibility()
 
 	if appstate.InitialQuery != "" {
-		elements.input.SetText(appstate.InitialQuery)
 		glib.IdleAdd(func() {
+			elements.input.SetText(appstate.InitialQuery)
 			elements.input.SetPosition(-1)
+			elements.input.Emit("changed")
 		})
 	}
 

@@ -11,7 +11,6 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
@@ -143,10 +142,8 @@ func (r *Runner) getBins() {
 
 	bins := []string{}
 
-	now := time.Now()
-
 	if config.Cfg.Builtins.Runner.UseFD {
-		args := []string{".", "--no-ignore-vcs", "--type", "executable"}
+		args := []string{".", "--no-ignore-vcs", "--type", "executable", "--type", "symlink"}
 		args = append(args, paths...)
 
 		cmd := exec.Command("fd", args...)
@@ -156,7 +153,14 @@ func (r *Runner) getBins() {
 			scanner := bufio.NewScanner(bytes.NewReader(out))
 
 			for scanner.Scan() {
-				bins = append(bins, filepath.Base(scanner.Text()))
+				info, err := os.Stat(scanner.Text())
+				if info == nil || err != nil {
+					continue
+				}
+
+				if info.Mode()&0111 != 0 {
+					bins = append(bins, filepath.Base(scanner.Text()))
+				}
 			}
 		}
 	} else {
@@ -179,8 +183,6 @@ func (r *Runner) getBins() {
 			})
 		}
 	}
-
-	fmt.Println(time.Since(now))
 
 	for k := range r.aliases {
 		bins = append(bins, k)

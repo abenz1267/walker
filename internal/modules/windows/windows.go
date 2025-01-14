@@ -111,17 +111,22 @@ func (w *Windows) Entries(term string) []util.Entry {
 	res := wlr.GetWindows()
 
 	for _, v := range res {
-		entries = append(entries, util.Entry{
+		entry := util.Entry{
 			Label:           v.Title,
 			Sub:             fmt.Sprintf("Windows: %s", v.AppId),
 			Searchable:      v.AppId,
-			Icon:            w.icons[v.AppId],
 			Categories:      []string{"windows"},
 			Class:           "windows",
 			Matching:        util.Fuzzy,
 			SpecialFunc:     w.SpecialFunc,
 			SpecialFuncArgs: []interface{}{v.Toplevel.Id()},
-		})
+		}
+
+		w.mutex.Lock()
+		entry.Icon = w.icons[v.AppId]
+		w.mutex.Unlock()
+
+		entries = append(entries, entry)
 	}
 
 	return entries

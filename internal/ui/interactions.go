@@ -442,7 +442,7 @@ func activateItem(keepOpen, alt bool) {
 
 	identifier := entry.Identifier()
 
-	if entry.History {
+	if module.General().History {
 		hstry.Save(identifier, strings.TrimSpace(elements.input.Text()))
 	}
 
@@ -812,7 +812,7 @@ func processAsync(text string) {
 				}
 
 				if toMatch == "" {
-					if e[k].ScoreFinal != 0 {
+					if e[k].ScoreFinal != 0 || config.Cfg.List.ShowInitialEntries {
 						if e[k].Prefix != "" && strings.HasPrefix(text, e[k].Prefix) {
 							hasEntryPrefix = true
 

@@ -327,6 +327,7 @@ type Runner struct {
 	Includes      []string `koanf:"includes"`
 	ShellConfig   string   `koanf:"shell_config"`
 	GenericEntry  bool     `koanf:"generic_entry"`
+	UseFD         bool     `koanf:"use_fd"`
 }
 
 type Plugin struct {

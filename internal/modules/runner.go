@@ -2,6 +2,7 @@ package modules
 
 import (
 	"bufio"
+	"bytes"
 	"fmt"
 	"io/fs"
 	"log"
@@ -10,6 +11,7 @@ import (
 	"path/filepath"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
@@ -141,30 +143,44 @@ func (r *Runner) getBins() {
 
 	bins := []string{}
 
-	for _, p := range paths {
-		filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
-			if d != nil && d.IsDir() {
-				return nil
+	now := time.Now()
+
+	if config.Cfg.Builtins.Runner.UseFD {
+		args := []string{".", "--no-ignore-vcs", "--type", "executable"}
+		args = append(args, paths...)
+
+		cmd := exec.Command("fd", args...)
+
+		out, err := cmd.CombinedOutput()
+		if err == nil {
+			scanner := bufio.NewScanner(bytes.NewReader(out))
+
+			for scanner.Scan() {
+				bins = append(bins, filepath.Base(scanner.Text()))
 			}
-
-			info, err := os.Stat("file/directory name")
-
-			if info == nil {
-				return nil
-			}
-
-			if info.Mode()&0111 != 0 {
-				exec, _ := exec.LookPath(filepath.Base(path))
-				if exec == "" {
+		}
+	} else {
+		for _, p := range paths {
+			filepath.WalkDir(p, func(path string, d fs.DirEntry, err error) error {
+				if d != nil && d.IsDir() {
 					return nil
 				}
 
-				bins = append(bins, filepath.Base(path))
-			}
+				info, err := os.Stat(path)
+				if info == nil {
+					return nil
+				}
 
-			return nil
-		})
+				if info.Mode()&0111 != 0 {
+					bins = append(bins, filepath.Base(path))
+				}
+
+				return nil
+			})
+		}
 	}
+
+	fmt.Println(time.Since(now))
 
 	for k := range r.aliases {
 		bins = append(bins, k)

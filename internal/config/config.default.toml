@@ -186,6 +186,7 @@ typeahead = true
 history = true
 generic_entry = false
 refresh = true
+use_fd = false
 
 [builtins.ssh]
 weight = 5

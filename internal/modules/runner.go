@@ -172,16 +172,7 @@ func (r *Runner) getBins() {
 
 	slices.Sort(bins)
 
-	j := 0
-	for i := 1; i < len(bins); i++ {
-		if bins[j] == bins[i] {
-			continue
-		}
-		j++
-		bins[j] = bins[i]
-	}
-
-	bins = bins[:j+1]
+	bins = slices.Compact(bins)
 
 	r.bins = bins
 }

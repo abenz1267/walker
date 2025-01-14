@@ -257,8 +257,10 @@ Type=Application
 			state.ExplicitPlaceholder = placeholderString.String()
 		}
 
-		if initialQueryString != nil && initialQueryString.String() != "" {
+		if initialQueryString != nil {
 			state.InitialQuery = initialQueryString.String()
+		} else {
+			state.InitialQuery = ""
 		}
 
 		if configString != nil && configString.String() != "" {

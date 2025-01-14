@@ -80,6 +80,8 @@ func setupInteractions(appstate *state.AppState) {
 	go setupCommands()
 	parseKeybinds()
 
+	lastQuery = trimArgumentDelimiter(elements.input.Text())
+
 	elements.input.Connect("changed", func() {
 		text := elements.input.Text()
 

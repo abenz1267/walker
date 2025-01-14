@@ -140,10 +140,6 @@ func (f *Finder) Entries(term string) []util.Entry {
 func (f *Finder) Setup() bool {
 	f.config = config.Cfg.Builtins.Finder
 
-	if config.Cfg.Builtins.Finder.EagerLoading {
-		go f.SetupData()
-	}
-
 	return true
 }
 

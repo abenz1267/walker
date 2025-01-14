@@ -196,6 +196,7 @@ type GeneralModule struct {
 	AutoSelect         bool        `koanf:"auto_select"`
 	Blacklist          []Blacklist `koanf:"blacklist"`
 	Delay              int         `koanf:"delay"`
+	EagerLoading       bool        `koanf:"eager_loading"`
 	ExternalConfig     bool        `koanf:"external_config"`
 	Hidden             bool        `koanf:"hidden"`
 	History            bool        `koanf:"history"`
@@ -235,7 +236,6 @@ type Finder struct {
 	UseFD           bool `koanf:"use_fd"`
 	IgnoreGitIgnore bool `koanf:"ignore_gitignore"`
 	Concurrency     int  `koanf:"concurrency"`
-	EagerLoading    bool `koanf:"eager_loading"`
 	PreviewImages   bool `koanf:"preview_images"`
 }
 

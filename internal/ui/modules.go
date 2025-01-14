@@ -131,6 +131,10 @@ func setAvailables() {
 				log.Panicln("module has no name")
 			}
 
+			if v.General().EagerLoading {
+				go v.SetupData()
+			}
+
 			if slices.Contains(config.Cfg.Disabled, v.General().Name) {
 				continue
 			}

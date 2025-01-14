@@ -178,6 +178,7 @@ show_icon_when_single = true
 preview_images = false
 
 [builtins.runner]
+eager_loading = true
 weight = 5
 icon = "utilities-terminal"
 name = "runner"

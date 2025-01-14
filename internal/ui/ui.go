@@ -778,6 +778,10 @@ func reopen() {
 		for _, proc := range toUse {
 			if proc.General().HasInitialSetup {
 				proc.Refresh()
+
+				if proc.General().EagerLoading {
+					go proc.SetupData()
+				}
 			}
 		}
 	}()

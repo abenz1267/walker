@@ -81,14 +81,14 @@ func setupInteractions(appstate *state.AppState) {
 	parseKeybinds()
 
 	elements.input.Connect("changed", func() {
-		text := elements.input.Text()
+		text := trimArgumentDelimiter(elements.input.Text())
 
-		text = trimArgumentDelimiter(text)
-
-		if lastQuery != text {
-			executeEvent(config.EventQueryChange, "")
-			lastQuery = text
+		if lastQuery == text {
+			return
 		}
+
+		executeEvent(config.EventQueryChange, "")
+		lastQuery = text
 
 		if elements.clear != nil {
 			if text == "" {

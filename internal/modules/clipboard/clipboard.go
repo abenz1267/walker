@@ -312,7 +312,14 @@ func (c *Clipboard) Delete(entry util.Entry) {
 
 	for k, v := range c.items {
 		if v.Content == content {
-			c.items = slices.Delete(c.items, k, k+1)
+			max := k + 1
+
+			if max > len(c.items) {
+				max = len(c.items)
+			}
+
+			c.items = slices.Delete(c.items, k, max)
+
 			continue
 		}
 	}

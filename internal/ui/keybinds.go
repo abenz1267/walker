@@ -241,6 +241,8 @@ func deleteFromHistory() bool {
 	entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
 	hstry.Delete(entry.Identifier())
 
+	debouncedProcess(process)
+
 	return true
 }
 

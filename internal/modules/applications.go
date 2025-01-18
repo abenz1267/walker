@@ -2,15 +2,18 @@ package modules
 
 import (
 	"bufio"
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"slices"
 	"strings"
 	"sync"
 	"time"
+	"unicode"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/history"
@@ -247,8 +250,6 @@ func (a *Applications) parse() []util.Entry {
 
 	dirs := xdg.ApplicationDirs
 
-	flags := []string{"%f", "%F", "%u", "%U", "%d", "%D", "%n", "%N", "%i", "%c", "%k", "%v", "%m"}
-
 	done := make(map[string]struct{})
 
 	for _, d := range dirs {
@@ -457,29 +458,25 @@ func (a *Applications) parse() []util.Entry {
 						}
 
 						if strings.HasPrefix(line, "Exec=") {
-							app.Generic.Exec = strings.TrimSpace(strings.TrimPrefix(line, "Exec="))
-
-							for _, v := range flags {
-								app.Generic.Exec = strings.ReplaceAll(app.Generic.Exec, v, "")
+							parsed, err := parseExec(strings.TrimPrefix(line, "Exec="))
+							if err != nil {
+								slog.Error("applications", "error", err)
+								continue
 							}
 
-							if strings.Contains(app.Generic.Exec, "wine C:") {
-								app.Generic.Exec = transformWineExec(app.Generic.Exec)
-							}
+							app.Generic.Exec = strings.TrimSpace(strings.Join(parsed, " "))
 
 							continue
 						}
 					} else {
 						if strings.HasPrefix(line, "Exec=") {
-							app.Actions[len(app.Actions)-1].Exec = strings.TrimSpace(strings.TrimPrefix(line, "Exec="))
-
-							for _, v := range flags {
-								app.Actions[len(app.Actions)-1].Exec = strings.ReplaceAll(app.Actions[len(app.Actions)-1].Exec, v, "")
+							parsed, err := parseExec(strings.TrimPrefix(line, "Exec="))
+							if err != nil {
+								slog.Error("applications", "error", err)
+								continue
 							}
 
-							if strings.Contains(app.Actions[len(app.Actions)-1].Exec, "wine C:") {
-								app.Actions[len(app.Actions)-1].Exec = transformWineExec(app.Actions[len(app.Actions)-1].Exec)
-							}
+							app.Actions[len(app.Actions)-1].Exec = strings.TrimSpace(strings.Join(parsed, " "))
 
 							continue
 						}
@@ -565,15 +562,78 @@ func (a *Applications) parse() []util.Entry {
 	return entries
 }
 
-func transformWineExec(in string) string {
-	splits := strings.Split(in, "wine ")
-	prefix := splits[0]
-	path := splits[1]
+// parseExec converts an XDG desktop file Exec entry into a slice of strings
+// suitable for exec.Command. It handles field codes and proper escaping according
+// to the XDG Desktop Entry specification.
+// See: https://specifications.freedesktop.org/desktop-entry-spec/latest/ar01s07.html
+func parseExec(execLine string) ([]string, error) {
+	if execLine == "" {
+		return nil, errors.New("empty exec line")
+	}
 
-	path = strings.ReplaceAll(path, "\\\\", "\\")
-	path = strings.ReplaceAll(path, "\\ ", " ")
+	var (
+		parts   []string
+		current strings.Builder
+		inQuote bool
+		escaped bool
+	)
 
-	result := fmt.Sprintf("%s wine '%s'", prefix, path)
+	// Helper to append current token and reset builder
+	appendCurrent := func() {
+		if current.Len() > 0 {
+			parts = append(parts, current.String())
+			current.Reset()
+		}
+	}
 
-	return result
+	// Process each rune in the exec line
+	for _, r := range execLine {
+		switch {
+		case escaped:
+			// Handle escaped character
+			current.WriteRune(r)
+			escaped = false
+
+		case r == '\\':
+			escaped = true
+
+		case r == '"':
+			inQuote = !inQuote
+
+		case unicode.IsSpace(r) && !inQuote:
+			// Space outside quotes marks token boundary
+			appendCurrent()
+
+		default:
+			current.WriteRune(r)
+		}
+	}
+
+	// Append final token if any
+	appendCurrent()
+
+	// Remove field codes
+	// List of field codes: %f %F %u %U %d %D %n %N %i %c %k %v %m
+	for i, part := range parts {
+		// Skip the first part (command name)
+		if i == 0 {
+			continue
+		}
+
+		// Remove any field codes
+		if strings.HasPrefix(part, "%") && len(part) == 2 {
+			switch part[1] {
+			case 'f', 'F', 'u', 'U', 'd', 'D', 'n', 'N', 'i', 'c', 'k', 'v', 'm':
+				// Remove this field code
+				parts = append(parts[:i], parts[i+1:]...)
+				i-- // Adjust index after removal
+			}
+		}
+	}
+
+	if len(parts) == 0 {
+		return nil, errors.New("no command found after parsing")
+	}
+
+	return parts, nil
 }

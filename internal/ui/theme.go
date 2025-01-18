@@ -17,55 +17,6 @@ import (
 
 var barHasItems = false
 
-func init() {
-	os.MkdirAll(util.ThemeDir(), 0755)
-	checkForDefaultCss()
-}
-
-func checkForDefaultCss() {
-	file := filepath.Join(util.ThemeDir(), "default.css")
-	os.Remove(file)
-
-	var pybytes []byte
-
-	cacheDir, err := os.UserCacheDir()
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	pywal := filepath.Join(cacheDir, "wal", "colors-waybar.css")
-
-	if util.FileExists(pywal) {
-		var err error
-
-		pybytes, err = os.ReadFile(pywal)
-		if err != nil {
-			log.Panicln(err)
-		}
-	} else {
-		var err error
-
-		pybytes, err = config.Themes.ReadFile("themes/colors.css")
-		if err != nil {
-			log.Panicln(err)
-		}
-	}
-
-	css, err := config.Themes.ReadFile("themes/default.css")
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	if len(pybytes) > 0 {
-		css = append(pybytes, css...)
-	}
-
-	err = os.WriteFile(file, css, 0o600)
-	if err != nil {
-		log.Panicln(err)
-	}
-}
-
 func setupCss(theme string, base []string) {
 	var css []byte
 

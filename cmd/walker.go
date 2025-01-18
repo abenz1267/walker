@@ -22,11 +22,9 @@ import (
 	"github.com/abenz1267/walker/internal/ui"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/adrg/xdg"
-	"github.com/davidbyttow/govips/v2/vips"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/joho/godotenv"
 )
 
 //go:embed version.txt
@@ -35,22 +33,6 @@ var version string
 var now = time.Now().UnixMilli()
 
 func main() {
-	os.MkdirAll(util.ThumbnailsDir(), 0755)
-
-	vips.LoggingSettings(nil, vips.LogLevelError)
-
-	vips.Startup(nil)
-	defer vips.Shutdown()
-
-	envFile := filepath.Join(util.ConfigDir(), ".env")
-
-	if util.FileExists(envFile) {
-		err := godotenv.Load(envFile)
-		if err != nil {
-			log.Fatal(err)
-		}
-	}
-
 	state := state.Get()
 
 	defer func() {

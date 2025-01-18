@@ -48,6 +48,7 @@ var (
 	debouncedOnSelect func(f func())
 	cfgErr            error
 	layoutErr         error
+	hasBaseSetup      bool
 )
 
 type Common struct {
@@ -85,6 +86,16 @@ type Elements struct {
 func Activate(state *state.AppState) func(app *gtk.Application) {
 	appstate = state
 	thumbnails = make(map[string][]byte)
+
+	if !hasBaseSetup {
+		os.MkdirAll(util.ThumbnailsDir(), 0755)
+
+		config.SetupConfigOnDisk()
+		history.SetupInputHistory()
+		config.SetupDefaultThemeOnDisk()
+
+		hasBaseSetup = true
+	}
 
 	go setupThumbnails()
 
@@ -1000,7 +1011,19 @@ func watchTheme() {
 	<-make(chan struct{})
 }
 
+var hasLibvips bool
+
+func initVips() {
+	vips.LoggingSettings(nil, vips.LogLevelError)
+	vips.Startup(nil)
+}
+
 func createThumbnail(file string) []byte {
+	if !hasLibvips {
+		initVips()
+		hasLibvips = true
+	}
+
 	image, err := vips.NewImageFromFile(file)
 	if err != nil {
 		slog.Error("thumbnail", "error", err)

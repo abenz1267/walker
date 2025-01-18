@@ -18,7 +18,7 @@ var (
 	file       = filepath.Join(util.CacheDir(), "inputhistory_0.7.6.gob")
 )
 
-func init() {
+func SetupInputHistory() {
 	if inputhstry == nil {
 		inputhstry = make(InputHistory)
 	}

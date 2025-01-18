@@ -5,6 +5,7 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
+	"log"
 	"log/slog"
 	"os"
 	"os/exec"
@@ -12,6 +13,7 @@ import (
 	"regexp"
 
 	"github.com/abenz1267/walker/internal/util"
+	"github.com/joho/godotenv"
 	"github.com/knadh/koanf/parsers/json"
 	"github.com/knadh/koanf/parsers/toml/v2"
 	"github.com/knadh/koanf/parsers/yaml"
@@ -375,13 +377,26 @@ var (
 	yamlFile = filepath.Join(util.ConfigDir(), "config.yaml")
 )
 
-func init() {
+func SetupConfigOnDisk() {
 	os.MkdirAll(util.ConfigDir(), 0755)
 
 	if !util.FileExists(tomlFile) && !util.FileExists(jsonFile) && !util.FileExists(yamlFile) {
 		err := os.WriteFile(tomlFile, defaultConfig, 0o600)
 		if err != nil {
 			slog.Error("Couldn't create config file", "err", err)
+		}
+	}
+
+	loadLocalEnv()
+}
+
+func loadLocalEnv() {
+	envFile := filepath.Join(util.ConfigDir(), ".env")
+
+	if util.FileExists(envFile) {
+		err := godotenv.Load(envFile)
+		if err != nil {
+			log.Fatal(err)
 		}
 	}
 }

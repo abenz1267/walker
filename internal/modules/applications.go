@@ -26,6 +26,8 @@ import (
 
 const ApplicationsName = "applications"
 
+var fieldCodes = []string{"%f", "%F", "%u", "%U", "%d", "%D", "%n", "%N", "%i", "%c", "%k", "%v", "%m"}
+
 type Applications struct {
 	config      config.Applications
 	mu          sync.Mutex
@@ -613,21 +615,15 @@ func parseExec(execLine string) ([]string, error) {
 	appendCurrent()
 
 	// Remove field codes
-	// List of field codes: %f %F %u %U %d %D %n %N %i %c %k %v %m
-	for i, part := range parts {
-		// Skip the first part (command name)
-		if i == 0 {
-			continue
-		}
+	for k, v := range parts {
+		if len(v) == 2 && slices.Contains(fieldCodes, v) {
+			until := k + 1
 
-		// Remove any field codes
-		if strings.HasPrefix(part, "%") && len(part) == 2 {
-			switch part[1] {
-			case 'f', 'F', 'u', 'U', 'd', 'D', 'n', 'N', 'i', 'c', 'k', 'v', 'm':
-				// Remove this field code
-				parts = append(parts[:i], parts[i+1:]...)
-				i-- // Adjust index after removal
+			if until > len(parts) {
+				until = len(parts)
 			}
+
+			parts = slices.Delete(parts, k, until)
 		}
 	}
 

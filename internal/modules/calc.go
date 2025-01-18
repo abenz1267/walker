@@ -67,14 +67,14 @@ func (c Calc) Entries(term string) []util.Entry {
 		return entries
 	}
 
-	txt := string(out)
+	txt := strings.TrimSpace(string(out))
 
 	if txt == "" {
 		return entries
 	}
 
 	res := util.Entry{
-		Label:    strings.TrimSpace(txt),
+		Label:    txt,
 		Sub:      "Calc",
 		Matching: util.AlwaysTop,
 	}

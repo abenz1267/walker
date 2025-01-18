@@ -1205,6 +1205,9 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 
 	usageScore := 0
 
+	// so old `Used` values don't persist, in case of a change in history
+	entry.Used = 0
+
 	if useHistory {
 		for k, v := range hstry {
 			if strings.HasPrefix(k, text) {

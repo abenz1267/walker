@@ -331,6 +331,8 @@ func itemToEntry(item ClipboardItem, exec string, avoidLineBreaks bool) util.Ent
 			Type:   "file",
 		}
 		entry.HideText = true
+		entry.DragDrop = true
+		entry.DragDropData = item.Content
 	}
 
 	return entry

@@ -974,6 +974,13 @@ func setupLayout(theme string, base []string) {
 
 	setupCss(theme, base)
 	setupLayerShellAnchors()
+
+	settings = gio.NewSettings("org.gnome.desktop.interface")
+	setThemeClass(settings.String("color-scheme"))
+
+	settings.Connect("changed::color-scheme", func(settings *gio.Settings, key string) {
+		setThemeClass(settings.String("color-scheme"))
+	})
 }
 
 func watchTheme() {

@@ -6,16 +6,21 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 	"syscall"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
-var barHasItems = false
+var (
+	barHasItems = false
+	settings    *gio.Settings
+)
 
 func setupCss(theme string, base []string) {
 	var css []byte
@@ -477,4 +482,17 @@ func setupWidgetStyle(
 	widget.SetMarginStart(style.Margins.Start)
 	widget.SetMarginEnd(style.Margins.End)
 	widget.SetSizeRequest(style.Width, style.Height)
+}
+
+func setThemeClass(scheme string) {
+	elements.appwin.RemoveCSSClass("light")
+	elements.appwin.RemoveCSSClass("dark")
+
+	if strings.Contains(scheme, "dark") {
+		elements.appwin.AddCSSClass("dark")
+	}
+
+	if strings.Contains(scheme, "light") {
+		elements.appwin.AddCSSClass("light")
+	}
 }

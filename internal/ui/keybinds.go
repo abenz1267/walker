@@ -231,15 +231,15 @@ func toggleAM() bool {
 }
 
 func deleteFromHistory() bool {
-	if singleModule != nil && singleModule.General().Name == config.Cfg.Builtins.Clipboard.Name {
+	entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
+	deleted := hstry.Delete(entry.Identifier())
+
+	if !deleted && singleModule != nil && singleModule.General().Name == config.Cfg.Builtins.Clipboard.Name {
 		entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
 		singleModule.(*clipboard.Clipboard).Delete(entry)
 		debouncedProcess(process)
 		return true
 	}
-
-	entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
-	hstry.Delete(entry.Identifier())
 
 	debouncedProcess(process)
 

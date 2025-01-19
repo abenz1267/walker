@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/abenz1267/walker/internal/config"
+	"github.com/abenz1267/walker/internal/history"
 	"github.com/abenz1267/walker/internal/util"
 )
 
@@ -35,10 +36,11 @@ type Clipboard struct {
 }
 
 type ClipboardItem struct {
-	Content string    `json:"content,omitempty"`
-	Time    time.Time `json:"time,omitempty"`
-	Hash    string    `json:"hash,omitempty"`
-	IsImg   bool      `json:"is_img,omitempty"`
+	Content   string    `json:"content,omitempty"`
+	Time      time.Time `json:"time,omitempty"`
+	Hash      string    `json:"hash,omitempty"`
+	IsImg     bool      `json:"is_img,omitempty"`
+	HashIdent string    `json:"hash_ident,omitempty"`
 }
 
 func (c *Clipboard) General() *config.GeneralModule {
@@ -52,6 +54,14 @@ func (c *Clipboard) Refresh() {
 func (c Clipboard) Cleanup() {}
 
 func (c Clipboard) Entries(term string) []util.Entry {
+	for k, v := range c.entries {
+		for _, vv := range c.items {
+			if v.HashIdent == vv.HashIdent {
+				c.entries[k].LastUsed = vv.Time
+			}
+		}
+	}
+
 	return c.entries
 }
 
@@ -228,10 +238,11 @@ func (c *Clipboard) watch() {
 		mimetype := getType()
 
 		e := ClipboardItem{
-			Content: content,
-			Time:    time.Now(),
-			Hash:    strgHash,
-			IsImg:   false,
+			Content:   content,
+			Time:      time.Now(),
+			Hash:      strgHash,
+			IsImg:     false,
+			HashIdent: strgHash,
 		}
 
 		if val, ok := c.imgTypes[mimetype]; ok {
@@ -243,12 +254,31 @@ func (c *Clipboard) watch() {
 		c.entries = append([]util.Entry{itemToEntry(e, c.exec, c.avoidLineBreaks)}, c.entries...)
 		c.items = append([]ClipboardItem{e}, c.items...)
 
+		hstry := history.Get()
+
+		toSpareEntries := []util.Entry{}
+		toSpareItems := []ClipboardItem{}
+
+		for _, v := range c.entries {
+			if hstry.Has(v.Identifier()) {
+				toSpareEntries = append(toSpareEntries, v)
+
+				for _, vv := range c.items {
+					if v.HashIdent == vv.HashIdent {
+						toSpareItems = append(toSpareItems, vv)
+					}
+				}
+			}
+		}
+
 		if len(c.items) >= c.max {
 			c.items = slices.Clone(c.items[:c.max])
+			c.items = append(c.items, toSpareItems...)
 		}
 
 		if len(c.entries) >= c.max {
 			c.entries = slices.Clone(c.entries[:c.max])
+			c.entries = append(c.entries, toSpareEntries...)
 		}
 
 		util.ToGob(&c.items, c.file)
@@ -289,6 +319,7 @@ func itemToEntry(item ClipboardItem, exec string, avoidLineBreaks bool) util.Ent
 		Matching:         util.Fuzzy,
 		LastUsed:         item.Time,
 		RecalculateScore: true,
+		HashIdent:        item.HashIdent,
 	}
 
 	if item.IsImg {

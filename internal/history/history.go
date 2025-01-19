@@ -24,16 +24,33 @@ type HistoryEntry struct {
 
 const HistoryName = "history_0.8.14.gob"
 
-func (s *History) Delete(hash string) {
+func (s *History) Has(hash string) bool {
+	for _, v := range *s {
+		for h := range v {
+			if h == hash {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (s *History) Delete(hash string) bool {
+	deleted := false
+
 	for _, v := range *s {
 		for h := range v {
 			if h == hash {
 				delete(v, h)
+				deleted = true
 			}
 		}
 	}
 
 	util.ToGob(&s, filepath.Join(util.CacheDir(), HistoryName))
+
+	return deleted
 }
 
 func (s History) Save(hash string, prefix string) {

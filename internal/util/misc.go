@@ -66,6 +66,7 @@ type Entry struct {
 	SpecialFuncArgs  []interface{}             `mapstructure:"-"`
 	Used             int                       `mapstructure:"-"`
 	Weight           int                       `mapstructure:"-"`
+	HashIdent        string                    `mapstructure:"-"`
 }
 
 func (e Entry) Identifier() string {

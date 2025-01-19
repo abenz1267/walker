@@ -19,7 +19,7 @@ func sortEntries(entries []util.Entry, keepSort bool) {
 			}
 		}
 
-		text := elements.input.Text()
+		text := trimArgumentDelimiter(elements.input.Text())
 
 		if text == "" {
 			if a.Matching == util.AlwaysTopOnEmptySearch && b.Matching != util.AlwaysTopOnEmptySearch {

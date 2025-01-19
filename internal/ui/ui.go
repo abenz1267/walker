@@ -520,6 +520,9 @@ func setupFactory() *gtk.SignalListItemFactory {
 		}
 
 		boxClasses := []string{"item", val.Class}
+		if val.Used > 0 {
+			boxClasses = append(boxClasses, "history")
+		}
 
 		if appstate.ActiveItem != nil && *appstate.ActiveItem >= 0 {
 			if item.Position() == uint(*appstate.ActiveItem) {

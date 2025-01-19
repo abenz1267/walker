@@ -296,7 +296,7 @@ height = -1
 width = -1
 hide = false
 opacity = 1
-icon_size = "large"
+icon_size = "larger"
 pixel_size = -1
 theme = ""
 

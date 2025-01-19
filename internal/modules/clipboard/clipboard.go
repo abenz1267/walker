@@ -91,13 +91,13 @@ func (c *Clipboard) SetupData() {
 	current := []ClipboardItem{}
 	_ = util.FromGob(c.file, &current)
 
-	go c.watch()
-
 	c.items = clean(current, c.file)
 
 	for _, v := range c.items {
 		c.entries = append(c.entries, itemToEntry(v, c.exec, c.avoidLineBreaks))
 	}
+
+	go c.watch()
 
 	c.general.IsSetup = true
 	c.general.HasInitialSetup = true
@@ -227,7 +227,9 @@ func (c *Clipboard) watch() {
 		hash := md5.Sum([]byte(content))
 		strgHash := hex.EncodeToString(hash[:])
 
-		if c.exists(strgHash) {
+		exists := c.exists(strgHash)
+
+		if exists && !config.Cfg.Builtins.Clipboard.AlwaysPutNewOnTop {
 			continue
 		}
 
@@ -235,24 +237,62 @@ func (c *Clipboard) watch() {
 			continue
 		}
 
-		mimetype := getType()
+		if exists && c.items[0].HashIdent != strgHash {
+			for k, v := range c.items {
+				if v.HashIdent == strgHash {
+					c.items[k].Time = time.Now()
+				}
+			}
 
-		e := ClipboardItem{
-			Content:   content,
-			Time:      time.Now(),
-			Hash:      strgHash,
-			IsImg:     false,
-			HashIdent: strgHash,
+			for k, v := range c.entries {
+				if v.HashIdent == strgHash {
+					c.entries[k].LastUsed = time.Now()
+				}
+			}
+
+			slices.SortFunc(c.items, func(a, b ClipboardItem) int {
+				if a.Time.After(b.Time) {
+					return -1
+				}
+
+				if a.Time.Before(b.Time) {
+					return 1
+				}
+
+				return 0
+			})
+
+			slices.SortFunc(c.entries, func(a, b util.Entry) int {
+				if a.LastUsed.After(b.LastUsed) {
+					return -1
+				}
+
+				if a.LastUsed.Before(b.LastUsed) {
+					return 1
+				}
+
+				return 0
+			})
+		} else if !exists {
+			mimetype := getType()
+
+			e := ClipboardItem{
+				Content:   content,
+				Time:      time.Now(),
+				Hash:      strgHash,
+				IsImg:     false,
+				HashIdent: strgHash,
+			}
+
+			if val, ok := c.imgTypes[mimetype]; ok {
+				file := saveTmpImg(val)
+				e.Content = file
+				e.IsImg = true
+			}
+
+			c.entries = append([]util.Entry{itemToEntry(e, c.exec, c.avoidLineBreaks)}, c.entries...)
+			c.items = append([]ClipboardItem{e}, c.items...)
 		}
-
-		if val, ok := c.imgTypes[mimetype]; ok {
-			file := saveTmpImg(val)
-			e.Content = file
-			e.IsImg = true
-		}
-
-		c.entries = append([]util.Entry{itemToEntry(e, c.exec, c.avoidLineBreaks)}, c.entries...)
-		c.items = append([]ClipboardItem{e}, c.items...)
 
 		hstry := history.Get()
 

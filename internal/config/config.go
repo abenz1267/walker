@@ -333,11 +333,12 @@ type ActivationMode struct {
 }
 
 type Clipboard struct {
-	GeneralModule   `koanf:",squash"`
-	AvoidLineBreaks bool   `koanf:"avoid_line_breaks"`
-	ImageHeight     int    `koanf:"image_height"`
-	MaxEntries      int    `koanf:"max_entries"`
-	Exec            string `koanf:"exec"`
+	GeneralModule     `koanf:",squash"`
+	AvoidLineBreaks   bool   `koanf:"avoid_line_breaks"`
+	ImageHeight       int    `koanf:"image_height"`
+	MaxEntries        int    `koanf:"max_entries"`
+	Exec              string `koanf:"exec"`
+	AlwaysPutNewOnTop bool   `koanf:"always_put_new_on_top"`
 }
 
 type Dmenu struct {

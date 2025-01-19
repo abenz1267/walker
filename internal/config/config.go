@@ -197,6 +197,7 @@ type CustomCommand struct {
 type GeneralModule struct {
 	AutoSelect         bool        `koanf:"auto_select"`
 	Blacklist          []Blacklist `koanf:"blacklist"`
+	HistoryBlacklist   []Blacklist `koanf:"history_blacklist"`
 	Delay              int         `koanf:"delay"`
 	EagerLoading       bool        `koanf:"eager_loading"`
 	ExternalConfig     bool        `koanf:"external_config"`
@@ -231,6 +232,28 @@ type Blacklist struct {
 
 	// internal
 	Reg *regexp.Regexp `koanf:"-"`
+}
+
+func (b *Blacklist) Match(entry util.Entry) bool {
+	if !b.Label && !b.Sub {
+		if b.Reg.MatchString(entry.Label) {
+			return true
+		}
+
+		if b.Reg.MatchString(entry.Sub) {
+			return true
+		}
+	}
+
+	if b.Label && b.Reg.MatchString(entry.Label) {
+		return true
+	}
+
+	if b.Sub && b.Reg.MatchString(entry.Sub) {
+		return true
+	}
+
+	return false
 }
 
 type Finder struct {

@@ -72,6 +72,12 @@ func prepareBlacklists() {
 				available[k].General().Blacklist[n].Reg = regexp.MustCompile(b.Regexp)
 			}
 		}
+
+		if len(c.HistoryBlacklist) > 0 {
+			for n, b := range c.HistoryBlacklist {
+				available[k].General().HistoryBlacklist[n].Reg = regexp.MustCompile(b.Regexp)
+			}
+		}
 	}
 }
 

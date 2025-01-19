@@ -442,8 +442,23 @@ func activateItem(keepOpen, alt bool) {
 
 	identifier := entry.Identifier()
 
-	if module.General().History {
-		hstry.Save(identifier, strings.TrimSpace(elements.input.Text()))
+	mCfg := module.General()
+
+	if mCfg.History {
+		canSave := true
+
+		if len(mCfg.HistoryBlacklist) > 0 {
+			for _, b := range mCfg.HistoryBlacklist {
+				if b.Match(entry) {
+					canSave = false
+					break
+				}
+			}
+		}
+
+		if canSave {
+			hstry.Save(identifier, strings.TrimSpace(elements.input.Text()))
+		}
 	}
 
 	if module != nil && module.General().Typeahead {
@@ -742,26 +757,8 @@ func processAsync(text string) {
 			for k := range e {
 				if len(mCfg.Blacklist) > 0 {
 					for _, b := range mCfg.Blacklist {
-						if !b.Label && !b.Sub {
-							if b.Reg.MatchString(e[k].Label) {
-								continue outer
-							}
-
-							if b.Reg.MatchString(e[k].Sub) {
-								continue outer
-							}
-						}
-
-						if b.Label {
-							if b.Reg.MatchString(e[k].Label) {
-								continue outer
-							}
-						}
-
-						if b.Sub {
-							if b.Reg.MatchString(e[k].Sub) {
-								continue outer
-							}
+						if b.Match(e[k]) {
+							continue outer
 						}
 					}
 				}

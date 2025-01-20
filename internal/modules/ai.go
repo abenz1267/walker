@@ -235,6 +235,10 @@ func (ai *AI) CopyLastResponse() {
 		log.Println(err)
 		return
 	}
+
+	go func() {
+		cmd.Wait()
+	}()
 }
 
 func (ai *AI) SpecialFunc(args ...interface{}) {
@@ -278,4 +282,8 @@ func (ai *AI) RunLastMessageInTerminal() {
 		slog.Error("Failed to start terminal", "err", err)
 		return
 	}
+
+	go func() {
+		cmd.Wait()
+	}()
 }

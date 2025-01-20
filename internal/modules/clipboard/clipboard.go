@@ -36,11 +36,10 @@ type Clipboard struct {
 }
 
 type ClipboardItem struct {
-	Content   string    `json:"content,omitempty"`
-	Time      time.Time `json:"time,omitempty"`
-	Hash      string    `json:"hash,omitempty"`
-	IsImg     bool      `json:"is_img,omitempty"`
-	HashIdent string    `json:"hash_ident,omitempty"`
+	Content string    `json:"content,omitempty"`
+	Time    time.Time `json:"time,omitempty"`
+	Hash    string    `json:"hash,omitempty"`
+	IsImg   bool      `json:"is_img,omitempty"`
 }
 
 func (c *Clipboard) General() *config.GeneralModule {
@@ -56,7 +55,7 @@ func (c Clipboard) Cleanup() {}
 func (c Clipboard) Entries(term string) []util.Entry {
 	for k, v := range c.entries {
 		for _, vv := range c.items {
-			if v.HashIdent == vv.HashIdent {
+			if v.HashIdent == vv.Hash {
 				c.entries[k].LastUsed = vv.Time
 			}
 		}
@@ -237,9 +236,9 @@ func (c *Clipboard) watch() {
 			continue
 		}
 
-		if exists && c.items[0].HashIdent != strgHash {
+		if exists && c.items[0].Hash != strgHash {
 			for k, v := range c.items {
-				if v.HashIdent == strgHash {
+				if v.Hash == strgHash {
 					c.items[k].Time = time.Now()
 				}
 			}
@@ -277,11 +276,10 @@ func (c *Clipboard) watch() {
 			mimetype := getType()
 
 			e := ClipboardItem{
-				Content:   content,
-				Time:      time.Now(),
-				Hash:      strgHash,
-				IsImg:     false,
-				HashIdent: strgHash,
+				Content: content,
+				Time:    time.Now(),
+				Hash:    strgHash,
+				IsImg:   false,
 			}
 
 			if val, ok := c.imgTypes[mimetype]; ok {
@@ -304,7 +302,7 @@ func (c *Clipboard) watch() {
 				toSpareEntries = append(toSpareEntries, v)
 
 				for _, vv := range c.items {
-					if v.HashIdent == vv.HashIdent {
+					if v.HashIdent == vv.Hash {
 						toSpareItems = append(toSpareItems, vv)
 					}
 				}
@@ -359,7 +357,7 @@ func itemToEntry(item ClipboardItem, exec string, avoidLineBreaks bool) util.Ent
 		Matching:         util.Fuzzy,
 		LastUsed:         item.Time,
 		RecalculateScore: true,
-		HashIdent:        item.HashIdent,
+		HashIdent:        item.Hash,
 	}
 
 	if item.IsImg {

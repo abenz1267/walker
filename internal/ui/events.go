@@ -40,5 +40,9 @@ func executeEvent(eventType config.EventType, label string) {
 
 		cmd.Args = append(cmd.Args, toRun)
 		cmd.Start()
+
+		go func() {
+			cmd.Wait()
+		}()
 	}()
 }

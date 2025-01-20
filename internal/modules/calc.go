@@ -39,6 +39,10 @@ func (c *Calc) Setup() bool {
 	cmd := exec.Command("qalc", "-e", "1+1")
 	cmd.Start()
 
+	go func() {
+		cmd.Wait()
+	}()
+
 	return true
 }
 

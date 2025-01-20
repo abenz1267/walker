@@ -70,6 +70,10 @@ func setupCommands() {
 
 		cmd.Start()
 
+		go func() {
+			cmd.Wait()
+		}()
+
 		return false
 	}
 }
@@ -474,6 +478,10 @@ func activateItem(keepOpen, alt bool) {
 	if err != nil {
 		log.Println(err)
 	}
+
+	go func() {
+		cmd.Wait()
+	}()
 
 	closeAfterActivation(keepOpen, selectNext)
 }
@@ -1298,6 +1306,10 @@ func executeOnSelect(entry util.Entry) {
 		if err != nil {
 			log.Println(err)
 		}
+
+		go func() {
+			cmd.Wait()
+		}()
 	}
 }
 

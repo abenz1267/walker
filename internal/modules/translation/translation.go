@@ -134,4 +134,8 @@ func (translation *Translation) SpecialFunc(args ...interface{}) {
 		log.Println(err)
 		return
 	}
+
+	go func() {
+		cmd.Wait()
+	}()
 }

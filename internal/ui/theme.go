@@ -260,6 +260,10 @@ func setupBarTheme() {
 						log.Println(err)
 					}
 
+					go func() {
+						cmd.Wait()
+					}()
+
 					closeAfterActivation(false, false)
 				} else {
 					handleSwitcher(v.Module)

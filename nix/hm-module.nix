@@ -4,15 +4,15 @@ self: {
   pkgs,
   ...
 }: let
-  inherit (lib) mkEnableOption mkOption mkPackageOption importJSON mkIf getExe mkForce mkMerge;
+  inherit (lib) mkEnableOption mkOption mkPackageOption importTOML mkIf getExe mkForce mkMerge;
   inherit (lib.types) bool nullOr submodule lines;
 
-  jsonFormat = pkgs.formats.json {};
+  tomlFormat = pkgs.formats.toml {};
 
   themeType = submodule {
     options = {
       layout = mkOption {
-        inherit (jsonFormat) type;
+        inherit (tomlFormat) type;
         default = {};
         description = ''
           The layout of the theme.
@@ -47,10 +47,10 @@ in {
       };
 
       config = mkOption {
-        inherit (jsonFormat) type;
-        default = importJSON ../internal/config/config.default.json;
+        inherit (tomlFormat) type;
+        default = importTOML ../internal/config/config.default.toml;
         description = ''
-          Configuration written to `$XDG_CONFIG_HOME/walker/config.json`.
+          Configuration written to `$XDG_CONFIG_HOME/walker/config.toml`.
 
           See <https://github.com/abenz1267/walker/wiki/Basic-Configuration> for the full list of options.
         '';
@@ -68,7 +68,7 @@ in {
     {
       home.packages = [cfg.package];
 
-      xdg.configFile."walker/config.json".source = mkIf (cfg.config != {}) (jsonFormat.generate "walker-config.json" cfg.config);
+      xdg.configFile."walker/config.toml".source = mkIf (cfg.config != {}) (tomlFormat.generate "walker-config.toml" cfg.config);
 
       systemd.user.services.walker = mkIf cfg.runAsService {
         Unit.Description = "Walker - Application Runner";
@@ -84,7 +84,7 @@ in {
       programs.walker.config.theme = mkForce themeName;
 
       xdg.configFile = {
-        "walker/themes/${themeName}.json".source = jsonFormat.generate "walker-themes-${themeName}.json" cfg.theme.layout;
+        "walker/themes/${themeName}.toml".source = tomlFormat.generate "walker-themes-${themeName}.toml" cfg.theme.layout;
         "walker/themes/${themeName}.css".text = cfg.theme.style;
       };
     })

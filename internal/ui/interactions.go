@@ -375,6 +375,11 @@ func activateItem(keepOpen, alt bool) {
 		}
 	}
 
+	// check if desktop app is terminal
+	if entry.Module == config.Cfg.Builtins.Finder.Name {
+		forceTerminal = forceTerminalForFile(strings.TrimPrefix(entry.Exec, "xdg-open "))
+	}
+
 	if appstate.IsDmenu {
 		handleDmenuResult(toRun)
 		closeAfterActivation(keepOpen, selectNext)
@@ -1294,4 +1299,28 @@ func executeOnSelect(entry util.Entry) {
 			log.Println(err)
 		}
 	}
+}
+
+func forceTerminalForFile(file string) bool {
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("xdg-mime query default $(xdg-mime query filetype %s)", file))
+
+	homedir, err := os.UserHomeDir()
+	if err != nil {
+		log.Panic(err)
+	}
+
+	cmd.Dir = homedir
+
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		log.Println(err)
+		log.Println(string(out))
+		return false
+	}
+
+	desktopFile := strings.TrimSpace(string(out))
+
+	_, ok := modules.TerminalApps[desktopFile]
+
+	return ok
 }

@@ -28,6 +28,8 @@ const ApplicationsName = "applications"
 
 var fieldCodes = []string{"%f", "%F", "%u", "%U", "%d", "%D", "%n", "%N", "%i", "%c", "%k", "%v", "%m"}
 
+var TerminalApps = map[string]struct{}{}
+
 type Applications struct {
 	config      config.Applications
 	mu          sync.Mutex
@@ -441,6 +443,11 @@ func (a *Applications) parse() []util.Entry {
 
 						if strings.HasPrefix(line, "Terminal=") {
 							app.Generic.Terminal = strings.TrimSpace(strings.TrimPrefix(line, "Terminal=")) == "true"
+
+							if app.Generic.Terminal {
+								TerminalApps[filepath.Base(path)] = struct{}{}
+							}
+
 							continue
 						}
 

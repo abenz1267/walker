@@ -401,3 +401,8 @@ func (c *Clipboard) Delete(entry util.Entry) {
 
 	util.ToGob(&c.items, c.file)
 }
+
+func (c *Clipboard) Clear() {
+	c.items = []ClipboardItem{}
+	c.entries = []util.Entry{}
+}

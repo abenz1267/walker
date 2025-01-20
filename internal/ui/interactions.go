@@ -16,6 +16,7 @@ import (
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/history"
 	"github.com/abenz1267/walker/internal/modules"
+	"github.com/abenz1267/walker/internal/modules/clipboard"
 	"github.com/abenz1267/walker/internal/state"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
@@ -45,11 +46,15 @@ func setupCommands() {
 		return true
 	}
 	commands["clearapplicationscache"] = func() bool {
-		os.Remove(filepath.Join(util.CacheDir(), "applications.json"))
+		os.Remove(filepath.Join(util.CacheDir(), "applications.gob"))
 		return true
 	}
 	commands["clearclipboard"] = func() bool {
 		os.Remove(filepath.Join(util.CacheDir(), "clipboard.gob"))
+
+		m := findModule("clipboard", available)
+		m.(*clipboard.Clipboard).Clear()
+
 		return true
 	}
 	commands["cleartypeaheadcache"] = func() bool {

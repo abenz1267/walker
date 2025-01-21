@@ -311,12 +311,34 @@ func (c *Clipboard) watch() {
 
 		if len(c.items) >= c.max {
 			c.items = slices.Clone(c.items[:c.max])
-			c.items = append(c.items, toSpareItems...)
+
+			for _, v := range toSpareItems {
+				if !slices.ContainsFunc(c.items, func(item ClipboardItem) bool {
+					if item.Hash == v.Hash {
+						return true
+					}
+
+					return false
+				}) {
+					c.items = append(c.items, v)
+				}
+			}
 		}
 
 		if len(c.entries) >= c.max {
 			c.entries = slices.Clone(c.entries[:c.max])
-			c.entries = append(c.entries, toSpareEntries...)
+
+			for _, v := range toSpareEntries {
+				if !slices.ContainsFunc(c.entries, func(item util.Entry) bool {
+					if item.HashIdent == v.HashIdent {
+						return true
+					}
+
+					return false
+				}) {
+					c.entries = append(c.entries, v)
+				}
+			}
 		}
 
 		util.ToGob(&c.items, c.file)

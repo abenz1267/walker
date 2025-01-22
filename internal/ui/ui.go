@@ -519,7 +519,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 			box.AddController(dd)
 		}
 
-		boxClasses := []string{"item", val.Class}
+		boxClasses := []string{"item", val.Class, val.Module}
 		if val.Used > 0 {
 			boxClasses = append(boxClasses, "history")
 		}

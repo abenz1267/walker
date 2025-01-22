@@ -144,6 +144,10 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 		config.Cfg.IsService = appstate.IsService
 
+		if !ls.IsSupported() {
+			config.Cfg.AsWindow = true
+		}
+
 		if appstate.Dmenu == nil {
 			if appstate.DmenuSeparator != "" {
 				config.Cfg.Builtins.Dmenu.Separator = appstate.DmenuSeparator

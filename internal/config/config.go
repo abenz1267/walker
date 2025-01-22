@@ -258,10 +258,11 @@ func (b *Blacklist) Match(entry util.Entry) bool {
 
 type Finder struct {
 	GeneralModule   `koanf:",squash"`
-	UseFD           bool `koanf:"use_fd"`
-	IgnoreGitIgnore bool `koanf:"ignore_gitignore"`
-	Concurrency     int  `koanf:"concurrency"`
-	PreviewImages   bool `koanf:"preview_images"`
+	CmdAlt          string `koanf:"cmd_alt"`
+	UseFD           bool   `koanf:"use_fd"`
+	IgnoreGitIgnore bool   `koanf:"ignore_gitignore"`
+	Concurrency     int    `koanf:"concurrency"`
+	PreviewImages   bool   `koanf:"preview_images"`
 }
 
 type Commands struct {

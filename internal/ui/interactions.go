@@ -385,7 +385,7 @@ func activateItem(keepOpen, alt bool) {
 	}
 
 	// check if desktop app is terminal
-	if entry.Module == config.Cfg.Builtins.Finder.Name {
+	if entry.Module == config.Cfg.Builtins.Finder.Name && !alt {
 		forceTerminal = forceTerminalForFile(strings.TrimPrefix(entry.Exec, "xdg-open "))
 	}
 

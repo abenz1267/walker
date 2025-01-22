@@ -91,11 +91,18 @@ func (f *Finder) Entries(term string) []util.Entry {
 			label = v
 		}
 
+		hasExplicitResultAlt := false
+
+		if strings.Contains(f.config.CmdAlt, "%RESULT%") {
+			hasExplicitResultAlt = true
+		}
+
 		if score >= scoremin {
 			entry := util.Entry{
 				Label:            label,
 				Sub:              "finder",
 				Exec:             fmt.Sprintf("xdg-open %s", v),
+				ExecAlt:          strings.ReplaceAll(f.config.CmdAlt, "%RESULT%", label),
 				RecalculateScore: false,
 				ScoreFinal:       score,
 				DragDrop:         true,
@@ -103,6 +110,11 @@ func (f *Finder) Entries(term string) []util.Entry {
 				Categories:       []string{"finder", "fzf"},
 				Class:            "finder",
 				Matching:         util.Fuzzy,
+			}
+
+			if !hasExplicitResultAlt {
+				entry.PipedAlt.String = label
+				entry.PipedAlt.Type = "string"
 			}
 
 			if f.config.PreviewImages {

@@ -208,7 +208,6 @@ end = 0
 top = 0
 
 [ui.window.box.scroll.list]
-marker_color = "#1BFFE1"
 name = "list"
 v_align = "start"
 v_expand = false

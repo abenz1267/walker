@@ -58,6 +58,7 @@ y_align = 0
 wrap = true
 
 [ui.window.box.scroll.list]
+marker_color = "#1BFFE1"
 max_height = 300
 max_width = 400
 min_width = 400

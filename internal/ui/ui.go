@@ -723,6 +723,22 @@ func setupFactory() *gtk.SignalListItemFactory {
 			setupLabelWidgetStyle(sub, &layout.Window.Box.Scroll.List.Item.Text.Sub)
 		}
 
+		if !label.Wrap() {
+			if val.MatchStartingPos > len(val.Label)/2 {
+				label.SetEllipsize(1)
+			} else {
+				label.SetEllipsize(3)
+			}
+		}
+
+		if !sub.Wrap() {
+			if val.MatchStartingPos > len(val.Sub)/2 {
+				sub.SetEllipsize(1)
+			} else {
+				sub.SetEllipsize(3)
+			}
+		}
+
 		if activationLabel != nil {
 			setupLabelWidgetStyle(activationLabel, &layout.Window.Box.Scroll.List.Item.ActivationLabel.LabelWidget)
 			activationLabel.SetWrap(false)
@@ -754,10 +770,6 @@ func setupLabelWidgetStyle(label *gtk.Label, style *config.LabelWidget) {
 	setupWidgetStyle(&label.Widget, &style.Widget, false)
 
 	label.SetWrap(style.Wrap)
-
-	if !style.Wrap {
-		label.SetEllipsize(3)
-	}
 
 	label.SetJustify(layout.JustifyMap[style.Justify])
 	label.SetXAlign(style.XAlign)

@@ -114,14 +114,16 @@ func (e Plugin) Entries(term string) []util.Entry {
 		out := e.cachedOutput
 
 		var score float64
+		var start int
 
 		e.Config.Keywords = append(e.Config.Keywords, e.Config.Name)
 
 		for _, v := range e.Config.Keywords {
-			res, _ := util.FuzzyScore(term, v)
+			res, _, start := util.FuzzyScore(term, v)
 
 			if res > score {
 				score = res
+				start = start
 			}
 		}
 
@@ -142,6 +144,7 @@ func (e Plugin) Entries(term string) []util.Entry {
 			Sub:              e.Config.Name,
 			Output:           e.Config.Src,
 			ScoreFinal:       score,
+			MatchStartingPos: start,
 			RecalculateScore: true,
 			Categories:       e.Config.Keywords,
 			Matching:         util.TopWhenFuzzyMatch,

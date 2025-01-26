@@ -68,6 +68,7 @@ type Entry struct {
 	Used             int                       `mapstructure:"-"`
 	Weight           int                       `mapstructure:"-"`
 	HashIdent        string                    `mapstructure:"-"`
+	MatchStartingPos int                       `mapstructure:"-"`
 }
 
 func (e Entry) Identifier() string {

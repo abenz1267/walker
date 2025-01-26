@@ -801,6 +801,7 @@ func processAsync(text string) {
 				if e[k].RecalculateScore {
 					e[k].ScoreFinal = 0
 					e[k].ScoreFuzzy = 0
+					e[k].MatchStartingPos = 0
 				}
 
 				if e[k].ScoreFinal == 0 {
@@ -1166,11 +1167,12 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 			}
 
 			var score float64
+			var start int
 
 			if strings.HasPrefix(text, "'") {
 				cleanText := strings.TrimPrefix(text, "'")
 
-				score, _ = util.ExactScore(cleanText, t)
+				score, _, start = util.ExactScore(cleanText, t)
 
 				f := strings.Index(strings.ToLower(t), strings.ToLower(cleanText))
 
@@ -1184,7 +1186,7 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 					pos = &poss
 				}
 			} else {
-				score, pos = util.FuzzyScore(text, t)
+				score, pos, start = util.FuzzyScore(text, t)
 			}
 
 			if score < 1 {
@@ -1223,6 +1225,7 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 				}
 
 				entry.ScoreFuzzy = score
+				entry.MatchStartingPos = start
 			}
 		}
 

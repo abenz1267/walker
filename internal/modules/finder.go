@@ -65,9 +65,10 @@ func (f *Finder) Entries(term string) []util.Entry {
 	for _, v := range toCheck {
 		var score float64
 		var pos *[]int
+		var start int
 
 		if exact {
-			score, _ = util.ExactScore(term, v)
+			score, _, start = util.ExactScore(term, v)
 			f := strings.Index(strings.ToLower(v), strings.ToLower(term))
 
 			if f != -1 {
@@ -80,7 +81,7 @@ func (f *Finder) Entries(term string) []util.Entry {
 				pos = &poss
 			}
 		} else {
-			score, pos = util.FuzzyScore(term, v)
+			score, pos, start = util.FuzzyScore(term, v)
 		}
 
 		ddd := v
@@ -105,6 +106,7 @@ func (f *Finder) Entries(term string) []util.Entry {
 				ExecAlt:          strings.ReplaceAll(f.config.CmdAlt, "%RESULT%", label),
 				RecalculateScore: false,
 				ScoreFinal:       score,
+				MatchStartingPos: start,
 				DragDrop:         true,
 				DragDropData:     ddd,
 				Categories:       []string{"finder", "fzf"},

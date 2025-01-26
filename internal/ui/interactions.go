@@ -875,6 +875,15 @@ func processAsync(text string) {
 		filteredEntries := []util.Entry{}
 
 		for _, v := range entries {
+			prefix := findModule(v.Module, toUse).General().Prefix
+
+			if prefix != "" && strings.HasPrefix(text, prefix) {
+				if strings.TrimPrefix(text, prefix) == "" {
+					filteredEntries = append(filteredEntries, v)
+					continue
+				}
+			}
+
 			if v.ScoreFinal > float64(config.Cfg.List.VisibilityThreshold) {
 				filteredEntries = append(filteredEntries, v)
 			}

@@ -14,6 +14,7 @@ type MatchingType int
 const (
 	Fuzzy MatchingType = iota
 	AlwaysTop
+	TopWhenFuzzyMatch
 	AlwaysBottom
 	AlwaysTopOnEmptySearch
 )

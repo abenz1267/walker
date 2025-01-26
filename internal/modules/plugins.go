@@ -142,9 +142,9 @@ func (e Plugin) Entries(term string) []util.Entry {
 			Sub:              e.Config.Name,
 			Output:           e.Config.Src,
 			ScoreFinal:       score,
-			RecalculateScore: false,
+			RecalculateScore: true,
 			Categories:       e.Config.Keywords,
-			Matching:         util.AlwaysTop,
+			Matching:         util.TopWhenFuzzyMatch,
 			Icon:             e.Config.Icon,
 		}
 

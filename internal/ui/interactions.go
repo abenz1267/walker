@@ -811,11 +811,17 @@ func processAsync(text string) {
 						} else {
 							e[k].ScoreFinal = 1000
 						}
-					case util.Fuzzy:
+					case util.Fuzzy, util.TopWhenFuzzyMatch:
 						e[k].ScoreFinal = fuzzyScore(&e[k], toMatch, g.History)
+
+						if e[k].Matching == util.TopWhenFuzzyMatch {
+							if e[k].ScoreFinal > 0 {
+								e[k].ScoreFinal = 10000
+							}
+						}
 					case util.AlwaysTop:
 						if e[k].ScoreFinal == 0 {
-							e[k].ScoreFinal = 1000
+							e[k].ScoreFinal = 10000
 						}
 					case util.AlwaysBottom:
 						if e[k].ScoreFinal == 0 {
@@ -841,18 +847,16 @@ func processAsync(text string) {
 						}
 					}
 				} else {
-					if e[k].ScoreFinal > float64(config.Cfg.List.VisibilityThreshold) {
-						if e[k].Prefix != "" && strings.HasPrefix(text, e[k].Prefix) {
-							hasEntryPrefix = true
+					if e[k].Prefix != "" && strings.HasPrefix(text, e[k].Prefix) {
+						hasEntryPrefix = true
 
-							toPush = append(toPush, e[k])
-						} else {
-							if e[k].IgnoreUnprefixed {
-								continue
-							}
-
-							toPush = append(toPush, e[k])
+						toPush = append(toPush, e[k])
+					} else {
+						if e[k].IgnoreUnprefixed {
+							continue
 						}
+
+						toPush = append(toPush, e[k])
 					}
 				}
 			}
@@ -864,6 +868,19 @@ func processAsync(text string) {
 	}
 
 	wg.Wait()
+
+	// remove entries that don't match the visibility threshold if list is too long
+	if len(entries) > config.Cfg.List.MaxEntries {
+		filteredEntries := []util.Entry{}
+
+		for _, v := range entries {
+			if v.ScoreFinal > float64(config.Cfg.List.VisibilityThreshold) {
+				filteredEntries = append(filteredEntries, v)
+			}
+		}
+
+		entries = filteredEntries
+	}
 
 	if query != lastQuery {
 		return
@@ -1124,8 +1141,12 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 		var matchables []string
 
 		if !appstate.IsDmenu {
-			matchables = []string{entry.Label, entry.Sub, entry.Searchable, entry.Searchable2}
+			matchables = []string{entry.Sub, entry.Searchable, entry.Searchable2}
 			matchables = append(matchables, entry.Categories...)
+
+			if entry.Output == "" {
+				matchables = append([]string{entry.Label}, matchables...)
+			}
 		} else {
 			matchables = []string{entry.Label}
 		}
@@ -1166,7 +1187,7 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 				score, pos = util.FuzzyScore(text, t)
 			}
 
-			if score < 2 {
+			if score < 1 {
 				continue
 			}
 

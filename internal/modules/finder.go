@@ -102,7 +102,7 @@ func (f *Finder) Entries(term string) []util.Entry {
 			entry := util.Entry{
 				Label:            label,
 				Sub:              "finder",
-				Exec:             fmt.Sprintf("xdg-open %s", v),
+				Exec:             fmt.Sprintf("xdg-open '%s'", v),
 				ExecAlt:          strings.ReplaceAll(f.config.CmdAlt, "%RESULT%", label),
 				RecalculateScore: false,
 				ScoreFinal:       score,

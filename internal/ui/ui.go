@@ -132,8 +132,6 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			themeBase = nil
 		}
 
-		layout, layoutErr = config.GetLayout(theme, themeBase)
-
 		appstate.Labels = strings.Split(config.Cfg.ActivationMode.Labels, "")
 		appstate.LabelsF = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
 		appstate.UsedLabels = appstate.Labels
@@ -147,6 +145,8 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		if !ls.IsSupported() {
 			config.Cfg.AsWindow = true
 		}
+
+		layout, layoutErr = config.GetLayout(theme, themeBase)
 
 		if appstate.Dmenu == nil {
 			if appstate.DmenuSeparator != "" {

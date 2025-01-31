@@ -1145,20 +1145,28 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 		}
 	}
 
+	moduleName := entry.Module
+
 	multiplier := 0
+	remember := ""
 
 	if textLength != 0 {
 		var matchables []string
 
-		if !appstate.IsDmenu {
-			matchables = []string{entry.Sub, entry.Searchable, entry.Searchable2}
-			matchables = append(matchables, entry.Categories...)
-
-			if entry.Output == "" {
-				matchables = append([]string{entry.Label}, matchables...)
-			}
+		if moduleName == config.Cfg.Builtins.Emojis.Name || moduleName == config.Cfg.Builtins.Symbols.Name {
+			matchables = []string{entry.Searchable}
+			remember = strings.Split(entry.Label, entry.Searchable)[0]
 		} else {
-			matchables = []string{entry.Label}
+			if !appstate.IsDmenu {
+				matchables = []string{entry.Sub, entry.Searchable, entry.Searchable2}
+				matchables = append(matchables, entry.Categories...)
+
+				if entry.Output == "" {
+					matchables = append([]string{entry.Label}, matchables...)
+				}
+			} else {
+				matchables = []string{entry.Label}
+			}
 		}
 
 		var pos *[]int
@@ -1166,13 +1174,6 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 		for k, t := range matchables {
 			if t == "" {
 				continue
-			}
-
-			remember := ""
-
-			if k == 0 && singleModule != nil && singleModule.General().Name == config.Cfg.Builtins.Emojis.Name {
-				remember = strings.Fields(t)[0]
-				t = entry.Searchable
 			}
 
 			var score float64

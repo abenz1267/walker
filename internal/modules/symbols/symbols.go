@@ -60,9 +60,10 @@ func (e *Symbols) SetupData() {
 		}
 
 		entries = append(entries, util.Entry{
-			Label:            fmt.Sprintf("%s - %s", toUse, fields[1]),
+			Label:            fmt.Sprintf("%s %s", toUse, fields[1]),
 			Sub:              "Symbols",
 			Exec:             exec,
+			Searchable:       fields[1],
 			Class:            "symbols",
 			Matching:         util.Fuzzy,
 			RecalculateScore: true,

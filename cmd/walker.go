@@ -84,6 +84,12 @@ func main() {
 				return
 			}
 
+			if slices.Contains(args, "-C") || slices.Contains(args, "--createuserconfig") {
+				config.WriteUserConfig()
+
+				return
+			}
+
 			state.IsService = slices.Contains(args, "--gapplication-service")
 
 			if state.IsService {
@@ -162,6 +168,7 @@ Type=Application
 	app.AddMainOption("active", 'a', glib.OptionFlagNone, glib.OptionArgString, "active item", "")
 	app.AddMainOption("enableautostart", 'A', glib.OptionFlagNone, glib.OptionArgNone, "creates a desktop file for autostarting on login", "")
 	app.AddMainOption("disableautostart", 'D', glib.OptionFlagNone, glib.OptionArgNone, "removes the autostart desktop file", "")
+	app.AddMainOption("createuserconfig", 'C', glib.OptionFlagNone, glib.OptionArgNone, "writes the default config to xdg_user_config", "")
 
 	app.Connect("activate", ui.Activate(state))
 

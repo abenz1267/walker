@@ -27,6 +27,9 @@ var defaultWindowLayout []byte
 //go:embed themes/default.toml
 var defaultThemeLayout []byte
 
+//go:embed themes/xdg_default.css
+var defaultThemeCSS []byte
+
 //go:embed themes/default_window.toml
 var defaultWindowThemeLayout []byte
 

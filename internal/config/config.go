@@ -435,6 +435,21 @@ func loadLocalEnv() {
 	}
 }
 
+func WriteUserConfig() {
+	dir, err := os.UserConfigDir()
+	if err != nil {
+		log.Panicln(err)
+	}
+
+	os.MkdirAll(filepath.Join(dir, "walker"), 0755)
+	os.MkdirAll(filepath.Join(dir, "walker", "themes"), 0755)
+
+	os.WriteFile(filepath.Join(dir, "walker", "config.toml"), defaultConfig, 0o600)
+	os.WriteFile(filepath.Join(dir, "walker", "themes", "default.toml"), defaultThemeLayout, 0o600)
+	os.WriteFile(filepath.Join(dir, "walker", "themes", "default_window.toml"), defaultWindowThemeLayout, 0o600)
+	os.WriteFile(filepath.Join(dir, "walker", "themes", "default.css"), defaultThemeCSS, 0o600)
+}
+
 func Get(config string) error {
 	defaults := koanf.New(".")
 	err := defaults.Load(rawbytes.Provider(defaultConfig), toml.Parser())

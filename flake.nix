@@ -30,12 +30,17 @@
 
     packages = eachSystem (pkgs: {
       default = self.packages.${pkgs.system}.walker;
-      walker-git = pkgs.callPackage ./nix/package.nix {};
+      walker = pkgs.callPackage ./nix/package.nix {};
     });
 
     homeManagerModules = {
       default = self.homeManagerModules.walker;
-      walker = import ./nix/hm-module.nix self;
+      walker = import ./nix/modules/home-manager.nix self;
+    };
+
+    nixosModules = {
+      default = self.nixosModules.walker;
+      walker = import ./nix/modules/nixos.nix self;
     };
 
     nixConfig = {

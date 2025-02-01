@@ -28,6 +28,7 @@ self: {
       };
     };
   };
+
   themeName = "home-manager";
 
   cfg = config.programs.walker;

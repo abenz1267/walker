@@ -64,7 +64,12 @@ func setupCommands() {
 	commands["adjusttheme"] = func() bool {
 		blockTimeout = true
 
-		cssFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.css", config.Cfg.Theme))
+		dir, root := util.ThemeDir()
+		cssFile := filepath.Join(dir, fmt.Sprintf("%s.css", config.Cfg.Theme))
+
+		if root {
+			return false
+		}
 
 		cmd := exec.Command("sh", "-c", wrapWithPrefix(fmt.Sprintf("xdg-open %s", cssFile)))
 		cmd.SysProcAttr = &syscall.SysProcAttr{

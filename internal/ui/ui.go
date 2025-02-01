@@ -1000,7 +1000,8 @@ func setupLayout(theme string, base []string) {
 }
 
 func watchTheme() {
-	themes := filepath.Join(util.ThemeDir())
+	dir, _ := util.ThemeDir()
+	themes := filepath.Join(dir)
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {

@@ -64,7 +64,8 @@ func setupCss(theme string, base []string) {
 func getCSS(theme string) []byte {
 	var css []byte
 
-	file := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.css", theme))
+	dir, _ := util.ThemeDir()
+	file := filepath.Join(dir, fmt.Sprintf("%s.css", theme))
 
 	if _, err := os.Stat(file); err == nil {
 		css, err = os.ReadFile(file)

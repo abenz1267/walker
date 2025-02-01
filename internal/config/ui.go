@@ -247,17 +247,28 @@ type TextWrapper struct {
 }
 
 func SetupDefaultThemeOnDisk() {
-	os.MkdirAll(util.ThemeDir(), 0755)
+	dir, root := util.ThemeDir()
+
+	if !root {
+		os.MkdirAll(dir, 0755)
+
+		file := filepath.Join(dir, "default.toml")
+
+		os.Remove(file)
+		os.WriteFile(file, defaultThemeLayout, 0o600)
+	}
+
 	checkForDefaultCss()
-
-	file := filepath.Join(util.ThemeDir(), "default.toml")
-
-	os.Remove(file)
-	os.WriteFile(file, defaultThemeLayout, 0o600)
 }
 
 func checkForDefaultCss() {
-	file := filepath.Join(util.ThemeDir(), "default.css")
+	dir, root := util.ThemeDir()
+
+	if root {
+		return
+	}
+
+	file := filepath.Join(dir, "default.css")
 	os.Remove(file)
 
 	var pybytes []byte
@@ -322,6 +333,8 @@ func GetLayout(theme string, base []string) (*UI, error) {
 
 	var cfgErr error
 
+	dir, _ := util.ThemeDir()
+
 	for _, v := range base {
 		if v == "default" {
 			defTheme := defaultThemeLayout
@@ -335,9 +348,9 @@ func GetLayout(theme string, base []string) (*UI, error) {
 			continue
 		}
 
-		tomlFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.toml", v))
-		jsonFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.json", v))
-		yamlFile := filepath.Join(util.ThemeDir(), fmt.Sprintf("%s.yaml", v))
+		tomlFile := filepath.Join(dir, fmt.Sprintf("%s.toml", v))
+		jsonFile := filepath.Join(dir, fmt.Sprintf("%s.json", v))
+		yamlFile := filepath.Join(dir, fmt.Sprintf("%s.yaml", v))
 
 		if util.FileExists(tomlFile) {
 			cfgErr = layout.Load(file.Provider(tomlFile), toml.Parser())

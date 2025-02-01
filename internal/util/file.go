@@ -59,17 +59,24 @@ func TmpDir() string {
 	return filepath.Join(os.TempDir())
 }
 
-func ThemeDir() string {
-	return filepath.Join(ConfigDir(), "themes")
+func ThemeDir() (string, bool) {
+	usrCfgDir, root := ConfigDir()
+	return filepath.Join(usrCfgDir, "themes"), root
 }
 
-func ConfigDir() string {
+func ConfigDir() (string, bool) {
 	dir, err := os.UserConfigDir()
 	if err != nil {
 		log.Panicln(err)
 	}
 
-	return filepath.Join(dir, "walker")
+	usrCfgDir := filepath.Join(dir, "walker")
+
+	if FileExists(usrCfgDir) {
+		return usrCfgDir, false
+	}
+
+	return filepath.Join("/etc", "xdg", "walker"), true
 }
 
 func CacheDir() string {

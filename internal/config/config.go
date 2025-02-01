@@ -397,18 +397,26 @@ type List struct {
 var Cfg *Config
 
 var (
-	tomlFile = filepath.Join(util.ConfigDir(), "config.toml")
-	jsonFile = filepath.Join(util.ConfigDir(), "config.json")
-	yamlFile = filepath.Join(util.ConfigDir(), "config.yaml")
+	tomlFile = ""
+	jsonFile = ""
+	yamlFile = ""
 )
 
 func SetupConfigOnDisk() {
-	os.MkdirAll(util.ConfigDir(), 0755)
+	dir, root := util.ConfigDir()
 
-	if !util.FileExists(tomlFile) && !util.FileExists(jsonFile) && !util.FileExists(yamlFile) {
-		err := os.WriteFile(tomlFile, defaultConfig, 0o600)
-		if err != nil {
-			slog.Error("Couldn't create config file", "err", err)
+	tomlFile = filepath.Join(dir, "config.toml")
+	jsonFile = filepath.Join(dir, "config.json")
+	yamlFile = filepath.Join(dir, "config.yaml")
+
+	if !root {
+		os.MkdirAll(dir, 0755)
+
+		if !util.FileExists(tomlFile) && !util.FileExists(jsonFile) && !util.FileExists(yamlFile) {
+			err := os.WriteFile(tomlFile, defaultConfig, 0o600)
+			if err != nil {
+				slog.Error("Couldn't create config file", "err", err)
+			}
 		}
 	}
 
@@ -416,7 +424,8 @@ func SetupConfigOnDisk() {
 }
 
 func loadLocalEnv() {
-	envFile := filepath.Join(util.ConfigDir(), ".env")
+	dir, _ := util.ConfigDir()
+	envFile := filepath.Join(dir, ".env")
 
 	if util.FileExists(envFile) {
 		err := godotenv.Load(envFile)
@@ -552,9 +561,10 @@ func setTerminal() {
 }
 
 func parseConfigFile(name string) (*koanf.Koanf, error) {
-	tomlFile := filepath.Join(util.ConfigDir(), fmt.Sprintf("%s.toml", name))
-	jsonFile := filepath.Join(util.ConfigDir(), fmt.Sprintf("%s.json", name))
-	yamlFile := filepath.Join(util.ConfigDir(), fmt.Sprintf("%s.yaml", name))
+	dir, _ := util.ConfigDir()
+	tomlFile := filepath.Join(dir, fmt.Sprintf("%s.toml", name))
+	jsonFile := filepath.Join(dir, fmt.Sprintf("%s.json", name))
+	yamlFile := filepath.Join(dir, fmt.Sprintf("%s.yaml", name))
 
 	var usrCfgErr error
 

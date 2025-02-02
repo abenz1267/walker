@@ -48,12 +48,12 @@ buildGoModule {
     vips
   ];
 
-  meta = with lib; {
+  meta = {
     description = "Wayland-native application runner";
     homepage = "https://github.com/abenz1267/walker";
-    license = licenses.mit;
-    maintainers = with maintainers; [diniamo];
-    platforms = platforms.linux;
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [diniamo NotAShelf];
+    platforms = lib.platforms.linux;
     mainProgram = "walker";
   };
 }

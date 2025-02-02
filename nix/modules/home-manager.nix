@@ -4,31 +4,36 @@ self: {
   pkgs,
   ...
 }: let
-  inherit (lib) mkEnableOption mkOption mkPackageOption importTOML mkIf getExe mkForce mkMerge;
-  inherit (lib.types) bool nullOr submodule lines;
+  inherit (lib.modules) mkIf mkDefault mkMerge;
+  inherit (lib.options) mkOption mkEnableOption mkPackageOption;
+  inherit (lib.trivial) importTOML;
+  inherit (lib.meta) getExe;
+  inherit (lib.types) nullOr bool submodule lines;
 
   tomlFormat = pkgs.formats.toml {};
 
-  themeType = submodule {
-    options = {
-      layout = mkOption {
-        inherit (tomlFormat) type;
-        default = {};
-        description = ''
-          The layout of the theme.
+  theme = {
+    name = "nixos";
+    type = submodule {
+      options = {
+        layout = mkOption {
+          inherit (tomlFormat) type;
+          default = {};
+          description = ''
+            The layout of the theme.
 
-          See <https://github.com/abenz1267/walker/wiki/Theming> for the full list of options.
-        '';
-      };
+            See <https://github.com/abenz1267/walker/wiki/Theming> for the full list of options.
+          '';
+        };
 
-      style = mkOption {
-        type = lines;
-        default = "";
-        description = "The styling of the theme, written in GTK CSS.";
+        style = mkOption {
+          type = lines;
+          default = "";
+          description = "The styling of the theme, written in GTK CSS.";
+        };
       };
     };
   };
-  themeName = "home-manager";
 
   cfg = config.programs.walker;
 in {
@@ -48,16 +53,17 @@ in {
 
       config = mkOption {
         inherit (tomlFormat) type;
-        default = importTOML ../internal/config/config.default.toml;
+        default = importTOML ../../internal/config/config.default.toml;
+        defaultText = "importTOML ../../internal/config/config.default.toml";
         description = ''
-          Configuration written to `$XDG_CONFIG_HOME/walker/config.toml`.
+          Configuration written to {file}`$XDG_CONFIG_HOME/walker/config.toml`.
 
           See <https://github.com/abenz1267/walker/wiki/Basic-Configuration> for the full list of options.
         '';
       };
 
       theme = mkOption {
-        type = nullOr themeType;
+        type = nullOr theme.type;
         default = null;
         description = "The custom theme used by walker. Setting this option overrides `config.theme`.";
       };
@@ -81,11 +87,11 @@ in {
     }
 
     (mkIf (cfg.theme != null) {
-      programs.walker.config.theme = mkForce themeName;
+      programs.walker.config.theme = mkDefault theme.name;
 
       xdg.configFile = {
-        "walker/themes/${themeName}.toml".source = tomlFormat.generate "walker-themes-${themeName}.toml" cfg.theme.layout;
-        "walker/themes/${themeName}.css".text = cfg.theme.style;
+        "walker/themes/${theme.name}.toml".source = tomlFormat.generate "walker-themes-${theme.name}.toml" cfg.theme.layout;
+        "walker/themes/${theme.name}.css".text = cfg.theme.style;
       };
     })
   ]);

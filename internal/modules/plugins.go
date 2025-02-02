@@ -299,6 +299,8 @@ func (e Plugin) parseKv(out []byte) []util.Entry {
 				entry.RecalculateScore, _ = strconv.ParseBool(pair[1])
 			case pair[0] == "label":
 				entry.Label = pair[1]
+			case pair[0] == "env":
+				entry.Env = strings.Split(pair[1], ",")
 			case pair[0] == "sub":
 				entry.Sub = pair[1]
 			case pair[0] == "exec":
@@ -325,6 +327,10 @@ func (e Plugin) parseKv(out []byte) []util.Entry {
 				entry.MatchFields, _ = strconv.Atoi(pair[1])
 			case pair[0] == "searchable":
 				entry.Searchable = pair[1]
+			case pair[0] == "searchable2":
+				entry.Searchable2 = pair[1]
+			case pair[0] == "terminal_title_flag":
+				entry.TerminalTitleFlag = pair[1]
 			case pair[0] == "categories":
 				entry.Categories = strings.Split(pair[1], ",")
 			case pair[0] == "terminal":

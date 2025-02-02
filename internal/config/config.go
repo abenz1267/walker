@@ -40,18 +40,18 @@ const (
 
 type Config struct {
 	ActivationMode      ActivationMode `koanf:"activation_mode"`
+	AppLaunchPrefix     string         `koanf:"app_launch_prefix"`
 	AsWindow            bool           `koanf:"as_window"`
 	Bar                 Bar            `koanf:"bar"`
 	Builtins            Builtins       `koanf:"builtins"`
 	CloseWhenOpen       bool           `koanf:"close_when_open"`
 	DisableClickToClose bool           `koanf:"disable_click_to_close"`
-	Keys                Keys           `koanf:"keys"`
 	Disabled            []string       `koanf:"disabled"`
 	Events              Events         `koanf:"events"`
 	ForceKeyboardFocus  bool           `koanf:"force_keyboard_focus"`
 	HotreloadTheme      bool           `koanf:"hotreload_theme"`
 	IgnoreMouse         bool           `koanf:"ignore_mouse"`
-	AppLaunchPrefix     string         `koanf:"app_launch_prefix"`
+	Keys                Keys           `koanf:"keys"`
 	List                List           `koanf:"list"`
 	Locale              string         `koanf:"locale"`
 	Monitor             string         `koanf:"monitor"`
@@ -63,6 +63,7 @@ type Config struct {
 	ThemeBase           []string       `koanf:"theme_base"`
 	Timeout             int            `koanf:"timeout"`
 
+	// internal
 	Available []string `koanf:"-"`
 	Hidden    []string `koanf:"-"`
 	IsService bool     `koanf:"-"`
@@ -71,7 +72,6 @@ type Config struct {
 type Keys struct {
 	AcceptTypeahead     []string            `koanf:"accept_typeahead"`
 	ActivationModifiers ActivationModifiers `koanf:"activation_modifiers"`
-	TriggerLabels       string              `koanf:"trigger_labels"`
 	Ai                  AiKeys              `koanf:"ai"`
 	Close               []string            `koanf:"close"`
 	Next                []string            `koanf:"next"`
@@ -79,11 +79,12 @@ type Keys struct {
 	RemoveFromHistory   []string            `koanf:"remove_from_history"`
 	ResumeQuery         []string            `koanf:"resume_query"`
 	ToggleExactSearch   []string            `koanf:"toggle_exact_search"`
+	TriggerLabels       string              `koanf:"trigger_labels"`
 }
 
 type ActivationModifiers struct {
-	KeepOpen  string `koanf:"keep_open"`
 	Alternate string `koanf:"alternate"`
+	KeepOpen  string `koanf:"keep_open"`
 }
 
 type AiKeys struct {
@@ -94,11 +95,11 @@ type AiKeys struct {
 }
 
 type Events struct {
-	OnLaunch      string `koanf:"on_launch"`
-	OnSelection   string `koanf:"on_selection"`
-	OnExit        string `koanf:"on_exit"`
 	OnActivate    string `koanf:"on_activate"`
+	OnExit        string `koanf:"on_exit"`
+	OnLaunch      string `koanf:"on_launch"`
 	OnQueryChange string `koanf:"on_query_change"`
+	OnSelection   string `koanf:"on_selection"`
 }
 
 type Bar struct {
@@ -113,8 +114,8 @@ type BarEntry struct {
 }
 
 type Builtins struct {
-	Applications   Applications   `koanf:"applications"`
 	AI             AI             `koanf:"ai"`
+	Applications   Applications   `koanf:"applications"`
 	Bookmarks      Bookmarks      `koanf:"bookmarks"`
 	Calc           Calc           `koanf:"calc"`
 	Clipboard      Clipboard      `koanf:"clipboard"`
@@ -127,10 +128,10 @@ type Builtins struct {
 	SSH            SSH            `koanf:"ssh"`
 	Switcher       Switcher       `koanf:"switcher"`
 	Symbols        Symbols        `koanf:"symbols"`
+	Translation    Translation    `koanf:"translation"`
 	Websearch      Websearch      `koanf:"websearch"`
 	Windows        Windows        `koanf:"windows"`
 	XdphPicker     XdphPicker     `koanf:"xdph_picker"`
-	Translation    Translation    `koanf:"translation"`
 }
 
 type XdphPicker struct {
@@ -139,21 +140,21 @@ type XdphPicker struct {
 
 type Bookmarks struct {
 	GeneralModule `koanf:",squash"`
-	Groups        []BookmarkGroup `koanf:"groups"`
 	Entries       []BookmarkEntry `koanf:"entries"`
+	Groups        []BookmarkGroup `koanf:"groups"`
 }
 
 type BookmarkGroup struct {
+	Entries          []BookmarkEntry `koanf:"entries"`
+	IgnoreUnprefixed bool            `koanf:"ignore_unprefixed"`
 	Label            string          `koanf:"label"`
 	Prefix           string          `koanf:"prefix"`
-	IgnoreUnprefixed bool            `koanf:"ignore_unprefixed"`
-	Entries          []BookmarkEntry `koanf:"entries"`
 }
 
 type BookmarkEntry struct {
+	Keywords []string `koanf:"keywords"`
 	Label    string   `koanf:"label"`
 	Url      string   `koanf:"url"`
-	Keywords []string `koanf:"keywords"`
 }
 
 type AI struct {
@@ -166,12 +167,12 @@ type Anthropic struct {
 }
 
 type AnthropicPrompt struct {
-	Model            string  `koanf:"model"`
-	MaxTokens        int     `koanf:"max_tokens"`
-	Temperature      float64 `koanf:"temperature"`
 	Label            string  `koanf:"label"`
+	MaxTokens        int     `koanf:"max_tokens"`
+	Model            string  `koanf:"model"`
 	Prompt           string  `koanf:"prompt"`
 	SingleModuleOnly bool    `koanf:"single_module_only"`
+	Temperature      float64 `koanf:"temperature"`
 }
 
 type Calc struct {
@@ -197,16 +198,18 @@ type CustomCommand struct {
 type GeneralModule struct {
 	AutoSelect         bool        `koanf:"auto_select"`
 	Blacklist          []Blacklist `koanf:"blacklist"`
-	HistoryBlacklist   []Blacklist `koanf:"history_blacklist"`
 	Delay              int         `koanf:"delay"`
 	EagerLoading       bool        `koanf:"eager_loading"`
 	ExternalConfig     bool        `koanf:"external_config"`
 	Hidden             bool        `koanf:"hidden"`
 	History            bool        `koanf:"history"`
+	HistoryBlacklist   []Blacklist `koanf:"history_blacklist"`
 	Icon               string      `koanf:"icon"`
 	KeepSort           bool        `koanf:"keep_sort"`
 	MinChars           int         `koanf:"min_chars"`
 	Name               string      `koanf:"name"`
+	OnSelect           string      `koanf:"on_select"`
+	OutputPlaceholder  string      `koanf:"output_placeholder"`
 	Placeholder        string      `koanf:"placeholder"`
 	Prefix             string      `koanf:"prefix"`
 	Refresh            bool        `koanf:"refresh"`
@@ -217,8 +220,6 @@ type GeneralModule struct {
 	ThemeBase          []string    `koanf:"theme_base"`
 	Typeahead          bool        `koanf:"typeahead"`
 	Weight             int         `koanf:"weight"`
-	OnSelect           string      `koanf:"on_select"`
-	OutputPlaceholder  string      `koanf:"output_placeholder"`
 
 	// internal
 	HasInitialSetup bool `koanf:"-"`
@@ -226,8 +227,8 @@ type GeneralModule struct {
 }
 
 type Blacklist struct {
-	Regexp string `koanf:"regexp"`
 	Label  bool   `koanf:"label"`
+	Regexp string `koanf:"regexp"`
 	Sub    bool   `koanf:"sub"`
 
 	// internal
@@ -259,10 +260,10 @@ func (b *Blacklist) Match(entry util.Entry) bool {
 type Finder struct {
 	GeneralModule   `koanf:",squash"`
 	CmdAlt          string `koanf:"cmd_alt"`
-	UseFD           bool   `koanf:"use_fd"`
-	IgnoreGitIgnore bool   `koanf:"ignore_gitignore"`
 	Concurrency     int    `koanf:"concurrency"`
+	IgnoreGitIgnore bool   `koanf:"ignore_gitignore"`
 	PreviewImages   bool   `koanf:"preview_images"`
+	UseFD           bool   `koanf:"use_fd"`
 }
 
 type Commands struct {
@@ -298,9 +299,9 @@ type Websearch struct {
 
 type WebsearchEntry struct {
 	Name         string `koanf:"name"`
-	Url          string `koanf:"url"`
 	Prefix       string `koanf:"prefix"`
 	SwitcherOnly bool   `koanf:"switcher_only"`
+	Url          string `koanf:"url"`
 }
 
 type Translation struct {
@@ -335,25 +336,25 @@ type ActivationMode struct {
 
 type Clipboard struct {
 	GeneralModule     `koanf:",squash"`
+	AlwaysPutNewOnTop bool   `koanf:"always_put_new_on_top"`
 	AvoidLineBreaks   bool   `koanf:"avoid_line_breaks"`
+	Exec              string `koanf:"exec"`
 	ImageHeight       int    `koanf:"image_height"`
 	MaxEntries        int    `koanf:"max_entries"`
-	Exec              string `koanf:"exec"`
-	AlwaysPutNewOnTop bool   `koanf:"always_put_new_on_top"`
 }
 
 type Dmenu struct {
 	GeneralModule `koanf:",squash"`
-	Separator     string `koanf:"separator"`
 	LabelColumn   int    `koanf:"label_column"`
+	Separator     string `koanf:"separator"`
 }
 
 type Runner struct {
 	GeneralModule `koanf:",squash"`
 	Excludes      []string `koanf:"excludes"`
+	GenericEntry  bool     `koanf:"generic_entry"`
 	Includes      []string `koanf:"includes"`
 	ShellConfig   string   `koanf:"shell_config"`
-	GenericEntry  bool     `koanf:"generic_entry"`
 	UseFD         bool     `koanf:"use_fd"`
 }
 
@@ -362,18 +363,18 @@ type Plugin struct {
 	Cmd              string            `koanf:"cmd"`
 	CmdAlt           string            `koanf:"cmd_alt"`
 	Entries          []util.Entry      `koanf:"entries"`
+	Keywords         []string          `koanf:"keywords"`
+	KvSeparator      string            `koanf:"kv_separator"`
 	LabelColumn      int               `koanf:"label_column"`
 	Matching         util.MatchingType `koanf:"matching"`
+	Output           bool              `koanf:"output"`
+	Parser           string            `koanf:"parser"`
 	RecalculateScore bool              `koanf:"recalculate_score,omitempty"`
 	ResultColumn     int               `koanf:"result_column"`
 	Separator        string            `koanf:"separator"`
 	Src              string            `koanf:"src"`
 	SrcOnce          string            `koanf:"src_once"`
 	Terminal         bool              `koanf:"terminal"`
-	Parser           string            `koanf:"parser"`
-	KvSeparator      string            `koanf:"kv_separator"`
-	Output           bool              `koanf:"output"`
-	Keywords         []string          `koanf:"keywords"`
 }
 
 type Search struct {

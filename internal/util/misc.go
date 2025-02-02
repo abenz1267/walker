@@ -33,8 +33,6 @@ type Entry struct {
 	InitialClass      string       `mapstructure:"initial_class,omitempty" json:"initial_class,omitempty"`
 	Label             string       `mapstructure:"label,omitempty" json:"label,omitempty"`
 	MatchFields       int          `mapstructure:"match_fields,omitempty" json:"match_fields,omitempty"`
-	MatchedLabel      string       `mapstructure:"matched_label,omitempty" json:"matched_label,omitempty"`
-	MatchedSub        string       `mapstructure:"matched_sub,omitempty" json:"matched_sub,omitempty"`
 	Matching          MatchingType `mapstructure:"matching,omitempty" json:"matching,omitempty"`
 	Path              string       `mapstructure:"path,omitempty" json:"path,omitempty"`
 	Prefer            bool         `mapstructure:"prefer,omitempty" json:"prefer,omitempty"`
@@ -51,24 +49,26 @@ type Entry struct {
 	// internal
 	DaysSinceUsed    int                       `mapstructure:"-"`
 	File             string                    `mapstructure:"-"`
+	HashIdent        string                    `mapstructure:"-"`
 	History          bool                      `mapstructure:"-"`
 	IgnoreUnprefixed bool                      `mapstructure:"-"`
 	IsAction         bool                      `mapstructure:"-"`
 	LastUsed         time.Time                 `mapstructure:"-"`
+	MatchStartingPos int                       `mapstructure:"-"`
+	MatchedLabel     string                    `mapstructure:"-"`
+	MatchedSub       string                    `mapstructure:"-"`
 	Module           string                    `mapstructure:"-"`
+	OnSelectPiped    Piped                     `mapstructure:"-"`
 	OpenWindows      uint                      `mapstructure:"-"`
+	Output           string                    `mapstructure:"-"`
 	Piped            Piped                     `mapstructure:"-"`
 	PipedAlt         Piped                     `mapstructure:"-"`
-	OnSelectPiped    Piped                     `mapstructure:"-"`
-	Output           string                    `mapstructure:"-"`
 	Prefix           string                    `mapstructure:"-"`
 	SingleModuleOnly bool                      `mapstructure:"-"`
 	SpecialFunc      func(args ...interface{}) `mapstructure:"-"`
 	SpecialFuncArgs  []interface{}             `mapstructure:"-"`
 	Used             int                       `mapstructure:"-"`
 	Weight           int                       `mapstructure:"-"`
-	HashIdent        string                    `mapstructure:"-"`
-	MatchStartingPos int                       `mapstructure:"-"`
 }
 
 func (e Entry) Identifier() string {

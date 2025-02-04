@@ -1215,7 +1215,7 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 					entry.MatchedSub = t
 				}
 
-				if layout.Window.Box.Scroll.List.MarkerColor != "" {
+				if layout.Window.Box.Scroll.List.MarkerColor != "" && len(t) < 1000 {
 					res := ""
 
 					if pos != nil {

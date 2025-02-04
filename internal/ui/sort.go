@@ -79,6 +79,14 @@ func sortEntries(entries []util.Entry, keepSort bool) {
 				return b.LastUsed.Compare(a.LastUsed)
 			}
 
+			if a.MatchStartingPos < b.MatchStartingPos {
+				return -1
+			}
+
+			if a.MatchStartingPos > b.MatchStartingPos {
+				return 1
+			}
+
 			if keepSort {
 				return 0
 			}

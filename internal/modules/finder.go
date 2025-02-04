@@ -84,13 +84,8 @@ func (f *Finder) Entries(term string) []util.Entry {
 			score, pos, start = util.FuzzyScore(term, v)
 		}
 
-		ddd := v
-		label := strings.TrimPrefix(strings.TrimPrefix(v, f.homedir), "/")
-
-		if f.config.UseFD {
-			ddd = filepath.Join(f.homedir, v)
-			label = v
-		}
+		ddd := filepath.Join(f.homedir, v)
+		label := v
 
 		hasExplicitResultAlt := false
 
@@ -224,7 +219,7 @@ func (f *Finder) SetupData() {
 						continue
 					}
 
-					f.files = append(f.files, file.Location)
+					f.files = append(f.files, strings.TrimPrefix(file.Location, f.homedir+"/"))
 				}
 			}
 		}(done)

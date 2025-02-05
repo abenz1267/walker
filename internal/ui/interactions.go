@@ -1219,7 +1219,7 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 					res := ""
 
 					if pos != nil {
-						for k, v := range t {
+						for k, v := range []rune(t) {
 							if slices.Contains(*pos, k) {
 								res = fmt.Sprintf("%s<span color=\"%s\">%s</span>", res, layout.Window.Box.Scroll.List.MarkerColor, string(v))
 							} else {

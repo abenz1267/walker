@@ -627,16 +627,14 @@ func setupFactory() *gtk.SignalListItemFactory {
 		}
 
 		if val.MatchedLabel != "" {
-			val.MatchedLabel = strings.ReplaceAll(val.MatchedLabel, "&", "&amp;")
-			label.SetMarkup(val.MatchedLabel)
+			label.SetMarkup(applyMarker(val.MatchedLabel))
 		}
 
 		sub := gtk.NewLabel(html.EscapeString(val.Sub))
 		sub.SetUseMarkup(true)
 
 		if val.MatchedSub != "" {
-			val.MatchedSub = strings.ReplaceAll(val.MatchedSub, "&", "&amp;")
-			sub.SetMarkup(val.MatchedSub)
+			sub.SetMarkup(applyMarker(val.MatchedSub))
 		}
 
 		var activationLabel *gtk.Label
@@ -1101,4 +1099,8 @@ func setupThumbnails() {
 
 		return nil
 	})
+}
+
+func applyMarker(in string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(html.EscapeString(in), "|MARKERSTART|", fmt.Sprintf("<span color=\"%s\">", layout.Window.Box.Scroll.List.MarkerColor)), "|MARKEREND|", "</span>")
 }

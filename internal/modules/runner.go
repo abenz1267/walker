@@ -202,7 +202,13 @@ func (r *Runner) parseAliases() {
 
 	r.aliases = make(map[string]string)
 
-	file, err := os.Open(r.config.ShellConfig)
+	r.parseAliasesFunc(r.config.ShellConfig)
+}
+
+func (r *Runner) parseAliasesFunc(src string) {
+	homeDir, _ := os.UserHomeDir()
+
+	file, err := os.Open(src)
 	if err != nil {
 		log.Println(err)
 		return
@@ -224,6 +230,13 @@ func (r *Runner) parseAliases() {
 			} else if strings.HasPrefix(splits[1], "'") {
 				r.aliases[alias] = strings.TrimSuffix(strings.TrimPrefix(splits[1], "'"), "'")
 			}
+		}
+
+		if strings.HasPrefix(text, "source") {
+			file := strings.Split(text, " ")[1]
+			file = strings.Replace(file, "~", homeDir, 1)
+
+			r.parseAliasesFunc(file)
 		}
 	}
 }

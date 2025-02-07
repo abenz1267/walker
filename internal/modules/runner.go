@@ -5,7 +5,6 @@ import (
 	"bytes"
 	"fmt"
 	"io/fs"
-	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -210,7 +209,6 @@ func (r *Runner) parseAliasesFunc(src string) {
 
 	file, err := os.Open(src)
 	if err != nil {
-		log.Println(err)
 		return
 	}
 

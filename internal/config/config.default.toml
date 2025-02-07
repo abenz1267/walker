@@ -241,6 +241,7 @@ switcher_only = true
 delay = 1000
 weight = 5
 name = "translation"
+icon = "accessories-dictionary"
 placeholder = "Translation"
 switcher_only = true
 provider = "googlefree"

@@ -728,15 +728,17 @@ func processAsync(text string) {
 		if len(p) > 1 {
 			prefix := p[k].General().Prefix
 
-			if p[k].General().SwitcherOnly {
-				if prefix == "" {
-					wg.Done()
-					continue
-				}
+			if len(appstate.ExplicitModules) == 0 {
+				if p[k].General().SwitcherOnly {
+					if prefix == "" {
+						wg.Done()
+						continue
+					}
 
-				if !strings.HasPrefix(text, prefix) {
-					wg.Done()
-					continue
+					if !strings.HasPrefix(text, prefix) {
+						wg.Done()
+						continue
+					}
 				}
 			}
 

@@ -29,10 +29,10 @@ archives:
       {{- else if eq .Arch "386" }}i386
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
-files:
-  - internal/config/config.default.toml
-  - internal/config/themes/xdg_default.css
-  - internal/config/themes/default.toml
+    files:
+      - internal/config/config.default.toml
+      - internal/config/themes/xdg_default.css
+      - internal/config/themes/default.toml
 
 changelog:
   sort: asc

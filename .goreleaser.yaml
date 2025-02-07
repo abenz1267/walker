@@ -30,6 +30,7 @@ archives:
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     files:
+      - LICENSE
       - internal/config/config.default.toml
       - internal/config/themes/xdg_default.css
       - internal/config/themes/default.toml

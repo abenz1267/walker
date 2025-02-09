@@ -124,7 +124,10 @@ Terminal=false
 Type=Application
 				`
 
-				err := os.WriteFile(filepath.Join(xdg.ConfigHome, "autostart", "walker-service.desktop"), []byte(strings.TrimSpace(content)), 0644)
+				dir := filepath.Join(xdg.ConfigHome, "autostart")
+				os.MkdirAll(dir, 0755)
+
+				err := os.WriteFile(filepath.Join(dir, "walker-service.desktop"), []byte(strings.TrimSpace(content)), 0644)
 				if err != nil {
 					log.Panicln(err)
 				}

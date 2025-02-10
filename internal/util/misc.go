@@ -50,6 +50,7 @@ type Entry struct {
 	DaysSinceUsed    int                       `mapstructure:"-"`
 	File             string                    `mapstructure:"-"`
 	HashIdent        string                    `mapstructure:"-"`
+	Hide             bool                      `mapstructure:"-"`
 	History          bool                      `mapstructure:"-"`
 	IgnoreUnprefixed bool                      `mapstructure:"-"`
 	IsAction         bool                      `mapstructure:"-"`

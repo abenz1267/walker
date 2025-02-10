@@ -355,20 +355,26 @@ func (a *Applications) parse() []util.Entry {
 					if strings.HasPrefix(line, "OnlyShowIn=") {
 						onlyshowin := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "OnlyShowIn=")), ";")
 
-						if slices.Contains(onlyshowin, desktop) {
-							continue
+						hide := !slices.Contains(onlyshowin, desktop)
+
+						if isAction {
+							app.Actions[len(app.Actions)-1].Hide = hide
+						} else {
+							app.Generic.Hide = hide
 						}
 
-						done[info.Name()] = struct{}{}
-						return nil
+						continue
 					}
 
 					if strings.HasPrefix(line, "NotShowIn=") {
 						notshowin := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "NotShowIn=")), ";")
 
-						if slices.Contains(notshowin, desktop) {
-							done[info.Name()] = struct{}{}
-							return nil
+						hide := slices.Contains(notshowin, desktop)
+
+						if isAction {
+							app.Actions[len(app.Actions)-1].Hide = hide
+						} else {
+							app.Generic.Hide = hide
 						}
 
 						continue
@@ -526,6 +532,10 @@ func (a *Applications) parse() []util.Entry {
 				}
 
 				for k := range app.Actions {
+					if app.Actions[k].Hide {
+						continue
+					}
+
 					sub := app.Generic.Label
 
 					if a.config.ShowGeneric && app.Generic.Sub != "" && !a.config.Actions.HideCategory {
@@ -564,7 +574,9 @@ func (a *Applications) parse() []util.Entry {
 
 	for _, v := range apps {
 		if a.config.ShowGeneric || !a.config.Actions.Enabled || len(v.Actions) == 0 {
-			entries = append(entries, v.Generic)
+			if !v.Generic.Hide {
+				entries = append(entries, v.Generic)
+			}
 		}
 
 		if a.config.Actions.Enabled {

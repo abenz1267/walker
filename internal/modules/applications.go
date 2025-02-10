@@ -169,6 +169,14 @@ func (a *Applications) RunWm() {
 				}
 			}
 
+			for k := range a.entries {
+				if _, ok := a.openWindows[a.entries[k].InitialClass]; ok {
+					a.entries[k].OpenWindows = a.openWindows[a.entries[k].InitialClass]
+				} else {
+					a.entries[k].OpenWindows = 0
+				}
+			}
+
 			a.mu.Unlock()
 		}
 	}

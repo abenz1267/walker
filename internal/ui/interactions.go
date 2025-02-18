@@ -877,8 +877,8 @@ func processAsync(text string) {
 
 	wg.Wait()
 
-	// remove entries that don't match the visibility threshold if list is too long
-	if text != "" && len(entries) > config.Cfg.List.MaxEntries {
+	// remove entries that don't match the visibility threshold
+	if text != "" {
 		filteredEntries := []util.Entry{}
 
 		for _, v := range entries {

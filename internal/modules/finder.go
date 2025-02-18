@@ -129,7 +129,7 @@ func (f *Finder) Entries(term string) []util.Entry {
 				if pos != nil {
 					for k, v := range label {
 						if slices.Contains(*pos, k) {
-							res = fmt.Sprintf("%s<span color=\"%s\">%s</span>", res, f.MarkerColor, string(v))
+							res = fmt.Sprintf("%s|MARKERSTART|%s|MARKEREND|", res, string(v))
 						} else {
 							res = fmt.Sprintf("%s%s", res, string(v))
 						}

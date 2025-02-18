@@ -891,7 +891,19 @@ func afterUI() {
 				elements.listPlaceholder.SetVisible(false)
 			}
 
-			common.selection.SetSelected(0)
+			if len(toUse) == 1 || singleModule != nil {
+				module := singleModule
+
+				if module == nil {
+					module = toUse[0]
+				}
+
+				if !module.General().KeepSelection {
+					common.selection.SetSelected(0)
+				}
+			} else {
+				common.selection.SetSelected(0)
+			}
 
 			if common.items.NItems() == 1 {
 				entry := gioutil.ObjectValue[util.Entry](common.items.Item(0))

@@ -205,6 +205,7 @@ type GeneralModule struct {
 	History            bool        `koanf:"history"`
 	HistoryBlacklist   []Blacklist `koanf:"history_blacklist"`
 	Icon               string      `koanf:"icon"`
+	KeepSelection      bool        `koanf:"keep_selection"`
 	KeepSort           bool        `koanf:"keep_sort"`
 	MinChars           int         `koanf:"min_chars"`
 	Name               string      `koanf:"name"`

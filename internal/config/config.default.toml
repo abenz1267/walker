@@ -206,6 +206,7 @@ placeholder = "Switcher"
 prefix = "/"
 
 [builtins.websearch]
+keep_selection = true
 weight = 5
 icon = "applications-internet"
 name = "websearch"

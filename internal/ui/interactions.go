@@ -594,7 +594,7 @@ func process() {
 
 	elements.typeahead.SetText("")
 
-	text := strings.TrimSpace(elements.input.Text())
+	text := elements.input.Text()
 
 	text = trimArgumentDelimiter(text)
 
@@ -717,8 +717,6 @@ func processAsync(text string) {
 		appstate.IsSingle = true
 	}
 
-	hasEntryPrefix := false
-
 	for k := range p {
 		if p[k] == nil {
 			wg.Done()
@@ -774,6 +772,7 @@ func processAsync(text string) {
 			text = strings.TrimPrefix(text, w.General().Prefix)
 
 			e := w.Entries(text)
+			text = strings.TrimSpace(text)
 
 			toPush := []util.Entry{}
 			g := w.General()
@@ -843,8 +842,6 @@ func processAsync(text string) {
 				if toMatch == "" {
 					if e[k].ScoreFinal != 0 || config.Cfg.List.ShowInitialEntries {
 						if e[k].Prefix != "" && strings.HasPrefix(text, e[k].Prefix) {
-							hasEntryPrefix = true
-
 							toPush = append(toPush, e[k])
 						} else {
 							if e[k].IgnoreUnprefixed {
@@ -856,8 +853,6 @@ func processAsync(text string) {
 					}
 				} else {
 					if e[k].Prefix != "" && strings.HasPrefix(text, e[k].Prefix) {
-						hasEntryPrefix = true
-
 						toPush = append(toPush, e[k])
 					} else {
 						if e[k].IgnoreUnprefixed {
@@ -901,18 +896,6 @@ func processAsync(text string) {
 
 	if query != lastQuery {
 		return
-	}
-
-	if hasEntryPrefix {
-		finalEntries := []util.Entry{}
-
-		for _, v := range entries {
-			if v.Prefix != "" {
-				finalEntries = append(finalEntries, v)
-			}
-		}
-
-		entries = finalEntries
 	}
 
 	if !keepSort || text != "" {

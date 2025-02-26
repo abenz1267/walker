@@ -101,7 +101,7 @@ icon = "help-browser"
 switcher_only = true
 
 [[builtins.ai.anthropic.prompts]]
-model = "claude-3-5-sonnet-20241022"
+model = "claude-3-7-sonnet-20250219"
 temperature = 1
 max_tokens = 1_000
 label = "General Assistant"

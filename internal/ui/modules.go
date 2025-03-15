@@ -10,6 +10,7 @@ import (
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/modules"
+	aiModule "github.com/abenz1267/walker/internal/modules/ai"
 	"github.com/abenz1267/walker/internal/modules/emojis"
 	"github.com/abenz1267/walker/internal/modules/symbols"
 	"github.com/abenz1267/walker/internal/modules/translation"
@@ -94,7 +95,7 @@ func setAvailables() {
 	res := []modules.Workable{
 		&modules.Applications{Hstry: hstry},
 		&modules.Bookmarks{},
-		&modules.AI{},
+		&aiModule.AI{},
 		&modules.Runner{},
 		&modules.Websearch{},
 		&modules.Calc{},

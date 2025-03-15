@@ -71,7 +71,7 @@ func setupCommands() {
 			return false
 		}
 
-		cmd := exec.Command("sh", "-c", wrapWithPrefix(fmt.Sprintf("xdg-open %s", cssFile)))
+		cmd := exec.Command("sh", "-c", util.WrapWithPrefix(config.Cfg.AppLaunchPrefix, fmt.Sprintf("xdg-open %s", cssFile)))
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Setpgid:    true,
 			Pgid:       0,
@@ -437,7 +437,7 @@ func activateItem(keepOpen, alt bool) {
 		toRun = fmt.Sprintf("%s %s", toRun, split[1])
 	}
 
-	cmd := exec.Command("sh", "-c", wrapWithPrefix(toRun))
+	cmd := exec.Command("sh", "-c", util.WrapWithPrefix(config.Cfg.AppLaunchPrefix, toRun))
 
 	if entry.Path != "" {
 		cmd.Dir = entry.Path

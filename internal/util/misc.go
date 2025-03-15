@@ -102,3 +102,11 @@ func GetMD5Hash(text string) string {
 	hash := md5.Sum([]byte(text))
 	return hex.EncodeToString(hash[:])
 }
+
+func WrapWithPrefix(prefix string, text string) string {
+	if prefix == "" {
+		return text
+	}
+
+	return fmt.Sprintf("%s%s", prefix, text)
+}

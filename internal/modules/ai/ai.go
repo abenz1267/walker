@@ -13,6 +13,7 @@ import (
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/modules/ai/providers"
 	"github.com/abenz1267/walker/internal/util"
+
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"

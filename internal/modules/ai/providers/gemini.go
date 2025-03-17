@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
@@ -116,13 +117,13 @@ func (p *GeminiProvider) Query(query string, currentMessages *[]Message, current
 
 	payload, err := json.Marshal(data)
 	if err != nil {
-		log.Printf("Error marshaling JSON: %v", err)
+		slog.Error("Error marshaling JSON: %v", err)
 		return
 	}
 
 	req, err := http.NewRequest("POST", url, bytes.NewBuffer(payload))
 	if err != nil {
-		log.Printf("Error creating request: %v", err)
+		slog.Error("Error creating request: %v", err)
 		return
 	}
 
@@ -130,31 +131,28 @@ func (p *GeminiProvider) Query(query string, currentMessages *[]Message, current
 
 	resp, err := http.DefaultClient.Do(req)
 	if err != nil {
-		log.Printf("Error sending request: %v", err)
+		slog.Error("Error sending request: %v", err)
 		return
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		log.Printf("Error: received status code %d", resp.StatusCode)
+		slog.Error("Error: received unexpected status code %d", resp.StatusCode)
 		return
 	}
 
 	body, err := io.ReadAll(resp.Body)
-	log.Printf("Response body: %s", string(body))
 	if err != nil {
-		log.Printf("Error reading response body: %v", err)
-		return
+		slog.Error("Error reading response body: %v", err)
 	}
 
 	var geminiResp GeminiResponse
 	err = json.Unmarshal(body, &geminiResp)
 	if err != nil {
-		log.Printf("Error unmarshaling response: %v", err)
+		slog.Error("Error unmarshalling response: %v", err)
 		return
 	}
 	if len(geminiResp.Candidates) == 0 {
-		log.Println("gemini: no candidates found")
 		return
 	}
 	var responseMessages []Message
@@ -175,8 +173,8 @@ func (p *GeminiProvider) SetupData() []util.Entry {
 
 	for _, v := range p.config.Gemini.Prompts {
 		entries = append(entries, util.Entry{
-			Label:            "Gemini: " + v.Label,
-			Sub:              v.Model,
+			Label:            v.Label,
+			Sub:              "Gemini: " + v.Model,
 			Exec:             "",
 			RecalculateScore: true,
 			Matching:         util.Fuzzy,

@@ -4,11 +4,13 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"net/http"
 	"os"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
+
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 )
 
@@ -18,7 +20,6 @@ const (
 	ANTHROPIC_API_URL        = "https://api.anthropic.com/v1/messages"
 	ANTHROPIC_AUTH_HEADER    = "x-api-key"
 	ANTHROPIC_API_KEY        = "ANTHROPIC_API_KEY"
-	aiHistoryFile            = "ai_history_0.9.6.gob"
 )
 
 type AnthropicProvider struct {
@@ -45,8 +46,8 @@ func (p *AnthropicProvider) SetupData() []util.Entry {
 
 	for _, v := range p.config.Anthropic.Prompts {
 		entries = append(entries, util.Entry{
-			Label:            "Anthropic: " + v.Label,
-			Sub:              "Claude 3.5",
+			Label:            v.Label,
+			Sub:              "Anthropic Claude 3.5",
 			Exec:             "",
 			RecalculateScore: true,
 			Matching:         util.Fuzzy,
@@ -123,13 +124,13 @@ func (p *AnthropicProvider) Query(query string, currentMessages *[]Message, curr
 
 	resp, err := http.DefaultClient.Do(request)
 	if err != nil {
-		log.Panicln(err)
+		slog.Error("Error making request: %v", err)
 	}
 
 	defer resp.Body.Close()
 
-	if resp.StatusCode == http.StatusOK {
-		log.Printf("Anthropic API returned status code %d", resp.StatusCode)
+	if resp.StatusCode != http.StatusOK {
+		slog.Error("Anthropic API returned unexpected status code %d", resp.StatusCode)
 		return
 	}
 
@@ -137,7 +138,8 @@ func (p *AnthropicProvider) Query(query string, currentMessages *[]Message, curr
 
 	err = json.NewDecoder(resp.Body).Decode(&anthropicResp)
 	if err != nil {
-		log.Panicln(err)
+		slog.Error("Error decoding response: %v", err)
+		return
 	}
 
 	responseMessages := []Message{}

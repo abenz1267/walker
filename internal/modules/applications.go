@@ -601,10 +601,11 @@ func parseExec(execLine string) ([]string, error) {
 	}
 
 	var (
-		parts   []string
-		current strings.Builder
-		inQuote bool
-		escaped bool
+		parts         []string
+		current       strings.Builder
+		inQuote       bool
+		escaped       bool
+		doubleEscaped bool
 	)
 
 	// Helper to append current token and reset builder
@@ -618,9 +619,25 @@ func parseExec(execLine string) ([]string, error) {
 	// Process each rune in the exec line
 	for _, r := range execLine {
 		switch {
+		case doubleEscaped:
+			// Handle double-escaped character
+			current.WriteRune(r)
+			doubleEscaped = false
+
+		case escaped && r == '\\':
+			// This is a double escape sequence
+			current.WriteRune('\\')
+			doubleEscaped = true
+			escaped = false
+
 		case escaped:
 			// Handle escaped character
-			current.WriteRune(r)
+			if r == '"' {
+				current.WriteRune('"')
+			} else {
+				current.WriteRune('\\')
+				current.WriteRune(r)
+			}
 			escaped = false
 
 		case r == '\\':
@@ -628,6 +645,8 @@ func parseExec(execLine string) ([]string, error) {
 
 		case r == '"':
 			inQuote = !inQuote
+			// Keep the quotes in the output for shell interpretation
+			current.WriteRune('"')
 
 		case unicode.IsSpace(r) && !inQuote:
 			// Space outside quotes marks token boundary

@@ -76,7 +76,13 @@ func ConfigDir() (string, bool) {
 		return usrCfgDir, false
 	}
 
-	return filepath.Join("/etc", "xdg", "walker"), true
+	dir = filepath.Join("/etc", "xdg", "walker")
+
+	if !FileExists(dir) {
+		log.Fatal("Couldn't find config dir in either ~/.config/ or /etc/xdg/. Use `walker -C` to generate one.")
+	}
+
+	return dir, true
 }
 
 func CacheDir() string {

@@ -193,7 +193,7 @@ func (c *Clipboard) watch() {
 	go func() {
 		time.Sleep(time.Second * 5)
 
-		cmd := exec.Command("sh", "-c", "wl-paste --watch walker --update-clipboard")
+		cmd := exec.Command("env", "-S", "wl-paste --watch walker --update-clipboard")
 
 		_ = cmd.Run()
 	}()

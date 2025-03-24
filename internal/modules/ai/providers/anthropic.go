@@ -28,7 +28,7 @@ type AnthropicProvider struct {
 	specialFunc func(args ...interface{})
 }
 
-func NewAnthropicProvider(config config.AI, specialFunc func(...interface{})) *AnthropicProvider {
+func NewAnthropicProvider(config config.AI, specialFunc func(...interface{})) Provider {
 	key := os.Getenv(ANTHROPIC_API_KEY)
 	if key == "" {
 		log.Println("anthropic: no api key set")

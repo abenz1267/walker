@@ -61,16 +61,20 @@ func (ai *AI) General() *config.GeneralModule {
 func (ai *AI) Refresh() {
 }
 
+type providerInitFunction func(config.AI, func(args ...interface{})) providers.Provider
+
+var knownProviders = map[string]providerInitFunction{
+	"gemini":    providers.NewGeminiProvider,
+	"anthropic": providers.NewAnthropicProvider,
+}
+
 func (ai *AI) Setup() bool {
 	ai.config = config.Cfg.Builtins.AI
 	ai.provider = make(map[string]providers.Provider)
-	gemini := providers.NewGeminiProvider(ai.config, ai.SpecialFunc)
-	if gemini != nil {
-		ai.provider["gemini"] = gemini
-	}
-	anthropic := providers.NewAnthropicProvider(ai.config, ai.SpecialFunc)
-	if anthropic != nil {
-		ai.provider["anthropic"] = anthropic
+	for name, initFunc := range knownProviders {
+		if provider := initFunc(ai.config, ai.SpecialFunc); provider != nil {
+			ai.provider[name] = provider
+		}
 	}
 
 	file := filepath.Join(util.CacheDir(), aiHistoryFile)

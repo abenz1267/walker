@@ -614,7 +614,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 
 				run = trimArgumentDelimiter(run)
 
-				cmd := exec.Command("sh", "-c", run)
+				cmd := exec.Command("env", "-S", run)
 
 				out, err := cmd.CombinedOutput()
 				if err != nil {

@@ -99,6 +99,7 @@ placeholder = "AI"
 name = "ai"
 icon = "help-browser"
 switcher_only = true
+show_sub_when_single = true
 
 [[builtins.ai.anthropic.prompts]]
 model = "claude-3-7-sonnet-20250219"

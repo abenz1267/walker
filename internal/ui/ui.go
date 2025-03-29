@@ -18,6 +18,7 @@ import (
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/history"
 	"github.com/abenz1267/walker/internal/modules"
+	aiProviders "github.com/abenz1267/walker/internal/modules/ai/providers"
 	"github.com/abenz1267/walker/internal/state"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/davidbyttow/govips/v2/vips"
@@ -53,7 +54,7 @@ var (
 
 type Common struct {
 	items       *gioutil.ListModel[util.Entry]
-	aiItems     *gioutil.ListModel[modules.AnthropicMessage]
+	aiItems     *gioutil.ListModel[aiProviders.Message]
 	selection   *gtk.SingleSelection
 	factory     *gtk.SignalListItemFactory
 	aiFactory   *gtk.SignalListItemFactory
@@ -286,7 +287,7 @@ func setupElementsPassword(app *gtk.Application) *Elements {
 
 func setupCommon(app *gtk.Application) {
 	items := gioutil.NewListModel[util.Entry]()
-	aiItems := gioutil.NewListModel[modules.AnthropicMessage]()
+	aiItems := gioutil.NewListModel[aiProviders.Message]()
 
 	selection := gtk.NewSingleSelection(items.ListModel)
 	selection.SetAutoselect(true)
@@ -439,7 +440,7 @@ func setupAiFactory() *gtk.SignalListItemFactory {
 		item.SetActivatable(false)
 
 		valObj := common.aiItems.Item(item.Position())
-		val := gioutil.ObjectValue[modules.AnthropicMessage](valObj)
+		val := gioutil.ObjectValue[aiProviders.Message](valObj)
 
 		content := val.Content
 		label := gtk.NewLabel(content)

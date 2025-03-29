@@ -2,7 +2,6 @@ package modules
 
 import (
 	"errors"
-	"fmt"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
@@ -25,12 +24,4 @@ func Find(plugins []config.Plugin, name string) (config.Plugin, error) {
 	}
 
 	return config.Plugin{}, errors.New("plugin not found")
-}
-
-func wrapWithPrefix(text string) string {
-	if config.Cfg.AppLaunchPrefix == "" {
-		return text
-	}
-
-	return fmt.Sprintf("%s%s", config.Cfg.AppLaunchPrefix, text)
 }

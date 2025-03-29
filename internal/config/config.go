@@ -160,13 +160,18 @@ type BookmarkEntry struct {
 type AI struct {
 	GeneralModule `koanf:",squash"`
 	Anthropic     Anthropic `koanf:"anthropic"`
+	Gemini        Gemini    `koanf:"gemini"`
 }
 
 type Anthropic struct {
-	Prompts []AnthropicPrompt `koanf:"prompts"`
+	Prompts []AIPrompt `koanf:"prompts"`
 }
 
-type AnthropicPrompt struct {
+type Gemini struct {
+	Prompts []AIPrompt `koanf:"prompts"`
+}
+
+type AIPrompt struct {
 	Label            string  `koanf:"label"`
 	MaxTokens        int     `koanf:"max_tokens"`
 	Model            string  `koanf:"model"`

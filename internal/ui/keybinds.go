@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/abenz1267/walker/internal/config"
-	"github.com/abenz1267/walker/internal/modules"
+	aiModule "github.com/abenz1267/walker/internal/modules/ai"
 	"github.com/abenz1267/walker/internal/modules/clipboard"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/diamondburned/gotk4/pkg/core/gioutil"
@@ -251,7 +251,7 @@ func aiCopyLast() bool {
 		return false
 	}
 
-	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
+	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*aiModule.AI)
 	ai.CopyLastResponse()
 
 	return true
@@ -262,7 +262,7 @@ func aiExecuteLast() bool {
 		return false
 	}
 
-	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
+	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*aiModule.AI)
 	ai.RunLastMessageInTerminal()
 	quit(true)
 
@@ -298,7 +298,7 @@ func aiResume() bool {
 		return false
 	}
 
-	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
+	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*aiModule.AI)
 	ai.ResumeLastMessages()
 
 	return true
@@ -309,7 +309,7 @@ func aiClearSession() bool {
 		return false
 	}
 
-	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*modules.AI)
+	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*aiModule.AI)
 	elements.input.SetText("")
 	ai.ClearCurrent()
 

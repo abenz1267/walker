@@ -13,7 +13,7 @@ func executeEvent(eventType config.EventType, label string) {
 	}
 
 	go func() {
-		cmd := exec.Command("env", "-S")
+		cmd := exec.Command("sh", "-c")
 
 		toRun := ""
 

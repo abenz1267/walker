@@ -71,7 +71,7 @@ func setupCommands() {
 			return false
 		}
 
-		cmd := exec.Command("env", "-S", util.WrapWithPrefix(config.Cfg.AppLaunchPrefix, fmt.Sprintf("xdg-open %s", cssFile)))
+		cmd := exec.Command("sh", "-c", util.WrapWithPrefix(config.Cfg.AppLaunchPrefix, fmt.Sprintf("xdg-open %s", cssFile)))
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Setpgid:    true,
 			Pgid:       0,
@@ -437,7 +437,7 @@ func activateItem(keepOpen, alt bool) {
 		toRun = fmt.Sprintf("%s %s", toRun, split[1])
 	}
 
-	cmd := exec.Command("env", "-S", util.WrapWithPrefix(config.Cfg.AppLaunchPrefix, toRun))
+	cmd := exec.Command("sh", "-c", util.WrapWithPrefix(config.Cfg.AppLaunchPrefix, toRun))
 
 	if entry.Path != "" {
 		cmd.Dir = entry.Path
@@ -1325,7 +1325,7 @@ func executeOnSelect(entry util.Entry) {
 			explicit = true
 		}
 
-		cmd := exec.Command("env", "-S", toRun)
+		cmd := exec.Command("sh", "-c", toRun)
 
 		if !explicit {
 			setStdin(cmd, &util.Piped{String: val, Type: "string"})
@@ -1343,7 +1343,7 @@ func executeOnSelect(entry util.Entry) {
 }
 
 func forceTerminalForFile(file string) bool {
-	cmd := exec.Command("env", "-S", fmt.Sprintf("xdg-mime query default $(xdg-mime query filetype %s)", file))
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("xdg-mime query default $(xdg-mime query filetype %s)", file))
 
 	homedir, err := os.UserHomeDir()
 	if err != nil {

@@ -2,7 +2,7 @@
 
 [ui]
 fullscreen = true
-ignore_exclusive = true
+exclusive_zone = -1
 
 [ui.anchors]
 top = false

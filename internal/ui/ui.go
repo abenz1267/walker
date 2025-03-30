@@ -966,9 +966,7 @@ func setupLayerShell() {
 	}
 
 	if layout != nil {
-		if layout.IgnoreExclusive {
-			ls.SetExclusiveZone(&elements.appwin.Window, -1)
-		}
+		ls.SetExclusiveZone(&elements.appwin.Window, layout.ExclusiveZone)
 
 		if !layout.Fullscreen {
 			ls.SetLayer(&elements.appwin.Window, ls.LayerShellLayerTop)

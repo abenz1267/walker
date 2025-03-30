@@ -38,10 +38,10 @@ type UICfg struct {
 }
 
 type UI struct {
-	Anchors         Anchors `koanf:"anchors"`
-	Fullscreen      bool    `koanf:"fullscreen"`
-	IgnoreExclusive bool    `koanf:"ignore_exclusive"`
-	Window          Window  `koanf:"window"`
+	Anchors       Anchors `koanf:"anchors"`
+	Fullscreen    bool    `koanf:"fullscreen"`
+	ExclusiveZone int     `koanf:"exclusive_zone"`
+	Window        Window  `koanf:"window"`
 
 	// internal
 	AlignMap        map[string]gtk.Align         `koanf:"-"`

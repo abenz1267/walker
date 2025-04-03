@@ -789,6 +789,12 @@ func handleListVisibility() {
 func reopen() {
 	timeoutReset()
 
+	for _, v := range setWindowClasses {
+		elements.appwin.RemoveCSSClass(v)
+	}
+
+	setWindowClasses = []string{}
+
 	if appstate.IsRunning {
 		if config.Cfg.CloseWhenOpen {
 			if appstate.IsService {

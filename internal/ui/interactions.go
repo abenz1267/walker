@@ -36,6 +36,7 @@ var (
 	blockTimeout            bool
 	mouseX                  float64
 	mouseY                  float64
+	setWindowClasses        []string
 )
 
 func setupCommands() {
@@ -224,10 +225,7 @@ func enableAM() {
 		return
 	}
 
-	c := elements.appwin.CSSClasses()
-	c = append(c, "activation")
-
-	elements.appwin.SetCSSClasses(c)
+	elements.appwin.AddCSSClass("activation")
 	elements.grid.GrabFocus()
 
 	activationEnabled = true
@@ -238,15 +236,7 @@ func disableAM() {
 		activationEnabled = false
 		elements.input.SetFocusable(false)
 
-		c := elements.appwin.CSSClasses()
-
-		for k, v := range c {
-			if v == "activation" {
-				c = slices.Delete(c, k, k+1)
-			}
-		}
-
-		elements.appwin.SetCSSClasses(c)
+		elements.appwin.RemoveCSSClass("activation")
 		elements.input.GrabFocus()
 	}
 }
@@ -697,7 +687,10 @@ func processAsync(text string) {
 		if hasPrefix {
 			glib.IdleAdd(func() {
 				for _, v := range prefixes {
-					elements.appwin.SetCSSClasses(elements.prefixClasses[v])
+					for _, class := range elements.prefixClasses[v] {
+						elements.appwin.AddCSSClass(class)
+						setWindowClasses = append(setWindowClasses, class)
+					}
 				}
 			})
 		}

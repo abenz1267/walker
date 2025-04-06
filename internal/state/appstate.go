@@ -20,6 +20,8 @@ type AppState struct {
 	Dmenu               *modules.Dmenu
 	DmenuSeparator      string
 	DmenuLabelColumn    int
+	DmenuIconColumn     int
+	DmenuValueColumn    int
 	ExplicitConfig      string
 	ExplicitModules     []string
 	ExplicitPlaceholder string

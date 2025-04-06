@@ -385,7 +385,7 @@ func activateItem(keepOpen, alt bool) {
 	}
 
 	if appstate.IsDmenu {
-		handleDmenuResult(toRun)
+		handleDmenuResult(entry.Value)
 		closeAfterActivation(keepOpen, selectNext)
 		return
 	}

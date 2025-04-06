@@ -351,7 +351,9 @@ type Clipboard struct {
 
 type Dmenu struct {
 	GeneralModule `koanf:",squash"`
-	LabelColumn   int    `koanf:"label_column"`
+	Label         int    `koanf:"label"`
+	Icon          int    `koanf:"icon"`
+	Value         int    `koanf:"value"`
 	Separator     string `koanf:"separator"`
 }
 

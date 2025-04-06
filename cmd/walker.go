@@ -163,7 +163,9 @@ Type=Application
 	app.AddMainOption("update-clipboard", 'u', glib.OptionFlagNone, glib.OptionArgString, "update clipboard content", "")
 	app.AddMainOption("placeholder", 'p', glib.OptionFlagNone, glib.OptionArgString, "placeholder text", "")
 	app.AddMainOption("query", 'q', glib.OptionFlagNone, glib.OptionArgString, "initial query", "")
-	app.AddMainOption("labelcolumn", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
+	app.AddMainOption("label", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
+	app.AddMainOption("icon", 'i', glib.OptionFlagNone, glib.OptionArgString, "column to use for the icon", "")
+	app.AddMainOption("value", 'V', glib.OptionFlagNone, glib.OptionArgString, "column to use for the value", "")
 	app.AddMainOption("separator", 't', glib.OptionFlagNone, glib.OptionArgString, "column separator", "")
 	app.AddMainOption("version", 'v', glib.OptionFlagNone, glib.OptionArgNone, "print version", "")
 	app.AddMainOption("forceprint", 'f', glib.OptionFlagNone, glib.OptionArgNone, "forces printing input if no item is selected", "")
@@ -193,7 +195,9 @@ Type=Application
 		initialQueryString := options.LookupValue("query", glib.NewVariantString("").Type())
 
 		if options.Contains("dmenu") {
-			labelColumnString := options.LookupValue("labelcolumn", glib.NewVariantString("").Type())
+			labelString := options.LookupValue("label", glib.NewVariantString("").Type())
+			iconString := options.LookupValue("icon", glib.NewVariantString("").Type())
+			valueString := options.LookupValue("value", glib.NewVariantString("").Type())
 			separatorString := options.LookupValue("separator", glib.NewVariantString("").Type())
 			activeItemString := options.LookupValue("active", glib.NewVariantString("").Type())
 
@@ -205,16 +209,42 @@ Type=Application
 				}
 			}
 
-			if labelColumnString != nil && labelColumnString.String() != "" {
-				col, err := strconv.Atoi(labelColumnString.String())
+			if labelString != nil && labelString.String() != "" {
+				col, err := strconv.Atoi(labelString.String())
 				if err != nil {
 					log.Panicln(err)
 				}
 
 				if state.Dmenu != nil {
-					state.Dmenu.Config.LabelColumn = col
+					state.Dmenu.Config.Label = col
 				} else {
 					state.DmenuLabelColumn = col
+				}
+			}
+
+			if iconString != nil && iconString.String() != "" {
+				col, err := strconv.Atoi(iconString.String())
+				if err != nil {
+					log.Panicln(err)
+				}
+
+				if state.Dmenu != nil {
+					state.Dmenu.Config.Icon = col
+				} else {
+					state.DmenuIconColumn = col
+				}
+			}
+
+			if valueString != nil && valueString.String() != "" {
+				col, err := strconv.Atoi(valueString.String())
+				if err != nil {
+					log.Panicln(err)
+				}
+
+				if state.Dmenu != nil {
+					state.Dmenu.Config.Value = col
+				} else {
+					state.DmenuValueColumn = col
 				}
 			}
 

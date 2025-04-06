@@ -155,7 +155,15 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 			}
 
 			if appstate.DmenuLabelColumn != 0 {
-				config.Cfg.Builtins.Dmenu.LabelColumn = appstate.DmenuLabelColumn
+				config.Cfg.Builtins.Dmenu.Label = appstate.DmenuLabelColumn
+			}
+
+			if appstate.DmenuIconColumn != 0 {
+				config.Cfg.Builtins.Dmenu.Icon = appstate.DmenuIconColumn
+			}
+
+			if appstate.DmenuValueColumn != 0 {
+				config.Cfg.Builtins.Dmenu.Value = appstate.DmenuValueColumn
 			}
 		}
 

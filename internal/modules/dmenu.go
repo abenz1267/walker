@@ -23,6 +23,8 @@ type Dmenu struct {
 	Content            []string
 	initialSeparator   string
 	initialLabelColumn int
+	initialIconColumn  int
+	initialValueColumn int
 	IsService          bool
 }
 
@@ -35,19 +37,42 @@ func (d Dmenu) Entries(term string) []util.Entry {
 
 	for _, v := range d.Content {
 		label := v
+		icon := ""
+		value := ""
 
-		if d.Config.LabelColumn > 0 {
-			split := strings.Split(v, d.Config.Separator)
+		// if strings.Contains(label, "\\0icon\\x1f") {
+		// 	split := strings.Split(label, "\\0icon\\x1f")
+		// 	label = split[0]
+		// 	icon = split[1]
+		// }
 
-			if len(split) >= d.Config.LabelColumn {
-				label = split[d.Config.LabelColumn-1]
+		split := strings.Split(v, d.Config.Separator)
+
+		if len(split) > 1 {
+			if d.Config.Icon > 0 {
+				icon = split[d.Config.Icon-1]
 			}
+
+			if d.Config.Label > 0 {
+				label = split[d.Config.Label-1]
+			} else {
+				label = split[0]
+			}
+
+			if d.Config.Value > 0 {
+				value = split[d.Config.Value-1]
+			} else {
+				value = label
+			}
+		} else {
+			value = v
 		}
 
 		entries = append(entries, util.Entry{
 			Label: label,
+			Value: value,
 			Sub:   "Dmenu",
-			Exec:  v,
+			Icon:  icon,
 		})
 	}
 
@@ -118,7 +143,7 @@ func (d *Dmenu) Setup() bool {
 	d.Config.Separator = util.TransformSeparator(d.Config.Separator)
 
 	d.initialSeparator = d.Config.Separator
-	d.initialLabelColumn = d.Config.LabelColumn
+	d.initialLabelColumn = d.Config.Label
 
 	d.Config.SwitcherOnly = true
 
@@ -127,7 +152,9 @@ func (d *Dmenu) Setup() bool {
 
 func (d *Dmenu) Cleanup() {
 	d.Config.Separator = d.initialSeparator
-	d.Config.LabelColumn = d.initialLabelColumn
+	d.Config.Label = d.initialLabelColumn
+	d.Config.Icon = d.initialIconColumn
+	d.Config.Value = d.initialValueColumn
 }
 
 func (d *Dmenu) StartListening() {

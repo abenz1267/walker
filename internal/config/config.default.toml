@@ -238,6 +238,7 @@ weight = 5
 name = "dmenu"
 placeholder = "Dmenu"
 switcher_only = true
+show_icon_when_single = true
 
 [builtins.translation]
 delay = 1000

@@ -40,32 +40,36 @@ func (d Dmenu) Entries(term string) []util.Entry {
 		icon := ""
 		value := ""
 
-		// if strings.Contains(label, "\\0icon\\x1f") {
-		// 	split := strings.Split(label, "\\0icon\\x1f")
-		// 	label = split[0]
-		// 	icon = split[1]
-		// }
+		if strings.ContainsRune(label, '\x00') && strings.ContainsRune(label, '\x1f') {
+			split := strings.Split(label, "\x00")
+			label = split[0]
+			value = label
 
-		split := strings.Split(v, d.Config.Separator)
-
-		if len(split) > 1 {
-			if d.Config.Icon > 0 {
-				icon = split[d.Config.Icon-1]
-			}
-
-			if d.Config.Label > 0 {
-				label = split[d.Config.Label-1]
-			} else {
-				label = split[0]
-			}
-
-			if d.Config.Value > 0 {
-				value = split[d.Config.Value-1]
-			} else {
-				value = label
-			}
+			split = strings.Split(v, "\x1f")
+			icon = split[1]
 		} else {
-			value = v
+
+			split := strings.Split(v, d.Config.Separator)
+
+			if len(split) > 1 {
+				if d.Config.Icon > 0 {
+					icon = split[d.Config.Icon-1]
+				}
+
+				if d.Config.Label > 0 {
+					label = split[d.Config.Label-1]
+				} else {
+					label = split[0]
+				}
+
+				if d.Config.Value > 0 {
+					value = split[d.Config.Value-1]
+				} else {
+					value = label
+				}
+			} else {
+				value = v
+			}
 		}
 
 		entries = append(entries, util.Entry{

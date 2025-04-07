@@ -267,6 +267,7 @@ type Finder struct {
 	GeneralModule   `koanf:",squash"`
 	CmdAlt          string `koanf:"cmd_alt"`
 	Concurrency     int    `koanf:"concurrency"`
+	FDFlags         string `koanf:"fd_flags"`
 	IgnoreGitIgnore bool   `koanf:"ignore_gitignore"`
 	PreviewImages   bool   `koanf:"preview_images"`
 	UseFD           bool   `koanf:"use_fd"`

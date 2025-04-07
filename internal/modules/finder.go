@@ -166,12 +166,7 @@ func (f *Finder) SetupData() {
 	f.homedir = homedir
 
 	if f.config.UseFD {
-		cmd := exec.Command("fd", "--ignore-vcs", "--type", "file")
-
-		if f.config.IgnoreGitIgnore {
-			cmd = exec.Command("fd", "--no-ignore-vcs", "--type", "file")
-		}
-
+		cmd := exec.Command("fd", strings.Fields(f.config.FDFlags)...)
 		cmd.Dir = homedir
 
 		out, err := cmd.CombinedOutput()

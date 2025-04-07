@@ -568,6 +568,14 @@ func setupFactory() *gtk.SignalListItemFactory {
 			if singleModule == nil || singleModule.General().ShowIconWhenSingle {
 				ii := val.Icon
 
+				fallbacks := []string{}
+
+				if strings.Contains(val.Icon, ",") {
+					split := strings.Split(val.Icon, ",")
+					ii = split[0]
+					fallbacks = split[1:]
+				}
+
 				if ii == "" {
 					ii = findModule(val.Module, toUse).General().Icon
 				}
@@ -585,7 +593,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 						if filepath.IsAbs(ii) {
 							icon = gtk.NewImageFromFile(ii)
 						} else {
-							i := elements.iconTheme.LookupIcon(ii, []string{}, layout.IconSizeIntMap[layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
+							i := elements.iconTheme.LookupIcon(ii, fallbacks, layout.IconSizeIntMap[layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
 
 							icon = gtk.NewImageFromPaintable(i)
 						}

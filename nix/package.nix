@@ -12,6 +12,7 @@
   pango,
   wrapGAppsHook,
   vips,
+  libqalculate,
 }:
 buildGoModule {
   pname = "walker";
@@ -46,6 +47,7 @@ buildGoModule {
     cairo
     pango
     vips
+    libqalculate
   ];
 
   meta = {

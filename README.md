@@ -94,6 +94,13 @@ Make sure you have the following dependencies installed:
 - libvips
 - libvips-dev
 
+If building doesn't work, or you are notified with a "package not found" error, please consider installing the developer packages (if available from your package manager):
+
+- gtk4-devel
+- gobject-introspection-devel
+- graphene-devel
+- gtk4-layer-shell-devel
+
 ```bash
 git clone https://github.com/abenz1267/walker /tmp/walker
 cd /tmp/walker/cmd

@@ -477,11 +477,11 @@ func activateItem(keepOpen, alt bool) {
 	err := cmd.Start()
 	if err != nil {
 		log.Println(err)
+	} else {
+		go func() {
+			cmd.Wait()
+		}()
 	}
-
-	go func() {
-		cmd.Wait()
-	}()
 
 	closeAfterActivation(keepOpen, selectNext)
 }

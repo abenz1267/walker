@@ -67,6 +67,11 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
 - xdg-desktop-portal-hyprland share picker
   - lets you select windows/monitors/region for sharing
 
+## Compatible tools
+
+- [iwmenu](https://github.com/e-tho/iwmenu) - lets you manage Wi-Fi through dmenu mode
+- [bzmenu](https://github.com/e-tho/bzmenu) - lets you manage Bluetooth through dmenu mode
+
 ## Requirements
 
 - gtk4-layer-shell

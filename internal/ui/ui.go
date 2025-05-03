@@ -958,7 +958,8 @@ func afterUI() {
 
 func setupLayerShell() {
 	if config.Cfg.AsWindow {
-		elements.appwin.SetTitlebar(nil)
+		box := gtk.NewBox(gtk.OrientationVertical, 0)
+		elements.appwin.SetTitlebar(box)
 		return
 	}
 

@@ -763,9 +763,9 @@ func processAsync(text string) {
 			}
 
 			text = strings.TrimPrefix(text, w.General().Prefix)
+			text = strings.TrimSpace(text)
 
 			e := w.Entries(text)
-			text = strings.TrimSpace(text)
 
 			toPush := []util.Entry{}
 			g := w.General()

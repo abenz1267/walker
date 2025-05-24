@@ -707,6 +707,8 @@ func processAsync(text string) {
 
 	keepSort := false || appstate.KeepSort
 
+	processedModulesKeepSort := []bool{}
+
 	if len(p) == 1 {
 		keepSort = p[0].General().KeepSort || appstate.KeepSort
 		appstate.IsSingle = true
@@ -760,6 +762,8 @@ func processAsync(text string) {
 
 			mCfg := w.General()
 
+			processedModulesKeepSort = append(processedModulesKeepSort, mCfg.KeepSort)
+
 			if len(text) < mCfg.MinChars {
 				return
 			}
@@ -770,7 +774,6 @@ func processAsync(text string) {
 			text = strings.TrimSpace(text)
 
 			toPush := []util.Entry{}
-			g := w.General()
 
 		outer:
 			for k := range e {
@@ -786,8 +789,8 @@ func processAsync(text string) {
 					continue
 				}
 
-				e[k].Module = g.Name
-				e[k].Weight = g.Weight
+				e[k].Module = mCfg.Name
+				e[k].Weight = mCfg.Weight
 
 				toMatch := text
 
@@ -809,12 +812,12 @@ func processAsync(text string) {
 					switch e[k].Matching {
 					case util.AlwaysTopOnEmptySearch:
 						if text != "" {
-							e[k].ScoreFinal = fuzzyScore(&e[k], toMatch, g.History)
+							e[k].ScoreFinal = fuzzyScore(&e[k], toMatch, mCfg.History)
 						} else {
 							e[k].ScoreFinal = 1000
 						}
 					case util.Fuzzy, util.TopWhenFuzzyMatch:
-						e[k].ScoreFinal = fuzzyScore(&e[k], toMatch, g.History)
+						e[k].ScoreFinal = fuzzyScore(&e[k], toMatch, mCfg.History)
 
 						if e[k].Matching == util.TopWhenFuzzyMatch {
 							if e[k].ScoreFinal > 0 {
@@ -893,8 +896,14 @@ func processAsync(text string) {
 		return
 	}
 
-	if !keepSort || text != "" {
-		sortEntries(entries, keepSort)
+	if len(processedModulesKeepSort) > 1 {
+		if !keepSort || text != "" {
+			sortEntries(entries, keepSort)
+		}
+	} else {
+		if processedModulesKeepSort[0] != true {
+			sortEntries(entries, keepSort)
+		}
 	}
 
 	if len(entries) > config.Cfg.List.MaxEntries {

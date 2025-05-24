@@ -588,12 +588,14 @@ func process() {
 
 	text = trimArgumentDelimiter(text)
 
+	isEmpty := strings.TrimSpace(text) == ""
+
 	if text == "" && config.Cfg.List.ShowInitialEntries && len(explicits) == 0 && !appstate.IsDmenu {
 		setInitials()
 		return
 	}
 
-	if (text != "" || appstate.IsDmenu) || (len(explicits) > 0 && config.Cfg.List.ShowInitialEntries) {
+	if ((!isEmpty && text != "") || appstate.IsDmenu) || (len(explicits) > 0 && config.Cfg.List.ShowInitialEntries) {
 		if !layout.Window.Box.Search.Spinner.Hide {
 			elements.spinner.SetVisible(true)
 		}

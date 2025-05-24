@@ -1255,11 +1255,9 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 		for k, v := range hstry {
 			if strings.HasPrefix(k, text) {
 				if val, ok := v[entry.Identifier()]; ok {
-					if entry.LastUsed.IsZero() || val.LastUsed.After(entry.LastUsed) {
-						entry.Used = val.Used
-						entry.DaysSinceUsed = val.DaysSinceUsed
-						entry.LastUsed = val.LastUsed
-					}
+					entry.Used = val.Used
+					entry.DaysSinceUsed = val.DaysSinceUsed
+					entry.LastUsed = val.LastUsed
 				}
 			}
 		}

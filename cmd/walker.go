@@ -259,11 +259,12 @@ Type=Application
 				val := a - 1
 
 				state.ActiveItem = &val
+			} else {
+				state.ActiveItem = nil
 			}
 
 			state.ExplicitModules = append(state.ExplicitModules, "dmenu")
 			state.IsDmenu = true
-
 		} else {
 			if modulesString != nil && modulesString.String() != "" {
 				m := strings.Split(modulesString.String(), ",")

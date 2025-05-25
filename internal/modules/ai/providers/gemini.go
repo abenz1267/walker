@@ -22,10 +22,11 @@ const (
 
 func NewGeminiProvider(config config.AI, specialFunc func(args ...interface{})) Provider {
 	apiKey := os.Getenv(GEMINI_ENV_KEY)
+
 	if apiKey == "" {
-		log.Println("gemini: no api key set")
 		return nil
 	}
+
 	return &GeminiProvider{
 		apiKey:      apiKey,
 		config:      config,

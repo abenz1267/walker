@@ -30,10 +30,11 @@ type AnthropicProvider struct {
 
 func NewAnthropicProvider(config config.AI, specialFunc func(...interface{})) Provider {
 	key := os.Getenv(ANTHROPIC_API_KEY)
+
 	if key == "" {
-		log.Println("anthropic: no api key set")
 		return nil
 	}
+
 	return &AnthropicProvider{
 		config:      config,
 		key:         os.Getenv(ANTHROPIC_API_KEY),
@@ -153,5 +154,4 @@ func (p *AnthropicProvider) Query(query string, currentMessages *[]Message, curr
 
 	messages = append(messages, responseMessages...)
 	*currentMessages = messages
-
 }

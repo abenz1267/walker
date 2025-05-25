@@ -31,15 +31,7 @@ func Activate(id wl.ProxyId) {
 	}
 }
 
-var (
-	addChan    chan string
-	deleteChan chan string
-)
-
-func StartWM(ac chan string, dc chan string) {
-	addChan = ac
-	deleteChan = dc
-
+func StartWM() {
 	var err error
 
 	display, err = wl.Connect("")

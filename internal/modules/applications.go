@@ -17,7 +17,6 @@ import (
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/history"
-	"github.com/abenz1267/walker/internal/modules/windows/wlr"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/adrg/xdg"
 	"github.com/djherbis/times"
@@ -30,14 +29,19 @@ var fieldCodes = []string{"%f", "%F", "%u", "%U", "%d", "%D", "%n", "%N", "%i", 
 
 var TerminalApps = map[string]struct{}{}
 
+var (
+	ApplicationsWindowAddChan    = make(chan string)
+	ApplicationsWindowDeleteChan = make(chan string)
+)
+
 type Applications struct {
-	config      config.Applications
-	mu          sync.Mutex
-	entries     []util.Entry
-	openWindows map[string]uint
-	wmRunning   bool
-	isWatching  bool
-	Hstry       history.History
+	config       config.Applications
+	mu           sync.Mutex
+	entries      []util.Entry
+	openWindows  map[string]uint
+	isSubscribed bool
+	isWatching   bool
+	Hstry        history.History
 }
 
 type Application struct {
@@ -66,8 +70,8 @@ func (a *Applications) SetupData() {
 		go a.Watch()
 	}
 
-	if !a.wmRunning && a.config.ContextAware {
-		go a.RunWm()
+	if !a.isSubscribed && a.config.ContextAware {
+		go a.SubscribeWm()
 	}
 
 	a.config.IsSetup = true
@@ -131,17 +135,12 @@ func (a *Applications) debounceParsing(interval time.Duration, input chan struct
 	}
 }
 
-func (a *Applications) RunWm() {
-	addChan := make(chan string)
-	deleteChan := make(chan string)
-
-	a.wmRunning = true
-
-	go wlr.StartWM(addChan, deleteChan)
+func (a *Applications) SubscribeWm() {
+	a.isSubscribed = true
 
 	for {
 		select {
-		case appId := <-addChan:
+		case appId := <-ApplicationsWindowAddChan:
 			a.mu.Lock()
 			val, ok := a.openWindows[appId]
 
@@ -158,7 +157,7 @@ func (a *Applications) RunWm() {
 			}
 
 			a.mu.Unlock()
-		case appId := <-deleteChan:
+		case appId := <-ApplicationsWindowDeleteChan:
 			a.mu.Lock()
 
 			if val, ok := a.openWindows[appId]; ok {

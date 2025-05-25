@@ -38,10 +38,6 @@ func (w *Windows) Setup() bool {
 }
 
 func (w *Windows) SetupData() {
-	if !wlr.IsRunning {
-		go wlr.StartWM(nil, nil)
-	}
-
 	w.icons = make(map[string]string)
 	w.GetIcons()
 

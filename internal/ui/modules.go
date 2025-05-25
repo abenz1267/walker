@@ -15,6 +15,7 @@ import (
 	"github.com/abenz1267/walker/internal/modules/symbols"
 	"github.com/abenz1267/walker/internal/modules/translation"
 	"github.com/abenz1267/walker/internal/modules/windows"
+	"github.com/abenz1267/walker/internal/modules/windows/wlr"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 )
@@ -165,6 +166,16 @@ func setAvailables() {
 			available = append(available, appstate.Clipboard)
 			config.Cfg.Available = append(config.Cfg.Available, appstate.Clipboard.General().Name)
 		}
+	}
+
+	windows := findModule("windows", available)
+
+	if config.Cfg.Builtins.Applications.ContextAware {
+		wlr.Subscribe(modules.ApplicationsWindowAddChan, modules.ApplicationsWindowDeleteChan)
+	}
+
+	if windows != nil || config.Cfg.Builtins.Applications.ContextAware {
+		go wlr.StartWM()
 	}
 }
 

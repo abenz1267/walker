@@ -898,11 +898,11 @@ func processAsync(text string) {
 
 	if len(processedModulesKeepSort) > 1 {
 		if !keepSort || text != "" {
-			sortEntries(entries, keepSort)
+			sortEntries(entries, keepSort, false)
 		}
 	} else {
 		if processedModulesKeepSort[0] != true {
-			sortEntries(entries, keepSort)
+			sortEntries(entries, keepSort, false)
 		}
 	}
 
@@ -985,6 +985,10 @@ func setInitials() {
 	e := proc.Entries("")
 
 	for _, entry := range e {
+		if entry.OpenWindows > 0 {
+			fmt.Println(entry.Label)
+		}
+
 		entry.Module = proc.General().Name
 		entry.MatchedLabel = ""
 		entry.MatchedSub = ""
@@ -1011,7 +1015,7 @@ func setInitials() {
 		return
 	}
 
-	sortEntries(entries, false)
+	sortEntries(entries, false, true)
 
 	glib.IdleAdd(func() {
 		common.items.Splice(0, int(common.items.NItems()), entries...)

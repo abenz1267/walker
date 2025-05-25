@@ -17,6 +17,7 @@ import (
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/history"
+	"github.com/abenz1267/walker/internal/modules/windows/wlr"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/adrg/xdg"
 	"github.com/djherbis/times"
@@ -35,13 +36,11 @@ var (
 )
 
 type Applications struct {
-	config       config.Applications
-	mu           sync.Mutex
-	entries      []util.Entry
-	openWindows  map[string]uint
-	isSubscribed bool
-	isWatching   bool
-	Hstry        history.History
+	config     config.Applications
+	mu         sync.Mutex
+	entries    []util.Entry
+	isWatching bool
+	Hstry      history.History
 }
 
 type Application struct {
@@ -58,8 +57,6 @@ func (a *Applications) Cleanup() {}
 func (a *Applications) Setup() bool {
 	a.config = config.Cfg.Builtins.Applications
 
-	a.openWindows = make(map[string]uint)
-
 	return true
 }
 
@@ -68,10 +65,6 @@ func (a *Applications) SetupData() {
 
 	if config.Cfg.IsService {
 		go a.Watch()
-	}
-
-	if !a.isSubscribed && a.config.ContextAware {
-		go a.SubscribeWm()
 	}
 
 	a.config.IsSetup = true
@@ -135,52 +128,6 @@ func (a *Applications) debounceParsing(interval time.Duration, input chan struct
 	}
 }
 
-func (a *Applications) SubscribeWm() {
-	a.isSubscribed = true
-
-	for {
-		select {
-		case appId := <-ApplicationsWindowAddChan:
-			a.mu.Lock()
-			val, ok := a.openWindows[appId]
-
-			if ok {
-				a.openWindows[appId] = val + 1
-			} else {
-				a.openWindows[appId] = 1
-			}
-
-			for k := range a.entries {
-				if _, ok := a.openWindows[a.entries[k].InitialClass]; ok {
-					a.entries[k].OpenWindows = a.openWindows[a.entries[k].InitialClass]
-				}
-			}
-
-			a.mu.Unlock()
-		case appId := <-ApplicationsWindowDeleteChan:
-			a.mu.Lock()
-
-			if val, ok := a.openWindows[appId]; ok {
-				if val == 1 {
-					delete(a.openWindows, appId)
-				} else {
-					a.openWindows[appId] = val - 1
-				}
-			}
-
-			for k := range a.entries {
-				if _, ok := a.openWindows[a.entries[k].InitialClass]; ok {
-					a.entries[k].OpenWindows = a.openWindows[a.entries[k].InitialClass]
-				} else {
-					a.entries[k].OpenWindows = 0
-				}
-			}
-
-			a.mu.Unlock()
-		}
-	}
-}
-
 func (a *Applications) Refresh() {
 	if !a.isWatching {
 		a.config.IsSetup = !a.config.Refresh
@@ -188,6 +135,14 @@ func (a *Applications) Refresh() {
 }
 
 func (a *Applications) Entries(term string) []util.Entry {
+	if a.config.ContextAware {
+		for k, v := range a.entries {
+			if val, ok := wlr.OpenWindows[v.InitialClass]; ok {
+				a.entries[k].OpenWindows = val
+			}
+		}
+	}
+
 	if a.config.Actions.HideWithoutQuery && term == "" {
 		entries := []util.Entry{}
 		added := make(map[string]struct{})
@@ -466,10 +421,6 @@ func (a *Applications) parse() []util.Entry {
 
 						if strings.HasPrefix(line, "StartupWMClass=") {
 							app.Generic.InitialClass = strings.ToLower(strings.TrimSpace(strings.TrimPrefix(line, "StartupWMClass=")))
-
-							if val, ok := a.openWindows[app.Generic.InitialClass]; ok {
-								app.Generic.OpenWindows = val
-							}
 
 							continue
 						}

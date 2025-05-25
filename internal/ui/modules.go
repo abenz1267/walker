@@ -170,10 +170,6 @@ func setAvailables() {
 
 	windows := findModule("windows", available)
 
-	if config.Cfg.Builtins.Applications.ContextAware {
-		wlr.Subscribe(modules.ApplicationsWindowAddChan, modules.ApplicationsWindowDeleteChan)
-	}
-
 	if windows != nil || config.Cfg.Builtins.Applications.ContextAware {
 		go wlr.StartWM()
 	}

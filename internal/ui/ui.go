@@ -792,6 +792,16 @@ func setupLabelWidgetStyle(label *gtk.Label, style *config.LabelWidget) {
 }
 
 func handleListVisibility() {
+	if common.selection.NItems() > 0 {
+		if elements.listPlaceholder != nil && elements.listPlaceholder.Visible() {
+			elements.listPlaceholder.SetVisible(false)
+		}
+	} else {
+		if config.Cfg.List.Placeholder != "" && elements.input.Text() != "" {
+			elements.listPlaceholder.SetVisible(true)
+		}
+	}
+
 	show := common.items.NItems() != 0
 
 	if layout.Window.Box.Scroll.List.AlwaysShow {
@@ -898,8 +908,6 @@ func reopen() {
 }
 
 func afterUI() {
-	handleListVisibility()
-
 	if appstate.InitialQuery != "" {
 		glib.IdleAdd(func() {
 			elements.input.SetText(appstate.InitialQuery)
@@ -910,10 +918,6 @@ func afterUI() {
 
 	common.selection.ConnectItemsChanged(func(p, r, a uint) {
 		if common.selection.NItems() > 0 {
-			if elements.listPlaceholder != nil && elements.listPlaceholder.Visible() {
-				elements.listPlaceholder.SetVisible(false)
-			}
-
 			if len(toUse) == 1 || singleModule != nil {
 				module := singleModule
 
@@ -946,12 +950,12 @@ func afterUI() {
 					executeOnSelect(entry)
 				})
 			}
-		} else {
-			if config.Cfg.List.Placeholder != "" && elements.input.Text() != "" {
-				elements.listPlaceholder.SetVisible(true)
-			}
 		}
 
+		handleListVisibility()
+	})
+
+	glib.IdleAdd(func() {
 		handleListVisibility()
 	})
 }

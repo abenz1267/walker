@@ -196,12 +196,18 @@ func (c *Clipboard) watch() {
 		cmd := exec.Command("sh", "-c", "wl-paste --watch walker --update-clipboard")
 
 		_ = cmd.Run()
+
+		go func() {
+			cmd.Wait()
+		}()
 	}()
 
 	l, err := net.ListenUnix("unix", &net.UnixAddr{Name: ClipboardSocketAddrUpdate})
 	if err != nil {
 		panic(err)
 	}
+
+	fmt.Println("listening")
 
 	for {
 		conn, err := l.AcceptUnix()
@@ -222,7 +228,6 @@ func (c *Clipboard) watch() {
 		}
 
 		content := string(b[:i])
-		fmt.Println(content)
 
 		hash := md5.Sum([]byte(content))
 		strgHash := hex.EncodeToString(hash[:])

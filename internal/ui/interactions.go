@@ -985,10 +985,6 @@ func setInitials() {
 	e := proc.Entries("")
 
 	for _, entry := range e {
-		if entry.OpenWindows > 0 {
-			fmt.Println(entry.Label)
-		}
-
 		entry.Module = proc.General().Name
 		entry.MatchedLabel = ""
 		entry.MatchedSub = ""

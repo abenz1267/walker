@@ -222,6 +222,7 @@ func (c *Clipboard) watch() {
 		}
 
 		content := string(b[:i])
+		fmt.Println(content)
 
 		hash := md5.Sum([]byte(content))
 		strgHash := hex.EncodeToString(hash[:])

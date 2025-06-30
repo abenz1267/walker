@@ -177,35 +177,44 @@ func (d *Dmenu) StartListening() {
 		}
 
 		b := make([]byte, 1_048_576)
+
 		i, err := conn.Read(b)
 		if err != nil {
 			log.Println(err)
 			continue
 		}
 
-		res := strings.Split(string(b[:i]), "\n")
-
-		d.Content = []string{}
-
-		for _, v := range res {
-			if v != "" {
-				d.Content = append(d.Content, v)
-			}
+		if string(b[:i]) == "x9c0" {
+			d.Content = []string{}
+			continue
 		}
+
+		d.Content = append(d.Content, string(b[:i]))
 	}
 }
 
 func (d Dmenu) Send() {
+	scanner := bufio.NewScanner(os.Stdin)
+
 	conn, err := net.Dial("unix", DmenuSocketAddrGet)
 	if err != nil {
 		log.Panic(err)
 	}
 	defer conn.Close()
 
-	scanner := bufio.NewScanner(os.Stdin)
+	_, err = conn.Write([]byte("x9c0"))
+	if err != nil {
+		log.Panic(err)
+	}
 
 	for scanner.Scan() {
-		msg := fmt.Sprintf("%s\n", scanner.Text())
+		conn, err := net.Dial("unix", DmenuSocketAddrGet)
+		if err != nil {
+			log.Panic(err)
+		}
+		defer conn.Close()
+
+		msg := fmt.Sprintf("%s", scanner.Text())
 
 		_, err = conn.Write([]byte(msg))
 		if err != nil {

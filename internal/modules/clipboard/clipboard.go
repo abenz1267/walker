@@ -207,8 +207,6 @@ func (c *Clipboard) watch() {
 		panic(err)
 	}
 
-	fmt.Println("listening")
-
 	for {
 		conn, err := l.AcceptUnix()
 		if err != nil {

@@ -438,9 +438,7 @@ func activateItem(keepOpen, alt bool) {
 	}
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Setpgid:    true,
-		Pgid:       0,
-		Foreground: false,
+		Setsid: true,
 	}
 
 	setStdin(cmd, &entry.Piped)

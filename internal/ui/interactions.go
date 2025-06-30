@@ -234,10 +234,12 @@ func enableAM() {
 func disableAM() {
 	if !config.Cfg.ActivationMode.Disabled && activationEnabled {
 		activationEnabled = false
-		elements.input.SetFocusable(false)
 
-		elements.appwin.RemoveCSSClass("activation")
-		elements.input.GrabFocus()
+		glib.IdleAdd(func() {
+			elements.input.SetFocusable(false)
+			elements.appwin.RemoveCSSClass("activation")
+			elements.input.GrabFocus()
+		})
 	}
 }
 
@@ -1095,10 +1097,9 @@ func quit(ignoreEvent bool) {
 			elements.input.SelectRegion(0, -1)
 		}
 
-		elements.appwin.SetVisible(false)
-
-		elements.scroll.SetVisible(true)
+		elements.scroll.SetVisible(false)
 		elements.aiScroll.SetVisible(false)
+		elements.appwin.SetVisible(false)
 	})
 
 	isAi = false

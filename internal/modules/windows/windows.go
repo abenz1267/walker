@@ -89,6 +89,11 @@ func (w *Windows) GetIcons() {
 
 					if strings.HasPrefix(line, "Icon=") {
 						icon = strings.TrimSpace(strings.TrimPrefix(line, "Icon="))
+
+						w.mutex.Lock()
+						w.icons[strings.TrimSuffix(info.Name(), filepath.Ext(info.Name()))] = icon
+						w.mutex.Unlock()
+
 						continue
 					}
 				}

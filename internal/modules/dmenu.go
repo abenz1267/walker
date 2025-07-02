@@ -176,22 +176,28 @@ func (d *Dmenu) StartListening() {
 			log.Panic(err)
 		}
 
-		b := make([]byte, 1_048_576)
-		i, err := conn.Read(b)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
+		scanner := bufio.NewScanner(conn)
 
-		res := strings.Split(string(b[:i]), "\n")
+		const maxCapacity = 64 * 1024 * 1024 // 64MB
 
-		d.Content = []string{}
+		buf := make([]byte, maxCapacity)
+		scanner.Buffer(buf, maxCapacity)
 
-		for _, v := range res {
-			if v != "" {
-				d.Content = append(d.Content, v)
+		var newContent []string
+
+		for scanner.Scan() {
+			line := scanner.Text()
+			if line != "" {
+				newContent = append(newContent, line)
 			}
 		}
+
+		if err := scanner.Err(); err != nil {
+			log.Printf("Error scanning connection: %v", err)
+			return
+		}
+
+		d.Content = newContent
 	}
 }
 

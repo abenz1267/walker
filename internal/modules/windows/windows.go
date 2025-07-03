@@ -68,34 +68,39 @@ func (w *Windows) GetIcons() {
 
 				defer file.Close()
 
-				scanner := bufio.NewScanner(file)
-
-				icon, class := "", ""
+				icon, class, isMainEntry, scanner := "", "", false, bufio.NewScanner(file)
 
 				for scanner.Scan() {
-					if icon != "" && class != "" {
-						w.mutex.Lock()
-						w.icons[class] = icon
-						w.mutex.Unlock()
-					}
-
 					line := scanner.Text()
 
-					if strings.HasPrefix(line, "StartupWMClass=") {
-						class = strings.TrimSpace(strings.TrimPrefix(line, "StartupWMClass="))
-						class = strings.ToLower(class)
-						continue
+					if strings.Contains(line, "Desktop Entry") {
+						isMainEntry = true
 					}
 
-					if strings.HasPrefix(line, "Icon=") {
-						icon = strings.TrimSpace(strings.TrimPrefix(line, "Icon="))
+					if isMainEntry {
+						if strings.HasPrefix(line, "StartupWMClass=") && class == "" {
+							class = strings.TrimSpace(strings.TrimPrefix(line, "StartupWMClass="))
+							class = strings.ToLower(class)
+							continue
+						}
 
-						w.mutex.Lock()
-						w.icons[strings.TrimSuffix(info.Name(), filepath.Ext(info.Name()))] = icon
-						w.mutex.Unlock()
-
-						continue
+						if strings.HasPrefix(line, "Icon=") && icon == "" {
+							icon = strings.TrimSpace(strings.TrimPrefix(line, "Icon="))
+							continue
+						}
 					}
+				}
+
+				if icon != "" {
+					w.mutex.Lock()
+
+					w.icons[strings.TrimSuffix(info.Name(), filepath.Ext(info.Name()))] = icon
+
+					if class != "" {
+						w.icons[class] = icon
+					}
+
+					w.mutex.Unlock()
 				}
 			}
 

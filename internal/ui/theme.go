@@ -86,7 +86,7 @@ func setupTheme() {
 		layout.InitUnitMaps()
 	}
 
-	if config.Cfg.IgnoreMouse {
+	if config.Cfg.IgnoreMouse && elements.grid != nil {
 		elements.grid.SetCanTarget(false)
 	}
 

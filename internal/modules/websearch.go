@@ -90,7 +90,7 @@ func (w Websearch) Entries(term string) []util.Entry {
 		n := util.Entry{
 			Label:            fmt.Sprintf("Search with %s", v.Name),
 			Sub:              "Websearch",
-			Exec:             fmt.Sprintf("xdg-open %s", url),
+			Exec:             fmt.Sprintf("xdg-open '%s'", url),
 			Class:            "websearch",
 			ScoreFinal:       score,
 			SingleModuleOnly: v.SwitcherOnly && prefix == "",

@@ -111,7 +111,7 @@ func (r Runner) Entries(term string) []util.Entry {
 		term = strings.TrimPrefix(term, "'")
 	}
 
-	if term != "" {
+	if len(fields) > 0 {
 		if path, _ := exec.LookPath(fields[0]); path != "" {
 			if r.config.GenericEntry {
 				n := util.Entry{

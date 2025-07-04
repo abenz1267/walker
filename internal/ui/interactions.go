@@ -1140,7 +1140,6 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 
 	moduleName := entry.Module
 
-	multiplier := 0
 	remember := ""
 
 	if textLength != 0 {
@@ -1165,86 +1164,97 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 
 		var pos *[]int
 
-		for k, t := range matchables {
-			if t == "" {
-				continue
-			}
+		splits := strings.Split(text, ";")
 
-			var score float64
-			var start int
+		totalScore := 0.0
+		start := 0
 
-			if strings.HasPrefix(text, "'") {
-				cleanText := strings.TrimPrefix(text, "'")
+		for _, text := range splits {
+			matchScore := 0.0
 
-				score, _, start = util.ExactScore(cleanText, t)
+			for k, t := range matchables {
+				if t == "" {
+					continue
+				}
 
-				f := strings.Index(strings.ToLower(t), strings.ToLower(cleanText))
+				var score float64
 
-				if f != -1 {
-					poss := []int{}
+				if strings.HasPrefix(text, "'") {
+					cleanText := strings.TrimPrefix(text, "'")
 
-					for i := f; i < f+len(text); i++ {
-						poss = append(poss, i)
+					score, _, start = util.ExactScore(cleanText, t)
+
+					f := strings.Index(strings.ToLower(t), strings.ToLower(cleanText))
+
+					if f != -1 {
+						poss := []int{}
+
+						for i := f; i < f+len(text); i++ {
+							poss = append(poss, i)
+						}
+
+						pos = &poss
+					}
+				} else {
+					score, pos, start = util.FuzzyScore(text, t)
+				}
+
+				if score < 1 {
+					continue
+				}
+
+				if score > matchScore {
+					if config.Cfg.List.DynamicSub && k > 1 {
+						entry.MatchedSub = t
 					}
 
-					pos = &poss
-				}
-			} else {
-				score, pos, start = util.FuzzyScore(text, t)
-			}
+					if len(splits) == 1 && layout.Window.Box.Scroll.List.MarkerColor != "" && len(t) < 1000 {
+						res := ""
 
-			if score < 1 {
-				continue
-			}
-
-			if score > entry.ScoreFuzzy {
-				multiplier = k
-
-				if config.Cfg.List.DynamicSub && k > 1 {
-					entry.MatchedSub = t
-				}
-
-				if layout.Window.Box.Scroll.List.MarkerColor != "" && len(t) < 1000 {
-					res := ""
-
-					if pos != nil {
-						for k, v := range []rune(t) {
-							if slices.Contains(*pos, k) {
-								res = fmt.Sprintf("%s|MARKERSTART|%s|MARKEREND|", res, string(v))
-							} else {
-								res = fmt.Sprintf("%s%s", res, string(v))
+						if pos != nil {
+							for k, v := range []rune(t) {
+								if slices.Contains(*pos, k) {
+									res = fmt.Sprintf("%s|MARKERSTART|%s|MARKEREND|", res, string(v))
+								} else {
+									res = fmt.Sprintf("%s%s", res, string(v))
+								}
 							}
+						}
+
+						if remember != "" {
+							res = fmt.Sprintf("%s %s", remember, res)
+						}
+
+						if k == 0 {
+							entry.MatchedLabel = res
+						} else if k > 0 {
+							entry.MatchedSub = res
 						}
 					}
 
-					if remember != "" {
-						res = fmt.Sprintf("%s %s", remember, res)
+					m := (1 - modifier*float64(k))
+
+					if m < 0.7 {
+						m = 0.7
 					}
 
-					if k == 0 {
-						entry.MatchedLabel = res
-					} else if k > 0 {
-						entry.MatchedSub = res
-					}
+					matchScore = (score * m)
 				}
-
-				entry.ScoreFuzzy = score
-				entry.MatchStartingPos = start
 			}
+
+			totalScore += matchScore
+		}
+
+		entry.ScoreFuzzy = totalScore
+
+		if len(splits) == 1 {
+			entry.MatchStartingPos = start
 		}
 
 		if entry.ScoreFuzzy == 0 {
 			return 0
 		}
 	}
-
-	m := (1 - modifier*float64(multiplier))
-
-	if m < 0.7 {
-		m = 0.7
-	}
-
-	entry.ScoreFuzzy = entry.ScoreFuzzy * m
 
 	usageScore := 0
 
@@ -1278,7 +1288,7 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 	score := float64(usageScore)*tm + float64(entry.ScoreFuzzy)/tm
 
 	if appstate.IsDebug {
-		fmt.Printf("Matching == label: %s sub: %s searchable: %s categories: %s score: %f usage: %d fuzzy: %f m: %f\n", entry.Label, entry.Sub, entry.Searchable, entry.Categories, score, usageScore, entry.ScoreFuzzy, m)
+		fmt.Printf("Matching == label: %s sub: %s searchable: %s categories: %s score: %f usage: %d fuzzy: %f m: %f\n", entry.Label, entry.Sub, entry.Searchable, entry.Categories, score, usageScore, entry.ScoreFuzzy)
 	}
 
 	return score

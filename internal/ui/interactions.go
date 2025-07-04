@@ -1148,6 +1148,7 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 
 		if moduleName == config.Cfg.Builtins.Emojis.Name || moduleName == config.Cfg.Builtins.Symbols.Name {
 			matchables = []string{entry.Searchable}
+			matchables = append(matchables, entry.Categories...)
 			remember = strings.Split(entry.Label, entry.Searchable)[0]
 		} else {
 			if !appstate.IsDmenu {

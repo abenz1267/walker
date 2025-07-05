@@ -667,7 +667,9 @@ func processAsync(text string) {
 
 	defer func() {
 		if !layout.Window.Box.Search.Spinner.Hide {
-			elements.spinner.SetVisible(false)
+			glib.IdleAdd(func() {
+				elements.spinner.SetVisible(false)
+			})
 		}
 	}()
 

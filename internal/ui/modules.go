@@ -17,7 +17,6 @@ import (
 	"github.com/abenz1267/walker/internal/modules/windows"
 	"github.com/abenz1267/walker/internal/modules/windows/wlr"
 	"github.com/abenz1267/walker/internal/util"
-	"github.com/diamondburned/gotk4/pkg/glib/v2"
 )
 
 func setupModules() {
@@ -220,9 +219,7 @@ func setupSingleModule() {
 		singleModule = toUse[0]
 	}
 
-	glib.IdleAdd(func() {
-		debouncedProcess = util.NewDebounce(time.Millisecond * time.Duration(singleModule.General().Delay))
-	})
+	debouncedProcess = util.NewDebounce(time.Millisecond * time.Duration(singleModule.General().Delay))
 }
 
 func resetSingleModule() {

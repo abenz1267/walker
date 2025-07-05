@@ -231,14 +231,17 @@ func enableAM() {
 	activationEnabled = true
 }
 
-func disableAM() {
+func disableAM(refocus bool) {
 	if !config.Cfg.ActivationMode.Disabled && activationEnabled {
 		activationEnabled = false
 
 		glib.IdleAdd(func() {
-			elements.input.SetFocusable(false)
 			elements.appwin.RemoveCSSClass("activation")
-			elements.input.GrabFocus()
+
+			if refocus {
+				elements.input.SetFocusable(true)
+				elements.input.GrabFocus()
+			}
 		})
 	}
 }
@@ -246,7 +249,7 @@ func disableAM() {
 func handleGlobalKeysReleased(val, code uint, state gdk.ModifierType) {
 	switch val {
 	case uint(labelTrigger):
-		disableAM()
+		disableAM(true)
 	}
 }
 
@@ -259,12 +262,14 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 	} else {
 		switch val {
 		case gdk.KEY_F1, gdk.KEY_F2, gdk.KEY_F3, gdk.KEY_F4, gdk.KEY_F5, gdk.KEY_F6, gdk.KEY_F7, gdk.KEY_F8:
-			index := slices.Index(fkeys, val)
+			if config.Cfg.ActivationMode.UseFKeys {
+				index := slices.Index(fkeys, val)
 
-			if index != -1 {
-				isShift := modifier == gdk.ShiftMask
-				selectActivationMode(isShift, true, uint(index))
-				return true
+				if index != -1 {
+					isShift := modifier == gdk.ShiftMask
+					selectActivationMode(isShift, true, uint(index))
+					return true
+				}
 			}
 		default:
 			if !config.Cfg.ActivationMode.Disabled && activationEnabled {
@@ -344,7 +349,6 @@ func activateItem(keepOpen, alt bool) {
 
 		switch module.General().Name {
 		case config.Cfg.Builtins.AI.Name:
-
 			elements.input.SetObjectProperty("placeholder-text", entry.Label)
 
 			isAi = true
@@ -1070,7 +1074,7 @@ func quit(ignoreEvent bool) {
 		go v.Cleanup()
 	}
 
-	disableAM()
+	disableAM(false)
 
 	appstate.ExplicitModules = []string{}
 	appstate.ExplicitPlaceholder = ""

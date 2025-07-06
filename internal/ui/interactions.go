@@ -13,6 +13,8 @@ import (
 	"syscall"
 	"time"
 
+	ls "github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
+
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/history"
 	"github.com/abenz1267/walker/internal/modules"
@@ -1045,6 +1047,8 @@ func usageModifier(item *util.Entry) int {
 }
 
 func quit(ignoreEvent bool) {
+	ls.SetKeyboardMode(&elements.appwin.Window, ls.LayerShellKeyboardModeNone)
+
 	if !ignoreEvent {
 		executeEvent(config.EventExit, "")
 	}

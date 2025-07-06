@@ -295,3 +295,7 @@ cache = false
 ```
 
 in your config.
+
+### Walker crashes with: INFO Lost connection to Wayland compositor.
+
+Use `GSK_RENDERER=cairo` to fix this. So far there's no real fix.

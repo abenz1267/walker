@@ -813,9 +813,6 @@ func handleListVisibility() {
 }
 
 func reopen() {
-	ls.SetKeyboardMode(&elements.appwin.Window, ls.LayerShellKeyboardModeExclusive)
-	time.Sleep(time.Millisecond * 1000)
-
 	timeoutReset()
 
 	for _, v := range setWindowClasses {

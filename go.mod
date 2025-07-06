@@ -24,6 +24,7 @@ require (
 require (
 	github.com/danwakefield/fnmatch v0.0.0-20160403171240-cbb64ac3d964 // indirect
 	github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc // indirect
+	github.com/diamondburned/gotk4 v0.3.2-0.20250703071137-3f083bd451e3 // indirect
 	github.com/go-viper/mapstructure/v2 v2.3.0 // indirect
 	github.com/knadh/koanf/maps v0.1.2 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect

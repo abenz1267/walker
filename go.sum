@@ -12,6 +12,8 @@ github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc h1:U9qPSI2PIWSS1
 github.com/davecgh/go-spew v1.1.2-0.20180830191138-d8f796af33cc/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davidbyttow/govips/v2 v2.16.0 h1:1nH/Rbx8qZP1hd+oYL9fYQjAnm1+KorX9s07ZGseQmo=
 github.com/davidbyttow/govips/v2 v2.16.0/go.mod h1:clH5/IDVmG5eVyc23qYpyi7kmOT0B/1QNTKtci4RkyM=
+github.com/diamondburned/gotk4 v0.3.2-0.20250703071137-3f083bd451e3 h1:A+U68TjwrMq+WO+J91GSy4PrPC0O+Wkeo/nSeQjemic=
+github.com/diamondburned/gotk4 v0.3.2-0.20250703071137-3f083bd451e3/go.mod h1:r0WyD6Gn+gGzRL4FQqP44POoEEQWecHvdFR7KN/wV4w=
 github.com/diamondburned/gotk4-layer-shell/pkg v0.0.0-20240109211357-6efa9f6dc438 h1:Ymnl4B+Fn4srLxXbRV2RY1iHT2SH3oAkOfxeEeMI3Fg=
 github.com/diamondburned/gotk4-layer-shell/pkg v0.0.0-20240109211357-6efa9f6dc438/go.mod h1:AjrxxF6teeNWgaEg0zIUwoqFtXlVTHlEGZvrOn7RXaQ=
 github.com/diamondburned/gotk4/pkg v0.3.1 h1:uhkXSUPUsCyz3yujdvl7DSN8jiLS2BgNTQE95hk6ygg=

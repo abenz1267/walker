@@ -870,6 +870,10 @@ func reopen() {
 
 			setupLayout(theme, themeBase)
 		}
+
+		if singleModule.General().Name == config.Cfg.Builtins.Dmenu.Name {
+			<-appstate.DmenuShowChan
+		}
 	}
 
 	executeEvent(config.EventLaunch, "")

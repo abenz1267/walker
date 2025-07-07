@@ -18,24 +18,26 @@ var (
 	DmenuSocketAddrReply = filepath.Join(util.TmpDir(), "walker-dmenu-reply.sock")
 )
 
+var content []string
+
 type Dmenu struct {
 	Config             config.Dmenu
-	Content            []string
 	initialSeparator   string
 	initialLabelColumn int
 	initialIconColumn  int
 	initialValueColumn int
 	IsService          bool
+	DmenuShowChan      chan bool
 }
 
 func (d *Dmenu) General() *config.GeneralModule {
 	return &d.Config.GeneralModule
 }
 
-func (d Dmenu) Entries(term string) []util.Entry {
+func (d *Dmenu) Entries(term string) []util.Entry {
 	entries := []util.Entry{}
 
-	for _, v := range d.Content {
+	for _, v := range content {
 		label := v
 		icon := ""
 		value := ""
@@ -159,6 +161,7 @@ func (d *Dmenu) Cleanup() {
 	d.Config.Label = d.initialLabelColumn
 	d.Config.Icon = d.initialIconColumn
 	d.Config.Value = d.initialValueColumn
+	content = []string{}
 }
 
 func (d *Dmenu) StartListening() {
@@ -197,7 +200,8 @@ func (d *Dmenu) StartListening() {
 			return
 		}
 
-		d.Content = newContent
+		content = newContent
+		d.DmenuShowChan <- true
 	}
 }
 
@@ -233,7 +237,7 @@ func (d *Dmenu) SetupData() {
 		scanner := bufio.NewScanner(os.Stdin)
 
 		for scanner.Scan() {
-			d.Content = append(d.Content, scanner.Text())
+			content = append(content, scanner.Text())
 		}
 	}
 }

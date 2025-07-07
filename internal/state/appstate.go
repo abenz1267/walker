@@ -24,6 +24,7 @@ type AppState struct {
 	DmenuValueColumn    int
 	ExplicitConfig      string
 	ExplicitModules     []string
+	DmenuShowChan       chan bool
 	ExplicitPlaceholder string
 	ExplicitTheme       string
 	ForcePrint          bool
@@ -52,13 +53,16 @@ func Get() *AppState {
 		IsRunning:      false,
 		HasUI:          false,
 		ExplicitConfig: "config.json",
+		DmenuShowChan:  make(chan bool, 1),
 	}
 }
 
 func (app *AppState) StartServiceableModules() {
 	config.Cfg.IsService = true
 
-	app.Dmenu = &modules.Dmenu{}
+	app.Dmenu = &modules.Dmenu{
+		DmenuShowChan: app.DmenuShowChan,
+	}
 
 	clipboard := &clipboard.Clipboard{}
 	hasClipboard := clipboard.Setup()

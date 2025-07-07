@@ -263,7 +263,7 @@ Type=Application
 				state.ActiveItem = nil
 			}
 
-			state.ExplicitModules = append(state.ExplicitModules, "dmenu")
+			state.ExplicitModules = []string{"dmenu"}
 			state.IsDmenu = true
 		} else {
 			if modulesString != nil && modulesString.String() != "" {

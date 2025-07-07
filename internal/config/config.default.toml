@@ -67,6 +67,7 @@ show_sub_when_single = true
 show_icon_when_single = true
 show_generic = true
 history = true
+icon = "applications-other"
 
 [builtins.applications.actions]
 enabled = true

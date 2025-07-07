@@ -299,3 +299,9 @@ in your config.
 ### Walker crashes with: INFO Lost connection to Wayland compositor.
 
 Use `GSK_RENDERER=cairo` to fix this. So far there's no real fix.
+
+### Applications launched via Walker close if the systemd-service stops
+
+Look [here](https://github.com/abenz1267/walker/issues/331#issuecomment-3031539042).
+
+My personal recommendation is to start the Walker service as an xdg-autostart application. That's up to you though.

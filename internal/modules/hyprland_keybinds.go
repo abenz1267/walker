@@ -95,10 +95,12 @@ func (h *HyprlandKeybinds) SetupData() {
 			}
 
 			h.entries = append(h.entries, util.Entry{
-				Label: strings.Join(values[2:], " "),
-				Sub:   label,
-				Class: "hyprland_keybinds",
-				Exec:  fmt.Sprintf("hyprctl dispatch %s", strings.Join(values[2:], " ")),
+				Label:            strings.Join(values[2:], " "),
+				Sub:              label,
+				Class:            "hyprland_keybinds",
+				Exec:             fmt.Sprintf("hyprctl dispatch %s", strings.Join(values[2:], " ")),
+				Matching:         util.Fuzzy,
+				RecalculateScore: true,
 			})
 		}
 	}

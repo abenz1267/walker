@@ -66,6 +66,10 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
   - no need to create keybinds for commands you don't run often
 - xdg-desktop-portal-hyprland share picker
   - lets you select windows/monitors/region for sharing
+- hyprland keybinds
+  - parses your hyprland config for keybinds
+  - shows the keybind
+  - execute the keybind via hyprctl
 
 ## Compatible tools
 

@@ -108,6 +108,7 @@ func setAvailables() {
 		&modules.CustomCommands{},
 		&windows.Windows{},
 		&translation.Translation{},
+		&modules.HyprlandKeybinds{},
 	}
 
 	if os.Getenv("XDG_CURRENT_DESKTOP") == "Hyprland" {

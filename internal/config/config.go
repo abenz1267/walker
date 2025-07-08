@@ -114,24 +114,30 @@ type BarEntry struct {
 }
 
 type Builtins struct {
-	AI             AI             `koanf:"ai"`
-	Applications   Applications   `koanf:"applications"`
-	Bookmarks      Bookmarks      `koanf:"bookmarks"`
-	Calc           Calc           `koanf:"calc"`
-	Clipboard      Clipboard      `koanf:"clipboard"`
-	Commands       Commands       `koanf:"commands"`
-	CustomCommands CustomCommands `koanf:"custom_commands"`
-	Dmenu          Dmenu          `koanf:"dmenu"`
-	Emojis         Emojis         `koanf:"emojis"`
-	Finder         Finder         `koanf:"finder"`
-	Runner         Runner         `koanf:"runner"`
-	SSH            SSH            `koanf:"ssh"`
-	Switcher       Switcher       `koanf:"switcher"`
-	Symbols        Symbols        `koanf:"symbols"`
-	Translation    Translation    `koanf:"translation"`
-	Websearch      Websearch      `koanf:"websearch"`
-	Windows        Windows        `koanf:"windows"`
-	XdphPicker     XdphPicker     `koanf:"xdph_picker"`
+	AI               AI               `koanf:"ai"`
+	Applications     Applications     `koanf:"applications"`
+	Bookmarks        Bookmarks        `koanf:"bookmarks"`
+	Calc             Calc             `koanf:"calc"`
+	Clipboard        Clipboard        `koanf:"clipboard"`
+	Commands         Commands         `koanf:"commands"`
+	CustomCommands   CustomCommands   `koanf:"custom_commands"`
+	HyprlandKeybinds HyprlandKeybinds `koanf:"hyprland_keybinds"`
+	Dmenu            Dmenu            `koanf:"dmenu"`
+	Emojis           Emojis           `koanf:"emojis"`
+	Finder           Finder           `koanf:"finder"`
+	Runner           Runner           `koanf:"runner"`
+	SSH              SSH              `koanf:"ssh"`
+	Switcher         Switcher         `koanf:"switcher"`
+	Symbols          Symbols          `koanf:"symbols"`
+	Translation      Translation      `koanf:"translation"`
+	Websearch        Websearch        `koanf:"websearch"`
+	Windows          Windows          `koanf:"windows"`
+	XdphPicker       XdphPicker       `koanf:"xdph_picker"`
+}
+
+type HyprlandKeybinds struct {
+	GeneralModule `koanf:",squash"`
+	Path          string `koanf:"path"`
 }
 
 type XdphPicker struct {

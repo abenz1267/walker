@@ -93,11 +93,20 @@ func (f *Finder) Entries(term string) []util.Entry {
 			hasExplicitResultAlt = true
 		}
 
+		var exec string
+
+		if strings.HasSuffix(v, "/") {
+			exec = fmt.Sprintf("xdg-open '%s/%s'", f.homedir, v)
+		} else {
+			exec = fmt.Sprintf("xdg-open '%s'", v)
+		}
+
 		if score >= scoremin {
 			entry := util.Entry{
 				Label:            label,
 				Sub:              "finder",
-				Exec:             fmt.Sprintf("xdg-open '%s'", v),
+				Path:             f.homedir,
+				Exec:             exec,
 				ExecAlt:          strings.ReplaceAll(f.config.CmdAlt, "%RESULT%", label),
 				RecalculateScore: false,
 				ScoreFinal:       score,

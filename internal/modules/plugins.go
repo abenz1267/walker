@@ -169,7 +169,7 @@ func (e Plugin) Entries(term string) []util.Entry {
 			return e.entries
 		}
 
-		cmd := exec.Command("sh", "-c", util.WrapWithPrefix(config.Cfg.AppLaunchPrefix, src))
+		cmd := exec.Command("sh", "-c", src)
 
 		if !hasExplicitTerm {
 			cmd.Stdin = strings.NewReader(term)
@@ -369,7 +369,7 @@ func (e Plugin) parseJson(out []byte) []util.Entry {
 }
 
 func (e Plugin) getSrcOutput(src string, hasExplicitTerm bool, term string) []byte {
-	cmd := exec.Command("sh", "-c", util.WrapWithPrefix(config.Cfg.AppLaunchPrefix, src))
+	cmd := exec.Command("sh", "-c", src)
 
 	if !hasExplicitTerm && term != "" {
 		cmd.Stdin = strings.NewReader(term)

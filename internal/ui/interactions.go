@@ -72,7 +72,7 @@ func setupCommands() {
 			return false
 		}
 
-		cmd := exec.Command("sh", "-c", util.WrapWithPrefix(config.Cfg.AppLaunchPrefix, fmt.Sprintf("xdg-open %s", cssFile)))
+		cmd := exec.Command("sh", "-c", fmt.Sprintf("xdg-open %s", cssFile))
 		cmd.SysProcAttr = &syscall.SysProcAttr{
 			Setpgid:    true,
 			Pgid:       0,

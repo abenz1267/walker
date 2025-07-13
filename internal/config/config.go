@@ -137,7 +137,6 @@ type Builtins struct {
 
 type HyprlandKeybinds struct {
 	GeneralModule `koanf:",squash"`
-	Path          string `koanf:"path"`
 }
 
 type XdphPicker struct {

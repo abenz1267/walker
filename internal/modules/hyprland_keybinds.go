@@ -1,15 +1,23 @@
 package modules
 
 import (
-	"bufio"
+	"encoding/json"
 	"fmt"
 	"log/slog"
-	"os"
+	"os/exec"
 	"strings"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
 )
+
+type Bind struct {
+	Modmask     int    `json:"modmask"`
+	Key         string `json:"key"`
+	Description string `json:"description"`
+	Dispatcher  string `json:"dispatcher"`
+	Arg         string `json:"arg"`
+}
 
 type HyprlandKeybinds struct {
 	config  config.HyprlandKeybinds
@@ -37,74 +45,76 @@ func (h *HyprlandKeybinds) Setup() (_ bool) {
 }
 
 func (h *HyprlandKeybinds) SetupData() {
-	if strings.HasPrefix(h.config.Path, "~") {
-		home, _ := os.UserHomeDir()
-		h.config.Path = strings.ReplaceAll(h.config.Path, "~", home)
-	}
+	cmd := exec.Command("hyprctl", "-j", "binds")
 
-	file, err := os.Open(h.config.Path)
+	out, err := cmd.Output()
 	if err != nil {
-		slog.Error("hyprland_keybinds", "error", err)
+		slog.Error("error", "hyprland_keybinds", err)
+		return
 	}
 
-	scanner := bufio.NewScanner(file)
+	var binds []Bind
 
-	variables := make(map[string]string)
-
-	for scanner.Scan() {
-		line := scanner.Text()
-
-		if strings.HasPrefix(line, "$") {
-			parts := strings.Split(line, "=")
-
-			if len(parts) < 2 {
-				continue
-			}
-
-			variables[strings.TrimSpace(parts[0])] = strings.TrimSpace(parts[1])
-		}
-
-		if strings.HasPrefix(line, "bind") {
-			parts := strings.SplitN(line, "=", 2)
-			if len(parts) < 2 {
-				continue
-			}
-
-			values := strings.Split(parts[1], ",")
-
-			for k, v := range values {
-				values[k] = strings.TrimSpace(v)
-			}
-
-			modifiers := strings.Split(values[0], " ")
-
-			for _, v := range modifiers {
-				if val, ok := variables[v]; ok {
-					modifiers[0] = val
-				}
-			}
-
-			values[0] = strings.Join(modifiers, " ")
-
-			var label string
-
-			if values[0] != "" {
-				label = fmt.Sprintf("%s+%s", values[0], values[1])
-			} else {
-				label = values[1]
-			}
-
-			h.entries = append(h.entries, util.Entry{
-				Label:            strings.Join(values[2:], " "),
-				Sub:              label,
-				Class:            "hyprland_keybinds",
-				Exec:             fmt.Sprintf("hyprctl dispatch %s", strings.Join(values[2:], " ")),
-				Matching:         util.Fuzzy,
-				RecalculateScore: true,
-			})
-		}
+	err = json.Unmarshal(out, &binds)
+	if err != nil {
+		slog.Error("error", "hyprland_keybinds", err)
+		return
 	}
+
+	var entries []util.Entry
+
+	for _, v := range binds {
+		label := v.Description
+
+		if label == "" {
+			label = fmt.Sprintf("%s %s", v.Dispatcher, v.Arg)
+		}
+
+		e := util.Entry{
+			Label: label,
+			Exec:  fmt.Sprintf("hyprctl dispatch %s %s", v.Dispatcher, v.Arg),
+			Sub:   fmt.Sprintf("%s+%s", modMaskToString(v.Modmask), v.Key),
+		}
+
+		entries = append(entries, e)
+	}
+
+	h.entries = entries
 
 	h.config.IsSetup = true
 	h.config.HasInitialSetup = true
+}
+
+func modMaskToString(modmask int) string {
+	var parts []string
+
+	// Common modifier mask values
+	const (
+		ShiftMask   = 1 << 0 // 1
+		LockMask    = 1 << 1 // 2
+		ControlMask = 1 << 2 // 4
+		Mod1Mask    = 1 << 3 // 8 (Alt)
+		Mod2Mask    = 1 << 4 // 16
+		Mod3Mask    = 1 << 5 // 32
+		Mod4Mask    = 1 << 6 // 64 (Super/Windows key)
+		Mod5Mask    = 1 << 7 // 128
+	)
+
+	if modmask&ShiftMask != 0 {
+		parts = append(parts, "SHIFT")
+	}
+	if modmask&LockMask != 0 {
+		parts = append(parts, "LOCK")
+	}
+	if modmask&ControlMask != 0 {
+		parts = append(parts, "CONTROL")
+	}
+	if modmask&Mod1Mask != 0 {
+		parts = append(parts, "ALT")
+	}
+	if modmask&Mod4Mask != 0 {
+		parts = append(parts, "SUPER")
+	}
+
+	return strings.Join(parts, "+")
 }

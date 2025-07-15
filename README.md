@@ -185,7 +185,7 @@ Option 1: Autostart Walker with `walker --gapplication-service` and it will run 
 Option 2: You can let Walker create an autostart desktop file for you by running `walker --enableautostart`.
 
 Then just run `walker` to bring it up.
-You can also send re-open walker by calling the socket at `/tmp/walker-reopen.socket`. F.e. with `nc -U /tmp/walker-reopen.socket`.
+You can also send re-open walker by calling the socket at `/tmp/walker-reopen.sock`. F.e. with `nc -U /tmp/walker-reopen.sock`.
 
 Example for Hyprland:
 

@@ -17,6 +17,8 @@ type Bind struct {
 	Description string `json:"description"`
 	Dispatcher  string `json:"dispatcher"`
 	Arg         string `json:"arg"`
+	Submap      string `json:"submap"`
+	Mouse       bool   `json:"mouse"`
 }
 
 type HyprlandKeybinds struct {
@@ -79,10 +81,23 @@ func (h *HyprlandKeybinds) SetupData() {
 			sub = fmt.Sprintf("%s+%s", modMaskToString(v.Modmask), v.Key)
 		}
 
+		if v.Submap != "" {
+			sub = fmt.Sprintf("%s: %s", v.Submap, sub)
+		}
+
+		exec := fmt.Sprintf("hyprctl dispatch %s %s", v.Dispatcher, v.Arg)
+
+		if v.Mouse {
+			sub = fmt.Sprintf("%s (mouse)", sub)
+			exec = ""
+		}
+
 		e := util.Entry{
-			Label: label,
-			Exec:  fmt.Sprintf("hyprctl dispatch %s %s", v.Dispatcher, v.Arg),
-			Sub:   sub,
+			Label:            label,
+			Exec:             exec,
+			Sub:              sub,
+			Matching:         util.Fuzzy,
+			RecalculateScore: true,
 		}
 
 		entries = append(entries, e)

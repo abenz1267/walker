@@ -125,12 +125,10 @@ Without these you won't be able to build.
 You have two options of installing walker using Nix.
 
 1.  Using the package exposed by this flake
-
     1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
     2. Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`
 
 2.  Using the home-manager module exposed by this flake:
-
     1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
     2. Add `imports = [inputs.walker.homeManagerModules.default];` into your home-manager config
     3. Configure walker using:
@@ -187,6 +185,7 @@ Option 1: Autostart Walker with `walker --gapplication-service` and it will run 
 Option 2: You can let Walker create an autostart desktop file for you by running `walker --enableautostart`.
 
 Then just run `walker` to bring it up.
+You can also send re-open walker by calling the socket at `/tmp/walker-reopen.socket`. F.e. with `nc -U /tmp/walker-reopen.socket`.
 
 Example for Hyprland:
 

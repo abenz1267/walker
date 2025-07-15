@@ -812,6 +812,10 @@ func handleListVisibility() {
 	elements.scroll.SetVisible(show)
 }
 
+func Reopen() {
+	reopen()
+}
+
 func reopen() {
 	timeoutReset()
 

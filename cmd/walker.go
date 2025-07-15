@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"os"
 	"os/signal"
 	"path/filepath"
@@ -32,11 +33,14 @@ var version string
 
 var now = time.Now().UnixMilli()
 
+var SocketReopen = "/tmp/walker-reopen.socket"
+
 func main() {
 	state := state.Get()
 
 	defer func() {
 		os.Remove(modules.DmenuSocketAddrReply)
+		os.Remove(SocketReopen)
 	}()
 
 	appName := "dev.benz.walker"
@@ -307,6 +311,8 @@ Type=Application
 	app.Flags()
 
 	if state.IsService {
+		go listenActivationSocket()
+
 		app.Hold()
 
 		signal_chan := make(chan os.Signal, 1)
@@ -343,4 +349,23 @@ Type=Application
 	}
 
 	os.Exit(code)
+}
+
+func listenActivationSocket() {
+	os.Remove(SocketReopen)
+
+	l, _ := net.ListenUnix("unix", &net.UnixAddr{
+		Name: SocketReopen,
+	})
+	defer l.Close()
+
+	for {
+		conn, err := l.AcceptUnix()
+		if err != nil {
+			log.Panic(err)
+		}
+		conn.Close()
+
+		ui.Reopen()
+	}
 }

@@ -33,14 +33,15 @@ var version string
 
 var now = time.Now().UnixMilli()
 
-var SocketReopen = "/tmp/walker-reopen.socket"
+var SocketReopen = filepath.Join(util.TmpDir(), "walker-reopen.sock")
+
+var app *gtk.Application
 
 func main() {
 	state := state.Get()
 
 	defer func() {
 		os.Remove(modules.DmenuSocketAddrReply)
-		os.Remove(SocketReopen)
 	}()
 
 	appName := "dev.benz.walker"
@@ -154,7 +155,7 @@ Type=Application
 		}
 	}
 
-	app := gtk.NewApplication(appName, gio.ApplicationHandlesCommandLine)
+	app = gtk.NewApplication(appName, gio.ApplicationHandlesCommandLine)
 
 	app.AddMainOption("autoselect", 'x', glib.OptionFlagNone, glib.OptionArgNone, "auto select only item in list", "")
 	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
@@ -366,6 +367,6 @@ func listenActivationSocket() {
 		}
 		conn.Close()
 
-		ui.Reopen()
+		ui.Show(app)
 	}
 }

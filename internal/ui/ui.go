@@ -84,6 +84,15 @@ type Elements struct {
 	listPlaceholder *gtk.Label
 }
 
+func Show(app *gtk.Application) {
+	if appstate.HasUI {
+		reopen()
+		return
+	}
+
+	initialUISetup(app)
+}
+
 func Activate(state *state.AppState) func(app *gtk.Application) {
 	appstate = state
 	thumbnails = make(map[string][]byte)
@@ -100,151 +109,148 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 
 	go setupThumbnails()
 
-	return func(app *gtk.Application) {
-		if appstate.HasUI {
-			reopen()
-			return
+	return Show
+}
+
+func initialUISetup(app *gtk.Application) {
+	layouts = make(map[string]*config.UI)
+
+	hstry = history.Get()
+
+	if appstate.IsService {
+		cfgErr = appstate.ConfigError
+	} else {
+		cfgErr = config.Init(appstate.ExplicitConfig)
+	}
+
+	t := 1
+
+	if config.Cfg.Search.Delay > 0 {
+		t = config.Cfg.Search.Delay
+	}
+
+	debouncedProcess = util.NewDebounce(time.Millisecond * time.Duration(t))
+	debouncedOnSelect = util.NewDebounce(time.Millisecond * 5)
+
+	theme := config.Cfg.Theme
+	themeBase := config.Cfg.ThemeBase
+
+	if appstate.ExplicitTheme != "" {
+		theme = appstate.ExplicitTheme
+		themeBase = nil
+	}
+
+	appstate.Labels = strings.Split(config.Cfg.ActivationMode.Labels, "")
+	appstate.LabelsF = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
+	appstate.UsedLabels = appstate.Labels
+
+	if config.Cfg.ActivationMode.UseFKeys {
+		appstate.UsedLabels = appstate.LabelsF
+	}
+
+	config.Cfg.IsService = appstate.IsService
+
+	if !ls.IsSupported() {
+		config.Cfg.AsWindow = true
+	}
+
+	layout, layoutErr = config.GetLayout(theme, themeBase)
+
+	if appstate.Dmenu == nil {
+		if appstate.DmenuSeparator != "" {
+			config.Cfg.Builtins.Dmenu.Separator = appstate.DmenuSeparator
 		}
 
-		layouts = make(map[string]*config.UI)
-
-		hstry = history.Get()
-
-		if appstate.IsService {
-			cfgErr = appstate.ConfigError
-		} else {
-			cfgErr = config.Init(appstate.ExplicitConfig)
+		if appstate.DmenuLabelColumn != 0 {
+			config.Cfg.Builtins.Dmenu.Label = appstate.DmenuLabelColumn
 		}
 
-		t := 1
-
-		if config.Cfg.Search.Delay > 0 {
-			t = config.Cfg.Search.Delay
+		if appstate.DmenuIconColumn != 0 {
+			config.Cfg.Builtins.Dmenu.Icon = appstate.DmenuIconColumn
 		}
 
-		debouncedProcess = util.NewDebounce(time.Millisecond * time.Duration(t))
-		debouncedOnSelect = util.NewDebounce(time.Millisecond * 5)
+		if appstate.DmenuValueColumn != 0 {
+			config.Cfg.Builtins.Dmenu.Value = appstate.DmenuValueColumn
+		}
+	}
 
-		theme := config.Cfg.Theme
-		themeBase := config.Cfg.ThemeBase
+	if appstate.ExplicitPlaceholder != "" {
+		config.Cfg.Search.Placeholder = appstate.ExplicitPlaceholder
+	}
 
-		if appstate.ExplicitTheme != "" {
-			theme = appstate.ExplicitTheme
-			themeBase = nil
+	if appstate.Password {
+		cssProvider := gtk.NewCSSProvider()
+		gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
+
+		common = &Common{
+			cssProvider: cssProvider,
 		}
 
-		appstate.Labels = strings.Split(config.Cfg.ActivationMode.Labels, "")
-		appstate.LabelsF = []string{"F1", "F2", "F3", "F4", "F5", "F6", "F7", "F8"}
-		appstate.UsedLabels = appstate.Labels
+		elements = setupElementsPassword(app)
 
-		if config.Cfg.ActivationMode.UseFKeys {
-			appstate.UsedLabels = appstate.LabelsF
-		}
+		setupLayerShell()
+	} else {
+		setupCommon(app)
 
-		config.Cfg.IsService = appstate.IsService
+		elements = setupElements(app)
 
-		if !ls.IsSupported() {
-			config.Cfg.AsWindow = true
-		}
+		setupLayerShell()
 
-		layout, layoutErr = config.GetLayout(theme, themeBase)
+		setupModules()
 
-		if appstate.Dmenu == nil {
-			if appstate.DmenuSeparator != "" {
-				config.Cfg.Builtins.Dmenu.Separator = appstate.DmenuSeparator
+		afterUI()
+
+		setupInteractions(appstate)
+	}
+
+	if singleModule == nil {
+		setupLayout(theme, themeBase)
+	} else {
+		g := singleModule.General()
+
+		if val, ok := layouts[g.Name]; ok {
+			layout = val
+
+			theme := g.Theme
+			themeBase := g.ThemeBase
+
+			if appstate.ExplicitTheme != "" {
+				theme = appstate.ExplicitTheme
+				themeBase = nil
 			}
 
-			if appstate.DmenuLabelColumn != 0 {
-				config.Cfg.Builtins.Dmenu.Label = appstate.DmenuLabelColumn
-			}
-
-			if appstate.DmenuIconColumn != 0 {
-				config.Cfg.Builtins.Dmenu.Icon = appstate.DmenuIconColumn
-			}
-
-			if appstate.DmenuValueColumn != 0 {
-				config.Cfg.Builtins.Dmenu.Value = appstate.DmenuValueColumn
-			}
-		}
-
-		if appstate.ExplicitPlaceholder != "" {
-			config.Cfg.Search.Placeholder = appstate.ExplicitPlaceholder
-		}
-
-		if appstate.Password {
-			cssProvider := gtk.NewCSSProvider()
-			gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
-
-			common = &Common{
-				cssProvider: cssProvider,
-			}
-
-			elements = setupElementsPassword(app)
-
-			setupLayerShell()
-		} else {
-			setupCommon(app)
-
-			elements = setupElements(app)
-
-			setupLayerShell()
-
-			setupModules()
-
-			afterUI()
-
-			setupInteractions(appstate)
-		}
-
-		if singleModule == nil {
 			setupLayout(theme, themeBase)
 		} else {
-			g := singleModule.General()
-
-			if val, ok := layouts[g.Name]; ok {
-				layout = val
-
-				theme := g.Theme
-				themeBase := g.ThemeBase
-
-				if appstate.ExplicitTheme != "" {
-					theme = appstate.ExplicitTheme
-					themeBase = nil
-				}
-
-				setupLayout(theme, themeBase)
-			} else {
-				setupLayout(theme, themeBase)
-			}
+			setupLayout(theme, themeBase)
 		}
+	}
 
-		elements.appwin.SetVisible(true)
+	elements.appwin.SetVisible(true)
 
-		if appstate.Password {
-			elements.password.GrabFocus()
-			timeoutReset()
-		} else {
-			elements.input.GrabFocus()
-		}
+	if appstate.Password {
+		elements.password.GrabFocus()
+		timeoutReset()
+	} else {
+		elements.input.GrabFocus()
+	}
 
-		appstate.HasUI = true
-		appstate.IsRunning = true
+	appstate.HasUI = true
+	appstate.IsRunning = true
 
-		handleTimeout()
+	handleTimeout()
 
-		if config.Cfg.IsService && config.Cfg.HotreloadTheme {
-			go watchTheme()
-		}
+	if config.Cfg.IsService && config.Cfg.HotreloadTheme {
+		go watchTheme()
+	}
 
-		if appstate.Benchmark {
-			fmt.Println("Visible (first ui)", time.Now().UnixMilli())
-		}
+	if appstate.Benchmark {
+		fmt.Println("Visible (first ui)", time.Now().UnixMilli())
+	}
 
-		executeEvent(config.EventLaunch, "")
+	executeEvent(config.EventLaunch, "")
 
-		if !appstate.Password {
-			debouncedProcess(process)
-		}
+	if !appstate.Password {
+		debouncedProcess(process)
 	}
 }
 
@@ -810,10 +816,6 @@ func handleListVisibility() {
 
 	elements.grid.SetVisible(show)
 	elements.scroll.SetVisible(show)
-}
-
-func Reopen() {
-	reopen()
 }
 
 func reopen() {

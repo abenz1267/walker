@@ -465,7 +465,7 @@ func WriteUserConfig() {
 	os.WriteFile(filepath.Join(dir, "walker", "themes", "default.css"), defaultThemeCSS, 0o600)
 }
 
-func Get(config string) error {
+func Init(config string) error {
 	defaults := koanf.New(".")
 	err := defaults.Load(rawbytes.Provider(defaultConfig), toml.Parser())
 	if err != nil {

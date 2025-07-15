@@ -113,7 +113,7 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 		if appstate.IsService {
 			cfgErr = appstate.ConfigError
 		} else {
-			cfgErr = config.Get(appstate.ExplicitConfig)
+			cfgErr = config.Init(appstate.ExplicitConfig)
 		}
 
 		t := 1

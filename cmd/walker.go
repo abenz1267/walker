@@ -93,7 +93,7 @@ func main() {
 			state.IsService = slices.Contains(args, "--gapplication-service")
 
 			if state.IsService {
-				state.ConfigError = config.Get(state.ExplicitConfig)
+				state.ConfigError = config.Init(state.ExplicitConfig)
 				state.StartServiceableModules()
 			}
 

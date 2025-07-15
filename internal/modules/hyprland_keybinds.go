@@ -70,10 +70,19 @@ func (h *HyprlandKeybinds) SetupData() {
 			label = fmt.Sprintf("%s %s", v.Dispatcher, v.Arg)
 		}
 
+		var sub string
+		modmask := modMaskToString(v.Modmask)
+
+		if modmask == "" {
+			sub = fmt.Sprintf("%s", v.Key)
+		} else {
+			sub = fmt.Sprintf("%s+%s", modMaskToString(v.Modmask), v.Key)
+		}
+
 		e := util.Entry{
 			Label: label,
 			Exec:  fmt.Sprintf("hyprctl dispatch %s %s", v.Dispatcher, v.Arg),
-			Sub:   fmt.Sprintf("%s+%s", modMaskToString(v.Modmask), v.Key),
+			Sub:   sub,
 		}
 
 		entries = append(entries, e)

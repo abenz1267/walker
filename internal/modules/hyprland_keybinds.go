@@ -19,6 +19,7 @@ type Bind struct {
 	Arg         string `json:"arg"`
 	Submap      string `json:"submap"`
 	Mouse       bool   `json:"mouse"`
+	CatchAll    bool   `json:"catch_all"`
 }
 
 type HyprlandKeybinds struct {
@@ -90,6 +91,10 @@ func (h *HyprlandKeybinds) SetupData() {
 		if v.Mouse {
 			sub = fmt.Sprintf("%s (mouse)", sub)
 			exec = ""
+		}
+
+		if v.CatchAll {
+			sub = fmt.Sprintf("%s (catch-all)", sub)
 		}
 
 		e := util.Entry{

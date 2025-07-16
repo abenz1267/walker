@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"log"
+	"log/slog"
 	"net/url"
 	"os/exec"
 	"strconv"
@@ -15,9 +16,12 @@ import (
 )
 
 type Plugin struct {
-	Config       config.Plugin
-	cachedOutput []byte
-	entries      []util.Entry
+	Config               config.Plugin
+	cachedOutput         []byte
+	entries              []util.Entry
+	hasExplicitResult    bool
+	hasExplicitResultAlt bool
+	hasExplicitTerm      bool
 }
 
 func (e *Plugin) General() *config.GeneralModule {
@@ -32,7 +36,7 @@ func (e *Plugin) Setup() bool {
 	e.Config.Separator = util.TransformSeparator(e.Config.Separator)
 
 	if e.Config.Parser == "" {
-		e.Config.Parser = "json"
+		e.Config.Parser = "raw"
 	}
 
 	if e.Config.KvSeparator == "" {
@@ -52,22 +56,21 @@ func (e *Plugin) SetupData() {
 		}
 	}
 
+	if strings.Contains(e.Config.Src, "%TERM%") {
+		e.hasExplicitTerm = true
+	}
+
+	if strings.Contains(e.Config.Cmd, "%RESULT%") {
+		e.hasExplicitResult = true
+	}
+
+	if strings.Contains(e.Config.CmdAlt, "%RESULT%") {
+		e.hasExplicitResultAlt = true
+	}
+
 	if e.Config.SrcOnce != "" {
-		e.Config.Src = e.Config.SrcOnce
-
-		e.cachedOutput = e.getSrcOutput(e.Config.SrcOnce, false, "")
-
-		if e.Config.Cmd == "" {
-			if e.Config.Parser == "json" {
-				e.entries = e.parseJson(e.cachedOutput)
-			} else if e.Config.Parser == "kv" {
-				e.entries = e.parseKv(e.cachedOutput)
-			}
-
-			for k := range e.entries {
-				e.entries[k].Class = e.Config.Name
-			}
-		}
+		e.cachedOutput = e.getSrcOutput(e.Config.SrcOnce, "")
+		e.entries = e.parseOut(e.cachedOutput)
 	}
 
 	e.Config.IsSetup = true
@@ -84,30 +87,20 @@ func (e Plugin) Entries(term string) []util.Entry {
 		return e.Config.Entries
 	}
 
+	if e.Config.SrcOnce != "" && !e.Config.Output {
+		return e.entries
+	}
+
 	entries := []util.Entry{}
 
 	if e.Config.Src == "" {
 		return entries
 	}
 
-	hasExplicitTerm := false
-
 	src := e.Config.Src
 
-	if strings.Contains(e.Config.Src, "%TERM%") {
-		hasExplicitTerm = true
+	if e.hasExplicitTerm {
 		src = strings.ReplaceAll(e.Config.Src, "%TERM%", term)
-	}
-
-	hasExplicitResult := false
-	hasExplicitResultAlt := false
-
-	if strings.Contains(e.Config.Cmd, "%RESULT%") {
-		hasExplicitResult = true
-	}
-
-	if strings.Contains(e.Config.CmdAlt, "%RESULT%") {
-		hasExplicitResultAlt = true
 	}
 
 	if e.Config.Output {
@@ -137,7 +130,7 @@ func (e Plugin) Entries(term string) []util.Entry {
 			result = "Running command..."
 		}
 
-		e := util.Entry{
+		entry := util.Entry{
 			Label:            strings.TrimSpace(result),
 			Exec:             strings.ReplaceAll(e.Config.Cmd, "%RESULT%", result),
 			ExecAlt:          strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result),
@@ -151,114 +144,87 @@ func (e Plugin) Entries(term string) []util.Entry {
 			Icon:             e.Config.Icon,
 		}
 
-		if !hasExplicitResult {
-			e.Piped.String = result
-			e.Piped.Type = "string"
+		if !e.hasExplicitResult {
+			entry.Piped.String = result
+			entry.Piped.Type = "string"
 		}
 
-		if !hasExplicitResultAlt {
-			e.PipedAlt.String = result
-			e.PipedAlt.Type = "string"
+		if !e.hasExplicitResultAlt {
+			entry.PipedAlt.String = result
+			entry.PipedAlt.Type = "string"
 		}
 
-		return []util.Entry{e}
+		return []util.Entry{entry}
 	}
 
-	if e.Config.Cmd == "" {
-		if len(e.entries) > 0 && e.Config.SrcOnce != "" {
-			return e.entries
-		}
+	var out []byte
 
-		cmd := exec.Command("sh", "-c", src)
+	if e.cachedOutput != nil {
+		out = e.cachedOutput
+	} else {
+		out = e.getSrcOutput(src, term)
+	}
 
-		if !hasExplicitTerm {
-			cmd.Stdin = strings.NewReader(term)
-		}
+	return e.parseOut(out)
+}
 
-		out, err := cmd.CombinedOutput()
+func (e Plugin) parseRaw(out []byte) []util.Entry {
+	entries := []util.Entry{}
+	scanner := bufio.NewScanner(strings.NewReader(string(out)))
+
+	for scanner.Scan() {
+		txt := scanner.Text()
+
+		unescaped, err := url.QueryUnescape(txt)
 		if err != nil {
 			log.Println(err)
-			return entries
+			continue
 		}
 
-		if e.Config.Parser == "json" {
-			entries = e.parseJson(out)
-		} else if e.Config.Parser == "kv" {
-			entries = e.parseKv(out)
-		}
+		result := txt
+		label := unescaped
 
-		for k := range entries {
-			entries[k].Class = e.Config.Name
-		}
-	}
+		if e.Config.ResultColumn > 0 || e.Config.LabelColumn > 0 {
+			cols := strings.Split(txt, e.Config.Separator)
 
-	if e.Config.Cmd != "" {
-		var out []byte
-
-		if e.cachedOutput != nil {
-			out = e.cachedOutput
-		} else {
-			out = e.getSrcOutput(src, hasExplicitTerm, term)
-		}
-
-		scanner := bufio.NewScanner(strings.NewReader(string(out)))
-
-		for scanner.Scan() {
-			txt := scanner.Text()
-
-			unescaped, err := url.QueryUnescape(txt)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-
-			result := txt
-			label := unescaped
-
-			if e.Config.ResultColumn > 0 || e.Config.LabelColumn > 0 {
-				cols := strings.Split(txt, e.Config.Separator)
-
-				if e.Config.ResultColumn > 0 {
-					if len(cols) < e.Config.ResultColumn {
-						continue
-					}
-
-					result = cols[e.Config.ResultColumn-1]
+			if e.Config.ResultColumn > 0 {
+				if len(cols) < e.Config.ResultColumn {
+					continue
 				}
 
-				if e.Config.LabelColumn > 0 {
-					if len(cols) < e.Config.LabelColumn {
-						continue
-					}
+				result = cols[e.Config.ResultColumn-1]
+			}
 
-					label = cols[e.Config.LabelColumn-1]
+			if e.Config.LabelColumn > 0 {
+				if len(cols) < e.Config.LabelColumn {
+					continue
 				}
-			}
 
-			e := util.Entry{
-				Label:    label,
-				Sub:      e.Config.Name,
-				Class:    e.Config.Name,
-				Terminal: e.Config.Terminal,
-				Exec:     strings.ReplaceAll(e.Config.Cmd, "%RESULT%", result),
-				ExecAlt:  strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result),
-				Matching: e.Config.Matching,
+				label = cols[e.Config.LabelColumn-1]
 			}
-
-			if !hasExplicitResult {
-				e.Piped.String = txt
-				e.Piped.Type = "string"
-			}
-
-			if !hasExplicitResultAlt {
-				e.PipedAlt.String = txt
-				e.PipedAlt.Type = "string"
-			}
-
-			entries = append(entries, e)
 		}
 
-		return entries
+		entry := util.Entry{
+			Label:    label,
+			Sub:      e.Config.Name,
+			Class:    e.Config.Name,
+			Terminal: e.Config.Terminal,
+			Exec:     strings.ReplaceAll(e.Config.Cmd, "%RESULT%", result),
+			ExecAlt:  strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result),
+			Matching: e.Config.Matching,
+		}
+
+		if !e.hasExplicitResult {
+			entry.Piped.String = txt
+			entry.Piped.Type = "string"
+		}
+
+		if !e.hasExplicitResultAlt {
+			entry.PipedAlt.String = txt
+			entry.PipedAlt.Type = "string"
+		}
+
+		entries = append(entries, entry)
 	}
 
 	return entries
@@ -348,6 +314,20 @@ func (e Plugin) parseKv(out []byte) []util.Entry {
 			}
 		}
 
+		result := entry.Value
+
+		if result == "" {
+			result = entry.Label
+		}
+
+		if entry.Exec == "" && e.Config.Cmd != "" {
+			entry.Exec = strings.ReplaceAll(e.Config.Cmd, "%RESULT%", result)
+		}
+
+		if entry.ExecAlt == "" && e.Config.CmdAlt != "" {
+			entry.ExecAlt = strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result)
+		}
+
 		if entry.Label != "" {
 			entries = append(entries, entry)
 		}
@@ -365,21 +345,55 @@ func (e Plugin) parseJson(out []byte) []util.Entry {
 		return nil
 	}
 
+	for k, v := range entries {
+		result := v.Value
+
+		if result == "" {
+			result = v.Label
+		}
+
+		if v.Exec == "" && e.Config.Cmd != "" {
+			entries[k].Exec = strings.ReplaceAll(e.Config.Cmd, "%RESULT%", result)
+		}
+
+		if v.ExecAlt == "" && e.Config.CmdAlt != "" {
+			entries[k].ExecAlt = strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result)
+		}
+	}
+
 	return entries
 }
 
-func (e Plugin) getSrcOutput(src string, hasExplicitTerm bool, term string) []byte {
+func (e Plugin) getSrcOutput(src, term string) []byte {
 	cmd := exec.Command("sh", "-c", src)
 
-	if !hasExplicitTerm && term != "" {
+	if !e.hasExplicitTerm && term != "" {
 		cmd.Stdin = strings.NewReader(term)
 	}
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		log.Println(err)
+		slog.Error("error", "plugins", err)
 		return nil
 	}
 
 	return out
+}
+
+func (e Plugin) parseOut(out []byte) []util.Entry {
+	entries := []util.Entry{}
+
+	if e.Config.Parser == "json" {
+		entries = e.parseJson(out)
+	} else if e.Config.Parser == "kv" {
+		entries = e.parseKv(out)
+	} else if e.Config.Parser == "raw" {
+		entries = e.parseRaw(out)
+	}
+
+	for k := range entries {
+		entries[k].Class = e.Config.Name
+	}
+
+	return entries
 }

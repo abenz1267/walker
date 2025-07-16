@@ -150,7 +150,7 @@ programs.walker = {
   };
 
   # If this is not set the default styling is used.
-  style = ''
+  theme.style = ''
     * {
       color: #dcd7ba;
     }

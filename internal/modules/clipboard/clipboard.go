@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"log"
 	"log/slog"
-	"net"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -20,8 +19,6 @@ import (
 )
 
 const ClipboardName = "clipboard"
-
-var ClipboardSocketAddrUpdate = filepath.Join(util.TmpDir(), "walker-clipboard-update.sock")
 
 type Clipboard struct {
 	general         config.GeneralModule
@@ -188,182 +185,141 @@ func (c *Clipboard) watch() {
 
 	c.isWatching = true
 
-	os.Remove(ClipboardSocketAddrUpdate)
+	pid := os.Getpid()
+	cmd := exec.Command("sh", "-c", fmt.Sprintf("wl-paste --watch kill -USR1 %d", pid))
 
-	go func() {
-		time.Sleep(time.Second * 5)
-
-		cmd := exec.Command("sh", "-c", "wl-paste --watch walker --update-clipboard")
-
-		_ = cmd.Run()
-
-		go func() {
-			cmd.Wait()
-		}()
-	}()
-
-	l, err := net.ListenUnix("unix", &net.UnixAddr{Name: ClipboardSocketAddrUpdate})
-	if err != nil {
-		panic(err)
-	}
-
-	for {
-		conn, err := l.AcceptUnix()
-		if err != nil {
-			slog.Error("clipboard", "socket", err)
-		}
-
-		b := make([]byte, 104_857_600)
-
-		i, err := conn.Read(b)
-		if err != nil {
-			if err.Error() == "EOF" {
-				continue
-			} else {
-				log.Panic(err)
-			}
-			continue
-		}
-
-		content := string(b[:i])
-
-		hash := md5.Sum([]byte(content))
-		strgHash := hex.EncodeToString(hash[:])
-
-		exists := c.exists(strgHash)
-
-		if exists && !config.Cfg.Builtins.Clipboard.AlwaysPutNewOnTop {
-			continue
-		}
-
-		if len(content) < 2 {
-			continue
-		}
-
-		if exists && c.items[0].Hash != strgHash {
-			for k, v := range c.items {
-				if v.Hash == strgHash {
-					c.items[k].Time = time.Now()
-				}
-			}
-
-			for k, v := range c.entries {
-				if v.HashIdent == strgHash {
-					c.entries[k].LastUsed = time.Now()
-				}
-			}
-
-			slices.SortFunc(c.items, func(a, b ClipboardItem) int {
-				if a.Time.After(b.Time) {
-					return -1
-				}
-
-				if a.Time.Before(b.Time) {
-					return 1
-				}
-
-				return 0
-			})
-
-			slices.SortFunc(c.entries, func(a, b util.Entry) int {
-				if a.LastUsed.After(b.LastUsed) {
-					return -1
-				}
-
-				if a.LastUsed.Before(b.LastUsed) {
-					return 1
-				}
-
-				return 0
-			})
-		} else if !exists {
-			mimetype := getType()
-
-			e := ClipboardItem{
-				Content: content,
-				Time:    time.Now(),
-				Hash:    strgHash,
-				IsImg:   false,
-			}
-
-			if val, ok := c.imgTypes[mimetype]; ok {
-				file := saveTmpImg(val)
-				e.Content = file
-				e.IsImg = true
-			}
-
-			c.entries = append([]util.Entry{itemToEntry(e, c.exec, c.avoidLineBreaks)}, c.entries...)
-			c.items = append([]ClipboardItem{e}, c.items...)
-		}
-
-		hstry := history.Get()
-
-		toSpareEntries := []util.Entry{}
-		toSpareItems := []ClipboardItem{}
-
-		for _, v := range c.entries {
-			if hstry.Has(v.Identifier()) {
-				toSpareEntries = append(toSpareEntries, v)
-
-				for _, vv := range c.items {
-					if v.HashIdent == vv.Hash {
-						toSpareItems = append(toSpareItems, vv)
-					}
-				}
-			}
-		}
-
-		if len(c.items) >= c.max {
-			c.items = slices.Clone(c.items[:c.max])
-
-			for _, v := range toSpareItems {
-				if !slices.ContainsFunc(c.items, func(item ClipboardItem) bool {
-					if item.Hash == v.Hash {
-						return true
-					}
-
-					return false
-				}) {
-					c.items = append(c.items, v)
-				}
-			}
-		}
-
-		if len(c.entries) >= c.max {
-			c.entries = slices.Clone(c.entries[:c.max])
-
-			for _, v := range toSpareEntries {
-				if !slices.ContainsFunc(c.entries, func(item util.Entry) bool {
-					if item.HashIdent == v.HashIdent {
-						return true
-					}
-
-					return false
-				}) {
-					c.entries = append(c.entries, v)
-				}
-			}
-		}
-
-		util.ToGob(&c.items, c.file)
-	}
+	_ = cmd.Run()
 }
 
-func Update(content []byte) {
-	if !util.FileExists(ClipboardSocketAddrUpdate) {
+func (c *Clipboard) Update() {
+	cmd := exec.Command("wl-paste")
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		slog.Error("clipboard", "error", "updating", err)
+	}
+
+	content := string(out)
+	fmt.Println(content)
+
+	hash := md5.Sum([]byte(content))
+	strgHash := hex.EncodeToString(hash[:])
+
+	exists := c.exists(strgHash)
+
+	if exists && !config.Cfg.Builtins.Clipboard.AlwaysPutNewOnTop {
 		return
 	}
 
-	conn, err := net.Dial("unix", ClipboardSocketAddrUpdate)
-	if err != nil {
-		slog.Error("clipboard", "socket", err)
+	if len(content) < 2 {
 		return
 	}
 
-	_, err = conn.Write(content)
-	if err != nil {
-		slog.Error("clipboard", "socket", err)
+	if exists && c.items[0].Hash != strgHash {
+		for k, v := range c.items {
+			if v.Hash == strgHash {
+				c.items[k].Time = time.Now()
+			}
+		}
+
+		for k, v := range c.entries {
+			if v.HashIdent == strgHash {
+				c.entries[k].LastUsed = time.Now()
+			}
+		}
+
+		slices.SortFunc(c.items, func(a, b ClipboardItem) int {
+			if a.Time.After(b.Time) {
+				return -1
+			}
+
+			if a.Time.Before(b.Time) {
+				return 1
+			}
+
+			return 0
+		})
+
+		slices.SortFunc(c.entries, func(a, b util.Entry) int {
+			if a.LastUsed.After(b.LastUsed) {
+				return -1
+			}
+
+			if a.LastUsed.Before(b.LastUsed) {
+				return 1
+			}
+
+			return 0
+		})
+	} else if !exists {
+		mimetype := getType()
+
+		e := ClipboardItem{
+			Content: content,
+			Time:    time.Now(),
+			Hash:    strgHash,
+			IsImg:   false,
+		}
+
+		if val, ok := c.imgTypes[mimetype]; ok {
+			file := saveTmpImg(val)
+			e.Content = file
+			e.IsImg = true
+		}
+
+		c.entries = append([]util.Entry{itemToEntry(e, c.exec, c.avoidLineBreaks)}, c.entries...)
+		c.items = append([]ClipboardItem{e}, c.items...)
 	}
+
+	hstry := history.Get()
+
+	toSpareEntries := []util.Entry{}
+	toSpareItems := []ClipboardItem{}
+
+	for _, v := range c.entries {
+		if hstry.Has(v.Identifier()) {
+			toSpareEntries = append(toSpareEntries, v)
+
+			for _, vv := range c.items {
+				if v.HashIdent == vv.Hash {
+					toSpareItems = append(toSpareItems, vv)
+				}
+			}
+		}
+	}
+
+	if len(c.items) >= c.max {
+		c.items = slices.Clone(c.items[:c.max])
+
+		for _, v := range toSpareItems {
+			if !slices.ContainsFunc(c.items, func(item ClipboardItem) bool {
+				if item.Hash == v.Hash {
+					return true
+				}
+
+				return false
+			}) {
+				c.items = append(c.items, v)
+			}
+		}
+	}
+
+	if len(c.entries) >= c.max {
+		c.entries = slices.Clone(c.entries[:c.max])
+
+		for _, v := range toSpareEntries {
+			if !slices.ContainsFunc(c.entries, func(item util.Entry) bool {
+				if item.HashIdent == v.HashIdent {
+					return true
+				}
+
+				return false
+			}) {
+				c.entries = append(c.entries, v)
+			}
+		}
+	}
+
+	util.ToGob(&c.items, c.file)
 }
 
 func itemToEntry(item ClipboardItem, exec string, avoidLineBreaks bool) util.Entry {
@@ -431,4 +387,6 @@ func (c *Clipboard) Delete(entry util.Entry) {
 func (c *Clipboard) Clear() {
 	c.items = []ClipboardItem{}
 	c.entries = []util.Entry{}
+
+	util.ToGob(&c.items, c.file)
 }

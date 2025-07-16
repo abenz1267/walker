@@ -3,8 +3,8 @@ package main
 import (
 	_ "embed"
 	"fmt"
-	"io"
 	"log"
+	"log/slog"
 	"net"
 	"os"
 	"os/signal"
@@ -76,17 +76,6 @@ func main() {
 
 			if slices.Contains(args, "-x") || slices.Contains(args, "--autoselect") {
 				state.AutoSelect = true
-			}
-
-			if slices.Contains(args, "-u") || slices.Contains(args, "--update-clipboard") {
-				b, err := io.ReadAll(os.Stdin)
-				if err != nil {
-					log.Panicln(err)
-				}
-
-				clipboard.Update(b)
-
-				return
 			}
 
 			if slices.Contains(args, "-C") || slices.Contains(args, "--createuserconfig") {
@@ -165,7 +154,7 @@ Type=Application
 	app.AddMainOption("dmenu", 'd', glib.OptionFlagNone, glib.OptionArgNone, "run in dmenu mode", "")
 	app.AddMainOption("config", 'c', glib.OptionFlagNone, glib.OptionArgString, "config file to use", "")
 	app.AddMainOption("theme", 's', glib.OptionFlagNone, glib.OptionArgString, "theme to use", "")
-	app.AddMainOption("update-clipboard", 'u', glib.OptionFlagNone, glib.OptionArgString, "update clipboard content", "")
+	app.AddMainOption("clear-clipboard", 'u', glib.OptionFlagNone, glib.OptionArgNone, "clears the clipboard content", "")
 	app.AddMainOption("placeholder", 'p', glib.OptionFlagNone, glib.OptionArgString, "placeholder text", "")
 	app.AddMainOption("query", 'q', glib.OptionFlagNone, glib.OptionArgString, "initial query", "")
 	app.AddMainOption("label", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
@@ -188,6 +177,14 @@ Type=Application
 		}
 
 		options := cmd.OptionsDict()
+
+		if options.Contains("clear-clipboard") {
+			state.Clipboard.(*clipboard.Clipboard).Clear()
+
+			cmd.Done()
+
+			return 0
+		}
 
 		if options.Contains("bench") {
 			state.Benchmark = true
@@ -322,17 +319,25 @@ Type=Application
 			syscall.SIGINT,
 			syscall.SIGTERM,
 			syscall.SIGKILL,
-			syscall.SIGQUIT)
+			syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
 
 		go func() {
 			for {
-				<-signal_chan
+				signal := <-signal_chan
 
-				os.Remove(modules.DmenuSocketAddrGet)
-				os.Remove(modules.DmenuSocketAddrReply)
-				os.Remove(clipboard.ClipboardSocketAddrUpdate)
+				switch signal {
+				case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGQUIT:
+					os.Remove(modules.DmenuSocketAddrGet)
+					os.Remove(modules.DmenuSocketAddrReply)
 
-				os.Exit(0)
+					os.Exit(0)
+				case syscall.SIGUSR1:
+					state.Clipboard.(*clipboard.Clipboard).Update()
+				case syscall.SIGUSR2:
+					state.Clipboard.(*clipboard.Clipboard).Clear()
+				default:
+					slog.Error("signal", "error", "unknown signal", signal)
+				}
 			}
 		}()
 	}

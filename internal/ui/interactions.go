@@ -51,8 +51,6 @@ func setupCommands() {
 		return true
 	}
 	commands["clearclipboard"] = func() bool {
-		os.Remove(filepath.Join(util.CacheDir(), "clipboard.gob"))
-
 		m := findModule("clipboard", available)
 		m.(*clipboard.Clipboard).Clear()
 

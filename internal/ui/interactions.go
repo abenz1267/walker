@@ -1207,6 +1207,14 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 					continue
 				}
 
+				m := (1 - modifier*float64(k))
+
+				if m < 0.7 {
+					m = 0.7
+				}
+
+				score = score * m
+
 				if score > matchScore {
 					if config.Cfg.List.DynamicSub && k > 1 {
 						entry.MatchedSub = t
@@ -1236,13 +1244,7 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 						}
 					}
 
-					m := (1 - modifier*float64(k))
-
-					if m < 0.7 {
-						m = 0.7
-					}
-
-					matchScore = (score * m)
+					matchScore = score
 				}
 			}
 

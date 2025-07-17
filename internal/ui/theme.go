@@ -189,7 +189,9 @@ func setupBoxTheme() {
 			elements.box.Append(elements.bar)
 		}
 
-		elements.box.Append(elements.search)
+		if !appstate.Hidebar {
+			elements.box.Append(elements.search)
+		}
 
 		if layout.Window.Box.Bar.Position == "end" {
 			elements.box.Append(elements.bar)
@@ -199,7 +201,9 @@ func setupBoxTheme() {
 			elements.box.Append(elements.bar)
 		}
 
-		elements.box.Append(elements.search)
+		if !appstate.Hidebar {
+			elements.box.Append(elements.search)
+		}
 
 		if layout.Window.Box.Bar.Position == "between" {
 			elements.box.Append(elements.bar)

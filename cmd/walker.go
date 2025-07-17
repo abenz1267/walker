@@ -147,6 +147,7 @@ Type=Application
 	app = gtk.NewApplication(appName, gio.ApplicationHandlesCommandLine)
 
 	app.AddMainOption("autoselect", 'x', glib.OptionFlagNone, glib.OptionArgNone, "auto select only item in list", "")
+	app.AddMainOption("hidebar", 'H', glib.OptionFlagNone, glib.OptionArgNone, "hide the search bar", "")
 	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
 	app.AddMainOption("new", 'n', glib.OptionFlagNone, glib.OptionArgNone, "start new instance ignoring service", "")
 	app.AddMainOption("keepsort", 'k', glib.OptionFlagNone, glib.OptionArgNone, "don't sort alphabetically", "")
@@ -186,9 +187,8 @@ Type=Application
 			return 0
 		}
 
-		if options.Contains("bench") {
-			state.Benchmark = true
-		}
+		state.Hidebar = options.Contains("hidebar")
+		state.Benchmark = options.Contains("bench")
 
 		modulesString := options.LookupValue("modules", glib.NewVariantString("").Type())
 		configString := options.LookupValue("config", glib.NewVariantString("").Type())

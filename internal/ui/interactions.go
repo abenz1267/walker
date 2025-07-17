@@ -94,6 +94,10 @@ func setupInteractions(appstate *state.AppState) {
 	parseKeybinds()
 
 	elements.input.Connect("changed", func() {
+		if appstate.Hidebar {
+			return
+		}
+
 		text := trimArgumentDelimiter(elements.input.Text())
 
 		if lastQuery == text {
@@ -1067,6 +1071,7 @@ func quit(ignoreEvent bool) {
 	appstate.IsRunning = false
 	appstate.IsSingle = false
 	appstate.AutoSelect = false
+	appstate.Hidebar = false
 
 	historyIndex = 0
 
@@ -1101,6 +1106,7 @@ func quit(ignoreEvent bool) {
 			elements.input.SelectRegion(0, -1)
 		}
 
+		elements.search.SetVisible(false)
 		elements.scroll.SetVisible(false)
 		elements.aiScroll.SetVisible(false)
 		elements.appwin.SetVisible(false)

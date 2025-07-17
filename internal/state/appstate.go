@@ -12,6 +12,7 @@ import (
 
 type AppState struct {
 	ActiveItem          *int
+	Hidebar             bool
 	AutoSelect          bool
 	Clipboard           modules.Workable
 	ConfigError         error

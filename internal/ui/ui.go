@@ -883,7 +883,14 @@ func reopen() {
 	}
 
 	executeEvent(config.EventLaunch, "")
-	elements.appwin.SetVisible(true)
+
+	glib.IdleAdd(func() {
+		if appstate.Hidebar {
+			elements.search.SetVisible(false)
+		}
+
+		elements.appwin.SetVisible(true)
+	})
 
 	if appstate.Benchmark {
 		fmt.Println("Visible (re-open)", time.Now().UnixMilli())

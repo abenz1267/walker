@@ -65,11 +65,10 @@ func (app *AppState) StartServiceableModules() {
 	}
 
 	clipboard := &clipboard.Clipboard{}
-	hasClipboard := clipboard.Setup()
 
 	app.Dmenu.Setup()
 
-	if !slices.Contains(config.Cfg.Disabled, clipboard.General().Name) && hasClipboard {
+	if !slices.Contains(config.Cfg.Disabled, clipboard.General().Name) && clipboard.Setup() {
 		app.Clipboard = clipboard
 		app.Clipboard.SetupData()
 	}

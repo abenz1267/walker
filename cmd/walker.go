@@ -332,9 +332,13 @@ Type=Application
 
 					os.Exit(0)
 				case syscall.SIGUSR1:
-					state.Clipboard.(*clipboard.Clipboard).Update()
+					if state.Clipboard != nil {
+						state.Clipboard.(*clipboard.Clipboard).Update()
+					}
 				case syscall.SIGUSR2:
-					state.Clipboard.(*clipboard.Clipboard).Clear()
+					if state.Clipboard != nil {
+						state.Clipboard.(*clipboard.Clipboard).Clear()
+					}
 				default:
 					slog.Error("signal", "error", "unknown signal", signal)
 				}

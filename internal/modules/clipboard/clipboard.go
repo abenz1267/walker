@@ -195,11 +195,16 @@ func (c *Clipboard) Update() {
 	cmd := exec.Command("wl-paste")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		slog.Error("clipboard", "error", "updating", err)
+		if strings.Contains(string(out), "Nothing is copied") {
+			return
+		}
+
+		slog.Error("clipboard", "error", err)
+
+		return
 	}
 
 	content := string(out)
-	fmt.Println(content)
 
 	hash := md5.Sum([]byte(content))
 	strgHash := hex.EncodeToString(hash[:])

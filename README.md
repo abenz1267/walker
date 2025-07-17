@@ -125,6 +125,7 @@ Without these you won't be able to build.
 You have two options of installing walker using Nix.
 
 1.  Using the package exposed by this flake
+
     1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
     2. Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`
 

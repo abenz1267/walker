@@ -173,6 +173,322 @@ func (a *Applications) Entries(term string) []util.Entry {
 	return a.entries
 }
 
+func (a *Applications) walkFunc(visited map[string]struct{}, d string, apps *[]Application, done map[string]struct{}, desktop, nameSingle, nameFull, commentSingle, commentFull, keywordsSingle, keywordsFull, genericNameSingle, genericNameFull string) {
+	filepath.WalkDir(d, func(path string, info fs.DirEntry, err error) error {
+		if _, ok := visited[path]; ok {
+			return nil
+		}
+
+		if _, ok := done[info.Name()]; ok {
+			return nil
+		}
+
+		symlink, _ := filepath.EvalSymlinks(d)
+
+		if err == nil && symlink != "" && symlink != d {
+			if _, ok := visited[path]; !ok {
+				a.walkFunc(visited, symlink, apps, done, desktop, nameSingle, nameFull, commentSingle, commentFull, keywordsSingle, keywordsFull, genericNameSingle, genericNameFull)
+				visited[symlink] = struct{}{}
+			}
+
+			return nil
+		}
+
+		if !info.IsDir() && filepath.Ext(path) == ".desktop" {
+			file, err := os.Open(path)
+			if err != nil {
+				return err
+			}
+
+			defer file.Close()
+
+			matching := util.Fuzzy
+
+			if a.config.PrioritizeNew {
+				if info, err := times.Stat(path); err == nil {
+					if info.HasBirthTime() {
+						target := time.Now().Add(-time.Minute * 5)
+						bt := info.BirthTime()
+
+						if bt.After(target) {
+							matching = util.AlwaysTopOnEmptySearch
+						}
+					}
+				}
+			}
+
+			scanner := bufio.NewScanner(file)
+
+			app := Application{
+				Generic: util.Entry{
+					Class:            ApplicationsName,
+					History:          a.config.History,
+					Matching:         matching,
+					RecalculateScore: true,
+					File:             path,
+					Searchable:       path,
+				},
+				Actions: []util.Entry{},
+			}
+
+			isAction := false
+			skip := false
+			keywords := []string{}
+			name := ""
+			localizedNameSingle := ""
+			localizedNameFull := ""
+
+			for scanner.Scan() {
+				line := scanner.Text()
+
+				if strings.HasPrefix(line, "[Desktop Entry") {
+					isAction = false
+					skip = false
+					continue
+				}
+
+				if skip {
+					continue
+				}
+
+				if strings.HasPrefix(line, "[Desktop Action") {
+					if !a.config.Actions.Enabled {
+						skip = true
+					}
+
+					app.Actions = append(app.Actions, util.Entry{})
+
+					isAction = true
+				}
+
+				if strings.HasPrefix(line, "NoDisplay=") || strings.HasPrefix(line, "Hidden=") {
+					nodisplay := strings.TrimPrefix(line, "NoDisplay=") == "true"
+					hidden := strings.TrimPrefix(line, "Hidden=") == "true"
+
+					if nodisplay || hidden {
+						done[info.Name()] = struct{}{}
+						return nil
+					}
+
+					continue
+				}
+
+				if strings.HasPrefix(line, "OnlyShowIn=") {
+					onlyshowin := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "OnlyShowIn=")), ";")
+
+					hide := !slices.Contains(onlyshowin, desktop)
+
+					if isAction {
+						app.Actions[len(app.Actions)-1].Hide = hide
+					} else {
+						app.Generic.Hide = hide
+					}
+
+					continue
+				}
+
+				if strings.HasPrefix(line, "NotShowIn=") {
+					notshowin := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "NotShowIn=")), ";")
+
+					hide := slices.Contains(notshowin, desktop)
+
+					if isAction {
+						app.Actions[len(app.Actions)-1].Hide = hide
+					} else {
+						app.Generic.Hide = hide
+					}
+
+					continue
+				}
+
+				if !isAction {
+					if strings.HasPrefix(line, "Name=") {
+						name = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
+
+						continue
+					}
+
+					if strings.HasPrefix(line, nameSingle) {
+						localizedNameSingle = strings.TrimSpace(strings.TrimPrefix(line, nameSingle))
+
+						continue
+					}
+
+					if strings.HasPrefix(line, nameFull) {
+						localizedNameFull = strings.TrimSpace(strings.TrimPrefix(line, nameFull))
+
+						continue
+					}
+
+					if strings.HasPrefix(line, "Comment=") {
+						app.Generic.Searchable2 = strings.TrimSpace(strings.TrimPrefix(line, "Comment="))
+						continue
+					}
+
+					if strings.HasPrefix(line, commentSingle) {
+						app.Generic.Searchable2 = strings.TrimSpace(strings.TrimPrefix(line, commentSingle))
+						continue
+					}
+
+					if strings.HasPrefix(line, commentFull) {
+						app.Generic.Searchable2 = strings.TrimSpace(strings.TrimPrefix(line, commentFull))
+						continue
+					}
+
+					if strings.HasPrefix(line, "Path=") {
+						app.Generic.Path = strings.TrimSpace(strings.TrimPrefix(line, "Path="))
+						continue
+					}
+
+					if strings.HasPrefix(line, "Categories=") {
+						cats := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "Categories=")), ";")
+						app.Generic.Categories = append(app.Generic.Categories, cats...)
+						continue
+					}
+
+					if strings.HasPrefix(line, "Keywords=") {
+						keywords = strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "Keywords=")), ";")
+						continue
+					}
+
+					if strings.HasPrefix(line, keywordsSingle) {
+						keywords = strings.Split(strings.TrimSpace(strings.TrimPrefix(line, keywordsSingle)), ";")
+						continue
+					}
+
+					if strings.HasPrefix(line, keywordsFull) {
+						keywords = strings.Split(strings.TrimSpace(strings.TrimPrefix(line, keywordsFull)), ";")
+						continue
+					}
+
+					if strings.HasPrefix(line, "GenericName=") {
+						app.Generic.Sub = strings.TrimSpace(strings.TrimPrefix(line, "GenericName="))
+						continue
+					}
+
+					if strings.HasPrefix(line, genericNameSingle) {
+						app.Generic.Sub = strings.TrimSpace(strings.TrimPrefix(line, genericNameSingle))
+						continue
+					}
+
+					if strings.HasPrefix(line, genericNameFull) {
+						app.Generic.Sub = strings.TrimSpace(strings.TrimPrefix(line, genericNameFull))
+						continue
+					}
+
+					if strings.HasPrefix(line, "Terminal=") {
+						app.Generic.Terminal = strings.TrimSpace(strings.TrimPrefix(line, "Terminal=")) == "true"
+
+						if app.Generic.Terminal {
+							TerminalApps[filepath.Base(path)] = struct{}{}
+						}
+
+						continue
+					}
+
+					if strings.HasPrefix(line, "StartupWMClass=") {
+						app.Generic.InitialClass = strings.ToLower(strings.TrimSpace(strings.TrimPrefix(line, "StartupWMClass=")))
+
+						continue
+					}
+
+					if strings.HasPrefix(line, "Icon=") {
+						app.Generic.Icon = strings.TrimSpace(strings.TrimPrefix(line, "Icon="))
+						continue
+					}
+
+					if strings.HasPrefix(line, "Exec=") {
+						parsed, err := parseExec(strings.TrimPrefix(line, "Exec="))
+						if err != nil {
+							slog.Error("applications", "error", err)
+							continue
+						}
+
+						app.Generic.Exec = strings.TrimSpace(strings.Join(parsed, " "))
+
+						continue
+					}
+				} else {
+					if strings.HasPrefix(line, "Exec=") {
+						parsed, err := parseExec(strings.TrimPrefix(line, "Exec="))
+						if err != nil {
+							slog.Error("applications", "error", err)
+							continue
+						}
+
+						app.Actions[len(app.Actions)-1].Exec = strings.TrimSpace(strings.Join(parsed, " "))
+
+						continue
+					}
+
+					if strings.HasPrefix(line, "Name=") {
+						app.Actions[len(app.Actions)-1].Label = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
+						continue
+					}
+
+					if strings.HasPrefix(line, nameSingle) {
+						app.Actions[len(app.Actions)-1].Label = strings.TrimSpace(strings.TrimPrefix(line, nameSingle))
+						continue
+					}
+
+					if strings.HasPrefix(line, nameFull) {
+						app.Actions[len(app.Actions)-1].Label = strings.TrimSpace(strings.TrimPrefix(line, nameFull))
+						continue
+					}
+				}
+			}
+
+			app.Generic.Label = name
+
+			if localizedNameSingle != "" {
+				app.Generic.Label = localizedNameSingle
+			}
+
+			if localizedNameFull != "" {
+				app.Generic.Label = localizedNameFull
+			}
+
+			for k := range app.Actions {
+				if app.Actions[k].Hide {
+					continue
+				}
+
+				sub := app.Generic.Label
+
+				if a.config.ShowGeneric && app.Generic.Sub != "" && !a.config.Actions.HideCategory {
+					sub = fmt.Sprintf("%s (%s)", app.Generic.Label, app.Generic.Sub)
+				}
+
+				app.Actions[k].Sub = sub
+				app.Actions[k].Path = app.Generic.Path
+				app.Actions[k].Icon = app.Generic.Icon
+				app.Actions[k].Terminal = app.Generic.Terminal
+				app.Actions[k].Class = ApplicationsName
+				app.Actions[k].Matching = app.Generic.Matching
+				app.Actions[k].Categories = app.Generic.Categories
+				app.Actions[k].Categories = append(app.Actions[k].Categories, keywords...)
+				app.Actions[k].History = app.Generic.History
+				app.Actions[k].InitialClass = app.Generic.InitialClass
+				app.Actions[k].OpenWindows = app.Generic.OpenWindows
+				app.Actions[k].Prefer = true
+				app.Actions[k].RecalculateScore = true
+				app.Actions[k].File = path
+				app.Actions[k].Searchable = path
+				app.Actions[k].Searchable2 = app.Generic.Searchable2
+				app.Actions[k].IsAction = true
+			}
+
+			app.Generic.Categories = append(app.Generic.Categories, keywords...)
+
+			*apps = append(*apps, app)
+
+			done[info.Name()] = struct{}{}
+		}
+
+		return nil
+	})
+}
+
 func (a *Applications) parse() []util.Entry {
 	apps := []Application{}
 	entries := []util.Entry{}
@@ -217,309 +533,14 @@ func (a *Applications) parse() []util.Entry {
 	dirs := xdg.ApplicationDirs
 
 	done := make(map[string]struct{})
+	visited := make(map[string]struct{})
 
 	for _, d := range dirs {
 		if _, err := os.Stat(d); err != nil {
 			continue
 		}
 
-		filepath.WalkDir(d, func(path string, info fs.DirEntry, err error) error {
-			if _, ok := done[info.Name()]; ok {
-				return nil
-			}
-
-			if !info.IsDir() && filepath.Ext(path) == ".desktop" {
-				file, err := os.Open(path)
-				if err != nil {
-					return err
-				}
-
-				defer file.Close()
-
-				matching := util.Fuzzy
-
-				if a.config.PrioritizeNew {
-					if info, err := times.Stat(path); err == nil {
-						if info.HasBirthTime() {
-							target := time.Now().Add(-time.Minute * 5)
-							bt := info.BirthTime()
-
-							if bt.After(target) {
-								matching = util.AlwaysTopOnEmptySearch
-							}
-						}
-					}
-				}
-
-				scanner := bufio.NewScanner(file)
-
-				app := Application{
-					Generic: util.Entry{
-						Class:            ApplicationsName,
-						History:          a.config.History,
-						Matching:         matching,
-						RecalculateScore: true,
-						File:             path,
-						Searchable:       path,
-					},
-					Actions: []util.Entry{},
-				}
-
-				isAction := false
-				skip := false
-				keywords := []string{}
-				name := ""
-				localizedNameSingle := ""
-				localizedNameFull := ""
-
-				for scanner.Scan() {
-					line := scanner.Text()
-
-					if strings.HasPrefix(line, "[Desktop Entry") {
-						isAction = false
-						skip = false
-						continue
-					}
-
-					if skip {
-						continue
-					}
-
-					if strings.HasPrefix(line, "[Desktop Action") {
-						if !a.config.Actions.Enabled {
-							skip = true
-						}
-
-						app.Actions = append(app.Actions, util.Entry{})
-
-						isAction = true
-					}
-
-					if strings.HasPrefix(line, "NoDisplay=") {
-						nodisplay := strings.TrimPrefix(line, "NoDisplay=") == "true"
-
-						if nodisplay {
-							done[info.Name()] = struct{}{}
-							return nil
-						}
-
-						continue
-					}
-
-					if strings.HasPrefix(line, "OnlyShowIn=") {
-						onlyshowin := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "OnlyShowIn=")), ";")
-
-						hide := !slices.Contains(onlyshowin, desktop)
-
-						if isAction {
-							app.Actions[len(app.Actions)-1].Hide = hide
-						} else {
-							app.Generic.Hide = hide
-						}
-
-						continue
-					}
-
-					if strings.HasPrefix(line, "NotShowIn=") {
-						notshowin := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "NotShowIn=")), ";")
-
-						hide := slices.Contains(notshowin, desktop)
-
-						if isAction {
-							app.Actions[len(app.Actions)-1].Hide = hide
-						} else {
-							app.Generic.Hide = hide
-						}
-
-						continue
-					}
-
-					if !isAction {
-						if strings.HasPrefix(line, "Name=") {
-							name = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
-
-							continue
-						}
-
-						if strings.HasPrefix(line, nameSingle) {
-							localizedNameSingle = strings.TrimSpace(strings.TrimPrefix(line, nameSingle))
-
-							continue
-						}
-
-						if strings.HasPrefix(line, nameFull) {
-							localizedNameFull = strings.TrimSpace(strings.TrimPrefix(line, nameFull))
-
-							continue
-						}
-
-						if strings.HasPrefix(line, "Comment=") {
-							app.Generic.Searchable2 = strings.TrimSpace(strings.TrimPrefix(line, "Comment="))
-							continue
-						}
-
-						if strings.HasPrefix(line, commentSingle) {
-							app.Generic.Searchable2 = strings.TrimSpace(strings.TrimPrefix(line, commentSingle))
-							continue
-						}
-
-						if strings.HasPrefix(line, commentFull) {
-							app.Generic.Searchable2 = strings.TrimSpace(strings.TrimPrefix(line, commentFull))
-							continue
-						}
-
-						if strings.HasPrefix(line, "Path=") {
-							app.Generic.Path = strings.TrimSpace(strings.TrimPrefix(line, "Path="))
-							continue
-						}
-
-						if strings.HasPrefix(line, "Categories=") {
-							cats := strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "Categories=")), ";")
-							app.Generic.Categories = append(app.Generic.Categories, cats...)
-							continue
-						}
-
-						if strings.HasPrefix(line, "Keywords=") {
-							keywords = strings.Split(strings.TrimSpace(strings.TrimPrefix(line, "Keywords=")), ";")
-							continue
-						}
-
-						if strings.HasPrefix(line, keywordsSingle) {
-							keywords = strings.Split(strings.TrimSpace(strings.TrimPrefix(line, keywordsSingle)), ";")
-							continue
-						}
-
-						if strings.HasPrefix(line, keywordsFull) {
-							keywords = strings.Split(strings.TrimSpace(strings.TrimPrefix(line, keywordsFull)), ";")
-							continue
-						}
-
-						if strings.HasPrefix(line, "GenericName=") {
-							app.Generic.Sub = strings.TrimSpace(strings.TrimPrefix(line, "GenericName="))
-							continue
-						}
-
-						if strings.HasPrefix(line, genericNameSingle) {
-							app.Generic.Sub = strings.TrimSpace(strings.TrimPrefix(line, genericNameSingle))
-							continue
-						}
-
-						if strings.HasPrefix(line, genericNameFull) {
-							app.Generic.Sub = strings.TrimSpace(strings.TrimPrefix(line, genericNameFull))
-							continue
-						}
-
-						if strings.HasPrefix(line, "Terminal=") {
-							app.Generic.Terminal = strings.TrimSpace(strings.TrimPrefix(line, "Terminal=")) == "true"
-
-							if app.Generic.Terminal {
-								TerminalApps[filepath.Base(path)] = struct{}{}
-							}
-
-							continue
-						}
-
-						if strings.HasPrefix(line, "StartupWMClass=") {
-							app.Generic.InitialClass = strings.ToLower(strings.TrimSpace(strings.TrimPrefix(line, "StartupWMClass=")))
-
-							continue
-						}
-
-						if strings.HasPrefix(line, "Icon=") {
-							app.Generic.Icon = strings.TrimSpace(strings.TrimPrefix(line, "Icon="))
-							continue
-						}
-
-						if strings.HasPrefix(line, "Exec=") {
-							parsed, err := parseExec(strings.TrimPrefix(line, "Exec="))
-							if err != nil {
-								slog.Error("applications", "error", err)
-								continue
-							}
-
-							app.Generic.Exec = strings.TrimSpace(strings.Join(parsed, " "))
-
-							continue
-						}
-					} else {
-						if strings.HasPrefix(line, "Exec=") {
-							parsed, err := parseExec(strings.TrimPrefix(line, "Exec="))
-							if err != nil {
-								slog.Error("applications", "error", err)
-								continue
-							}
-
-							app.Actions[len(app.Actions)-1].Exec = strings.TrimSpace(strings.Join(parsed, " "))
-
-							continue
-						}
-
-						if strings.HasPrefix(line, "Name=") {
-							app.Actions[len(app.Actions)-1].Label = strings.TrimSpace(strings.TrimPrefix(line, "Name="))
-							continue
-						}
-
-						if strings.HasPrefix(line, nameSingle) {
-							app.Actions[len(app.Actions)-1].Label = strings.TrimSpace(strings.TrimPrefix(line, nameSingle))
-							continue
-						}
-
-						if strings.HasPrefix(line, nameFull) {
-							app.Actions[len(app.Actions)-1].Label = strings.TrimSpace(strings.TrimPrefix(line, nameFull))
-							continue
-						}
-					}
-				}
-
-				app.Generic.Label = name
-
-				if localizedNameSingle != "" {
-					app.Generic.Label = localizedNameSingle
-				}
-
-				if localizedNameFull != "" {
-					app.Generic.Label = localizedNameFull
-				}
-
-				for k := range app.Actions {
-					if app.Actions[k].Hide {
-						continue
-					}
-
-					sub := app.Generic.Label
-
-					if a.config.ShowGeneric && app.Generic.Sub != "" && !a.config.Actions.HideCategory {
-						sub = fmt.Sprintf("%s (%s)", app.Generic.Label, app.Generic.Sub)
-					}
-
-					app.Actions[k].Sub = sub
-					app.Actions[k].Path = app.Generic.Path
-					app.Actions[k].Icon = app.Generic.Icon
-					app.Actions[k].Terminal = app.Generic.Terminal
-					app.Actions[k].Class = ApplicationsName
-					app.Actions[k].Matching = app.Generic.Matching
-					app.Actions[k].Categories = app.Generic.Categories
-					app.Actions[k].Categories = append(app.Actions[k].Categories, keywords...)
-					app.Actions[k].History = app.Generic.History
-					app.Actions[k].InitialClass = app.Generic.InitialClass
-					app.Actions[k].OpenWindows = app.Generic.OpenWindows
-					app.Actions[k].Prefer = true
-					app.Actions[k].RecalculateScore = true
-					app.Actions[k].File = path
-					app.Actions[k].Searchable = path
-					app.Actions[k].Searchable2 = app.Generic.Searchable2
-					app.Actions[k].IsAction = true
-				}
-
-				app.Generic.Categories = append(app.Generic.Categories, keywords...)
-
-				apps = append(apps, app)
-
-				done[info.Name()] = struct{}{}
-			}
-
-			return nil
-		})
+		a.walkFunc(visited, d, &apps, done, desktop, nameSingle, nameFull, commentSingle, commentFull, keywordsSingle, keywordsFull, genericNameSingle, genericNameFull)
 	}
 
 	for _, v := range apps {

@@ -328,6 +328,16 @@ func (e Plugin) parseKv(out []byte) []util.Entry {
 			entry.ExecAlt = strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result)
 		}
 
+		if !e.hasExplicitResult {
+			entry.Piped.String = result
+			entry.Piped.Type = "string"
+		}
+
+		if !e.hasExplicitResultAlt {
+			entry.PipedAlt.String = result
+			entry.PipedAlt.Type = "string"
+		}
+
 		if entry.Label != "" {
 			entries = append(entries, entry)
 		}
@@ -358,6 +368,16 @@ func (e Plugin) parseJson(out []byte) []util.Entry {
 
 		if v.ExecAlt == "" && e.Config.CmdAlt != "" {
 			entries[k].ExecAlt = strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result)
+		}
+
+		if !e.hasExplicitResult {
+			entries[k].Piped.String = result
+			entries[k].Piped.Type = "string"
+		}
+
+		if !e.hasExplicitResultAlt {
+			entries[k].PipedAlt.String = result
+			entries[k].PipedAlt.Type = "string"
 		}
 	}
 

@@ -198,6 +198,7 @@ type CustomCommands struct {
 type CustomCommand struct {
 	Cmd               string   `koanf:"cmd"`
 	CmdAlt            string   `koanf:"cmd_alt"`
+	Icon              string   `koanf:"icon"`
 	Env               []string `koanf:"env"`
 	Name              string   `koanf:"name"`
 	Path              string   `koanf:"path"`

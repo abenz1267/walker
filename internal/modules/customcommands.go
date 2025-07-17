@@ -33,6 +33,7 @@ func (c *CustomCommands) SetupData() {
 		c.entries = append(c.entries, util.Entry{
 			Label:             v.Name,
 			Sub:               "Commands",
+			Icon:              v.Icon,
 			Exec:              v.Cmd,
 			ExecAlt:           v.CmdAlt,
 			Terminal:          v.Terminal,

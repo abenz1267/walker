@@ -21,6 +21,7 @@ type Plugin struct {
 	entries              []util.Entry
 	hasExplicitResult    bool
 	hasExplicitResultAlt bool
+	hasExplicitImagePath bool
 	hasExplicitTerm      bool
 }
 
@@ -66,6 +67,10 @@ func (e *Plugin) SetupData() {
 
 	if strings.Contains(e.Config.CmdAlt, "%RESULT%") {
 		e.hasExplicitResultAlt = true
+	}
+
+	if strings.Contains(e.Config.Cmd, "%IMAGE%") || strings.Contains(e.Config.CmdAlt, "%IMAGE%") {
+		e.hasExplicitImagePath = true
 	}
 
 	if e.Config.SrcOnce != "" {
@@ -144,6 +149,11 @@ func (e Plugin) Entries(term string) []util.Entry {
 			Icon:             e.Config.Icon,
 		}
 
+		if e.hasExplicitImagePath && entry.Image != "" {
+			entry.Exec = strings.ReplaceAll(entry.Exec, "%IMAGE%", entry.Image)
+			entry.ExecAlt = strings.ReplaceAll(entry.ExecAlt, "%IMAGE%", entry.Image)
+		}
+
 		if !e.hasExplicitResult {
 			entry.Piped.String = result
 			entry.Piped.Type = "string"
@@ -212,6 +222,11 @@ func (e Plugin) parseRaw(out []byte) []util.Entry {
 			Exec:     strings.ReplaceAll(e.Config.Cmd, "%RESULT%", result),
 			ExecAlt:  strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result),
 			Matching: e.Config.Matching,
+		}
+
+		if e.hasExplicitImagePath && entry.Image != "" {
+			entry.Exec = strings.ReplaceAll(entry.Exec, "%IMAGE%", entry.Image)
+			entry.ExecAlt = strings.ReplaceAll(entry.ExecAlt, "%IMAGE%", entry.Image)
 		}
 
 		if !e.hasExplicitResult {
@@ -322,10 +337,18 @@ func (e Plugin) parseKv(out []byte) []util.Entry {
 
 		if entry.Exec == "" && e.Config.Cmd != "" {
 			entry.Exec = strings.ReplaceAll(e.Config.Cmd, "%RESULT%", result)
+
+			if e.hasExplicitImagePath && entry.Image != "" {
+				entry.Exec = strings.ReplaceAll(entry.Exec, "%IMAGE%", entry.Image)
+			}
 		}
 
 		if entry.ExecAlt == "" && e.Config.CmdAlt != "" {
 			entry.ExecAlt = strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result)
+
+			if e.hasExplicitImagePath && entry.Image != "" {
+				entry.ExecAlt = strings.ReplaceAll(entry.ExecAlt, "%IMAGE%", entry.Image)
+			}
 		}
 
 		if entry.Label != "" {
@@ -354,10 +377,18 @@ func (e Plugin) parseJson(out []byte) []util.Entry {
 
 		if v.Exec == "" && e.Config.Cmd != "" {
 			entries[k].Exec = strings.ReplaceAll(e.Config.Cmd, "%RESULT%", result)
+
+			if e.hasExplicitImagePath && v.Image != "" {
+				entries[k].Exec = strings.ReplaceAll(entries[k].Exec, "%IMAGE%", v.Image)
+			}
 		}
 
 		if v.ExecAlt == "" && e.Config.CmdAlt != "" {
 			entries[k].ExecAlt = strings.ReplaceAll(e.Config.CmdAlt, "%RESULT%", result)
+
+			if e.hasExplicitImagePath && v.Image != "" {
+				entries[k].ExecAlt = strings.ReplaceAll(entries[k].ExecAlt, "%IMAGE%", v.Image)
+			}
 		}
 	}
 

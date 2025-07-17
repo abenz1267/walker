@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"bytes"
 	"fmt"
 	"log"
 	"os"
@@ -57,6 +58,9 @@ func setupCss(theme string, base []string) {
 
 	css = append(css, '\n')
 	css = append(css, toPut...)
+
+	homedir, _ := os.UserHomeDir()
+	css = bytes.ReplaceAll(css, []byte("file://~/"), []byte(fmt.Sprintf("file://%s/", homedir)))
 
 	common.cssProvider.LoadFromBytes(glib.NewBytes(css))
 }

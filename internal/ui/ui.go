@@ -863,7 +863,8 @@ func reopen() {
 	setupSingleModule()
 
 	if singleModule != nil {
-		if val, ok := layouts[singleModule.General().Name]; ok {
+		val, ok := layouts[singleModule.General().Name]
+		if ok {
 			layout = val
 
 			theme := singleModule.General().Theme
@@ -875,6 +876,8 @@ func reopen() {
 			}
 
 			setupLayout(theme, themeBase)
+		} else if appstate.ExplicitTheme != "" {
+			setupLayout(appstate.ExplicitTheme, nil)
 		}
 
 		if singleModule.General().Name == config.Cfg.Builtins.Dmenu.Name {

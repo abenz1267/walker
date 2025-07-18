@@ -393,7 +393,7 @@ func (e Plugin) getSrcOutput(src, term string) []byte {
 
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		slog.Error("error", "plugins", err)
+		slog.Error("error", "plugins", err, "message", string(out))
 		return nil
 	}
 

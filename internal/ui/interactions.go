@@ -1106,9 +1106,6 @@ func quit(ignoreEvent bool) {
 			elements.input.SelectRegion(0, -1)
 		}
 
-		elements.search.SetVisible(false)
-		elements.scroll.SetVisible(false)
-		elements.aiScroll.SetVisible(false)
 		elements.appwin.SetVisible(false)
 	})
 

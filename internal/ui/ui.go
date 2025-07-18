@@ -887,6 +887,8 @@ func reopen() {
 	glib.IdleAdd(func() {
 		if appstate.Hidebar {
 			elements.search.SetVisible(false)
+		} else {
+			elements.search.SetVisible(true)
 		}
 
 		elements.appwin.SetVisible(true)

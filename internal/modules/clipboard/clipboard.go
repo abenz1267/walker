@@ -192,6 +192,10 @@ func (c *Clipboard) watch() {
 }
 
 func (c *Clipboard) Update() {
+	if os.Getenv("CLIPBOARD_STATE") == "sensitive" {
+		return
+	}
+
 	cmd := exec.Command("wl-paste")
 	out, err := cmd.CombinedOutput()
 	if err != nil {

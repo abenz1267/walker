@@ -334,7 +334,7 @@ func activateItem(keepOpen, alt bool) {
 		return
 	}
 
-	entry := gioutil.ObjectValue[util.Entry](common.items.Item(common.selection.Selected()))
+	entry := gioutil.ObjectValue[*util.Entry](common.items.Item(common.selection.Selected()))
 
 	executeEvent(config.EventActivate, entry.Label)
 
@@ -464,7 +464,7 @@ func activateItem(keepOpen, alt bool) {
 
 		if len(mCfg.HistoryBlacklist) > 0 {
 			for _, b := range mCfg.HistoryBlacklist {
-				if b.Match(&entry) {
+				if b.Match(entry) {
 					canSave = false
 					break
 				}
@@ -665,7 +665,7 @@ func handleTimeout() {
 var mut sync.Mutex
 
 func processAsync(text string) {
-	entries := []util.Entry{}
+	entries := []*util.Entry{}
 
 	defer func() {
 		if !layout.Window.Box.Search.Spinner.Hide {
@@ -777,11 +777,12 @@ func processAsync(text string) {
 			}
 
 			text = strings.TrimSpace(strings.TrimPrefix(text, w.General().Prefix))
-			toPush := []util.Entry{}
+			toPush := []*util.Entry{}
 
 			e := w.Entries(text)
+
 			for k := range e {
-				if evaluateEntry(text, &e[k], mCfg) {
+				if evaluateEntry(text, e[k], mCfg) {
 					toPush = append(toPush, e[k])
 				}
 			}
@@ -803,7 +804,7 @@ func processAsync(text string) {
 	tahAcceptedIdentifier = ""
 }
 
-func populateList(text string, keepSort bool, processedModulesKeepSort []bool, entries []util.Entry) {
+func populateList(text string, keepSort bool, processedModulesKeepSort []bool, entries []*util.Entry) {
 	if len(processedModulesKeepSort) > 1 {
 		if !keepSort || text != "" {
 			sortEntries(entries, keepSort, false)
@@ -978,7 +979,7 @@ func setTypeahead(modules []modules.Workable) {
 }
 
 func setInitials() {
-	entries := []util.Entry{}
+	entries := []*util.Entry{}
 
 	proc := findModule("applications", toUse)
 
@@ -1009,7 +1010,8 @@ func setInitials() {
 				}
 			}
 
-			entry.ScoreFinal = float64(usageModifier(&entry))
+			entry.ScoreFinal = float64(usageModifier(entry))
+			// fmt.Println(entry.ScoreFinal, entry.Label)
 		}
 
 		entries = append(entries, entry)
@@ -1026,15 +1028,15 @@ func setInitials() {
 	})
 }
 
-func usageModifier(item *util.Entry) int {
+func usageModifier(entry *util.Entry) int {
 	base := 10
 
-	if item.Used > 0 {
-		if item.DaysSinceUsed > 0 {
-			base -= item.DaysSinceUsed
+	if entry.Used > 0 {
+		if entry.DaysSinceUsed > 0 {
+			base -= entry.DaysSinceUsed
 		}
 
-		res := base * item.Used
+		res := base * entry.Used
 
 		if res < 1 {
 			res = 1
@@ -1268,6 +1270,7 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 	usageScore := 0
 
 	// so old `Used` values don't persist, in case of a change in history
+	oldUsed := entry.Used
 	entry.Used = 0
 
 	if useHistory {
@@ -1283,9 +1286,17 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 
 		usageScore = usageModifier(entry)
 
+		if entry.Used == 0 {
+			entry.Used = oldUsed
+		}
+
 		if textLength == 0 {
 			return float64(usageScore)
 		}
+	}
+
+	if entry.Used == 0 {
+		entry.Used = oldUsed
 	}
 
 	if textLength == 0 {
@@ -1325,7 +1336,7 @@ func trimArgumentDelimiter(text string) string {
 	return text
 }
 
-func executeOnSelect(entry util.Entry) {
+func executeOnSelect(entry *util.Entry) {
 	if singleModule == nil || !appstate.IsRunning {
 		return
 	}

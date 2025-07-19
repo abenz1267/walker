@@ -10,14 +10,14 @@ import (
 
 type Bookmarks struct {
 	config   *config.Bookmarks
-	entries  []util.Entry
+	entries  []*util.Entry
 	prefixes []string
 }
 
 func (bookmarks *Bookmarks) Cleanup() {
 }
 
-func (bookmarks *Bookmarks) Entries(term string) []util.Entry {
+func (bookmarks *Bookmarks) Entries(term string) []*util.Entry {
 	hasPrefix := false
 
 	for _, v := range bookmarks.prefixes {
@@ -28,7 +28,7 @@ func (bookmarks *Bookmarks) Entries(term string) []util.Entry {
 	}
 
 	if hasPrefix {
-		entries := []util.Entry{}
+		entries := []*util.Entry{}
 
 		for _, v := range bookmarks.entries {
 			if v.Prefix != "" && strings.HasPrefix(term, v.Prefix) {
@@ -57,11 +57,11 @@ func (bookmarks *Bookmarks) Setup() bool {
 }
 
 func (bookmarks *Bookmarks) SetupData() {
-	bookmarks.entries = []util.Entry{}
+	bookmarks.entries = []*util.Entry{}
 	bookmarks.prefixes = []string{}
 
 	for _, v := range config.Cfg.Builtins.Bookmarks.Entries {
-		bookmarks.entries = append(bookmarks.entries, util.Entry{
+		bookmarks.entries = append(bookmarks.entries, &util.Entry{
 			Label:            v.Label,
 			Sub:              v.Url,
 			Categories:       v.Keywords,
@@ -78,7 +78,7 @@ func (bookmarks *Bookmarks) SetupData() {
 		}
 
 		for _, entry := range v.Entries {
-			bookmarks.entries = append(bookmarks.entries, util.Entry{
+			bookmarks.entries = append(bookmarks.entries, &util.Entry{
 				Label:            entry.Label,
 				Sub:              fmt.Sprintf("%s: %s", v.Label, entry.Url),
 				Categories:       entry.Keywords,

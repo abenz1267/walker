@@ -37,11 +37,11 @@ func (f *Finder) Refresh() {
 	f.config.IsSetup = false
 }
 
-func (f *Finder) Entries(term string) []util.Entry {
+func (f *Finder) Entries(term string) []*util.Entry {
 	for !f.hasList {
 	}
 
-	entries := []util.Entry{}
+	entries := []*util.Entry{}
 
 	scoremin := 50.0
 
@@ -148,7 +148,7 @@ func (f *Finder) Entries(term string) []util.Entry {
 				entry.MatchedLabel = res
 			}
 
-			entries = append(entries, entry)
+			entries = append(entries, &entry)
 		}
 	}
 

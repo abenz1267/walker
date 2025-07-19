@@ -17,11 +17,9 @@ import (
 )
 
 type Windows struct {
-	mutex     sync.Mutex
-	general   config.GeneralModule
-	entries   []util.Entry
-	functions []func()
-	icons     map[string]string
+	mutex   sync.Mutex
+	general config.GeneralModule
+	icons   map[string]string
 }
 
 func (w *Windows) General() *config.GeneralModule {
@@ -111,8 +109,8 @@ func (w *Windows) GetIcons() {
 	}
 }
 
-func (w *Windows) Entries(term string) []util.Entry {
-	entries := []util.Entry{}
+func (w *Windows) Entries(term string) []*util.Entry {
+	entries := []*util.Entry{}
 
 	res := wlr.GetWindows()
 
@@ -132,7 +130,7 @@ func (w *Windows) Entries(term string) []util.Entry {
 		entry.Icon = w.icons[v.AppId]
 		w.mutex.Unlock()
 
-		entries = append(entries, entry)
+		entries = append(entries, &entry)
 	}
 
 	return entries

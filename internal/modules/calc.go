@@ -48,7 +48,7 @@ func (c *Calc) Setup() bool {
 
 func (c *Calc) SetupData() {}
 
-func (c Calc) Entries(term string) []util.Entry {
+func (c Calc) Entries(term string) []*util.Entry {
 	if c.config.RequireNumber {
 		hasNumber := false
 
@@ -59,22 +59,20 @@ func (c Calc) Entries(term string) []util.Entry {
 		}
 
 		if !hasNumber {
-			return []util.Entry{}
+			return []*util.Entry{}
 		}
 	}
-
-	entries := []util.Entry{}
 
 	cmd := exec.Command("qalc", "-t", term)
 	out, err := cmd.CombinedOutput()
 	if err != nil {
-		return entries
+		return []*util.Entry{}
 	}
 
 	txt := strings.TrimSpace(string(out))
 
 	if txt == "" {
-		return entries
+		return []*util.Entry{}
 	}
 
 	res := util.Entry{
@@ -91,9 +89,7 @@ func (c Calc) Entries(term string) []util.Entry {
 		}
 	}
 
-	entries = append(entries, res)
-
-	return entries
+	return []*util.Entry{&res}
 }
 
 func (c *Calc) Refresh() {}

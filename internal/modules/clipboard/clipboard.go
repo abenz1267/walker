@@ -23,7 +23,7 @@ const ClipboardName = "clipboard"
 type Clipboard struct {
 	general         config.GeneralModule
 	items           []ClipboardItem
-	entries         []util.Entry
+	entries         []*util.Entry
 	file            string
 	imgTypes        map[string]string
 	max             int
@@ -49,7 +49,7 @@ func (c *Clipboard) Refresh() {
 
 func (c Clipboard) Cleanup() {}
 
-func (c Clipboard) Entries(term string) []util.Entry {
+func (c Clipboard) Entries(term string) []*util.Entry {
 	for k, v := range c.entries {
 		for _, vv := range c.items {
 			if v.HashIdent == vv.Hash {
@@ -248,7 +248,7 @@ func (c *Clipboard) Update() {
 			return 0
 		})
 
-		slices.SortFunc(c.entries, func(a, b util.Entry) int {
+		slices.SortFunc(c.entries, func(a, b *util.Entry) int {
 			if a.LastUsed.After(b.LastUsed) {
 				return -1
 			}
@@ -275,13 +275,13 @@ func (c *Clipboard) Update() {
 			e.IsImg = true
 		}
 
-		c.entries = append([]util.Entry{itemToEntry(e, c.exec, c.avoidLineBreaks)}, c.entries...)
+		c.entries = append([]*util.Entry{itemToEntry(e, c.exec, c.avoidLineBreaks)}, c.entries...)
 		c.items = append([]ClipboardItem{e}, c.items...)
 	}
 
 	hstry := history.Get()
 
-	toSpareEntries := []util.Entry{}
+	toSpareEntries := []*util.Entry{}
 	toSpareItems := []ClipboardItem{}
 
 	for _, v := range c.entries {
@@ -316,7 +316,7 @@ func (c *Clipboard) Update() {
 		c.entries = slices.Clone(c.entries[:c.max])
 
 		for _, v := range toSpareEntries {
-			if !slices.ContainsFunc(c.entries, func(item util.Entry) bool {
+			if !slices.ContainsFunc(c.entries, func(item *util.Entry) bool {
 				if item.HashIdent == v.HashIdent {
 					return true
 				}
@@ -331,14 +331,14 @@ func (c *Clipboard) Update() {
 	util.ToGob(&c.items, c.file)
 }
 
-func itemToEntry(item ClipboardItem, exec string, avoidLineBreaks bool) util.Entry {
+func itemToEntry(item ClipboardItem, exec string, avoidLineBreaks bool) *util.Entry {
 	label := strings.TrimSpace(item.Content)
 
 	if avoidLineBreaks {
 		label = strings.ReplaceAll(label, "\n", " ")
 	}
 
-	entry := util.Entry{
+	entry := &util.Entry{
 		Label:            label,
 		Sub:              "Text",
 		Exec:             exec,
@@ -367,10 +367,10 @@ func itemToEntry(item ClipboardItem, exec string, avoidLineBreaks bool) util.Ent
 	return entry
 }
 
-func (c *Clipboard) Delete(entry util.Entry) {
+func (c *Clipboard) Delete(entry *util.Entry) {
 	content := entry.Piped.String
 
-	c.entries = []util.Entry{}
+	c.entries = []*util.Entry{}
 
 	for k, v := range c.items {
 		if v.Content == content {
@@ -395,7 +395,7 @@ func (c *Clipboard) Delete(entry util.Entry) {
 
 func (c *Clipboard) Clear() {
 	c.items = []ClipboardItem{}
-	c.entries = []util.Entry{}
+	c.entries = []*util.Entry{}
 
 	util.ToGob(&c.items, c.file)
 }

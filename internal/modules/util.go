@@ -9,7 +9,7 @@ import (
 
 type Workable interface {
 	Cleanup()
-	Entries(term string) []util.Entry
+	Entries(term string) []*util.Entry
 	General() *config.GeneralModule
 	Refresh()
 	Setup() bool

@@ -13,5 +13,5 @@ type Message struct {
 
 type Provider interface {
 	Query(query string, currentMessages *[]Message, currentPrompt *config.AIPrompt, items *gioutil.ListModel[Message])
-	SetupData() []util.Entry
+	SetupData() []*util.Entry
 }

@@ -29,8 +29,8 @@ type Translation struct {
 func (translation *Translation) Cleanup() {
 }
 
-func (translation *Translation) Entries(term string) []util.Entry {
-	entries := []util.Entry{}
+func (translation *Translation) Entries(term string) []*util.Entry {
+	entries := []*util.Entry{}
 
 	src, dest := "auto", translation.systemLang
 
@@ -66,7 +66,7 @@ func (translation *Translation) Entries(term string) []util.Entry {
 		return entries
 	}
 
-	entries = append(entries, util.Entry{
+	entries = append(entries, &util.Entry{
 		Label:            strings.TrimSpace(res),
 		Sub:              "Translation",
 		Exec:             "",

@@ -24,13 +24,13 @@ type Bind struct {
 
 type HyprlandKeybinds struct {
 	config  config.HyprlandKeybinds
-	entries []util.Entry
+	entries []*util.Entry
 }
 
 func (HyprlandKeybinds) Cleanup() {
 }
 
-func (h HyprlandKeybinds) Entries(term string) (_ []util.Entry) {
+func (h HyprlandKeybinds) Entries(term string) (_ []*util.Entry) {
 	return h.entries
 }
 
@@ -64,7 +64,7 @@ func (h *HyprlandKeybinds) SetupData() {
 		return
 	}
 
-	var entries []util.Entry
+	var entries []*util.Entry
 
 	for _, v := range binds {
 		label := v.Description
@@ -97,7 +97,7 @@ func (h *HyprlandKeybinds) SetupData() {
 			sub = fmt.Sprintf("%s (catch-all)", sub)
 		}
 
-		e := util.Entry{
+		e := &util.Entry{
 			Label:            label,
 			Exec:             exec,
 			Sub:              sub,

@@ -38,14 +38,14 @@ var (
 type Applications struct {
 	config     config.Applications
 	mu         sync.Mutex
-	entries    []util.Entry
+	entries    []*util.Entry
 	isWatching bool
 	Hstry      history.History
 }
 
 type Application struct {
-	Generic util.Entry   `json:"generic,omitempty"`
-	Actions []util.Entry `json:"actions,omitempty"`
+	Generic *util.Entry   `json:"generic,omitempty"`
+	Actions []*util.Entry `json:"actions,omitempty"`
 }
 
 func (a *Applications) General() *config.GeneralModule {
@@ -134,7 +134,7 @@ func (a *Applications) Refresh() {
 	}
 }
 
-func (a *Applications) Entries(term string) []util.Entry {
+func (a *Applications) Entries(term string) []*util.Entry {
 	if a.config.ContextAware {
 		for k, v := range a.entries {
 			if val, ok := wlr.OpenWindows[v.InitialClass]; ok {
@@ -144,7 +144,7 @@ func (a *Applications) Entries(term string) []util.Entry {
 	}
 
 	if a.config.Actions.HideWithoutQuery && term == "" {
-		entries := []util.Entry{}
+		entries := []*util.Entry{}
 		added := make(map[string]struct{})
 
 		for _, entry := range a.entries {
@@ -220,7 +220,7 @@ func (a *Applications) walkFunc(visited map[string]struct{}, d string, apps *[]A
 			scanner := bufio.NewScanner(file)
 
 			app := Application{
-				Generic: util.Entry{
+				Generic: &util.Entry{
 					Class:            ApplicationsName,
 					History:          a.config.History,
 					Matching:         matching,
@@ -228,7 +228,7 @@ func (a *Applications) walkFunc(visited map[string]struct{}, d string, apps *[]A
 					File:             path,
 					Searchable:       path,
 				},
-				Actions: []util.Entry{},
+				Actions: []*util.Entry{},
 			}
 
 			isAction := false
@@ -256,7 +256,7 @@ func (a *Applications) walkFunc(visited map[string]struct{}, d string, apps *[]A
 						skip = true
 					}
 
-					app.Actions = append(app.Actions, util.Entry{})
+					app.Actions = append(app.Actions, &util.Entry{})
 
 					isAction = true
 				}
@@ -489,9 +489,9 @@ func (a *Applications) walkFunc(visited map[string]struct{}, d string, apps *[]A
 	})
 }
 
-func (a *Applications) parse() []util.Entry {
+func (a *Applications) parse() []*util.Entry {
 	apps := []Application{}
-	entries := []util.Entry{}
+	entries := []*util.Entry{}
 	desktop := os.Getenv("XDG_CURRENT_DESKTOP")
 
 	langFull := config.Cfg.Locale

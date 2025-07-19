@@ -17,8 +17,8 @@ func (s *Switcher) General() *config.GeneralModule {
 
 func (s Switcher) Cleanup() {}
 
-func (s Switcher) Entries(term string) []util.Entry {
-	entries := []util.Entry{}
+func (s Switcher) Entries(term string) []*util.Entry {
+	entries := []*util.Entry{}
 
 	for _, v := range config.Cfg.Available {
 		if v == "switcher" || slices.Contains(config.Cfg.Hidden, v) {
@@ -34,7 +34,7 @@ func (s Switcher) Entries(term string) []util.Entry {
 			Matching:   util.Fuzzy,
 		}
 
-		entries = append(entries, e)
+		entries = append(entries, &e)
 	}
 
 	return entries

@@ -53,7 +53,7 @@ var (
 )
 
 type Common struct {
-	items       *gioutil.ListModel[util.Entry]
+	items       *gioutil.ListModel[*util.Entry]
 	aiItems     *gioutil.ListModel[aiProviders.Message]
 	selection   *gtk.SingleSelection
 	factory     *gtk.SignalListItemFactory
@@ -300,7 +300,7 @@ func setupElementsPassword(app *gtk.Application) *Elements {
 }
 
 func setupCommon(app *gtk.Application) {
-	items := gioutil.NewListModel[util.Entry]()
+	items := gioutil.NewListModel[*util.Entry]()
 	aiItems := gioutil.NewListModel[aiProviders.Message]()
 
 	selection := gtk.NewSingleSelection(items.ListModel)
@@ -311,7 +311,7 @@ func setupCommon(app *gtk.Application) {
 
 		if singleModule != nil {
 			valObj := common.items.Item(common.selection.Selected())
-			entry := gioutil.ObjectValue[util.Entry](valObj)
+			entry := gioutil.ObjectValue[*util.Entry](valObj)
 
 			debouncedOnSelect(func() {
 				executeOnSelect(entry)
@@ -506,7 +506,7 @@ func setupFactory() *gtk.SignalListItemFactory {
 		item := object.Cast().(*gtk.ListItem)
 
 		valObj := common.items.Item(item.Position())
-		val := gioutil.ObjectValue[util.Entry](valObj)
+		val := gioutil.ObjectValue[*util.Entry](valObj)
 
 		overlay := item.Child().(*gtk.Overlay)
 		box := overlay.Child().(*gtk.Box)
@@ -955,7 +955,7 @@ func afterUI() {
 			}
 
 			if common.items.NItems() == 1 {
-				entry := gioutil.ObjectValue[util.Entry](common.items.Item(0))
+				entry := gioutil.ObjectValue[*util.Entry](common.items.Item(0))
 				module := findModule(entry.Module, toUse)
 
 				if module.General().AutoSelect || appstate.AutoSelect {
@@ -966,7 +966,7 @@ func afterUI() {
 			elements.grid.ScrollTo(0, gtk.ListScrollNone, nil)
 
 			if singleModule != nil {
-				entry := gioutil.ObjectValue[util.Entry](common.items.Item(0))
+				entry := gioutil.ObjectValue[*util.Entry](common.items.Item(0))
 
 				debouncedOnSelect(func() {
 					executeOnSelect(entry)

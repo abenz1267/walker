@@ -34,8 +34,8 @@ func (d *Dmenu) General() *config.GeneralModule {
 	return &d.Config.GeneralModule
 }
 
-func (d *Dmenu) Entries(term string) []util.Entry {
-	entries := []util.Entry{}
+func (d *Dmenu) Entries(term string) []*util.Entry {
+	entries := []*util.Entry{}
 
 	for _, v := range content {
 		label := v
@@ -74,7 +74,7 @@ func (d *Dmenu) Entries(term string) []util.Entry {
 			}
 		}
 
-		entries = append(entries, util.Entry{
+		entries = append(entries, &util.Entry{
 			Label: label,
 			Value: value,
 			Sub:   "Dmenu",

@@ -25,7 +25,7 @@ const (
 
 type AI struct {
 	config          config.AI
-	entries         []util.Entry
+	entries         []*util.Entry
 	currentPrompt   *config.AIPrompt
 	canProcess      bool
 	currentMessages []providers.Message
@@ -50,7 +50,7 @@ func (ai *AI) Cleanup() {
 	})
 }
 
-func (ai *AI) Entries(term string) []util.Entry {
+func (ai *AI) Entries(term string) []*util.Entry {
 	return ai.entries
 }
 

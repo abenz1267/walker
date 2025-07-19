@@ -52,8 +52,8 @@ func (w *Websearch) Refresh() {
 	w.config.IsSetup = !w.config.Refresh
 }
 
-func (w Websearch) Entries(term string) []util.Entry {
-	entries := []util.Entry{}
+func (w Websearch) Entries(term string) []*util.Entry {
+	entries := []*util.Entry{}
 
 	path, _ := exec.LookPath("xdg-open")
 	if path == "" {
@@ -97,13 +97,13 @@ func (w Websearch) Entries(term string) []util.Entry {
 			Prefix:           prefix,
 		}
 
-		entries = append(entries, n)
+		entries = append(entries, &n)
 	}
 
 	if strings.ContainsAny(term, ".") && !strings.HasSuffix(term, ".") {
 		_, err := url.ParseRequestURI(fmt.Sprintf("https://%s", term))
 		if err == nil {
-			entries = append(entries, util.Entry{
+			entries = append(entries, &util.Entry{
 				Label:    fmt.Sprintf("Visit https://%s", term),
 				Sub:      "Websearch",
 				Exec:     "xdg-open https://" + term,

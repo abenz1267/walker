@@ -17,7 +17,7 @@ var list string
 
 type Symbols struct {
 	config  config.Symbols
-	entries []util.Entry
+	entries []*util.Entry
 }
 
 func (e *Symbols) General() *config.GeneralModule {
@@ -26,7 +26,7 @@ func (e *Symbols) General() *config.GeneralModule {
 
 func (e Symbols) Cleanup() {}
 
-func (e Symbols) Entries(term string) []util.Entry {
+func (e Symbols) Entries(term string) []*util.Entry {
 	return e.entries
 }
 
@@ -39,7 +39,7 @@ func (e *Symbols) Setup() bool {
 func (e *Symbols) SetupData() {
 	scanner := bufio.NewScanner(strings.NewReader(list))
 
-	entries := []util.Entry{}
+	entries := []*util.Entry{}
 
 	for scanner.Scan() {
 		text := scanner.Text()
@@ -59,7 +59,7 @@ func (e *Symbols) SetupData() {
 			exec = fmt.Sprintf("wl-copy '%s' | %s", toUse, e.config.AfterCopy)
 		}
 
-		entries = append(entries, util.Entry{
+		entries = append(entries, &util.Entry{
 			Label:            fmt.Sprintf("%s %s", toUse, fields[1]),
 			Sub:              "Symbols",
 			Exec:             exec,

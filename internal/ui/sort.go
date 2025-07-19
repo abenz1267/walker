@@ -7,8 +7,8 @@ import (
 	"github.com/abenz1267/walker/internal/util"
 )
 
-func sortEntries(entries []util.Entry, keepSort bool, initial bool) {
-	slices.SortFunc(entries, func(a, b util.Entry) int {
+func sortEntries(entries []*util.Entry, keepSort bool, initial bool) {
+	slices.SortFunc(entries, func(a, b *util.Entry) int {
 		if tahAcceptedIdentifier != "" {
 			if a.Identifier() == tahAcceptedIdentifier {
 				return -1

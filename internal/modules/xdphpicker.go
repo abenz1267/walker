@@ -14,13 +14,13 @@ import (
 
 type XdphPicker struct {
 	config  *config.XdphPicker
-	entries []util.Entry
+	entries []*util.Entry
 }
 
 func (x *XdphPicker) Cleanup() {
 }
 
-func (x *XdphPicker) Entries(term string) []util.Entry {
+func (x *XdphPicker) Entries(term string) []*util.Entry {
 	return x.entries
 }
 
@@ -45,12 +45,12 @@ type Window struct {
 }
 
 func (x *XdphPicker) SetupData() {
-	x.entries = []util.Entry{}
+	x.entries = []*util.Entry{}
 
 	windows := parseWindows(os.Getenv("XDPH_WINDOW_SHARING_LIST"))
 
 	for _, w := range windows {
-		x.entries = append(x.entries, util.Entry{
+		x.entries = append(x.entries, &util.Entry{
 			Label:            fmt.Sprintf("%s - %s", w.Title, w.Class),
 			Sub:              "Window",
 			Matching:         util.Fuzzy,
@@ -65,7 +65,7 @@ func (x *XdphPicker) SetupData() {
 	for i := 0; i < int(monitors.NItems()); i++ {
 		monitor := monitors.Item(uint(i)).Cast().(*gdk.Monitor)
 
-		x.entries = append(x.entries, util.Entry{
+		x.entries = append(x.entries, &util.Entry{
 			Label:            monitor.Connector(),
 			Sub:              "Screen",
 			Matching:         util.Fuzzy,
@@ -78,7 +78,7 @@ func (x *XdphPicker) SetupData() {
 	path, _ := exec.LookPath("slurp")
 
 	if path != "" {
-		x.entries = append(x.entries, util.Entry{
+		x.entries = append(x.entries, &util.Entry{
 			Label:            "Selection Region",
 			Sub:              "Region",
 			Matching:         util.Fuzzy,

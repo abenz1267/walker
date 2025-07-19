@@ -7,7 +7,7 @@ import (
 
 type CustomCommands struct {
 	config  config.CustomCommands
-	entries []util.Entry
+	entries []*util.Entry
 }
 
 func (c *CustomCommands) General() *config.GeneralModule {
@@ -16,7 +16,7 @@ func (c *CustomCommands) General() *config.GeneralModule {
 
 func (c CustomCommands) Cleanup() {}
 
-func (c CustomCommands) Entries(term string) (_ []util.Entry) {
+func (c CustomCommands) Entries(term string) (_ []*util.Entry) {
 	return c.entries
 }
 
@@ -27,10 +27,10 @@ func (c *CustomCommands) Setup() bool {
 }
 
 func (c *CustomCommands) SetupData() {
-	c.entries = []util.Entry{}
+	c.entries = []*util.Entry{}
 
 	for _, v := range config.Cfg.Builtins.CustomCommands.Commands {
-		c.entries = append(c.entries, util.Entry{
+		c.entries = append(c.entries, &util.Entry{
 			Label:             v.Name,
 			Sub:               "Commands",
 			Icon:              v.Icon,

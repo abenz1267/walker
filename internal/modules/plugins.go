@@ -18,7 +18,7 @@ import (
 type Plugin struct {
 	Config               config.Plugin
 	cachedOutput         []byte
-	entries              []util.Entry
+	entries              []*util.Entry
 	hasExplicitResult    bool
 	hasExplicitResultAlt bool
 	hasExplicitTerm      bool
@@ -77,7 +77,7 @@ func (e *Plugin) SetupData() {
 	e.Config.HasInitialSetup = true
 }
 
-func (e Plugin) Entries(term string) []util.Entry {
+func (e Plugin) Entries(term string) []*util.Entry {
 	if e.Config.Entries != nil {
 		for k := range e.Config.Entries {
 			e.Config.Entries[k].ScoreFinal = 0
@@ -91,7 +91,7 @@ func (e Plugin) Entries(term string) []util.Entry {
 		return e.entries
 	}
 
-	entries := []util.Entry{}
+	entries := []*util.Entry{}
 
 	if e.Config.Src == "" {
 		return entries
@@ -154,7 +154,7 @@ func (e Plugin) Entries(term string) []util.Entry {
 			entry.PipedAlt.Type = "string"
 		}
 
-		return []util.Entry{entry}
+		return []*util.Entry{&entry}
 	}
 
 	var out []byte
@@ -168,8 +168,8 @@ func (e Plugin) Entries(term string) []util.Entry {
 	return e.parseOut(out)
 }
 
-func (e Plugin) parseRaw(out []byte) []util.Entry {
-	entries := []util.Entry{}
+func (e Plugin) parseRaw(out []byte) []*util.Entry {
+	entries := []*util.Entry{}
 	scanner := bufio.NewScanner(strings.NewReader(string(out)))
 
 	for scanner.Scan() {
@@ -224,14 +224,14 @@ func (e Plugin) parseRaw(out []byte) []util.Entry {
 			entry.PipedAlt.Type = "string"
 		}
 
-		entries = append(entries, entry)
+		entries = append(entries, &entry)
 	}
 
 	return entries
 }
 
-func (e Plugin) parseKv(out []byte) []util.Entry {
-	var entries []util.Entry
+func (e Plugin) parseKv(out []byte) []*util.Entry {
+	var entries []*util.Entry
 
 	scanner := bufio.NewScanner(bytes.NewReader(out))
 
@@ -339,15 +339,15 @@ func (e Plugin) parseKv(out []byte) []util.Entry {
 		}
 
 		if entry.Label != "" {
-			entries = append(entries, entry)
+			entries = append(entries, &entry)
 		}
 	}
 
 	return entries
 }
 
-func (e Plugin) parseJson(out []byte) []util.Entry {
-	var entries []util.Entry
+func (e Plugin) parseJson(out []byte) []*util.Entry {
+	var entries []*util.Entry
 
 	err := json.Unmarshal(out, &entries)
 	if err != nil {
@@ -400,8 +400,8 @@ func (e Plugin) getSrcOutput(src, term string) []byte {
 	return out
 }
 
-func (e Plugin) parseOut(out []byte) []util.Entry {
-	entries := []util.Entry{}
+func (e Plugin) parseOut(out []byte) []*util.Entry {
+	entries := []*util.Entry{}
 
 	if e.Config.Parser == "json" {
 		entries = e.parseJson(out)

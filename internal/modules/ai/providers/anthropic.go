@@ -42,11 +42,11 @@ func NewAnthropicProvider(config config.AI, specialFunc func(...interface{})) Pr
 	}
 }
 
-func (p *AnthropicProvider) SetupData() []util.Entry {
-	var entries []util.Entry
+func (p *AnthropicProvider) SetupData() []*util.Entry {
+	var entries []*util.Entry
 
 	for _, v := range p.config.Anthropic.Prompts {
-		entries = append(entries, util.Entry{
+		entries = append(entries, &util.Entry{
 			Label:            v.Label,
 			Sub:              "Anthropic Claude 3.5",
 			Exec:             "",

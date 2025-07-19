@@ -47,29 +47,29 @@ type Entry struct {
 	Value             string       `mapstructure:"value,omitempty" json:"value,omitempty"`
 
 	// internal
-	DaysSinceUsed    int                       `mapstructure:"-"`
-	File             string                    `mapstructure:"-"`
-	HashIdent        string                    `mapstructure:"-"`
-	Hide             bool                      `mapstructure:"-"`
-	History          bool                      `mapstructure:"-"`
-	IgnoreUnprefixed bool                      `mapstructure:"-"`
-	IsAction         bool                      `mapstructure:"-"`
-	LastUsed         time.Time                 `mapstructure:"-"`
-	MatchStartingPos int                       `mapstructure:"-"`
-	MatchedLabel     string                    `mapstructure:"-"`
-	MatchedSub       string                    `mapstructure:"-"`
-	Module           string                    `mapstructure:"-"`
-	OnSelectPiped    Piped                     `mapstructure:"-"`
-	OpenWindows      uint                      `mapstructure:"-"`
-	Output           string                    `mapstructure:"-"`
-	Piped            Piped                     `mapstructure:"-"`
-	PipedAlt         Piped                     `mapstructure:"-"`
-	Prefix           string                    `mapstructure:"-"`
-	SingleModuleOnly bool                      `mapstructure:"-"`
-	SpecialFunc      func(args ...interface{}) `mapstructure:"-"`
-	SpecialFuncArgs  []interface{}             `mapstructure:"-"`
-	Used             int                       `mapstructure:"-"`
-	Weight           int                       `mapstructure:"-"`
+	DaysSinceUsed    int               `mapstructure:"-"`
+	File             string            `mapstructure:"-"`
+	HashIdent        string            `mapstructure:"-"`
+	Hide             bool              `mapstructure:"-"`
+	History          bool              `mapstructure:"-"`
+	IgnoreUnprefixed bool              `mapstructure:"-"`
+	IsAction         bool              `mapstructure:"-"`
+	LastUsed         time.Time         `mapstructure:"-"`
+	MatchStartingPos int               `mapstructure:"-"`
+	MatchedLabel     string            `mapstructure:"-"`
+	MatchedSub       string            `mapstructure:"-"`
+	Module           string            `mapstructure:"-"`
+	OnSelectPiped    Piped             `mapstructure:"-"`
+	OpenWindows      uint              `mapstructure:"-"`
+	Output           string            `mapstructure:"-"`
+	Piped            Piped             `mapstructure:"-"`
+	PipedAlt         Piped             `mapstructure:"-"`
+	Prefix           string            `mapstructure:"-"`
+	SingleModuleOnly bool              `mapstructure:"-"`
+	SpecialFunc      func(args ...any) `mapstructure:"-"`
+	SpecialFuncArgs  []any             `mapstructure:"-"`
+	Used             int               `mapstructure:"-"`
+	Weight           int               `mapstructure:"-"`
 }
 
 func (e Entry) Identifier() string {

@@ -391,7 +391,7 @@ type Plugin struct {
 	GeneralModule    `koanf:",squash"`
 	Cmd              string            `koanf:"cmd"`
 	CmdAlt           string            `koanf:"cmd_alt"`
-	Entries          []util.Entry      `koanf:"entries"`
+	Entries          []*util.Entry     `koanf:"entries"`
 	Keywords         []string          `koanf:"keywords"`
 	KvSeparator      string            `koanf:"kv_separator"`
 	LabelColumn      int               `koanf:"label_column"`

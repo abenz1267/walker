@@ -16,7 +16,7 @@ var list string
 
 type Emojis struct {
 	general         config.GeneralModule
-	entries         []util.Entry
+	entries         []*util.Entry
 	showUnqualified bool
 	exec            string
 	execAlt         string
@@ -28,7 +28,7 @@ func (e *Emojis) General() *config.GeneralModule {
 
 func (e Emojis) Cleanup() {}
 
-func (e Emojis) Entries(term string) []util.Entry {
+func (e Emojis) Entries(term string) []*util.Entry {
 	return e.entries
 }
 
@@ -44,7 +44,7 @@ func (e *Emojis) Setup() bool {
 func (e *Emojis) SetupData() {
 	scanner := bufio.NewScanner(strings.NewReader(list))
 
-	entries := []util.Entry{}
+	entries := []*util.Entry{}
 
 	for scanner.Scan() {
 		text := scanner.Text()
@@ -59,7 +59,7 @@ func (e *Emojis) SetupData() {
 			continue
 		}
 
-		entries = append(entries, util.Entry{
+		entries = append(entries, &util.Entry{
 			Label:            fmt.Sprintf("%s %s", fields[4], fields[5]),
 			Sub:              "Emojis",
 			Exec:             e.exec,

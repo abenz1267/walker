@@ -62,8 +62,8 @@ func (r *Runner) Refresh() {
 	r.config.IsSetup = !r.config.Refresh
 }
 
-func (r Runner) Entries(term string) []util.Entry {
-	entries := []util.Entry{}
+func (r Runner) Entries(term string) []*util.Entry {
+	entries := []*util.Entry{}
 
 	fields := strings.Fields(term)
 
@@ -80,7 +80,7 @@ func (r Runner) Entries(term string) []util.Entry {
 			exec = fmt.Sprintf("%s %s", bin, strings.Join(fields[1:], " "))
 		}
 
-		n := util.Entry{
+		n := &util.Entry{
 			Label:            bin,
 			Searchable:       v,
 			Sub:              "Runner",
@@ -126,7 +126,7 @@ func (r Runner) Entries(term string) []util.Entry {
 					Terminal:         true,
 				}
 
-				entries = append(entries, n)
+				entries = append(entries, &n)
 			}
 		}
 	}

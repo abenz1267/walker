@@ -169,11 +169,11 @@ func (p *GeminiProvider) Query(query string, currentMessages *[]Message, current
 	*currentMessages = messages
 }
 
-func (p *GeminiProvider) SetupData() []util.Entry {
-	var entries []util.Entry
+func (p *GeminiProvider) SetupData() []*util.Entry {
+	var entries []*util.Entry
 
 	for _, v := range p.config.Gemini.Prompts {
-		entries = append(entries, util.Entry{
+		entries = append(entries, &util.Entry{
 			Label:            v.Label,
 			Sub:              "Gemini: " + v.Model,
 			Exec:             "",

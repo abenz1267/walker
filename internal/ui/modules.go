@@ -246,7 +246,12 @@ func resetSingleModule() {
 func loadPluginsFromDisk() {
 	dir, _ := util.ConfigDir()
 
-	filepath.Walk(filepath.Join(dir, "plugins"), func(path string, info fs.FileInfo, err error) error {
+	path := filepath.Join(dir, "plugins")
+	if !util.FileExists(path) {
+		return
+	}
+
+	filepath.Walk(path, func(path string, info fs.FileInfo, err error) error {
 		if info.IsDir() {
 			return nil
 		}

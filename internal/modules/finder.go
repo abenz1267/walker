@@ -189,8 +189,6 @@ func (f *Finder) SetupData() {
 			f.files = append(f.files, scanner.Text())
 		}
 
-		slices.Sort(f.files)
-
 		f.hasList = true
 	} else {
 		fileListQueue := make(chan *gocodewalker.File)

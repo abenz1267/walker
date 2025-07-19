@@ -464,7 +464,7 @@ func activateItem(keepOpen, alt bool) {
 
 		if len(mCfg.HistoryBlacklist) > 0 {
 			for _, b := range mCfg.HistoryBlacklist {
-				if b.Match(entry) {
+				if b.Match(&entry) {
 					canSave = false
 					break
 				}
@@ -776,97 +776,13 @@ func processAsync(text string) {
 				return
 			}
 
-			text = strings.TrimPrefix(text, w.General().Prefix)
-
-			e := w.Entries(text)
-			text = strings.TrimSpace(text)
-
+			text = strings.TrimSpace(strings.TrimPrefix(text, w.General().Prefix))
 			toPush := []util.Entry{}
 
-		outer:
+			e := w.Entries(text)
 			for k := range e {
-				if len(mCfg.Blacklist) > 0 {
-					for _, b := range mCfg.Blacklist {
-						if b.Match(e[k]) {
-							continue outer
-						}
-					}
-				}
-
-				if e[k].SingleModuleOnly && singleModule == nil {
-					continue
-				}
-
-				e[k].Module = mCfg.Name
-				e[k].Weight = mCfg.Weight
-
-				toMatch := text
-
-				if e[k].MatchFields > 0 {
-					textFields := strings.Fields(text)
-
-					if len(textFields) > 0 {
-						toMatch = strings.Join(textFields[:1], " ")
-					}
-				}
-
-				if e[k].RecalculateScore {
-					e[k].ScoreFinal = 0
-					e[k].ScoreFuzzy = 0
-					e[k].MatchStartingPos = 0
-				}
-
-				if e[k].ScoreFinal == 0 {
-					switch e[k].Matching {
-					case util.AlwaysTopOnEmptySearch:
-						if text != "" {
-							e[k].ScoreFinal = fuzzyScore(&e[k], toMatch, mCfg.History)
-						} else {
-							e[k].ScoreFinal = 1000
-						}
-					case util.Fuzzy, util.TopWhenFuzzyMatch:
-						e[k].ScoreFinal = fuzzyScore(&e[k], toMatch, mCfg.History)
-
-						if e[k].Matching == util.TopWhenFuzzyMatch {
-							if e[k].ScoreFinal > 0 {
-								e[k].ScoreFinal = 10000
-							}
-						}
-					case util.AlwaysTop:
-						if e[k].ScoreFinal == 0 {
-							e[k].ScoreFinal = 10000
-						}
-					case util.AlwaysBottom:
-						if e[k].ScoreFinal == 0 {
-							e[k].ScoreFinal = 1
-						}
-					default:
-						e[k].ScoreFinal = 0
-					}
-				}
-
-				if toMatch == "" {
-					if e[k].ScoreFinal != 0 || config.Cfg.List.ShowInitialEntries {
-						if e[k].Prefix != "" && strings.HasPrefix(text, e[k].Prefix) {
-							toPush = append(toPush, e[k])
-						} else {
-							if e[k].IgnoreUnprefixed {
-								continue
-							}
-
-							toPush = append(toPush, e[k])
-						}
-					}
-				} else {
-					if e[k].Prefix != "" && strings.HasPrefix(text, e[k].Prefix) {
-						toPush = append(toPush, e[k])
-					} else {
-						if e[k].IgnoreUnprefixed {
-							continue
-						}
-
-						toPush = append(toPush, e[k])
-					}
+				if evaluateEntry(text, &e[k], mCfg) {
+					toPush = append(toPush, e[k])
 				}
 			}
 
@@ -878,32 +794,16 @@ func processAsync(text string) {
 
 	wg.Wait()
 
-	// remove entries that don't match the visibility threshold
-	if text != "" {
-		filteredEntries := []util.Entry{}
-
-		for _, v := range entries {
-			prefix := findModule(v.Module, toUse).General().Prefix
-
-			if prefix != "" && strings.HasPrefix(text, prefix) {
-				if strings.TrimPrefix(text, prefix) == "" {
-					filteredEntries = append(filteredEntries, v)
-					continue
-				}
-			}
-
-			if v.ScoreFinal > float64(config.Cfg.List.VisibilityThreshold) {
-				filteredEntries = append(filteredEntries, v)
-			}
-		}
-
-		entries = filteredEntries
-	}
-
 	if query != lastQuery {
 		return
 	}
 
+	populateList(text, keepSort, processedModulesKeepSort, entries)
+
+	tahAcceptedIdentifier = ""
+}
+
+func populateList(text string, keepSort bool, processedModulesKeepSort []bool, entries []util.Entry) {
 	if len(processedModulesKeepSort) > 1 {
 		if !keepSort || text != "" {
 			sortEntries(entries, keepSort, false)
@@ -942,8 +842,108 @@ func processAsync(text string) {
 			elements.spinner.SetVisible(false)
 		}
 	})
+}
 
-	tahAcceptedIdentifier = ""
+func evaluateEntry(text string, entry *util.Entry, cfg *config.GeneralModule) bool {
+	if cfg.Blacklist.Contains(entry) {
+		return false
+	}
+
+	if entry.SingleModuleOnly && singleModule == nil {
+		return false
+	}
+
+	entry.Module = cfg.Name
+	entry.Weight = cfg.Weight
+
+	toMatch := text
+
+	if entry.MatchFields > 0 {
+		textFields := strings.Fields(text)
+
+		if len(textFields) > 0 {
+			toMatch = strings.Join(textFields[:1], " ")
+		}
+	}
+
+	if entry.RecalculateScore {
+		entry.ScoreFinal = 0
+		entry.ScoreFuzzy = 0
+		entry.MatchStartingPos = 0
+	}
+
+	if entry.ScoreFinal == 0 {
+		switch entry.Matching {
+		case util.AlwaysTopOnEmptySearch:
+			if text != "" {
+				entry.ScoreFinal = fuzzyScore(entry, toMatch, cfg.History)
+			} else {
+				entry.ScoreFinal = 1000
+			}
+		case util.Fuzzy, util.TopWhenFuzzyMatch:
+			entry.ScoreFinal = fuzzyScore(entry, toMatch, cfg.History)
+
+			if entry.Matching == util.TopWhenFuzzyMatch {
+				if entry.ScoreFinal > 0 {
+					entry.ScoreFinal = 10000
+				}
+			}
+		case util.AlwaysTop:
+			if entry.ScoreFinal == 0 {
+				entry.ScoreFinal = 10000
+			}
+		case util.AlwaysBottom:
+			if entry.ScoreFinal == 0 {
+				entry.ScoreFinal = 1
+			}
+		default:
+			entry.ScoreFinal = 0
+		}
+	}
+
+	if toMatch == "" {
+		if entry.ScoreFinal != 0 || config.Cfg.List.ShowInitialEntries {
+			if entry.Prefix != "" && strings.HasPrefix(text, entry.Prefix) {
+				return matchesVisibilityThreshold(text, cfg.Prefix, entry)
+			} else {
+				if entry.IgnoreUnprefixed {
+					return false
+				}
+
+				return matchesVisibilityThreshold(text, cfg.Prefix, entry)
+			}
+		}
+	} else {
+		if entry.Prefix != "" && strings.HasPrefix(text, entry.Prefix) {
+			return matchesVisibilityThreshold(text, cfg.Prefix, entry)
+		} else {
+			if entry.IgnoreUnprefixed {
+				return false
+			}
+
+			return matchesVisibilityThreshold(text, cfg.Prefix, entry)
+		}
+	}
+
+	return false
+}
+
+func matchesVisibilityThreshold(text, prefix string, entry *util.Entry) bool {
+	if text == "" {
+		return true
+	}
+
+	if prefix != "" && strings.HasPrefix(text, prefix) {
+		if strings.TrimPrefix(text, prefix) == "" {
+			return true
+		}
+	}
+
+	if entry.ScoreFinal > float64(config.Cfg.List.VisibilityThreshold) {
+		return true
+	}
+
+	return false
 }
 
 func setTypeahead(modules []modules.Workable) {

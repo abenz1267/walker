@@ -206,32 +206,34 @@ type CustomCommand struct {
 	TerminalTitleFlag string   `koanf:"terminal_title_flag"`
 }
 
+type BlacklistItems []Blacklist
+
 type GeneralModule struct {
-	AutoSelect         bool        `koanf:"auto_select"`
-	Blacklist          []Blacklist `koanf:"blacklist"`
-	Delay              int         `koanf:"delay"`
-	EagerLoading       bool        `koanf:"eager_loading"`
-	ExternalConfig     bool        `koanf:"external_config"`
-	Hidden             bool        `koanf:"hidden"`
-	History            bool        `koanf:"history"`
-	HistoryBlacklist   []Blacklist `koanf:"history_blacklist"`
-	Icon               string      `koanf:"icon"`
-	KeepSelection      bool        `koanf:"keep_selection"`
-	KeepSort           bool        `koanf:"keep_sort"`
-	MinChars           int         `koanf:"min_chars"`
-	Name               string      `koanf:"name"`
-	OnSelect           string      `koanf:"on_select"`
-	OutputPlaceholder  string      `koanf:"output_placeholder"`
-	Placeholder        string      `koanf:"placeholder"`
-	Prefix             string      `koanf:"prefix"`
-	Refresh            bool        `koanf:"refresh"`
-	ShowIconWhenSingle bool        `koanf:"show_icon_when_single"`
-	ShowSubWhenSingle  bool        `koanf:"show_sub_when_single"`
-	SwitcherOnly       bool        `koanf:"switcher_only"`
-	Theme              string      `koanf:"theme"`
-	ThemeBase          []string    `koanf:"theme_base"`
-	Typeahead          bool        `koanf:"typeahead"`
-	Weight             int         `koanf:"weight"`
+	AutoSelect         bool           `koanf:"auto_select"`
+	Blacklist          BlacklistItems `koanf:"blacklist"`
+	Delay              int            `koanf:"delay"`
+	EagerLoading       bool           `koanf:"eager_loading"`
+	ExternalConfig     bool           `koanf:"external_config"`
+	Hidden             bool           `koanf:"hidden"`
+	History            bool           `koanf:"history"`
+	HistoryBlacklist   []Blacklist    `koanf:"history_blacklist"`
+	Icon               string         `koanf:"icon"`
+	KeepSelection      bool           `koanf:"keep_selection"`
+	KeepSort           bool           `koanf:"keep_sort"`
+	MinChars           int            `koanf:"min_chars"`
+	Name               string         `koanf:"name"`
+	OnSelect           string         `koanf:"on_select"`
+	OutputPlaceholder  string         `koanf:"output_placeholder"`
+	Placeholder        string         `koanf:"placeholder"`
+	Prefix             string         `koanf:"prefix"`
+	Refresh            bool           `koanf:"refresh"`
+	ShowIconWhenSingle bool           `koanf:"show_icon_when_single"`
+	ShowSubWhenSingle  bool           `koanf:"show_sub_when_single"`
+	SwitcherOnly       bool           `koanf:"switcher_only"`
+	Theme              string         `koanf:"theme"`
+	ThemeBase          []string       `koanf:"theme_base"`
+	Typeahead          bool           `koanf:"typeahead"`
+	Weight             int            `koanf:"weight"`
 
 	// internal
 	HasInitialSetup bool `koanf:"-"`
@@ -247,7 +249,19 @@ type Blacklist struct {
 	Reg *regexp.Regexp `koanf:"-"`
 }
 
-func (b *Blacklist) Match(entry util.Entry) bool {
+func (items BlacklistItems) Contains(entry *util.Entry) bool {
+	if len(items) > 0 {
+		for _, b := range items {
+			if b.Match(entry) {
+				return true
+			}
+		}
+	}
+
+	return false
+}
+
+func (b *Blacklist) Match(entry *util.Entry) bool {
 	if !b.Label && !b.Sub {
 		if b.Reg.MatchString(entry.Label) {
 			return true

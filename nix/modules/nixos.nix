@@ -80,7 +80,7 @@ in {
       systemd.services.walker = mkIf cfg.runAsService {
         description = "Walker - Application Runner";
         wantedBy = ["graphical-session.target"];
-        service = {
+        serviceConfig = {
           ExecStart = "${getExe cfg.package} --gapplication-service";
           Restart = "on-failure";
         };

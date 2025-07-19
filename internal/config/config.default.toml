@@ -57,7 +57,6 @@ labels = "jkl;asdf"
 
 [builtins.hyprland_keybinds]
 show_sub_when_single = true
-path = "~/.config/hypr/hyprland.conf"
 weight = 5
 name = "hyprland_keybinds"
 placeholder = "Hyprland Keybinds"

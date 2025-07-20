@@ -1105,6 +1105,8 @@ func quit(ignoreEvent bool) {
 		}
 
 		elements.appwin.SetVisible(false)
+
+		common.items.Splice(0, int(common.items.NItems()))
 	})
 
 	isAi = false

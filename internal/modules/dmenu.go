@@ -7,6 +7,7 @@ import (
 	"net"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -162,6 +163,7 @@ func (d *Dmenu) Cleanup() {
 	d.Config.Icon = d.initialIconColumn
 	d.Config.Value = d.initialValueColumn
 	content = []string{}
+	runtime.GC()
 }
 
 func (d *Dmenu) StartListening() {

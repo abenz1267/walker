@@ -836,6 +836,11 @@ func reopen() {
 	if appstate.IsRunning {
 		if config.Cfg.CloseWhenOpen {
 			if appstate.IsService {
+
+				if appstate.IsDmenu {
+					handleDmenuResult("CNCLD")
+				}
+
 				quit(false)
 			} else {
 				exit(false, false)

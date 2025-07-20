@@ -44,8 +44,6 @@ func main() {
 
 	var wg sync.WaitGroup
 
-	var cancelled bool
-
 	if len(os.Args) > 1 {
 		args := os.Args[1:]
 
@@ -304,7 +302,13 @@ Type=Application
 
 		if state.IsDmenu {
 			go func() {
-				cmd.PrintLiteral(fmt.Sprintf("%s\n", <-state.DmenuResultChan))
+				result := <-state.DmenuResultChan
+				cmd.PrintLiteral(fmt.Sprintf("%s\n", result))
+
+				if result == "CNCLD" {
+					cmd.SetExitStatus(130)
+				}
+
 				cmd.Done()
 			}()
 		} else {
@@ -358,10 +362,6 @@ Type=Application
 	code := app.Run(os.Args)
 
 	wg.Wait()
-
-	if cancelled {
-		code = 2
-	}
 
 	os.Exit(code)
 }

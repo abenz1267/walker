@@ -529,9 +529,7 @@ func handleDmenuResult(result string) {
 			}
 		}
 	} else {
-		if result != "CNCLD" {
-			fmt.Println(result)
-		}
+		fmt.Println(result)
 	}
 }
 
@@ -1117,7 +1115,7 @@ func exit(ignoreEvent bool, cancel bool) {
 	code := 0
 
 	if cancel {
-		code = 2
+		code = 130
 	}
 
 	if !ignoreEvent {

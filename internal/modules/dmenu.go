@@ -36,7 +36,7 @@ func (d *Dmenu) General() *config.GeneralModule {
 }
 
 func (d *Dmenu) Entries(term string) []*util.Entry {
-	entries := []*util.Entry{}
+	entries := make([]*util.Entry, 0, len(content))
 
 	for _, v := range content {
 		label := v
@@ -183,17 +183,17 @@ func (d *Dmenu) StartListening() {
 
 		scanner := bufio.NewScanner(conn)
 
-		const maxCapacity = 64 * 1024 * 1024 // 64MB
+		const maxCapacity = 2 << 20 // 2MB
 
 		buf := make([]byte, maxCapacity)
 		scanner.Buffer(buf, maxCapacity)
 
-		var newContent []string
+		content = []string{}
 
 		for scanner.Scan() {
 			line := scanner.Text()
 			if line != "" {
-				newContent = append(newContent, line)
+				content = append(content, line)
 			}
 		}
 
@@ -202,7 +202,6 @@ func (d *Dmenu) StartListening() {
 			return
 		}
 
-		content = newContent
 		d.DmenuShowChan <- true
 	}
 }
@@ -219,6 +218,7 @@ func (d Dmenu) Send() {
 	for scanner.Scan() {
 		msg := fmt.Sprintf("%s\n", scanner.Text())
 
+		fmt.Println("sending", []byte(msg))
 		_, err = conn.Write([]byte(msg))
 		if err != nil {
 			log.Panic(err)

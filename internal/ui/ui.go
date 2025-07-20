@@ -895,7 +895,7 @@ func reopen() {
 	executeEvent(config.EventLaunch, "")
 
 	glib.IdleAdd(func() {
-		if appstate.Hidebar {
+		if appstate.Hidebar || layout.Window.Box.Search.Hide {
 			elements.search.SetVisible(false)
 		} else {
 			elements.search.SetVisible(true)

@@ -343,6 +343,8 @@ func GetLayout(theme string, base []string) (*UI, error) {
 	locations := []string{dir}
 	locations = append(locations, Cfg.ThemeLocation...)
 
+	notFound := []string{}
+
 	for _, dir := range locations {
 		for _, v := range base {
 			if v == "default" {
@@ -368,8 +370,14 @@ func GetLayout(theme string, base []string) (*UI, error) {
 			} else if util.FileExists(yamlFile) {
 				cfgErr = layout.Load(file.Provider(yamlFile), yaml.Parser())
 			} else {
-				slog.Error("layout", "not found", v)
+				notFound = append(notFound, v)
 			}
+		}
+	}
+
+	if len(notFound) > 0 {
+		for _, v := range notFound {
+			slog.Error("layout", "not found", v)
 		}
 	}
 

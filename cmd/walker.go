@@ -376,6 +376,6 @@ func listenActivationSocket() {
 		}
 		conn.Close()
 
-		ui.Show(app)
+		go ui.Show(app)
 	}
 }

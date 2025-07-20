@@ -344,6 +344,7 @@ func GetLayout(theme string, base []string) (*UI, error) {
 	locations = append(locations, Cfg.ThemeLocation...)
 
 	notFound := make(map[string]struct{})
+	found := make(map[string]struct{})
 
 	for _, dir := range locations {
 		for _, v := range base {
@@ -365,13 +366,13 @@ func GetLayout(theme string, base []string) (*UI, error) {
 
 			if util.FileExists(tomlFile) {
 				cfgErr = layout.Load(file.Provider(tomlFile), toml.Parser())
-				delete(notFound, v)
+				found[v] = struct{}{}
 			} else if util.FileExists(jsonFile) {
 				cfgErr = layout.Load(file.Provider(jsonFile), json.Parser())
-				delete(notFound, v)
+				found[v] = struct{}{}
 			} else if util.FileExists(yamlFile) {
 				cfgErr = layout.Load(file.Provider(yamlFile), yaml.Parser())
-				delete(notFound, v)
+				found[v] = struct{}{}
 			} else {
 				notFound[v] = struct{}{}
 			}
@@ -380,7 +381,9 @@ func GetLayout(theme string, base []string) (*UI, error) {
 
 	if len(notFound) > 0 {
 		for k := range notFound {
-			slog.Error("layout", "not found", k)
+			if _, ok := found[k]; !ok {
+				slog.Error("layout", "not found", k)
+			}
 		}
 	}
 

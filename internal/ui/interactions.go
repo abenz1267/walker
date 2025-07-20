@@ -1056,12 +1056,10 @@ func quit(ignoreEvent bool) {
 	timeoutTimer = nil
 
 	if singleModule != nil {
-		if _, ok := mergedLayouts[singleModule.General().Name]; ok {
-			glib.IdleAdd(func() {
-				layout, _ = config.GetLayout(config.Cfg.Theme, config.Cfg.ThemeBase)
-				setupLayout(config.Cfg.Theme, config.Cfg.ThemeBase)
-			})
-		}
+		glib.IdleAdd(func() {
+			layout, _ = config.GetLayout(config.Cfg.Theme, config.Cfg.ThemeBase)
+			setupLayout(config.Cfg.Theme, config.Cfg.ThemeBase)
+		})
 
 		resetSingleModule()
 	}

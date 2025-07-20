@@ -36,7 +36,8 @@ var (
 	elements          *Elements
 	startupTheme      string
 	layout            *config.UI
-	layouts           map[string]*config.UI
+	mergedLayouts     map[string]*config.UI
+	themes            map[string]*config.UI
 	common            *Common
 	explicits         []modules.Workable
 	toUse             []modules.Workable
@@ -113,7 +114,8 @@ func Activate(state *state.AppState) func(app *gtk.Application) {
 }
 
 func initialUISetup(app *gtk.Application) {
-	layouts = make(map[string]*config.UI)
+	mergedLayouts = make(map[string]*config.UI)
+	themes = make(map[string]*config.UI)
 
 	hstry = history.Get()
 
@@ -208,7 +210,7 @@ func initialUISetup(app *gtk.Application) {
 	} else {
 		g := singleModule.General()
 
-		if val, ok := layouts[g.Name]; ok {
+		if val, ok := mergedLayouts[g.Name]; ok {
 			layout = val
 
 			theme := g.Theme
@@ -240,7 +242,7 @@ func initialUISetup(app *gtk.Application) {
 	handleTimeout()
 
 	if config.Cfg.IsService && config.Cfg.HotreloadTheme {
-		go watchTheme()
+		// go watchTheme()
 	}
 
 	if appstate.Benchmark {
@@ -863,7 +865,7 @@ func reopen() {
 	setupSingleModule()
 
 	if singleModule != nil {
-		val, ok := layouts[singleModule.General().Name]
+		val, ok := mergedLayouts[singleModule.General().Name]
 		if ok {
 			layout = val
 
@@ -877,6 +879,7 @@ func reopen() {
 
 			setupLayout(theme, themeBase)
 		} else if appstate.ExplicitTheme != "" {
+			layout = themes[appstate.ExplicitTheme]
 			setupLayout(appstate.ExplicitTheme, nil)
 		}
 

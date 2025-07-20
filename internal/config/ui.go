@@ -314,6 +314,9 @@ func checkForDefaultCss() {
 	}
 }
 
+func MergeLayouts(theme, base string) {
+}
+
 func GetLayout(theme string, base []string) (*UI, error) {
 	layout := koanf.New(".")
 

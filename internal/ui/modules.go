@@ -10,6 +10,7 @@ import (
 	"path/filepath"
 	"regexp"
 	"slices"
+	"strings"
 	"time"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -90,10 +91,33 @@ func prepareBlacklists() {
 }
 
 func setupLayouts(modules []modules.Workable) {
+	base, _ := util.ThemeDir()
+	dirs := []string{base}
+	dirs = append(dirs, config.Cfg.ThemeLocation...)
+
+	list := make(map[string]struct{})
+
+	for _, v := range dirs {
+		filepath.Walk(v, func(path string, info fs.FileInfo, err error) error {
+			if !info.IsDir() {
+				name := strings.TrimSuffix(info.Name(), filepath.Ext(info.Name()))
+				if name != "" {
+					list[name] = struct{}{}
+				}
+			}
+
+			return nil
+		})
+	}
+
+	for k := range list {
+		themes[k], layoutErr = config.GetLayout(k, nil)
+	}
+
 	for _, v := range modules {
 		g := v.General()
 		if v != nil && g.Theme != "" && g.Theme != config.Cfg.Theme {
-			layouts[g.Name], layoutErr = config.GetLayout(g.Theme, g.ThemeBase)
+			mergedLayouts[g.Name], layoutErr = config.GetLayout(g.Theme, g.ThemeBase)
 		}
 	}
 }

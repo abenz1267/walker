@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	_ "embed"
 	"fmt"
 	"log"
@@ -17,7 +18,6 @@ import (
 	"time"
 
 	"github.com/abenz1267/walker/internal/config"
-	"github.com/abenz1267/walker/internal/modules"
 	"github.com/abenz1267/walker/internal/modules/clipboard"
 	"github.com/abenz1267/walker/internal/state"
 	"github.com/abenz1267/walker/internal/ui"
@@ -39,10 +39,6 @@ var app *gtk.Application
 
 func main() {
 	state := state.Get()
-
-	defer func() {
-		os.Remove(modules.DmenuSocketAddrReply)
-	}()
 
 	appName := "dev.benz.walker"
 
@@ -89,22 +85,6 @@ func main() {
 			if state.IsService {
 				state.ConfigError = config.Init(state.ExplicitConfig)
 				state.StartServiceableModules()
-			}
-
-			if slices.Contains(args, "-d") || slices.Contains(args, "--dmenu") {
-				if !isNew && !state.IsService {
-					if util.FileExists(modules.DmenuSocketAddrGet) {
-						wg.Add(1)
-
-						dmenu := modules.Dmenu{}
-						dmenu.Send()
-
-						go func(wg *sync.WaitGroup) {
-							cancelled = dmenu.ListenForReply()
-							wg.Done()
-						}(&wg)
-					}
-				}
 			}
 
 			if slices.Contains(args, "-A") || slices.Contains(args, "--enableautostart") {
@@ -202,6 +182,26 @@ Type=Application
 			valueString := options.LookupValue("value", glib.NewVariantString("").Type())
 			separatorString := options.LookupValue("separator", glib.NewVariantString("").Type())
 			activeItemString := options.LookupValue("active", glib.NewVariantString("").Type())
+
+			if state.IsService {
+				stdin := cmd.Stdin()
+				if stdin == nil {
+					fmt.Println("No stdin available")
+					return 1
+				}
+
+				reader := gio.NewDataInputStream(stdin)
+				ctx := context.Background()
+
+				for {
+					size, res, err := reader.ReadLine(ctx)
+					if err == nil && size != 0 {
+						state.Dmenu.Append(string(res))
+					} else {
+						break
+					}
+				}
+			}
 
 			if separatorString != nil && separatorString.String() != "" {
 				if state.Dmenu != nil {
@@ -301,7 +301,15 @@ Type=Application
 		}
 
 		app.Activate()
-		cmd.Done()
+
+		if state.IsDmenu {
+			go func() {
+				cmd.PrintLiteral(fmt.Sprintf("%s\n", <-state.DmenuResultChan))
+				cmd.Done()
+			}()
+		} else {
+			cmd.Done()
+		}
 
 		return 0
 	})
@@ -327,9 +335,6 @@ Type=Application
 
 				switch signal {
 				case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGQUIT:
-					os.Remove(modules.DmenuSocketAddrGet)
-					os.Remove(modules.DmenuSocketAddrReply)
-
 					os.Exit(0)
 				case syscall.SIGUSR1:
 					if state.Clipboard != nil {

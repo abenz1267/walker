@@ -1,0 +1,23 @@
+#!/bin/bash
+
+show_power_menu() {
+  # The first characters are invisible sort keys.
+  local menu_options="\u200B Lock
+\u200C󰤄 Suspend
+\u200D Relaunch
+\u2060󰜉 Restart
+\u2063󰐥 Shutdown"
+  local selection=$(echo -e "$menu_options" | go run walker.go --dmenu --theme power)
+
+  echo $selection
+  #
+  # case "$selection" in
+  # *Lock*) hyprlock ;;
+  # *Suspend*) systemctl suspend ;;
+  # *Relaunch*) uwsm stop ;;
+  # *Restart*) systemctl reboot ;;
+  # *Shutdown*) systemctl poweroff ;;
+  # esac
+}
+
+show_power_menu

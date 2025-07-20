@@ -24,6 +24,7 @@ type AppState struct {
 	DmenuLabelColumn    int
 	DmenuIconColumn     int
 	DmenuValueColumn    int
+	DmenuResultChan     chan string
 	ExplicitConfig      string
 	ExplicitModules     []string
 	DmenuShowChan       chan bool
@@ -51,13 +52,13 @@ func Get() *AppState {
 	_, isDebug := os.LookupEnv("DEBUG")
 
 	return &AppState{
-		IsService:      false,
-		IsDebug:        isDebug,
-		IsRunning:      false,
-		HasUI:          false,
-		ExplicitConfig: "config.json",
-		JSRuntime:      getJsRuntime(),
-		DmenuShowChan:  make(chan bool, 1),
+		IsService:       false,
+		IsDebug:         isDebug,
+		IsRunning:       false,
+		HasUI:           false,
+		ExplicitConfig:  "config.json",
+		JSRuntime:       getJsRuntime(),
+		DmenuResultChan: make(chan string),
 	}
 }
 

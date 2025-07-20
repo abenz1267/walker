@@ -525,7 +525,7 @@ func handleDmenuResult(result string) {
 	if appstate.IsService {
 		for _, v := range toUse {
 			if v.General().Name == "dmenu" {
-				v.(*modules.Dmenu).Reply(result)
+				appstate.DmenuResultChan <- result
 			}
 		}
 	} else {

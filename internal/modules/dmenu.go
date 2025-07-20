@@ -2,21 +2,12 @@ package modules
 
 import (
 	"bufio"
-	"fmt"
-	"log"
-	"net"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
+	"sync"
 
 	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/util"
-)
-
-var (
-	DmenuSocketAddrGet   = filepath.Join(util.TmpDir(), "walker-dmenu.sock")
-	DmenuSocketAddrReply = filepath.Join(util.TmpDir(), "walker-dmenu-reply.sock")
 )
 
 var content []string
@@ -29,6 +20,7 @@ type Dmenu struct {
 	initialValueColumn int
 	IsService          bool
 	DmenuShowChan      chan bool
+	mut                sync.Mutex
 }
 
 func (d *Dmenu) General() *config.GeneralModule {
@@ -86,64 +78,6 @@ func (d *Dmenu) Entries(term string) []*util.Entry {
 	return entries
 }
 
-func (Dmenu) Reply(res string) {
-	if !util.FileExists(DmenuSocketAddrReply) {
-		return
-	}
-
-	conn, err := net.Dial("unix", DmenuSocketAddrReply)
-	if err != nil {
-		log.Println(err)
-		return
-	}
-	defer conn.Close()
-
-	_, err = conn.Write([]byte(res))
-	if err != nil {
-		log.Println(err)
-	}
-}
-
-func (d Dmenu) ListenForReply() bool {
-	os.Remove(DmenuSocketAddrReply)
-
-	l, err := net.ListenUnix("unix", &net.UnixAddr{Name: DmenuSocketAddrReply})
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
-
-	for {
-		conn, err := l.AcceptUnix()
-		if err != nil {
-			log.Panic(err)
-		}
-
-		b := make([]byte, 1_048_576)
-		i, err := conn.Read(b)
-		if err != nil {
-			if err.Error() == "EOF" {
-				break
-			} else {
-				log.Panic(err)
-			}
-			continue
-		}
-
-		res := string(b[:i])
-
-		if res != "CNCLD" {
-			fmt.Println(res)
-		} else {
-			return true
-		}
-
-		break
-	}
-
-	return false
-}
-
 func (d *Dmenu) Setup() bool {
 	d.Config = config.Cfg.Builtins.Dmenu
 
@@ -163,72 +97,10 @@ func (d *Dmenu) Cleanup() {
 	d.Config.Icon = d.initialIconColumn
 	d.Config.Value = d.initialValueColumn
 	content = []string{}
-	runtime.GC()
-}
-
-func (d *Dmenu) StartListening() {
-	os.Remove(DmenuSocketAddrGet)
-
-	l, err := net.ListenUnix("unix", &net.UnixAddr{Name: DmenuSocketAddrGet})
-	if err != nil {
-		panic(err)
-	}
-	defer l.Close()
-
-	for {
-		conn, err := l.AcceptUnix()
-		if err != nil {
-			log.Panic(err)
-		}
-
-		scanner := bufio.NewScanner(conn)
-
-		const maxCapacity = 2 << 20 // 2MB
-
-		buf := make([]byte, maxCapacity)
-		scanner.Buffer(buf, maxCapacity)
-
-		content = []string{}
-
-		for scanner.Scan() {
-			line := scanner.Text()
-			if line != "" {
-				content = append(content, line)
-			}
-		}
-
-		if err := scanner.Err(); err != nil {
-			log.Printf("Error scanning connection: %v", err)
-			return
-		}
-
-		d.DmenuShowChan <- true
-	}
-}
-
-func (d Dmenu) Send() {
-	conn, err := net.Dial("unix", DmenuSocketAddrGet)
-	if err != nil {
-		log.Panic(err)
-	}
-	defer conn.Close()
-
-	scanner := bufio.NewScanner(os.Stdin)
-
-	for scanner.Scan() {
-		msg := fmt.Sprintf("%s\n", scanner.Text())
-
-		fmt.Println("sending", []byte(msg))
-		_, err = conn.Write([]byte(msg))
-		if err != nil {
-			log.Panic(err)
-		}
-	}
 }
 
 func (d *Dmenu) SetupData() {
 	if config.Cfg.IsService {
-		go d.StartListening()
 		d.IsService = true
 	}
 
@@ -246,4 +118,10 @@ func (d *Dmenu) SetupData() {
 
 func (d *Dmenu) Refresh() {
 	d.Config.IsSetup = !d.Config.Refresh
+}
+
+func (d *Dmenu) Append(in string) {
+	d.mut.Lock()
+	content = append(content, in)
+	d.mut.Unlock()
 }

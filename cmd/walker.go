@@ -13,7 +13,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -41,8 +40,6 @@ func main() {
 	state := state.Get()
 
 	appName := "dev.benz.walker"
-
-	var wg sync.WaitGroup
 
 	if len(os.Args) > 1 {
 		args := os.Args[1:]
@@ -361,8 +358,6 @@ Type=Application
 
 	code := app.Run(os.Args)
 
-	wg.Wait()
-
 	os.Exit(code)
 }
 
@@ -381,6 +376,6 @@ func listenActivationSocket() {
 		}
 		conn.Close()
 
-		go ui.Show(app)
+		ui.Show(app)
 	}
 }

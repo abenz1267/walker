@@ -7,6 +7,8 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
+	"runtime/debug"
 	"slices"
 	"strings"
 	"sync"
@@ -1107,6 +1109,9 @@ func quit(ignoreEvent bool) {
 
 	isAi = false
 	blockTimeout = false
+
+	runtime.GC()
+	debug.FreeOSMemory()
 
 	common.app.Hold()
 }

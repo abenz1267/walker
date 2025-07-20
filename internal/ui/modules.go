@@ -193,11 +193,19 @@ func setAvailables() {
 		if appstate.Dmenu != nil {
 			available = append(available, appstate.Dmenu)
 			config.Cfg.Available = append(config.Cfg.Available, appstate.Dmenu.General().Name)
+
+			if appstate.Dmenu.Config.Hidden {
+				config.Cfg.Hidden = append(config.Cfg.Hidden, appstate.Dmenu.General().Name)
+			}
 		}
 
 		if appstate.Clipboard != nil {
 			available = append(available, appstate.Clipboard)
 			config.Cfg.Available = append(config.Cfg.Available, appstate.Clipboard.General().Name)
+
+			if appstate.Clipboard.General().Hidden {
+				config.Cfg.Hidden = append(config.Cfg.Hidden, appstate.Clipboard.General().Name)
+			}
 		}
 	}
 

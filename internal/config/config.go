@@ -61,6 +61,7 @@ type Config struct {
 	Terminal            string         `koanf:"terminal"`
 	TerminalTitleFlag   string         `koanf:"terminal_title_flag"`
 	ThemeLocation       []string       `koanf:"theme_location"`
+	PluginLocation      []string       `koanf:"plugin_location"`
 	Theme               string         `koanf:"theme"`
 	ThemeBase           []string       `koanf:"theme_base"`
 	Timeout             int            `koanf:"timeout"`
@@ -530,6 +531,12 @@ func Init(config string) error {
 	for k, v := range Cfg.ThemeLocation {
 		if strings.HasPrefix(v, "~") {
 			Cfg.ThemeLocation[k] = strings.ReplaceAll(v, "~", hDir)
+		}
+	}
+
+	for k, v := range Cfg.PluginLocation {
+		if strings.HasPrefix(v, "~") {
+			Cfg.PluginLocation[k] = strings.ReplaceAll(v, "~", hDir)
 		}
 	}
 

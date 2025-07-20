@@ -251,64 +251,69 @@ func loadPluginsFromDisk() {
 		return
 	}
 
-	filepath.Walk(path, func(path string, info fs.FileInfo, err error) error {
-		if info.IsDir() {
+	locations := []string{path}
+	locations = append(locations, config.Cfg.PluginLocation...)
+
+	for _, v := range locations {
+		filepath.Walk(v, func(path string, info fs.FileInfo, err error) error {
+			if info.IsDir() {
+				return nil
+			}
+
+			executeWith := ""
+
+			switch filepath.Ext(path) {
+			case ".cjs", ".js":
+				executeWith = "node"
+			case ".lua":
+				executeWith = "lua"
+			}
+
+			// check if file is executable
+			if executeWith == "" && info.Mode()&0111 == 0 {
+				return nil
+			}
+
+			cmd := exec.Command(path, "info")
+			if executeWith != "" {
+				cmd = exec.Command(executeWith, path, "info")
+			}
+
+			out, err := cmd.CombinedOutput()
+			if err != nil {
+				slog.Error("plugins", err, "plugin", path)
+				return nil
+			}
+
+			defaults := koanf.New(".")
+
+			err = defaults.Load(rawbytes.Provider(out), toml.Parser())
+			if err != nil {
+				slog.Error("plugins", err, "plugin", path)
+				return nil
+			}
+
+			plugin := config.Plugin{}
+
+			err = defaults.Unmarshal("", &plugin)
+			if err != nil {
+				slog.Error("plugins", err, "plugin", path)
+				return nil
+			}
+
+			plugin.Src = fmt.Sprintf("%s entries", path)
+
+			if executeWith != "" {
+				plugin.Src = fmt.Sprintf("%s %s entries", executeWith, path)
+			}
+
+			if plugin.SrcOnce == "yes" {
+				plugin.SrcOnce = plugin.Src
+			}
+
+			config.Cfg.Plugins = append(config.Cfg.Plugins, plugin)
+
 			return nil
-		}
-
-		executeWith := ""
-
-		switch filepath.Ext(path) {
-		case ".cjs", ".js":
-			executeWith = "node"
-		case ".lua":
-			executeWith = "lua"
-		}
-
-		// check if file is executable
-		if executeWith == "" && info.Mode()&0111 == 0 {
-			return nil
-		}
-
-		cmd := exec.Command(path, "info")
-		if executeWith != "" {
-			cmd = exec.Command(executeWith, path, "info")
-		}
-
-		out, err := cmd.CombinedOutput()
-		if err != nil {
-			slog.Error("plugins", err, "plugin", path)
-			return nil
-		}
-
-		defaults := koanf.New(".")
-
-		err = defaults.Load(rawbytes.Provider(out), toml.Parser())
-		if err != nil {
-			slog.Error("plugins", err, "plugin", path)
-			return nil
-		}
-
-		plugin := config.Plugin{}
-
-		err = defaults.Unmarshal("", &plugin)
-		if err != nil {
-			slog.Error("plugins", err, "plugin", path)
-			return nil
-		}
-
-		plugin.Src = fmt.Sprintf("%s entries", path)
-
-		if executeWith != "" {
-			plugin.Src = fmt.Sprintf("%s %s entries", executeWith, path)
-		}
-
-		if plugin.SrcOnce == "yes" {
-			plugin.SrcOnce = plugin.Src
-		}
-
-		config.Cfg.Plugins = append(config.Cfg.Plugins, plugin)
-
-		return nil
-	})
+		})
+	}
 }

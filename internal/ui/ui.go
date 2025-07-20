@@ -1058,18 +1058,21 @@ func setupLayout(theme string, base []string) {
 }
 
 func watchTheme() {
-	dir, _ := util.ThemeDir()
-	themes := filepath.Join(dir)
+	themes, _ := util.ThemeDir()
+	locations := []string{themes}
+	locations = append(locations, config.Cfg.ThemeLocation...)
 
 	watcher, err := fsnotify.NewWatcher()
 	if err != nil {
 		log.Panicln(err)
 	}
 
-	err = watcher.Add(themes)
-	if err != nil {
-		slog.Error("watcher", "add", err)
-		return
+	for _, v := range locations {
+		err = watcher.Add(v)
+		if err != nil {
+			slog.Error("watcher", "add", err)
+			return
+		}
 	}
 
 	go func() {

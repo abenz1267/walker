@@ -11,6 +11,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/joho/godotenv"
@@ -59,6 +60,7 @@ type Config struct {
 	Search              Search         `koanf:"search"`
 	Terminal            string         `koanf:"terminal"`
 	TerminalTitleFlag   string         `koanf:"terminal_title_flag"`
+	ThemeLocation       []string       `koanf:"theme_location"`
 	Theme               string         `koanf:"theme"`
 	ThemeBase           []string       `koanf:"theme_base"`
 	Timeout             int            `koanf:"timeout"`
@@ -523,6 +525,13 @@ func Init(config string) error {
 	}
 
 	Cfg = parsed
+
+	hDir, _ := os.UserHomeDir()
+	for k, v := range Cfg.ThemeLocation {
+		if strings.HasPrefix(v, "~") {
+			Cfg.ThemeLocation[k] = strings.ReplaceAll(v, "~", hDir)
+		}
+	}
 
 	setTerminal()
 

@@ -337,32 +337,36 @@ func GetLayout(theme string, base []string) (*UI, error) {
 	var cfgErr error
 
 	dir, _ := util.ThemeDir()
+	locations := []string{dir}
+	locations = append(locations, Cfg.ThemeLocation...)
 
-	for _, v := range base {
-		if v == "default" {
-			defTheme := defaultThemeLayout
+	for _, dir := range locations {
+		for _, v := range base {
+			if v == "default" {
+				defTheme := defaultThemeLayout
 
-			if Cfg.AsWindow {
-				defTheme = defaultWindowThemeLayout
+				if Cfg.AsWindow {
+					defTheme = defaultWindowThemeLayout
+				}
+
+				cfgErr = layout.Load(rawbytes.Provider(defTheme), toml.Parser())
+
+				continue
 			}
 
-			cfgErr = layout.Load(rawbytes.Provider(defTheme), toml.Parser())
+			tomlFile := filepath.Join(dir, fmt.Sprintf("%s.toml", v))
+			jsonFile := filepath.Join(dir, fmt.Sprintf("%s.json", v))
+			yamlFile := filepath.Join(dir, fmt.Sprintf("%s.yaml", v))
 
-			continue
-		}
-
-		tomlFile := filepath.Join(dir, fmt.Sprintf("%s.toml", v))
-		jsonFile := filepath.Join(dir, fmt.Sprintf("%s.json", v))
-		yamlFile := filepath.Join(dir, fmt.Sprintf("%s.yaml", v))
-
-		if util.FileExists(tomlFile) {
-			cfgErr = layout.Load(file.Provider(tomlFile), toml.Parser())
-		} else if util.FileExists(jsonFile) {
-			cfgErr = layout.Load(file.Provider(jsonFile), json.Parser())
-		} else if util.FileExists(yamlFile) {
-			cfgErr = layout.Load(file.Provider(yamlFile), yaml.Parser())
-		} else {
-			slog.Error("layout", "not found", v)
+			if util.FileExists(tomlFile) {
+				cfgErr = layout.Load(file.Provider(tomlFile), toml.Parser())
+			} else if util.FileExists(jsonFile) {
+				cfgErr = layout.Load(file.Provider(jsonFile), json.Parser())
+			} else if util.FileExists(yamlFile) {
+				cfgErr = layout.Load(file.Provider(yamlFile), yaml.Parser())
+			} else {
+				slog.Error("layout", "not found", v)
+			}
 		}
 	}
 

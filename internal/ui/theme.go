@@ -69,12 +69,19 @@ func getCSS(theme string) []byte {
 	var css []byte
 
 	dir, _ := util.ThemeDir()
-	file := filepath.Join(dir, fmt.Sprintf("%s.css", theme))
+	locations := []string{dir}
+	locations = append(locations, config.Cfg.ThemeLocation...)
 
-	if _, err := os.Stat(file); err == nil {
-		css, err = os.ReadFile(file)
-		if err != nil {
-			log.Panicln(err)
+	for _, v := range locations {
+		file := filepath.Join(v, fmt.Sprintf("%s.css", theme))
+
+		if _, err := os.Stat(file); err == nil {
+			css, err = os.ReadFile(file)
+			if err != nil {
+				log.Panicln(err)
+			}
+
+			break
 		}
 	}
 

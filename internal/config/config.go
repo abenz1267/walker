@@ -65,6 +65,7 @@ type Config struct {
 	Theme               string         `koanf:"theme"`
 	ThemeBase           []string       `koanf:"theme_base"`
 	Timeout             int            `koanf:"timeout"`
+	JSRuntime           string         `koanf:"js_runtime"`
 
 	// internal
 	Available []string `koanf:"-"`

@@ -125,6 +125,10 @@ func initialUISetup(app *gtk.Application) {
 		cfgErr = config.Init(appstate.ExplicitConfig)
 	}
 
+	if config.Cfg.JSRuntime != "" {
+		appstate.JSRuntime = config.Cfg.JSRuntime
+	}
+
 	t := 1
 
 	if config.Cfg.Search.Delay > 0 {

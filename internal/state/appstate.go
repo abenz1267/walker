@@ -2,6 +2,7 @@ package state
 
 import (
 	"os"
+	"os/exec"
 	"slices"
 
 	"github.com/abenz1267/walker/internal/config"
@@ -41,6 +42,7 @@ type AppState struct {
 	UsedLabels          []string
 	InitialQuery        string
 	LastQuery           string
+	JSRuntime           string
 }
 
 func Get() *AppState {
@@ -54,8 +56,22 @@ func Get() *AppState {
 		IsRunning:      false,
 		HasUI:          false,
 		ExplicitConfig: "config.json",
+		JSRuntime:      getJsRuntime(),
 		DmenuShowChan:  make(chan bool, 1),
 	}
+}
+
+func getJsRuntime() string {
+	possible := []string{"node", "bun", "deno"}
+
+	for _, v := range possible {
+		pth, _ := exec.LookPath(v)
+		if pth != "" {
+			return v
+		}
+	}
+
+	return ""
 }
 
 func (app *AppState) StartServiceableModules() {

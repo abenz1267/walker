@@ -288,7 +288,7 @@ func loadPluginsFromDisk() {
 
 			switch filepath.Ext(path) {
 			case ".cjs", ".js":
-				executeWith = "node"
+				executeWith = appstate.JSRuntime
 			case ".lua":
 				executeWith = "lua"
 			}

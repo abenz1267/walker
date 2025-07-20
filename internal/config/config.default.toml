@@ -11,6 +11,7 @@ disable_click_to_close = false
 force_keyboard_focus = false
 theme_location = []
 plugin_location = []
+js_runtime = "node"
 
 [keys]
 accept_typeahead = ["tab"]

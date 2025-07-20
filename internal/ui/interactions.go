@@ -675,26 +675,22 @@ func processAsync(text string) {
 		}
 	}()
 
-	hasExplicit := len(explicits) > 0
-
 	p := toUse
-
 	query := text
-	hasPrefix := false
-
+	queryHasPrefix := false
 	prefixes := []string{}
 
-	for _, v := range p {
-		prefix := v.General().Prefix
+	if singleModule == nil {
+		for _, v := range p {
+			prefix := v.General().Prefix
 
-		if len(prefix) > 0 && strings.HasPrefix(text, prefix) {
-			prefixes = append(prefixes, prefix)
-			hasPrefix = true
+			if len(prefix) > 0 && strings.HasPrefix(text, prefix) {
+				prefixes = append(prefixes, prefix)
+				queryHasPrefix = true
+			}
 		}
-	}
 
-	if !hasExplicit {
-		if hasPrefix {
+		if queryHasPrefix {
 			glib.IdleAdd(func() {
 				for _, v := range prefixes {
 					for _, class := range elements.prefixClasses[v] {
@@ -705,7 +701,7 @@ func processAsync(text string) {
 			})
 		}
 	} else {
-		p = explicits
+		p = []modules.Workable{singleModule}
 	}
 
 	setTypeahead(p)
@@ -745,17 +741,17 @@ func processAsync(text string) {
 				}
 			}
 
-			if hasPrefix && prefix == "" {
+			if queryHasPrefix && prefix == "" {
 				wg.Done()
 				continue
 			}
 
-			if !hasPrefix && prefix != "" {
+			if !queryHasPrefix && prefix != "" {
 				wg.Done()
 				continue
 			}
 
-			if hasPrefix && !strings.HasPrefix(text, prefix) {
+			if queryHasPrefix && !strings.HasPrefix(text, prefix) {
 				wg.Done()
 				continue
 			}
@@ -772,7 +768,7 @@ func processAsync(text string) {
 
 			processedModulesKeepSort = append(processedModulesKeepSort, mCfg.KeepSort)
 
-			if len(text) < mCfg.MinChars {
+			if singleModule == nil && len(text) < mCfg.MinChars {
 				return
 			}
 

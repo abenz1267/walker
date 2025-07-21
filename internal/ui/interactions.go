@@ -606,7 +606,7 @@ func process() {
 			elements.spinner.SetVisible(true)
 		}
 
-		go processAsync(text)
+		processAsync(text)
 	} else {
 		common.items.Splice(0, int(common.items.NItems()))
 
@@ -706,108 +706,148 @@ func processAsync(text string) {
 
 	setTypeahead(p)
 
-	var wg sync.WaitGroup
-	wg.Add(len(p))
-
-	keepSort := false || appstate.KeepSort
-
-	processedModulesKeepSort := []bool{}
-
-	if len(p) == 1 {
+	if appstate.IsDmenu {
+		keepSort := false || appstate.KeepSort
+		processedModulesKeepSort := []bool{}
 		keepSort = p[0].General().KeepSort || appstate.KeepSort
 		appstate.IsSingle = true
-	}
 
-	for k := range p {
-		if p[k] == nil {
-			wg.Done()
-			continue
-		}
+		mCfg := appstate.Dmenu.General()
+		processedModulesKeepSort = append(processedModulesKeepSort, mCfg.KeepSort)
+		text = strings.TrimSpace(text)
+		toPush := []*util.Entry{}
 
-		if len(p) > 1 {
-			prefix := p[k].General().Prefix
+		e := appstate.Dmenu.Entries(text)
 
-			if len(appstate.ExplicitModules) == 0 {
-				if p[k].General().SwitcherOnly {
-					if prefix == "" {
-						wg.Done()
-						continue
-					}
-
-					if !strings.HasPrefix(text, prefix) {
-						wg.Done()
-						continue
-					}
+		if text == "" {
+			entries = e
+		} else {
+			for _, v := range e {
+				if evaluateEntry(text, v, mCfg) {
+					toPush = append(toPush, v)
 				}
 			}
 
-			if queryHasPrefix && prefix == "" {
-				wg.Done()
-				continue
-			}
-
-			if !queryHasPrefix && prefix != "" {
-				wg.Done()
-				continue
-			}
-
-			if queryHasPrefix && !strings.HasPrefix(text, prefix) {
-				wg.Done()
-				continue
-			}
-		}
-
-		if !p[k].General().IsSetup {
-			p[k].SetupData()
-		}
-
-		go func(wg *sync.WaitGroup, text string, w modules.Workable) {
-			defer wg.Done()
-
-			mCfg := w.General()
-
-			processedModulesKeepSort = append(processedModulesKeepSort, mCfg.KeepSort)
-
-			if singleModule == nil && len(text) < mCfg.MinChars {
-				return
-			}
-
-			text = strings.TrimSpace(strings.TrimPrefix(text, w.General().Prefix))
-			toPush := []*util.Entry{}
-
-			e := w.Entries(text)
-
-			for k := range e {
-				if evaluateEntry(text, e[k], mCfg) {
-					toPush = append(toPush, e[k])
-				}
-			}
-
-			mut.Lock()
 			entries = append(entries, toPush...)
-			mut.Unlock()
-		}(&wg, text, p[k])
+		}
+
+		if query != lastQuery {
+			return
+		}
+
+		populateList(text, keepSort, processedModulesKeepSort, entries)
+
+	} else {
+		var wg sync.WaitGroup
+		wg.Add(len(p))
+
+		keepSort := false || appstate.KeepSort
+
+		processedModulesKeepSort := []bool{}
+
+		if len(p) == 1 {
+			keepSort = p[0].General().KeepSort || appstate.KeepSort
+			appstate.IsSingle = true
+		}
+
+		for k := range p {
+			if p[k] == nil {
+				wg.Done()
+				continue
+			}
+
+			if len(p) > 1 {
+				prefix := p[k].General().Prefix
+
+				if len(appstate.ExplicitModules) == 0 {
+					if p[k].General().SwitcherOnly {
+						if prefix == "" {
+							wg.Done()
+							continue
+						}
+
+						if !strings.HasPrefix(text, prefix) {
+							wg.Done()
+							continue
+						}
+					}
+				}
+
+				if queryHasPrefix && prefix == "" {
+					wg.Done()
+					continue
+				}
+
+				if !queryHasPrefix && prefix != "" {
+					wg.Done()
+					continue
+				}
+
+				if queryHasPrefix && !strings.HasPrefix(text, prefix) {
+					wg.Done()
+					continue
+				}
+			}
+
+			if !p[k].General().IsSetup {
+				p[k].SetupData()
+			}
+
+			go func(wg *sync.WaitGroup, text string, w modules.Workable) {
+				defer wg.Done()
+
+				mCfg := w.General()
+
+				processedModulesKeepSort = append(processedModulesKeepSort, mCfg.KeepSort)
+
+				if singleModule == nil && len(text) < mCfg.MinChars {
+					return
+				}
+
+				text = strings.TrimSpace(strings.TrimPrefix(text, w.General().Prefix))
+				toPush := []*util.Entry{}
+
+				e := w.Entries(text)
+
+				if text == "" && appstate.IsDmenu {
+					entries = e
+					return
+				}
+
+				for _, v := range e {
+					if evaluateEntry(text, v, mCfg) {
+						toPush = append(toPush, v)
+					}
+				}
+
+				mut.Lock()
+				entries = append(entries, toPush...)
+				mut.Unlock()
+			}(&wg, text, p[k])
+		}
+
+		wg.Wait()
+
+		if query != lastQuery {
+			return
+		}
+
+		populateList(text, keepSort, processedModulesKeepSort, entries)
 	}
-
-	wg.Wait()
-
-	if query != lastQuery {
-		return
-	}
-
-	populateList(text, keepSort, processedModulesKeepSort, entries)
 
 	tahAcceptedIdentifier = ""
 }
 
 func populateList(text string, keepSort bool, processedModulesKeepSort []bool, entries []*util.Entry) {
-	if len(processedModulesKeepSort) > 1 {
-		if !keepSort || text != "" {
-			sortEntries(entries, keepSort, false)
-		}
-	} else {
-		if processedModulesKeepSort[0] != true {
-			sortEntries(entries, keepSort, false)
+	if !appstate.IsDmenu || text != "" {
+		if len(processedModulesKeepSort) > 1 {
+			if !keepSort || text != "" {
+				sortEntries(entries, keepSort, false)
+			}
+		} else {
+			if processedModulesKeepSort[0] != true {
+				sortEntries(entries, keepSort, false)
+			}
 		}
 	}
 
@@ -867,6 +907,10 @@ func evaluateEntry(text string, entry *util.Entry, cfg *config.GeneralModule) bo
 		entry.ScoreFinal = 0
 		entry.ScoreFuzzy = 0
 		entry.MatchStartingPos = 0
+	}
+
+	if text == "" && appstate.IsDmenu {
+		return true
 	}
 
 	if entry.ScoreFinal == 0 {
@@ -1045,6 +1089,8 @@ func usageModifier(entry *util.Entry) int {
 }
 
 func quit(ignoreEvent bool) {
+	appstate.DmenuStreamId = 0
+
 	if !ignoreEvent {
 		executeEvent(config.EventExit, "")
 	}

@@ -14,7 +14,7 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
 - typeahead
 - start with explicit modules, style or config
 - drag&drop support
-- dmenu-mode
+- dmenu-mode (with streaming support for large datasets)
 - run as password input
 - theming support (global, per module, with inheritance)
 
@@ -125,7 +125,6 @@ Without these you won't be able to build.
 You have two options of installing walker using Nix.
 
 1.  Using the package exposed by this flake
-
     1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
     2. Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`
 

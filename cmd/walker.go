@@ -108,7 +108,6 @@ func addFlags(app *gtk.Application) {
 	app.AddMainOption("new", 'n', glib.OptionFlagNone, glib.OptionArgNone, "start new instance ignoring service", "")
 	app.AddMainOption("keepsort", 'k', glib.OptionFlagNone, glib.OptionArgNone, "don't sort alphabetically", "")
 	app.AddMainOption("password", 'y', glib.OptionFlagNone, glib.OptionArgNone, "launch in password mode", "")
-	app.AddMainOption("dmenu", 'd', glib.OptionFlagNone, glib.OptionArgNone, "run in dmenu mode", "")
 	app.AddMainOption("config", 'c', glib.OptionFlagNone, glib.OptionArgString, "config file to use", "")
 	app.AddMainOption("theme", 's', glib.OptionFlagNone, glib.OptionArgString, "theme to use", "")
 	app.AddMainOption("clear-clipboard", 'u', glib.OptionFlagNone, glib.OptionArgNone, "clears the clipboard content", "")
@@ -116,16 +115,20 @@ func addFlags(app *gtk.Application) {
 	app.AddMainOption("height", 'h', glib.OptionFlagNone, glib.OptionArgString, "overwrite height", "")
 	app.AddMainOption("placeholder", 'p', glib.OptionFlagNone, glib.OptionArgString, "placeholder text", "")
 	app.AddMainOption("query", 'q', glib.OptionFlagNone, glib.OptionArgString, "initial query", "")
-	app.AddMainOption("label", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
-	app.AddMainOption("icon", 'i', glib.OptionFlagNone, glib.OptionArgString, "column to use for the icon", "")
-	app.AddMainOption("value", 'V', glib.OptionFlagNone, glib.OptionArgString, "column to use for the value", "")
-	app.AddMainOption("separator", 't', glib.OptionFlagNone, glib.OptionArgString, "column separator", "")
 	app.AddMainOption("version", 'v', glib.OptionFlagNone, glib.OptionArgNone, "print version", "")
 	app.AddMainOption("forceprint", 'f', glib.OptionFlagNone, glib.OptionArgNone, "forces printing input if no item is selected", "")
 	app.AddMainOption("active", 'a', glib.OptionFlagNone, glib.OptionArgString, "active item", "")
 	app.AddMainOption("enableautostart", 'A', glib.OptionFlagNone, glib.OptionArgNone, "creates a desktop file for autostarting on login", "")
 	app.AddMainOption("disableautostart", 'D', glib.OptionFlagNone, glib.OptionArgNone, "removes the autostart desktop file", "")
 	app.AddMainOption("createuserconfig", 'C', glib.OptionFlagNone, glib.OptionArgNone, "writes the default config to xdg_user_config", "")
+
+	// dmenu flags
+	app.AddMainOption("dmenu", 'd', glib.OptionFlagNone, glib.OptionArgNone, "run in dmenu mode", "")
+	app.AddMainOption("label", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
+	app.AddMainOption("icon", 'i', glib.OptionFlagNone, glib.OptionArgString, "column to use for the icon", "")
+	app.AddMainOption("value", 'V', glib.OptionFlagNone, glib.OptionArgString, "column to use for the value", "")
+	app.AddMainOption("separator", 't', glib.OptionFlagNone, glib.OptionArgString, "column separator", "")
+	app.AddMainOption("stream", 's', glib.OptionFlagNone, glib.OptionArgNone, "stream data (dmenu)", "")
 }
 
 func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int {
@@ -178,36 +181,32 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 		state.HeightOverwrite = gtkStringToInt(options.LookupValue("height", glib.NewVariantType("s")))
 		state.AutoSelect = options.Contains("autoselect")
 		state.Hidebar = options.Contains("hidebar")
+		state.IsDmenu = options.Contains("dmenu")
 
-		if options.Contains("dmenu") {
+		if state.IsDmenu {
+			state.ExplicitModules = []string{"dmenu"}
+
+			stream := options.Contains("stream")
+			state.Dmenu.General().Stream = stream
+
 			if options.Contains("separator") {
-				if state.Dmenu != nil {
-					state.Dmenu.Separator = options.LookupValue("separator", glib.NewVariantType("s")).String()
-				}
+				state.Dmenu.Separator = options.LookupValue("separator", glib.NewVariantType("s")).String()
 			}
 
 			if options.Contains("label") {
 				col := gtkStringToInt(options.LookupValue("label", glib.NewVariantType("s")))
-
-				if state.Dmenu != nil {
-					state.Dmenu.LabelColumn = col - 1
-				}
+				state.Dmenu.LabelColumn = col - 1
 			}
 
 			if options.Contains("icon") {
 				col := gtkStringToInt(options.LookupValue("icon", glib.NewVariantType("s")))
-
-				if state.Dmenu != nil {
-					state.Dmenu.IconColum = col - 1
-				}
+				state.Dmenu.IconColum = col - 1
 			}
 
 			if options.Contains("value") {
 				col := gtkStringToInt(options.LookupValue("value", glib.NewVariantType("s")))
 
-				if state.Dmenu != nil {
-					state.Dmenu.ValueColumn = col - 1
-				}
+				state.Dmenu.ValueColumn = col - 1
 			}
 
 			if options.Contains("active") {
@@ -216,9 +215,6 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 			} else {
 				state.ActiveItem = nil
 			}
-
-			state.ExplicitModules = []string{"dmenu"}
-			state.IsDmenu = true
 
 			if !slices.Contains(config.Cfg.Disabled, state.Dmenu.General().Name) {
 				stdin := cmd.Stdin()
@@ -230,12 +226,33 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 				reader := gio.NewDataInputStream(stdin)
 				ctx := context.Background()
 
-				for {
-					size, res, err := reader.ReadLine(ctx)
-					if err == nil && size != 0 {
-						state.Dmenu.Append(string(res))
-					} else {
-						break
+				if stream {
+					go func() {
+						id := int(time.Now().UnixMilli())
+						state.DmenuStreamId = id
+						state.Dmenu.ClearEntries()
+
+						for {
+							if id != state.DmenuStreamId {
+								return
+							}
+
+							size, res, err := reader.ReadLine(ctx)
+							if err == nil && size != 0 {
+								state.Dmenu.Append(string(res))
+							} else {
+								break
+							}
+						}
+					}()
+				} else {
+					for {
+						size, res, err := reader.ReadLine(ctx)
+						if err == nil && size != 0 {
+							state.Dmenu.Append(string(res))
+						} else {
+							break
+						}
 					}
 				}
 			}

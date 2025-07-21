@@ -24,6 +24,14 @@ func (d *Dmenu) General() *config.GeneralModule {
 }
 
 func (d *Dmenu) Entries(term string) []*util.Entry {
+	for len(d.entries) == 0 {
+	}
+
+	if d.General().Stream {
+		d.mut.Lock()
+		defer d.mut.Unlock()
+	}
+
 	return d.entries
 }
 
@@ -47,6 +55,10 @@ func (d *Dmenu) SetupData() {
 }
 
 func (d *Dmenu) Refresh() {
+}
+
+func (d *Dmenu) ClearEntries() {
+	d.entries = []*util.Entry{}
 }
 
 func (d *Dmenu) Append(in string) {
@@ -79,9 +91,11 @@ func (d *Dmenu) LineToEntry(in string) *util.Entry {
 	}
 
 	return &util.Entry{
-		Label: label,
-		Icon:  icon,
-		Sub:   "Dmenu",
-		Value: value,
+		Label:            label,
+		Icon:             icon,
+		Sub:              "Dmenu",
+		Value:            value,
+		RecalculateScore: true,
+		Module:           d.Config.Name,
 	}
 }

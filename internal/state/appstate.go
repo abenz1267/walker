@@ -33,6 +33,7 @@ type AppState struct {
 	IsDmenu             bool
 	Dmenu               *modules.Dmenu
 	DmenuResultChan     chan string
+	DmenuStreamId       int
 	ExplicitConfig      string
 	ExplicitModules     []string
 	DmenuShowChan       chan bool

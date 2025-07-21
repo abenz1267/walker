@@ -213,6 +213,7 @@ type CustomCommand struct {
 type BlacklistItems []Blacklist
 
 type GeneralModule struct {
+	Stream             bool
 	AutoSelect         bool           `koanf:"auto_select"`
 	Blacklist          BlacklistItems `koanf:"blacklist"`
 	Delay              int            `koanf:"delay"`

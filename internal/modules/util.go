@@ -7,6 +7,12 @@ import (
 	"github.com/abenz1267/walker/internal/util"
 )
 
+var EntryChan chan *util.Entry
+
+func init() {
+	EntryChan = make(chan *util.Entry)
+}
+
 type Workable interface {
 	Cleanup()
 	Entries(term string) []*util.Entry

@@ -30,41 +30,34 @@ func (d *Dmenu) General() *config.GeneralModule {
 func (d *Dmenu) Entries(term string) []*util.Entry {
 	entries := make([]*util.Entry, 0, len(content))
 
+	iconIndex := d.Config.Icon - 1
+	labelIndex := d.Config.Label - 1
+	valueIndex := d.Config.Value - 1
+
 	for _, v := range content {
 		label := v
 		icon := ""
 		value := ""
 
-		if strings.ContainsRune(label, '\x00') && strings.ContainsRune(label, '\x1f') {
-			split := strings.Split(label, "\x00")
+		split := strings.Split(v, d.Config.Separator)
+
+		if len(split) > 1 {
 			label = split[0]
 			value = label
 
-			split = strings.Split(v, "\x1f")
-			icon = split[1]
-		} else {
-
-			split := strings.Split(v, d.Config.Separator)
-
-			if len(split) > 1 {
-				if d.Config.Icon > 0 {
-					icon = split[d.Config.Icon-1]
-				}
-
-				if d.Config.Label > 0 {
-					label = split[d.Config.Label-1]
-				} else {
-					label = split[0]
-				}
-
-				if d.Config.Value > 0 {
-					value = split[d.Config.Value-1]
-				} else {
-					value = label
-				}
-			} else {
-				value = v
+			if d.Config.Icon > 0 {
+				icon = split[iconIndex]
 			}
+
+			if d.Config.Label > 0 {
+				label = split[labelIndex]
+			}
+
+			if d.Config.Value > 0 {
+				value = split[valueIndex]
+			}
+		} else {
+			value = v
 		}
 
 		entries = append(entries, &util.Entry{

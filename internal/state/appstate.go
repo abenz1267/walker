@@ -47,7 +47,6 @@ type AppState struct {
 	IsService           bool
 	KeepSort            bool
 	Password            bool
-	Benchmark           bool
 	IsSingle            bool
 	Labels              []string
 	LabelsF             []string

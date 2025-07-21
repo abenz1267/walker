@@ -30,97 +30,79 @@ import (
 //go:embed version.txt
 var version string
 
-var now = time.Now().UnixMilli()
-
-var SocketReopen = filepath.Join(util.TmpDir(), "walker-reopen.sock")
-
-var app *gtk.Application
+var (
+	now          = time.Now().UnixMilli()
+	SocketReopen = filepath.Join(util.TmpDir(), "walker-reopen.sock")
+	app          *gtk.Application
+)
 
 func main() {
 	state := state.Get()
-
 	appName := "dev.benz.walker"
 
 	if len(os.Args) > 1 {
 		args := os.Args[1:]
 
-		isNew := false
-
 		if len(os.Args) > 0 {
-			if slices.Contains(args, "-n") || slices.Contains(args, "--new") {
-				isNew = true
+			if slices.Contains(args, "-n") ||
+				slices.Contains(args, "--new") ||
+				slices.Contains(args, "-y") ||
+				slices.Contains(args, "--password") {
+				appName = fmt.Sprintf("%s-%d", appName, time.Now().Unix())
 			}
 
-			if slices.Contains(args, "-y") || slices.Contains(args, "--password") {
-				isNew = true
-			}
-
-			if slices.Contains(args, "-v") || slices.Contains(args, "--version") {
-				fmt.Println(version)
-				return
-			}
-
-			if slices.Contains(args, "-b") || slices.Contains(args, "--benchmark") {
-				fmt.Println("Startup: ", now)
-				state.Benchmark = true
-			}
-
-			if slices.Contains(args, "-x") || slices.Contains(args, "--autoselect") {
-				state.AutoSelect = true
-			}
-
-			if slices.Contains(args, "-C") || slices.Contains(args, "--createuserconfig") {
-				config.WriteUserConfig()
-
-				return
-			}
-
-			state.IsService = slices.Contains(args, "--gapplication-service")
-
-			if state.IsService {
+			if slices.Contains(args, "--gapplication-service") {
+				state.IsService = true
 				state.ConfigError = config.Init(state.ExplicitConfig)
 				state.StartServiceableModules()
-			}
-
-			if slices.Contains(args, "-A") || slices.Contains(args, "--enableautostart") {
-				content := `
-[Desktop Entry]
-Name=Walker
-Comment=Walker Service
-Exec=walker --gapplication-service
-StartupNotify=false
-Terminal=false
-Type=Application
-				`
-
-				dir := filepath.Join(xdg.ConfigHome, "autostart")
-				os.MkdirAll(dir, 0755)
-
-				err := os.WriteFile(filepath.Join(dir, "walker-service.desktop"), []byte(strings.TrimSpace(content)), 0644)
-				if err != nil {
-					log.Panicln(err)
-				}
-
-				return
-			}
-
-			if slices.Contains(args, "-D") || slices.Contains(args, "--disableautostart") {
-				err := os.Remove(filepath.Join(xdg.ConfigHome, "autostart", "walker-service.desktop"))
-				if err != nil {
-					log.Panicln(err)
-				}
-
-				return
-			}
-
-			if isNew {
-				appName = fmt.Sprintf("%s-%d", appName, time.Now().Unix())
 			}
 		}
 	}
 
 	app = gtk.NewApplication(appName, gio.ApplicationHandlesCommandLine)
+	app.Connect("activate", ui.Activate(state))
+	app.ConnectCommandLine(handleCmd(state))
 
+	addFlags(app)
+	app.Flags()
+
+	if state.IsService {
+		go listenActivationSocket()
+
+		app.Hold()
+
+		signal_chan := make(chan os.Signal, 1)
+		signal.Notify(signal_chan,
+			syscall.SIGHUP,
+			syscall.SIGINT,
+			syscall.SIGTERM,
+			syscall.SIGKILL,
+			syscall.SIGQUIT, syscall.SIGUSR1)
+
+		go func() {
+			for {
+				signal := <-signal_chan
+
+				switch signal {
+				case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGQUIT:
+					os.Exit(0)
+				case syscall.SIGUSR1:
+					if state.Clipboard != nil {
+						state.Clipboard.(*clipboard.Clipboard).Update()
+					}
+				default:
+					slog.Error("signal", "error", "unknown signal", signal)
+				}
+			}
+		}()
+	}
+
+	code := app.Run(os.Args)
+
+	os.Exit(code)
+}
+
+func addFlags(app *gtk.Application) {
 	app.AddMainOption("autoselect", 'x', glib.OptionFlagNone, glib.OptionArgNone, "auto select only item in list", "")
 	app.AddMainOption("hidebar", 'H', glib.OptionFlagNone, glib.OptionArgNone, "hide the search bar", "")
 	app.AddMainOption("modules", 'm', glib.OptionFlagNone, glib.OptionArgString, "modules to be loaded", "the modules")
@@ -141,66 +123,52 @@ Type=Application
 	app.AddMainOption("separator", 't', glib.OptionFlagNone, glib.OptionArgString, "column separator", "")
 	app.AddMainOption("version", 'v', glib.OptionFlagNone, glib.OptionArgNone, "print version", "")
 	app.AddMainOption("forceprint", 'f', glib.OptionFlagNone, glib.OptionArgNone, "forces printing input if no item is selected", "")
-	app.AddMainOption("bench", 'b', glib.OptionFlagNone, glib.OptionArgNone, "prints nanoseconds for start and displaying in both service and client", "")
 	app.AddMainOption("active", 'a', glib.OptionFlagNone, glib.OptionArgString, "active item", "")
 	app.AddMainOption("enableautostart", 'A', glib.OptionFlagNone, glib.OptionArgNone, "creates a desktop file for autostarting on login", "")
 	app.AddMainOption("disableautostart", 'D', glib.OptionFlagNone, glib.OptionArgNone, "removes the autostart desktop file", "")
 	app.AddMainOption("createuserconfig", 'C', glib.OptionFlagNone, glib.OptionArgNone, "writes the default config to xdg_user_config", "")
+}
 
-	app.Connect("activate", ui.Activate(state))
-
-	app.ConnectCommandLine(func(cmd *gio.ApplicationCommandLine) int {
-		if state.Benchmark {
-			fmt.Println("start handle cmd: ", time.Now().UnixMilli())
-		}
-
+func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int {
+	return func(cmd *gio.ApplicationCommandLine) int {
 		options := cmd.OptionsDict()
 
-		if options.Contains("clear-clipboard") {
-			state.Clipboard.(*clipboard.Clipboard).Clear()
-
+		if options.Contains("version") {
+			cmd.PrintLiteral(fmt.Sprintf("%s\n", version))
 			cmd.Done()
-
 			return 0
 		}
 
+		if options.Contains("clear-clipboard") {
+			state.Clipboard.(*clipboard.Clipboard).Clear()
+			cmd.Done()
+			return 0
+		}
+
+		if options.Contains("createuserconfig") {
+			config.WriteUserConfig()
+			cmd.Done()
+			return 0
+		}
+
+		if options.Contains("enableautostart") {
+			enableAutostart()
+			cmd.Done()
+			return 0
+		}
+
+		if options.Contains("disableautostart") {
+			disableAutostart()
+			cmd.Done()
+			return 0
+		}
+
+		state.WidthOverwrite = gtkStringToInt(options.LookupValue("width", glib.NewVariantType("s")))
+		state.HeightOverwrite = gtkStringToInt(options.LookupValue("height", glib.NewVariantType("s")))
+		state.AutoSelect = options.Contains("autoselect")
 		state.Hidebar = options.Contains("hidebar")
-		state.Benchmark = options.Contains("bench")
-
-		modulesString := options.LookupValue("modules", glib.NewVariantString("").Type())
-		configString := options.LookupValue("config", glib.NewVariantString("").Type())
-		themeString := options.LookupValue("theme", glib.NewVariantString("").Type())
-		placeholderString := options.LookupValue("placeholder", glib.NewVariantString("").Type())
-		initialQueryString := options.LookupValue("query", glib.NewVariantString("").Type())
-		widthStr := options.LookupValue("width", glib.NewVariantString("").Type())
-		heightStr := options.LookupValue("height", glib.NewVariantString("").Type())
-
-		// no idea how to just get an int. tried every glib Variant possible
-		if widthStr != nil && widthStr.String() != "" {
-			width, err := strconv.Atoi(widthStr.String())
-			if err != nil {
-				slog.Error("argument", "width", err)
-			}
-
-			state.WidthOverwrite = width
-		}
-
-		if heightStr != nil && heightStr.String() != "" {
-			height, err := strconv.Atoi(heightStr.String())
-			if err != nil {
-				slog.Error("argument", "height", err)
-			}
-
-			state.HeightOverwrite = height
-		}
 
 		if options.Contains("dmenu") {
-			labelString := options.LookupValue("label", glib.NewVariantString("").Type())
-			iconString := options.LookupValue("icon", glib.NewVariantString("").Type())
-			valueString := options.LookupValue("value", glib.NewVariantString("").Type())
-			separatorString := options.LookupValue("separator", glib.NewVariantString("").Type())
-			activeItemString := options.LookupValue("active", glib.NewVariantString("").Type())
-
 			if state.IsService {
 				stdin := cmd.Stdin()
 				if stdin == nil {
@@ -221,19 +189,16 @@ Type=Application
 				}
 			}
 
-			if separatorString != nil && separatorString.String() != "" {
+			if options.Contains("separator") {
 				if state.Dmenu != nil {
-					state.Dmenu.Config.Separator = separatorString.String()
+					state.Dmenu.Config.Separator = options.LookupValue("separator", glib.NewVariantType("s")).String()
 				} else {
-					state.DmenuSeparator = separatorString.String()
+					state.DmenuSeparator = options.LookupValue("separator", glib.NewVariantType("s")).String()
 				}
 			}
 
-			if labelString != nil && labelString.String() != "" {
-				col, err := strconv.Atoi(labelString.String())
-				if err != nil {
-					log.Panicln(err)
-				}
+			if options.Contains("label") {
+				col := gtkStringToInt(options.LookupValue("label", glib.NewVariantType("s")))
 
 				if state.Dmenu != nil {
 					state.Dmenu.Config.Label = col
@@ -242,11 +207,8 @@ Type=Application
 				}
 			}
 
-			if iconString != nil && iconString.String() != "" {
-				col, err := strconv.Atoi(iconString.String())
-				if err != nil {
-					log.Panicln(err)
-				}
+			if options.Contains("icon") {
+				col := gtkStringToInt(options.LookupValue("icon", glib.NewVariantType("s")))
 
 				if state.Dmenu != nil {
 					state.Dmenu.Config.Icon = col
@@ -255,11 +217,8 @@ Type=Application
 				}
 			}
 
-			if valueString != nil && valueString.String() != "" {
-				col, err := strconv.Atoi(valueString.String())
-				if err != nil {
-					log.Panicln(err)
-				}
+			if options.Contains("value") {
+				col := gtkStringToInt(options.LookupValue("value", glib.NewVariantType("s")))
 
 				if state.Dmenu != nil {
 					state.Dmenu.Config.Value = col
@@ -268,16 +227,8 @@ Type=Application
 				}
 			}
 
-			if activeItemString != nil && activeItemString.String() != "" {
-				n := activeItemString.String()
-
-				a, err := strconv.Atoi(n)
-				if err != nil {
-					log.Println(err)
-				}
-
-				val := a - 1
-
+			if options.Contains("active") {
+				val := gtkStringToInt(options.LookupValue("active", glib.NewVariantType("s"))) - 1
 				state.ActiveItem = &val
 			} else {
 				state.ActiveItem = nil
@@ -286,8 +237,8 @@ Type=Application
 			state.ExplicitModules = []string{"dmenu"}
 			state.IsDmenu = true
 		} else {
-			if modulesString != nil && modulesString.String() != "" {
-				m := strings.Split(modulesString.String(), ",")
+			if options.Contains("modules") {
+				m := strings.Split(options.LookupValue("modules", glib.NewVariantType("s")).String(), ",")
 				state.ExplicitModules = m
 			}
 		}
@@ -296,26 +247,20 @@ Type=Application
 		state.Password = options.Contains("password")
 		state.KeepSort = options.Contains("keepsort")
 
-		if placeholderString != nil && placeholderString.String() != "" {
-			state.ExplicitPlaceholder = placeholderString.String()
+		if options.Contains("placeholder") {
+			state.ExplicitPlaceholder = options.LookupValue("placeholder", glib.NewVariantType("s")).String()
 		}
 
-		if initialQueryString != nil {
-			state.InitialQuery = initialQueryString.String()
-		} else {
-			state.InitialQuery = ""
+		if options.Contains("query") {
+			state.InitialQuery = options.LookupValue("query", glib.NewVariantType("s")).String()
 		}
 
-		if configString != nil && configString.String() != "" {
-			state.ExplicitConfig = configString.String()
+		if options.Contains("config") {
+			state.ExplicitConfig = options.LookupValue("config", glib.NewVariantType("s")).String()
 		}
 
-		if themeString != nil && themeString.String() != "" {
-			state.ExplicitTheme = themeString.String()
-		}
-
-		if state.Benchmark {
-			fmt.Println("run activate: ", time.Now().UnixMilli())
+		if options.Contains("theme") {
+			state.ExplicitTheme = options.LookupValue("theme", glib.NewVariantType("s")).String()
 		}
 
 		app.Activate()
@@ -336,52 +281,7 @@ Type=Application
 		}
 
 		return 0
-	})
-
-	app.Flags()
-
-	if state.IsService {
-		go listenActivationSocket()
-
-		app.Hold()
-
-		signal_chan := make(chan os.Signal, 1)
-		signal.Notify(signal_chan,
-			syscall.SIGHUP,
-			syscall.SIGINT,
-			syscall.SIGTERM,
-			syscall.SIGKILL,
-			syscall.SIGQUIT, syscall.SIGUSR1, syscall.SIGUSR2)
-
-		go func() {
-			for {
-				signal := <-signal_chan
-
-				switch signal {
-				case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGQUIT:
-					os.Exit(0)
-				case syscall.SIGUSR1:
-					if state.Clipboard != nil {
-						state.Clipboard.(*clipboard.Clipboard).Update()
-					}
-				case syscall.SIGUSR2:
-					if state.Clipboard != nil {
-						state.Clipboard.(*clipboard.Clipboard).Clear()
-					}
-				default:
-					slog.Error("signal", "error", "unknown signal", signal)
-				}
-			}
-		}()
 	}
-
-	if state.Benchmark {
-		fmt.Println("start run: ", time.Now().UnixMilli())
-	}
-
-	code := app.Run(os.Args)
-
-	os.Exit(code)
 }
 
 func listenActivationSocket() {
@@ -401,4 +301,45 @@ func listenActivationSocket() {
 
 		ui.Show(app)
 	}
+}
+
+func enableAutostart() {
+	content := `
+[Desktop Entry]
+Name=Walker
+Comment=Walker Service
+Exec=walker --gapplication-service
+StartupNotify=false
+Terminal=false
+Type=Application
+				`
+
+	dir := filepath.Join(xdg.ConfigHome, "autostart")
+	os.MkdirAll(dir, 0755)
+
+	err := os.WriteFile(filepath.Join(dir, "walker-service.desktop"), []byte(strings.TrimSpace(content)), 0644)
+	if err != nil {
+		log.Panicln(err)
+	}
+}
+
+func disableAutostart() {
+	err := os.Remove(filepath.Join(xdg.ConfigHome, "autostart", "walker-service.desktop"))
+	if err != nil {
+		log.Panicln(err)
+	}
+}
+
+func gtkStringToInt(in *glib.Variant) int {
+	if in != nil && in.String() != "" {
+		out, err := strconv.Atoi(in.String())
+		if err != nil {
+			slog.Error("argument", "width", err)
+			return 0
+		}
+
+		return out
+	}
+
+	return 0
 }

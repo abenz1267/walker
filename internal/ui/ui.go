@@ -247,11 +247,7 @@ func initialUISetup(app *gtk.Application) {
 	handleTimeout()
 
 	if config.Cfg.IsService && config.Cfg.HotreloadTheme {
-		// go watchTheme()
-	}
-
-	if appstate.Benchmark {
-		fmt.Println("Visible (first ui)", time.Now().UnixMilli())
+		go watchTheme()
 	}
 
 	executeEvent(config.EventLaunch, "")
@@ -906,10 +902,6 @@ func reopen() {
 		applySizeOverwrite()
 		elements.appwin.SetVisible(true)
 	})
-
-	if appstate.Benchmark {
-		fmt.Println("Visible (re-open)", time.Now().UnixMilli())
-	}
 
 	if len(toUse) == 1 {
 		text := toUse[0].General().Placeholder

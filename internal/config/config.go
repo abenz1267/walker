@@ -376,10 +376,6 @@ type Clipboard struct {
 
 type Dmenu struct {
 	GeneralModule `koanf:",squash"`
-	Label         int    `koanf:"label"`
-	Icon          int    `koanf:"icon"`
-	Value         int    `koanf:"value"`
-	Separator     string `koanf:"separator"`
 }
 
 type Runner struct {

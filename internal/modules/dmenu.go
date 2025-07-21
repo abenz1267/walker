@@ -1,8 +1,6 @@
 package modules
 
 import (
-	"bufio"
-	"os"
 	"strings"
 	"sync"
 
@@ -10,17 +8,15 @@ import (
 	"github.com/abenz1267/walker/internal/util"
 )
 
-var content []string
-
 type Dmenu struct {
-	Config             config.Dmenu
-	initialSeparator   string
-	initialLabelColumn int
-	initialIconColumn  int
-	initialValueColumn int
-	IsService          bool
-	DmenuShowChan      chan bool
-	mut                sync.Mutex
+	Config        config.Dmenu
+	Separator     string
+	IconColum     int
+	LabelColumn   int
+	ValueColumn   int
+	DmenuShowChan chan bool
+	mut           sync.Mutex
+	entries       []*util.Entry
 }
 
 func (d *Dmenu) General() *config.GeneralModule {
@@ -28,93 +24,64 @@ func (d *Dmenu) General() *config.GeneralModule {
 }
 
 func (d *Dmenu) Entries(term string) []*util.Entry {
-	entries := make([]*util.Entry, 0, len(content))
-
-	iconIndex := d.Config.Icon - 1
-	labelIndex := d.Config.Label - 1
-	valueIndex := d.Config.Value - 1
-
-	for _, v := range content {
-		label := v
-		icon := ""
-		value := ""
-
-		split := strings.Split(v, d.Config.Separator)
-
-		if len(split) > 1 {
-			label = split[0]
-			value = label
-
-			if d.Config.Icon > 0 {
-				icon = split[iconIndex]
-			}
-
-			if d.Config.Label > 0 {
-				label = split[labelIndex]
-			}
-
-			if d.Config.Value > 0 {
-				value = split[valueIndex]
-			}
-		} else {
-			value = v
-		}
-
-		entries = append(entries, &util.Entry{
-			Label: label,
-			Value: value,
-			Sub:   "Dmenu",
-			Icon:  icon,
-		})
-	}
-
-	return entries
+	return d.entries
 }
 
 func (d *Dmenu) Setup() bool {
 	d.Config = config.Cfg.Builtins.Dmenu
-
-	d.Config.Separator = util.TransformSeparator(d.Config.Separator)
-
-	d.initialSeparator = d.Config.Separator
-	d.initialLabelColumn = d.Config.Label
-
-	d.Config.SwitcherOnly = true
+	d.Separator = util.TransformSeparator(d.Separator)
+	d.Config.IsSetup = true
+	d.Config.HasInitialSetup = true
 
 	return true
 }
 
 func (d *Dmenu) Cleanup() {
-	d.Config.Separator = d.initialSeparator
-	d.Config.Label = d.initialLabelColumn
-	d.Config.Icon = d.initialIconColumn
-	d.Config.Value = d.initialValueColumn
-	content = []string{}
+	d.IconColum = 0
+	d.LabelColumn = 0
+	d.ValueColumn = 0
+	d.entries = []*util.Entry{}
 }
 
 func (d *Dmenu) SetupData() {
-	if config.Cfg.IsService {
-		d.IsService = true
-	}
-
-	d.Config.IsSetup = true
-	d.Config.HasInitialSetup = true
-
-	if !d.IsService {
-		scanner := bufio.NewScanner(os.Stdin)
-
-		for scanner.Scan() {
-			content = append(content, scanner.Text())
-		}
-	}
 }
 
 func (d *Dmenu) Refresh() {
-	d.Config.IsSetup = !d.Config.Refresh
 }
 
 func (d *Dmenu) Append(in string) {
 	d.mut.Lock()
-	content = append(content, in)
+	d.entries = append(d.entries, d.LineToEntry(in))
 	d.mut.Unlock()
+}
+
+func (d *Dmenu) LineToEntry(in string) *util.Entry {
+	label := in
+	icon := ""
+	value := in
+
+	if strings.Contains(in, d.Separator) {
+		split := strings.Split(in, d.Separator)
+		label = split[0]
+		value = label
+
+		if d.IconColum > 0 {
+			icon = split[d.IconColum]
+		}
+
+		if d.LabelColumn > 0 {
+			label = split[d.LabelColumn]
+		}
+
+		if d.ValueColumn > 0 {
+			value = split[d.ValueColumn]
+		}
+	}
+
+	return &util.Entry{
+		Label: label,
+		Icon:  icon,
+		Sub:   "Dmenu",
+		Value: value,
+	}
 }

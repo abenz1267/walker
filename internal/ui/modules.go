@@ -146,10 +146,6 @@ func setAvailables() {
 		res = append(res, &modules.HyprlandKeybinds{})
 	}
 
-	if !appstate.IsService {
-		res = append(res, &modules.Dmenu{})
-	}
-
 	loadPluginsFromDisk()
 
 	for _, v := range config.Cfg.Plugins {
@@ -189,16 +185,16 @@ func setAvailables() {
 		}
 	}
 
-	if appstate.IsService {
-		if appstate.Dmenu != nil {
-			available = append(available, appstate.Dmenu)
-			config.Cfg.Available = append(config.Cfg.Available, appstate.Dmenu.General().Name)
+	if appstate.Dmenu != nil {
+		available = append(available, appstate.Dmenu)
+		config.Cfg.Available = append(config.Cfg.Available, appstate.Dmenu.General().Name)
 
-			if appstate.Dmenu.Config.Hidden {
-				config.Cfg.Hidden = append(config.Cfg.Hidden, appstate.Dmenu.General().Name)
-			}
+		if appstate.Dmenu.Config.Hidden {
+			config.Cfg.Hidden = append(config.Cfg.Hidden, appstate.Dmenu.General().Name)
 		}
+	}
 
+	if appstate.IsService {
 		if appstate.Clipboard != nil {
 			available = append(available, appstate.Clipboard)
 			config.Cfg.Available = append(config.Cfg.Available, appstate.Clipboard.General().Name)

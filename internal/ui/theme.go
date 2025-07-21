@@ -232,7 +232,7 @@ func setupBoxTheme() {
 		}
 	}
 
-	if cfgErr != nil {
+	if appstate.ConfigError != nil {
 		elements.box.Append(elements.cfgErr)
 	}
 

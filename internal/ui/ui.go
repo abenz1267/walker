@@ -48,7 +48,6 @@ var (
 	thumbnailsMutex   sync.Mutex
 	debouncedProcess  func(f func())
 	debouncedOnSelect func(f func())
-	cfgErr            error
 	layoutErr         error
 	hasBaseSetup      bool
 )
@@ -119,12 +118,6 @@ func initialUISetup(app *gtk.Application) {
 
 	hstry = history.Get()
 
-	if appstate.IsService {
-		cfgErr = appstate.ConfigError
-	} else {
-		cfgErr = config.Init(appstate.ExplicitConfig)
-	}
-
 	if config.Cfg.JSRuntime != "" {
 		appstate.JSRuntime = config.Cfg.JSRuntime
 	}
@@ -161,24 +154,6 @@ func initialUISetup(app *gtk.Application) {
 	}
 
 	layout, layoutErr = config.GetLayout(theme, themeBase)
-
-	if appstate.Dmenu == nil {
-		if appstate.DmenuSeparator != "" {
-			config.Cfg.Builtins.Dmenu.Separator = appstate.DmenuSeparator
-		}
-
-		if appstate.DmenuLabelColumn != 0 {
-			config.Cfg.Builtins.Dmenu.Label = appstate.DmenuLabelColumn
-		}
-
-		if appstate.DmenuIconColumn != 0 {
-			config.Cfg.Builtins.Dmenu.Icon = appstate.DmenuIconColumn
-		}
-
-		if appstate.DmenuValueColumn != 0 {
-			config.Cfg.Builtins.Dmenu.Value = appstate.DmenuValueColumn
-		}
-	}
 
 	if appstate.ExplicitPlaceholder != "" {
 		config.Cfg.Search.Placeholder = appstate.ExplicitPlaceholder
@@ -410,8 +385,8 @@ func setupElements(app *gtk.Application) *Elements {
 		prefixClasses:   make(map[string][]string),
 	}
 
-	if cfgErr != nil {
-		label := gtk.NewLabel(fmt.Sprintf("Error loading config:\n\n%s", cfgErr.Error()))
+	if appstate.ConfigError != nil {
+		label := gtk.NewLabel(fmt.Sprintf("Error loading config:\n\n%s", appstate.ConfigError.Error()))
 		label.SetName("cfgerr")
 		label.SetHAlign(gtk.AlignFill)
 		label.SetXAlign(0.0)

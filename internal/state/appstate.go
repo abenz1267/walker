@@ -23,6 +23,7 @@ type OldSizeData struct {
 }
 
 type AppState struct {
+	ModulesStarted      bool
 	ActiveItem          *int
 	Hidebar             bool
 	AutoSelect          bool
@@ -31,10 +32,6 @@ type AppState struct {
 	IsDebug             bool
 	IsDmenu             bool
 	Dmenu               *modules.Dmenu
-	DmenuSeparator      string
-	DmenuLabelColumn    int
-	DmenuIconColumn     int
-	DmenuValueColumn    int
 	DmenuResultChan     chan string
 	ExplicitConfig      string
 	ExplicitModules     []string
@@ -96,16 +93,14 @@ func (app *AppState) StartServiceableModules() {
 		DmenuShowChan: app.DmenuShowChan,
 	}
 
-	clipboard := &clipboard.Clipboard{}
-
 	app.Dmenu.Setup()
+
+	clipboard := &clipboard.Clipboard{}
 
 	if !slices.Contains(config.Cfg.Disabled, clipboard.General().Name) && clipboard.Setup() {
 		app.Clipboard = clipboard
 		app.Clipboard.SetupData()
 	}
 
-	if !slices.Contains(config.Cfg.Disabled, app.Dmenu.General().Name) {
-		app.Dmenu.SetupData()
-	}
+	app.ModulesStarted = true
 }

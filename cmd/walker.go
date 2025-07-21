@@ -38,6 +38,7 @@ var (
 
 func main() {
 	state := state.Get()
+
 	appName := "dev.benz.walker"
 
 	if len(os.Args) > 1 {
@@ -53,8 +54,6 @@ func main() {
 
 			if slices.Contains(args, "--gapplication-service") {
 				state.IsService = true
-				state.ConfigError = config.Init(state.ExplicitConfig)
-				state.StartServiceableModules()
 			}
 		}
 	}
@@ -163,13 +162,65 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 			return 0
 		}
 
+		if options.Contains("config") {
+			state.ExplicitConfig = options.LookupValue("config", glib.NewVariantType("s")).String()
+		}
+
+		if config.Cfg == nil {
+			state.ConfigError = config.Init(state.ExplicitConfig)
+		}
+
+		if !state.ModulesStarted {
+			state.StartServiceableModules()
+		}
+
 		state.WidthOverwrite = gtkStringToInt(options.LookupValue("width", glib.NewVariantType("s")))
 		state.HeightOverwrite = gtkStringToInt(options.LookupValue("height", glib.NewVariantType("s")))
 		state.AutoSelect = options.Contains("autoselect")
 		state.Hidebar = options.Contains("hidebar")
 
 		if options.Contains("dmenu") {
-			if state.IsService {
+			if options.Contains("separator") {
+				if state.Dmenu != nil {
+					state.Dmenu.Separator = options.LookupValue("separator", glib.NewVariantType("s")).String()
+				}
+			}
+
+			if options.Contains("label") {
+				col := gtkStringToInt(options.LookupValue("label", glib.NewVariantType("s")))
+
+				if state.Dmenu != nil {
+					state.Dmenu.LabelColumn = col - 1
+				}
+			}
+
+			if options.Contains("icon") {
+				col := gtkStringToInt(options.LookupValue("icon", glib.NewVariantType("s")))
+
+				if state.Dmenu != nil {
+					state.Dmenu.IconColum = col - 1
+				}
+			}
+
+			if options.Contains("value") {
+				col := gtkStringToInt(options.LookupValue("value", glib.NewVariantType("s")))
+
+				if state.Dmenu != nil {
+					state.Dmenu.ValueColumn = col - 1
+				}
+			}
+
+			if options.Contains("active") {
+				val := gtkStringToInt(options.LookupValue("active", glib.NewVariantType("s"))) - 1
+				state.ActiveItem = &val
+			} else {
+				state.ActiveItem = nil
+			}
+
+			state.ExplicitModules = []string{"dmenu"}
+			state.IsDmenu = true
+
+			if !slices.Contains(config.Cfg.Disabled, state.Dmenu.General().Name) {
 				stdin := cmd.Stdin()
 				if stdin == nil {
 					fmt.Println("No stdin available")
@@ -189,53 +240,6 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 				}
 			}
 
-			if options.Contains("separator") {
-				if state.Dmenu != nil {
-					state.Dmenu.Config.Separator = options.LookupValue("separator", glib.NewVariantType("s")).String()
-				} else {
-					state.DmenuSeparator = options.LookupValue("separator", glib.NewVariantType("s")).String()
-				}
-			}
-
-			if options.Contains("label") {
-				col := gtkStringToInt(options.LookupValue("label", glib.NewVariantType("s")))
-
-				if state.Dmenu != nil {
-					state.Dmenu.Config.Label = col
-				} else {
-					state.DmenuLabelColumn = col
-				}
-			}
-
-			if options.Contains("icon") {
-				col := gtkStringToInt(options.LookupValue("icon", glib.NewVariantType("s")))
-
-				if state.Dmenu != nil {
-					state.Dmenu.Config.Icon = col
-				} else {
-					state.DmenuIconColumn = col
-				}
-			}
-
-			if options.Contains("value") {
-				col := gtkStringToInt(options.LookupValue("value", glib.NewVariantType("s")))
-
-				if state.Dmenu != nil {
-					state.Dmenu.Config.Value = col
-				} else {
-					state.DmenuValueColumn = col
-				}
-			}
-
-			if options.Contains("active") {
-				val := gtkStringToInt(options.LookupValue("active", glib.NewVariantType("s"))) - 1
-				state.ActiveItem = &val
-			} else {
-				state.ActiveItem = nil
-			}
-
-			state.ExplicitModules = []string{"dmenu"}
-			state.IsDmenu = true
 		} else {
 			if options.Contains("modules") {
 				m := strings.Split(options.LookupValue("modules", glib.NewVariantType("s")).String(), ",")
@@ -253,10 +257,6 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 
 		if options.Contains("query") {
 			state.InitialQuery = options.LookupValue("query", glib.NewVariantType("s")).String()
-		}
-
-		if options.Contains("config") {
-			state.ExplicitConfig = options.LookupValue("config", glib.NewVariantType("s")).String()
 		}
 
 		if options.Contains("theme") {
@@ -286,6 +286,10 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 
 func listenActivationSocket() {
 	os.Remove(SocketReopen)
+
+	for config.Cfg == nil {
+		time.Sleep(1 * time.Second)
+	}
 
 	l, _ := net.ListenUnix("unix", &net.UnixAddr{
 		Name: SocketReopen,

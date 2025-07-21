@@ -131,6 +131,8 @@ Type=Application
 	app.AddMainOption("config", 'c', glib.OptionFlagNone, glib.OptionArgString, "config file to use", "")
 	app.AddMainOption("theme", 's', glib.OptionFlagNone, glib.OptionArgString, "theme to use", "")
 	app.AddMainOption("clear-clipboard", 'u', glib.OptionFlagNone, glib.OptionArgNone, "clears the clipboard content", "")
+	app.AddMainOption("width", 'w', glib.OptionFlagNone, glib.OptionArgString, "overwrite width", "")
+	app.AddMainOption("height", 'h', glib.OptionFlagNone, glib.OptionArgString, "overwrite height", "")
 	app.AddMainOption("placeholder", 'p', glib.OptionFlagNone, glib.OptionArgString, "placeholder text", "")
 	app.AddMainOption("query", 'q', glib.OptionFlagNone, glib.OptionArgString, "initial query", "")
 	app.AddMainOption("label", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
@@ -170,6 +172,27 @@ Type=Application
 		themeString := options.LookupValue("theme", glib.NewVariantString("").Type())
 		placeholderString := options.LookupValue("placeholder", glib.NewVariantString("").Type())
 		initialQueryString := options.LookupValue("query", glib.NewVariantString("").Type())
+		widthStr := options.LookupValue("width", glib.NewVariantString("").Type())
+		heightStr := options.LookupValue("height", glib.NewVariantString("").Type())
+
+		// no idea how to just get an int. tried every glib Variant possible
+		if widthStr != nil && widthStr.String() != "" {
+			width, err := strconv.Atoi(widthStr.String())
+			if err != nil {
+				slog.Error("argument", "width", err)
+			}
+
+			state.WidthOverwrite = width
+		}
+
+		if heightStr != nil && heightStr.String() != "" {
+			height, err := strconv.Atoi(heightStr.String())
+			if err != nil {
+				slog.Error("argument", "height", err)
+			}
+
+			state.HeightOverwrite = height
+		}
 
 		if options.Contains("dmenu") {
 			labelString := options.LookupValue("label", glib.NewVariantString("").Type())

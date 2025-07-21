@@ -1105,6 +1105,18 @@ func quit(ignoreEvent bool) {
 		elements.appwin.SetVisible(false)
 
 		common.items.Splice(0, int(common.items.NItems()))
+
+		if appstate.OldSizeData != nil {
+			appstate.HeightOverwrite = 0
+			appstate.WidthOverwrite = 0
+
+			elements.scroll.SetMinContentHeight(appstate.OldSizeData.ListMinHeight)
+			elements.scroll.SetMaxContentHeight(appstate.OldSizeData.ListMaxHeight)
+			elements.scroll.SetMinContentWidth(appstate.OldSizeData.ListMinWidth)
+			elements.scroll.SetMaxContentWidth(appstate.OldSizeData.ListMaxWidth)
+			elements.box.Widget.SetSizeRequest(appstate.OldSizeData.BoxWidth, appstate.OldSizeData.BoxHeight)
+			elements.scroll.SetSizeRequest(appstate.OldSizeData.ListWidth, appstate.OldSizeData.ListHeight)
+		}
 	})
 
 	isAi = false

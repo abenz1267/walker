@@ -11,6 +11,17 @@ import (
 	"github.com/junegunn/fzf/src/algo"
 )
 
+type OldSizeData struct {
+	BoxWidth      int
+	BoxHeight     int
+	ListWidth     int
+	ListHeight    int
+	ListMinWidth  int
+	ListMinHeight int
+	ListMaxWidth  int
+	ListMaxHeight int
+}
+
 type AppState struct {
 	ActiveItem          *int
 	Hidebar             bool
@@ -44,6 +55,9 @@ type AppState struct {
 	InitialQuery        string
 	LastQuery           string
 	JSRuntime           string
+	WidthOverwrite      int
+	HeightOverwrite     int
+	OldSizeData         *OldSizeData
 }
 
 func Get() *AppState {
@@ -59,6 +73,7 @@ func Get() *AppState {
 		ExplicitConfig:  "config.json",
 		JSRuntime:       getJsRuntime(),
 		DmenuResultChan: make(chan string),
+		OldSizeData:     nil,
 	}
 }
 

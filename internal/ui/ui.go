@@ -231,6 +231,7 @@ func initialUISetup(app *gtk.Application) {
 		}
 	}
 
+	applySizeOverwrite()
 	elements.appwin.SetVisible(true)
 
 	if appstate.Password {
@@ -902,6 +903,7 @@ func reopen() {
 			elements.search.SetVisible(true)
 		}
 
+		applySizeOverwrite()
 		elements.appwin.SetVisible(true)
 	})
 
@@ -1044,6 +1046,47 @@ func setupLayerShellAnchors() {
 		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeLeft, layout.Anchors.Left)
 		ls.SetAnchor(&elements.appwin.Window, ls.LayerShellEdgeRight, layout.Anchors.Right)
 	}
+}
+
+func applySizeOverwrite() {
+	if appstate.WidthOverwrite == 0 && appstate.HeightOverwrite == 0 {
+		return
+	}
+
+	bW, bH := elements.box.Widget.SizeRequest()
+	lW, lH := elements.scroll.Widget.SizeRequest()
+
+	o := &state.OldSizeData{
+		BoxWidth:      bW,
+		BoxHeight:     bH,
+		ListWidth:     lW,
+		ListHeight:    lH,
+		ListMinWidth:  elements.scroll.MinContentWidth(),
+		ListMinHeight: elements.scroll.MinContentHeight(),
+		ListMaxWidth:  elements.scroll.MaxContentWidth(),
+		ListMaxHeight: elements.scroll.MaxContentHeight(),
+	}
+
+	appstate.OldSizeData = o
+
+	if appstate.HeightOverwrite != 0 {
+		bH = appstate.HeightOverwrite
+		lH = appstate.HeightOverwrite
+
+		elements.scroll.SetMinContentHeight(appstate.HeightOverwrite)
+		elements.scroll.SetMaxContentHeight(appstate.HeightOverwrite)
+	}
+
+	if appstate.WidthOverwrite != 0 {
+		bW = appstate.WidthOverwrite
+		lW = appstate.WidthOverwrite
+
+		elements.scroll.SetMinContentWidth(appstate.WidthOverwrite)
+		elements.scroll.SetMaxContentWidth(appstate.WidthOverwrite)
+	}
+
+	elements.box.Widget.SetSizeRequest(bW, bH)
+	elements.scroll.SetSizeRequest(lW, lH)
 }
 
 func setupLayout(theme string, base []string) {

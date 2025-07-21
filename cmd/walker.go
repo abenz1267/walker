@@ -244,6 +244,8 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 								break
 							}
 						}
+
+						state.DmenuStreamDone <- id
 					}()
 				} else {
 					for {

@@ -33,6 +33,7 @@ type AppState struct {
 	IsDmenu             bool
 	Dmenu               *modules.Dmenu
 	DmenuResultChan     chan string
+	DmenuStreamDone     chan int
 	DmenuStreamId       int
 	ExplicitConfig      string
 	ExplicitModules     []string
@@ -70,6 +71,7 @@ func Get() *AppState {
 		ExplicitConfig:  "config.json",
 		JSRuntime:       getJsRuntime(),
 		DmenuResultChan: make(chan string),
+		DmenuStreamDone: make(chan int),
 		OldSizeData:     nil,
 	}
 }

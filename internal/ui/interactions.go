@@ -712,6 +712,14 @@ func processAsync(text string) {
 		keepSort = p[0].General().KeepSort || appstate.KeepSort
 		appstate.IsSingle = true
 
+		go func() {
+			id := <-appstate.DmenuStreamDone
+
+			if id == appstate.DmenuStreamId {
+				debouncedProcess(process)
+			}
+		}()
+
 		mCfg := appstate.Dmenu.General()
 		processedModulesKeepSort = append(processedModulesKeepSort, mCfg.KeepSort)
 		text = strings.TrimSpace(text)

@@ -33,7 +33,8 @@ type AppState struct {
 	IsDmenu             bool
 	Dmenu               *modules.Dmenu
 	DmenuResultChan     chan string
-	DmenuStreamDone     chan int
+	DmenuStreamDone     chan struct{}
+	DmenuStreamAdded    chan int
 	DmenuStreamId       int
 	ExplicitConfig      string
 	ExplicitModules     []string
@@ -64,15 +65,16 @@ func Get() *AppState {
 	_, isDebug := os.LookupEnv("DEBUG")
 
 	return &AppState{
-		IsService:       false,
-		IsDebug:         isDebug,
-		IsRunning:       false,
-		HasUI:           false,
-		ExplicitConfig:  "config.json",
-		JSRuntime:       getJsRuntime(),
-		DmenuResultChan: make(chan string),
-		DmenuStreamDone: make(chan int),
-		OldSizeData:     nil,
+		IsService:        false,
+		IsDebug:          isDebug,
+		IsRunning:        false,
+		HasUI:            false,
+		ExplicitConfig:   "config.json",
+		JSRuntime:        getJsRuntime(),
+		DmenuResultChan:  make(chan string),
+		DmenuStreamDone:  make(chan struct{}),
+		DmenuStreamAdded: make(chan int),
+		OldSizeData:      nil,
 	}
 }
 

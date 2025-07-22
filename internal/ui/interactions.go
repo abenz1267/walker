@@ -713,10 +713,14 @@ func processAsync(text string) {
 		appstate.IsSingle = true
 
 		go func() {
-			id := <-appstate.DmenuStreamDone
-
-			if id == appstate.DmenuStreamId {
+			select {
+			case id := <-appstate.DmenuStreamAdded:
+				if id == appstate.DmenuStreamId {
+					debouncedProcess(process)
+				}
+			case <-appstate.DmenuStreamDone:
 				debouncedProcess(process)
+				return
 			}
 		}()
 

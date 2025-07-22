@@ -228,6 +228,9 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 
 				if stream {
 					go func() {
+						throttler := ui.NewLatestOnlyThrottler(100 * time.Millisecond)
+						defer throttler.Stop()
+
 						id := int(time.Now().UnixMilli())
 						state.DmenuStreamId = id
 						state.Dmenu.ClearEntries()
@@ -240,12 +243,15 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 							size, res, err := reader.ReadLine(ctx)
 							if err == nil && size != 0 {
 								state.Dmenu.Append(string(res))
+								throttler.Execute(id)
 							} else {
 								break
 							}
 						}
 
-						state.DmenuStreamDone <- id
+						if id == state.DmenuStreamId {
+							state.DmenuStreamDone <- struct{}{}
+						}
 					}()
 				} else {
 					for {

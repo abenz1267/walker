@@ -3,20 +3,11 @@ package ui
 import (
 	"sync"
 	"time"
-
-	"github.com/abenz1267/walker/internal/util"
 )
-
-type PopulateListParams struct {
-	Text                     string
-	KeepSort                 bool
-	ProcessedModulesKeepSort []bool
-	Entries                  []*util.Entry
-}
 
 type LatestOnlyThrottler struct {
 	ticker     *time.Ticker
-	latestCall *PopulateListParams
+	latestCall int
 	hasCall    bool
 	mu         sync.Mutex
 	stop       chan struct{}
@@ -40,12 +31,12 @@ func (t *LatestOnlyThrottler) run() {
 			return
 		case <-t.ticker.C:
 			t.mu.Lock()
-			if t.hasCall && t.latestCall != nil {
-				params := *t.latestCall
+			if t.hasCall && t.latestCall != 0 {
+				params := t.latestCall
 				t.hasCall = false
 				t.mu.Unlock()
 
-				populateList(params.Text, params.KeepSort, params.ProcessedModulesKeepSort, params.Entries)
+				appstate.DmenuStreamAdded <- params
 			} else {
 				t.mu.Unlock()
 			}
@@ -53,17 +44,11 @@ func (t *LatestOnlyThrottler) run() {
 	}
 }
 
-func (t *LatestOnlyThrottler) Execute(text string, keepSort bool, processedModulesKeepSort []bool, entries []*util.Entry) {
+func (t *LatestOnlyThrottler) Execute(id int) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
 
-	// Always replace with the latest call
-	t.latestCall = &PopulateListParams{
-		Text:                     text,
-		KeepSort:                 keepSort,
-		ProcessedModulesKeepSort: processedModulesKeepSort,
-		Entries:                  entries,
-	}
+	t.latestCall = id
 	t.hasCall = true
 }
 

@@ -1135,6 +1135,7 @@ func quit(ignoreEvent bool) {
 	appstate.ExplicitPlaceholder = ""
 	appstate.ExplicitTheme = ""
 	appstate.IsDmenu = false
+	appstate.InitialQuery = ""
 
 	explicits = []modules.Workable{}
 

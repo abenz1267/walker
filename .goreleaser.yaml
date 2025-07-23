@@ -8,7 +8,7 @@ before:
     - go mod tidy
 
 builds:
-  - id: 'walker'
+  - id: walker-amd64
     main: ./cmd
     binary: walker
     env:
@@ -18,6 +18,17 @@ builds:
     goarch:
       - amd64
 
+  - id: walker-arm64
+    main: ./cmd
+    binary: walker
+    env:
+      - CGO_ENABLED=1
+      - CC=aarch64-linux-gnu-gcc
+    goos:
+      - linux
+    goarch:
+      - arm64
+
 archives:
   - format: tar.gz
     # this name template makes the OS and Arch compatible with the results of `uname`.
@@ -26,7 +37,7 @@ archives:
       {{ .Version }}_
       {{- title .Os }}_
       {{- if eq .Arch "amd64" }}x86_64
-      {{- else if eq .Arch "386" }}i386
+      {{- else if eq .Arch "arm64" }}arm64
       {{- else }}{{ .Arch }}{{ end }}
       {{- if .Arm }}v{{ .Arm }}{{ end }}
     files:

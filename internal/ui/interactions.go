@@ -1386,14 +1386,6 @@ func fuzzyScore(entry *util.Entry, text string, useHistory bool) float64 {
 	return score
 }
 
-func wrapWithPrefix(text string) string {
-	if config.Cfg.AppLaunchPrefix == "" {
-		return text
-	}
-
-	return fmt.Sprintf("%s%s", config.Cfg.AppLaunchPrefix, text)
-}
-
 func trimArgumentDelimiter(text string) string {
 	if strings.Contains(text, config.Cfg.Search.ArgumentDelimiter) {
 		split := strings.Split(text, config.Cfg.Search.ArgumentDelimiter)

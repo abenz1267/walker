@@ -18,6 +18,8 @@ var list string
 type Symbols struct {
 	config  config.Symbols
 	entries []*util.Entry
+	exec    string
+	execAlt string
 }
 
 func (e *Symbols) General() *config.GeneralModule {
@@ -32,6 +34,8 @@ func (e Symbols) Entries(term string) []*util.Entry {
 
 func (e *Symbols) Setup() bool {
 	e.config = config.Cfg.Builtins.Symbols
+	e.exec = config.Cfg.Builtins.Symbols.Exec
+	e.execAlt = config.Cfg.Builtins.Symbols.ExecAlt
 
 	return true
 }
@@ -40,6 +44,9 @@ func (e *Symbols) SetupData() {
 	scanner := bufio.NewScanner(strings.NewReader(list))
 
 	entries := []*util.Entry{}
+
+	explicitResult := strings.Contains(e.exec, "%RESULT%")
+	explicitResultAlt := strings.Contains(e.execAlt, "%RESULT%")
 
 	for scanner.Scan() {
 		text := scanner.Text()
@@ -53,21 +60,37 @@ func (e *Symbols) SetupData() {
 			continue
 		}
 
-		exec := fmt.Sprintf("wl-copy '%s'", toUse)
+		exec := e.exec
+		execAlt := e.execAlt
 
-		if e.config.AfterCopy != "" {
-			exec = fmt.Sprintf("wl-copy '%s' | %s", toUse, e.config.AfterCopy)
+		if explicitResult {
+			exec = strings.ReplaceAll(exec, "%RESULT%", toUse)
 		}
 
-		entries = append(entries, &util.Entry{
+		if explicitResultAlt {
+			execAlt = strings.ReplaceAll(execAlt, "%RESULT%", toUse)
+		}
+
+		entry := util.Entry{
 			Label:            fmt.Sprintf("%s %s", toUse, fields[1]),
 			Sub:              "Symbols",
 			Exec:             exec,
+			ExecAlt:          execAlt,
 			Searchable:       fields[1],
 			Class:            "symbols",
 			Matching:         util.Fuzzy,
 			RecalculateScore: true,
-		})
+		}
+
+		if !explicitResult {
+			entry.Piped = util.Piped{String: toUse, Type: "string"}
+		}
+
+		if !explicitResultAlt {
+			entry.PipedAlt = util.Piped{String: toUse, Type: "string"}
+		}
+
+		entries = append(entries, &entry)
 	}
 
 	e.entries = entries

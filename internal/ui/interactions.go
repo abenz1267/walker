@@ -482,6 +482,8 @@ func activateItem(keepOpen, alt bool) {
 		history.SaveInputHistory(module.General().Name, elements.input.Text(), identifier)
 	}
 
+	fmt.Println(cmd.String())
+
 	err := cmd.Start()
 	if err != nil {
 		log.Println(err)

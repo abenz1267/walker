@@ -169,7 +169,7 @@ typeahead = true
 show_unqualified = false
 
 [builtins.symbols]
-after_copy = ""
+exec = "wl-copy '%RESULT%'"
 weight = 5
 name = "symbols"
 placeholder = "Symbols"

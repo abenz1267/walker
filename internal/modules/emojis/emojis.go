@@ -46,6 +46,9 @@ func (e *Emojis) SetupData() {
 
 	entries := []*util.Entry{}
 
+	explicitResult := strings.Contains(e.exec, "%RESULT%")
+	explicitResultAlt := strings.Contains(e.execAlt, "%RESULT%")
+
 	for scanner.Scan() {
 		text := scanner.Text()
 
@@ -59,18 +62,38 @@ func (e *Emojis) SetupData() {
 			continue
 		}
 
-		entries = append(entries, &util.Entry{
+		exec := e.exec
+		execAlt := e.execAlt
+
+		if explicitResult {
+			exec = strings.ReplaceAll(exec, "%RESULT%", fields[4])
+		}
+
+		if explicitResultAlt {
+			execAlt = strings.ReplaceAll(execAlt, "%RESULT%", fields[4])
+		}
+
+		entry := util.Entry{
 			Label:            fmt.Sprintf("%s %s", fields[4], fields[5]),
 			Sub:              "Emojis",
-			Exec:             e.exec,
-			ExecAlt:          e.execAlt,
-			Piped:            util.Piped{String: fields[4], Type: "string"},
+			Exec:             exec,
+			ExecAlt:          execAlt,
 			Searchable:       fields[5],
 			Categories:       []string{fields[0], fields[1]},
 			Class:            "emojis",
 			Matching:         util.Fuzzy,
 			RecalculateScore: true,
-		})
+		}
+
+		if !explicitResult {
+			entry.Piped = util.Piped{String: fields[4], Type: "string"}
+		}
+
+		if !explicitResultAlt {
+			entry.PipedAlt = util.Piped{String: fields[4], Type: "string"}
+		}
+
+		entries = append(entries, &entry)
 	}
 
 	e.entries = entries

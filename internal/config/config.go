@@ -315,7 +315,8 @@ type Emojis struct {
 
 type Symbols struct {
 	GeneralModule `koanf:",squash"`
-	AfterCopy     string `koanf:"after_copy"`
+	Exec          string `koanf:"exec"`
+	ExecAlt       string `koanf:"exec_alt"`
 }
 
 type SSH struct {

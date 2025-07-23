@@ -10,8 +10,17 @@ permissions:
   contents: write
 
 jobs:
-  build-and-release:
-    runs-on: ubuntu-24.04
+  build:
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-24.04-arm
+            arch: arm64
+            binary: walker-arm64
+          - os: ubuntu-24.04
+            arch: amd64
+            binary: walker-amd64
+    runs-on: ${{ matrix.os }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -23,11 +32,7 @@ jobs:
         with:
           go-version: stable
 
-      - name: Get version
-        id: version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
-
-      - name: Install native dependencies
+      - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y \
@@ -40,9 +45,9 @@ jobs:
             gtk-doc-tools \
             python3 \
             valac \
-            libvips \
             libvips-dev \
-            pkg-config
+            pkg-config \
+            gcc
 
       - name: Build gtk4-layer-shell
         run: |
@@ -54,27 +59,56 @@ jobs:
           sudo ninja -C build install
           sudo ldconfig
 
-      - name: Build AMD64
+      - name: Build binary
         run: |
-          CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o walker-amd64 ./cmd
+          if [ "${{ matrix.arch }}" = "arm64" ]; then
+            CGO_ENABLED=1 GOOS=linux GOARCH=arm64 go build -tags=nosse -o ${{ matrix.binary }} ./cmd
+          else
+            CGO_ENABLED=1 GOOS=linux GOARCH=amd64 go build -o ${{ matrix.binary }} ./cmd
+          fi
 
-      - name: Build ARM64 with Docker
-        run: |
-          docker run --rm --platform linux/arm64 \
-            -v ${{ github.workspace }}:/workspace \
-            -w /workspace \
-            golang:1.21-bookworm \
-            bash -c "
-              apt-get update &&
-              apt-get install -y libvips-dev libgtk-4-dev libwayland-dev libglib2.0-dev pkg-config gcc libc6-dev &&
-              CGO_ENABLED=1 GOOS=linux GOARCH=arm64 go build -o walker-arm64 ./cmd
-            "
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.binary }}
+          path: ${{ matrix.binary }}
+
+  release:
+    needs: build
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Get version
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+
+      - name: Download ARM64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: walker-arm64
+          path: .
+
+      - name: Download AMD64 binary
+        uses: actions/download-artifact@v4
+        with:
+          name: walker-amd64
+          path: .
 
       - name: Create archives
         run: |
-          # Create directories
-          mkdir -p dist/walker_${{ steps.version.outputs.VERSION }}_Linux_x86_64
+          # Create directories (ARM64 first as requested)
           mkdir -p dist/walker_${{ steps.version.outputs.VERSION }}_Linux_arm64
+          mkdir -p dist/walker_${{ steps.version.outputs.VERSION }}_Linux_x86_64
+
+          # Copy ARM64 files FIRST
+          cp walker-arm64 dist/walker_${{ steps.version.outputs.VERSION }}_Linux_arm64/walker
+          cp LICENSE dist/walker_${{ steps.version.outputs.VERSION }}_Linux_arm64/
+          cp internal/config/config.default.toml dist/walker_${{ steps.version.outputs.VERSION }}_Linux_arm64/
+          cp -r internal/config/themes dist/walker_${{ steps.version.outputs.VERSION }}_Linux_arm64/
 
           # Copy AMD64 files
           cp walker-amd64 dist/walker_${{ steps.version.outputs.VERSION }}_Linux_x86_64/walker
@@ -82,16 +116,10 @@ jobs:
           cp internal/config/config.default.toml dist/walker_${{ steps.version.outputs.VERSION }}_Linux_x86_64/
           cp -r internal/config/themes dist/walker_${{ steps.version.outputs.VERSION }}_Linux_x86_64/
 
-          # Copy ARM64 files
-          cp walker-arm64 dist/walker_${{ steps.version.outputs.VERSION }}_Linux_arm64/walker
-          cp LICENSE dist/walker_${{ steps.version.outputs.VERSION }}_Linux_arm64/
-          cp internal/config/config.default.toml dist/walker_${{ steps.version.outputs.VERSION }}_Linux_arm64/
-          cp -r internal/config/themes dist/walker_${{ steps.version.outputs.VERSION }}_Linux_arm64/
-
           # Create tarballs
           cd dist
-          tar -czf walker_${{ steps.version.outputs.VERSION }}_Linux_x86_64.tar.gz walker_${{ steps.version.outputs.VERSION }}_Linux_x86_64/
           tar -czf walker_${{ steps.version.outputs.VERSION }}_Linux_arm64.tar.gz walker_${{ steps.version.outputs.VERSION }}_Linux_arm64/
+          tar -czf walker_${{ steps.version.outputs.VERSION }}_Linux_x86_64.tar.gz walker_${{ steps.version.outputs.VERSION }}_Linux_x86_64/
 
       - name: Generate changelog
         id: changelog
@@ -116,11 +144,3 @@ jobs:
             dist/*.tar.gz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: walker-binaries
-          path: |
-            walker-amd64
-            walker-arm64

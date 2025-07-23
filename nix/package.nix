@@ -30,7 +30,7 @@ buildGoModule {
   };
   subPackages = ["cmd/walker.go"];
 
-  vendorHash = "sha256-250HPwSkcT7pOulhqAtmuoWOJUakF0S1bpZ8FMsp7bU=";
+  vendorHash = "sha256-N7lNxO/l3E1BlSSbSiQjrDPy2sWwk4G4JYlUArmMJxs=";
 
   nativeBuildInputs = [
     gobject-introspection

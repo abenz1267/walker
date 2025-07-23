@@ -1,6 +1,7 @@
 package modules
 
 import (
+	"fmt"
 	"log"
 	"os/exec"
 	"strings"
@@ -11,15 +12,32 @@ import (
 )
 
 type Calc struct {
-	config  config.Calc
-	hasClip bool
+	config     config.Calc
+	hasClip    bool
+	history    []calchist
+	hiddenhist []calchist
+}
+
+type calchist struct {
+	in  string
+	res string
 }
 
 func (c *Calc) General() *config.GeneralModule {
 	return &c.config.GeneralModule
 }
 
-func (c Calc) Cleanup() {}
+func (c *Calc) Cleanup() {
+	if len(c.hiddenhist) > 0 {
+		c.history = append([]calchist{c.hiddenhist[0]}, c.history...)
+
+		if len(c.history) > 10 {
+			c.history = c.history[10:]
+		}
+
+		c.hiddenhist = []calchist{}
+	}
+}
 
 func (c *Calc) Setup() bool {
 	pth, _ := exec.LookPath("qalc")
@@ -34,6 +52,8 @@ func (c *Calc) Setup() bool {
 	}
 
 	c.config = config.Cfg.Builtins.Calc
+	c.history = []calchist{}
+	c.hiddenhist = []calchist{}
 
 	// to update exchange rates
 	cmd := exec.Command("qalc", "-e", "1+1")
@@ -48,48 +68,92 @@ func (c *Calc) Setup() bool {
 
 func (c *Calc) SetupData() {}
 
-func (c Calc) Entries(term string) []*util.Entry {
-	if c.config.RequireNumber {
-		hasNumber := false
+func (c *Calc) Entries(term string) []*util.Entry {
+	entries := []*util.Entry{}
 
-		for _, c := range term {
-			if unicode.IsDigit(c) {
-				hasNumber = true
+	useHistory := strings.HasPrefix(term, ">")
+	term = strings.TrimPrefix(term, ">")
+
+	if term == "" && len(c.history) == 0 {
+		return entries
+	}
+
+	if term != "" {
+		if c.config.RequireNumber {
+			hasNumber := false
+
+			for _, c := range term {
+				if unicode.IsDigit(c) {
+					hasNumber = true
+				}
+			}
+
+			if !hasNumber && len(c.history) == 0 {
+				return []*util.Entry{}
 			}
 		}
 
-		if !hasNumber {
+		if useHistory {
+			term = fmt.Sprintf("%s%s", c.history[0].res, term)
+		}
+
+		cmd := exec.Command("qalc", "-t", term)
+		out, err := cmd.CombinedOutput()
+		if err != nil && len(c.history) == 0 {
 			return []*util.Entry{}
 		}
-	}
 
-	cmd := exec.Command("qalc", "-t", term)
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return []*util.Entry{}
-	}
+		txt := strings.TrimSpace(string(out))
 
-	txt := strings.TrimSpace(string(out))
+		if txt == "" && len(c.history) == 0 {
+			return []*util.Entry{}
+		}
 
-	if txt == "" {
-		return []*util.Entry{}
-	}
+		if txt != "" {
+			res := util.Entry{
+				Label:    txt,
+				Sub:      "Calc",
+				Matching: util.AlwaysTop,
+			}
 
-	res := util.Entry{
-		Label:    txt,
-		Sub:      "Calc",
-		Matching: util.AlwaysTop,
-	}
+			if c.hasClip {
+				res.Exec = "wl-copy"
+				res.Piped = util.Piped{
+					String: txt,
+					Type:   "string",
+				}
+			}
 
-	if c.hasClip {
-		res.Exec = "wl-copy"
-		res.Piped = util.Piped{
-			String: txt,
-			Type:   "string",
+			entries = append(entries, &res)
+
+			c.hiddenhist = append([]calchist{{
+				in:  term,
+				res: txt,
+			}}, c.hiddenhist...)
 		}
 	}
 
-	return []*util.Entry{&res}
+	for k, v := range c.history {
+		res := util.Entry{
+			Label:            fmt.Sprintf("%d. %s = %s", k+1, v.in, v.res),
+			Sub:              "Calc",
+			ScoreFinal:       100 - float64(k),
+			Matching:         util.Fuzzy,
+			RecalculateScore: false,
+		}
+
+		if c.hasClip {
+			res.Exec = "wl-copy"
+			res.Piped = util.Piped{
+				String: v.res,
+				Type:   "string",
+			}
+		}
+
+		entries = append(entries, &res)
+	}
+
+	return entries
 }
 
 func (c *Calc) Refresh() {}

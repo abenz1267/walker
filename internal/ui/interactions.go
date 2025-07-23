@@ -596,14 +596,12 @@ func process() {
 
 	text = trimArgumentDelimiter(text)
 
-	isEmpty := strings.TrimSpace(text) == ""
-
 	if text == "" && config.Cfg.List.ShowInitialEntries && len(explicits) == 0 && !appstate.IsDmenu {
 		setInitials()
 		return
 	}
 
-	if ((!isEmpty && text != "") || appstate.IsDmenu) || (len(explicits) > 0 && config.Cfg.List.ShowInitialEntries) {
+	if (text != " " || appstate.IsDmenu) || (len(explicits) > 0 && config.Cfg.List.ShowInitialEntries) {
 		if !layout.Window.Box.Search.Spinner.Hide {
 			elements.spinner.SetVisible(true)
 		}
@@ -818,15 +816,10 @@ func processAsync(text string) {
 					return
 				}
 
-				text = strings.TrimSpace(strings.TrimPrefix(text, w.General().Prefix))
+				text = strings.TrimSpace(strings.TrimPrefix(text, mCfg.Prefix))
 				toPush := []*util.Entry{}
 
 				e := w.Entries(text)
-
-				if text == "" && appstate.IsDmenu {
-					entries = e
-					return
-				}
 
 				for _, v := range e {
 					if evaluateEntry(text, v, mCfg) {

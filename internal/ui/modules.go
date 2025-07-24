@@ -309,7 +309,7 @@ func loadPluginsFromDisk() {
 
 			out, err := cmd.CombinedOutput()
 			if err != nil {
-				slog.Error("plugins", err, "plugin", path)
+				slog.Error("plugins", "getinfo", err, "plugin", path, "out", string(out))
 				return nil
 			}
 
@@ -317,7 +317,7 @@ func loadPluginsFromDisk() {
 
 			err = defaults.Load(rawbytes.Provider(out), toml.Parser())
 			if err != nil {
-				slog.Error("plugins", err, "plugin", path)
+				slog.Error("plugins", "parse", err, "plugin", path)
 				return nil
 			}
 
@@ -325,7 +325,7 @@ func loadPluginsFromDisk() {
 
 			err = defaults.Unmarshal("", &plugin)
 			if err != nil {
-				slog.Error("plugins", err, "plugin", path)
+				slog.Error("plugins", "unmarshal", err, "plugin", path)
 				return nil
 			}
 

@@ -71,10 +71,10 @@ func (c *Calc) SetupData() {}
 func (c *Calc) Entries(term string) []*util.Entry {
 	entries := []*util.Entry{}
 
-	useHistory := strings.HasPrefix(term, ">")
+	useHistory := strings.HasPrefix(term, ">") && len(c.history) > 0
 	term = strings.TrimPrefix(term, ">")
 
-	if term == "" && len(c.history) == 0 {
+	if term == "" && !useHistory {
 		return entries
 	}
 
@@ -88,7 +88,7 @@ func (c *Calc) Entries(term string) []*util.Entry {
 				}
 			}
 
-			if !hasNumber && len(c.history) == 0 {
+			if !hasNumber {
 				return []*util.Entry{}
 			}
 		}
@@ -99,13 +99,13 @@ func (c *Calc) Entries(term string) []*util.Entry {
 
 		cmd := exec.Command("qalc", "-t", term)
 		out, err := cmd.CombinedOutput()
-		if err != nil && len(c.history) == 0 {
+		if err != nil && !useHistory {
 			return []*util.Entry{}
 		}
 
 		txt := strings.TrimSpace(string(out))
 
-		if txt == "" && len(c.history) == 0 {
+		if txt == "" && !useHistory {
 			return []*util.Entry{}
 		}
 

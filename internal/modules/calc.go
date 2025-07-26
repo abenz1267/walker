@@ -74,25 +74,25 @@ func (c *Calc) Entries(term string) []*util.Entry {
 	useHistory := strings.HasPrefix(term, ">")
 	term = strings.TrimPrefix(term, ">")
 
+	if c.config.RequireNumber {
+		hasNumber := false
+
+		for _, c := range term {
+			if unicode.IsDigit(c) {
+				hasNumber = true
+			}
+		}
+
+		if !hasNumber {
+			return []*util.Entry{}
+		}
+	}
+
 	if term == "" && len(c.history) == 0 {
 		return entries
 	}
 
 	if term != "" {
-		if c.config.RequireNumber {
-			hasNumber := false
-
-			for _, c := range term {
-				if unicode.IsDigit(c) {
-					hasNumber = true
-				}
-			}
-
-			if !hasNumber && len(c.history) == 0 {
-				return []*util.Entry{}
-			}
-		}
-
 		if useHistory {
 			term = fmt.Sprintf("%s%s", c.history[0].res, term)
 		}

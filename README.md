@@ -125,6 +125,7 @@ Without these you won't be able to build.
 You have two options of installing walker using Nix.
 
 1.  Using the package exposed by this flake
+
     1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
     2. Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`
 
@@ -243,19 +244,7 @@ Start with `walker --gapplication-service` to start in service-mode. Calling `wa
 
 ### Additional flags
 
-| Flag                  | Description                                  |
-| --------------------- | -------------------------------------------- |
-| `--modules`, `-m`     | Run with explicit modules                    |
-| `--new`, `-n`         | Start new instance ignoring service          |
-| `--config`, `-c`      | Config file to use                           |
-| `--theme`, `-s`       | Theme to use                                 |
-| `--dmenu`, `-d`       | Start in dmenu mode                          |
-| `--keepsort`, `-k`    | Don't sort alphabetically                    |
-| `--placeholder`, `-p` | Placeholder text                             |
-| `--labelcolumn`, `-l` | Column to use for the label                  |
-| `--password`, `-y`    | Launch in password mode                      |
-| `--forceprint`, `-f`  | Forces printing input if no item is selected |
-| `--query`, `-q`       | To set initial query                         |
+`walker --help`
 
 ## Keybinds
 

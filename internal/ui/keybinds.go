@@ -45,6 +45,7 @@ var (
 		"backspace": int(gdk.KEY_BackSpace),
 		"tab":       int(gdk.KEY_Tab),
 		"esc":       int(gdk.KEY_Escape),
+		"kpenter":   int(gdk.KEY_KP_Enter),
 		"enter":     int(gdk.KEY_Return),
 		"down":      int(gdk.KEY_Down),
 		"up":        int(gdk.KEY_Up),
@@ -98,8 +99,12 @@ func parseKeybinds() {
 	}
 
 	binds.bind(binds, "enter", func() bool { return activate(false, false) })
+	binds.bind(binds, "kpenter", func() bool { return activate(false, false) })
 	binds.bind(binds, strings.Join([]string{config.Cfg.Keys.ActivationModifiers.KeepOpen, "enter"}, " "), func() bool { return activate(true, false) })
 	binds.bind(binds, strings.Join([]string{config.Cfg.Keys.ActivationModifiers.Alternate, "enter"}, " "), func() bool { return activate(false, true) })
+
+	binds.bind(binds, strings.Join([]string{config.Cfg.Keys.ActivationModifiers.KeepOpen, "kpenter"}, " "), func() bool { return activate(true, false) })
+	binds.bind(binds, strings.Join([]string{config.Cfg.Keys.ActivationModifiers.Alternate, "kpenter"}, " "), func() bool { return activate(false, true) })
 
 	keepOpenModifier = modifiers[config.Cfg.Keys.ActivationModifiers.KeepOpen]
 	activateAltModifier = modifiers[config.Cfg.Keys.ActivationModifiers.Alternate]

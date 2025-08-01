@@ -837,7 +837,11 @@ func reopen() {
 	}()
 
 	if len(appstate.ExplicitModules) > 0 {
-		setExplicits()
+		err := setExplicits()
+		if err != nil {
+			return
+		}
+
 		toUse = explicits
 	} else {
 		toUse = available

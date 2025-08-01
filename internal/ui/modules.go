@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"errors"
 	"fmt"
 	"io/fs"
 	"log"
@@ -222,7 +223,7 @@ func findModule(name string, modules ...[]modules.Workable) modules.Workable {
 	return nil
 }
 
-func setExplicits() {
+func setExplicits() error {
 	explicits = []modules.Workable{}
 
 	for _, v := range appstate.ExplicitModules {
@@ -236,12 +237,16 @@ func setExplicits() {
 	}
 
 	if len(explicits) == 0 {
-		fmt.Printf("Module(s) not found\n.")
+		log.Println("Module(s) not found.")
 
 		if !appstate.IsService {
 			os.Exit(1)
 		}
+
+		return errors.New("expected module(s) not found")
 	}
+
+	return nil
 }
 
 func setupSingleModule() {

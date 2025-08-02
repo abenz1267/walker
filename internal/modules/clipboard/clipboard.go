@@ -208,7 +208,7 @@ func (c *Clipboard) Update() {
 		return
 	}
 
-	content := string(out)
+	content := strings.TrimSpace(string(out))
 
 	hash := md5.Sum([]byte(content))
 	strgHash := hex.EncodeToString(hash[:])
@@ -342,7 +342,7 @@ func itemToEntry(item ClipboardItem, exec string, avoidLineBreaks bool) *util.En
 		Label:            label,
 		Sub:              "Text",
 		Exec:             exec,
-		Piped:            util.Piped{String: item.Content, Type: "string"},
+		Piped:            util.Piped{String: strings.TrimSpace(item.Content), Type: "string"},
 		Categories:       []string{"clipboard"},
 		Class:            "clipboard",
 		Matching:         util.Fuzzy,

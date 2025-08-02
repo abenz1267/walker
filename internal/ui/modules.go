@@ -176,7 +176,7 @@ func setAvailables() {
 			}
 
 			available = append(available, v)
-			config.Cfg.Available = append(config.Cfg.Available, v.General().Name)
+			config.Cfg.Available = append(config.Cfg.Available, config.SwitcherAvailable{Name: v.General().Name, Icon: v.General().Icon})
 
 			if v.General().Hidden {
 				config.Cfg.Hidden = append(config.Cfg.Hidden, v.General().Name)
@@ -186,7 +186,7 @@ func setAvailables() {
 
 	if appstate.Dmenu != nil {
 		available = append(available, appstate.Dmenu)
-		config.Cfg.Available = append(config.Cfg.Available, appstate.Dmenu.General().Name)
+		config.Cfg.Available = append(config.Cfg.Available, config.SwitcherAvailable{Name: appstate.Dmenu.General().Name, Icon: appstate.Dmenu.General().Icon})
 
 		if appstate.Dmenu.Config.Hidden {
 			config.Cfg.Hidden = append(config.Cfg.Hidden, appstate.Dmenu.General().Name)
@@ -196,7 +196,7 @@ func setAvailables() {
 	if appstate.IsService {
 		if appstate.Clipboard != nil {
 			available = append(available, appstate.Clipboard)
-			config.Cfg.Available = append(config.Cfg.Available, appstate.Clipboard.General().Name)
+			config.Cfg.Available = append(config.Cfg.Available, config.SwitcherAvailable{Name: appstate.Clipboard.General().Name, Icon: appstate.Clipboard.General().Icon})
 
 			if appstate.Clipboard.General().Hidden {
 				config.Cfg.Hidden = append(config.Cfg.Hidden, appstate.Clipboard.General().Name)
@@ -227,7 +227,9 @@ func setExplicits() error {
 	explicits = []modules.Workable{}
 
 	for _, v := range appstate.ExplicitModules {
-		if slices.Contains(config.Cfg.Available, v) {
+		if slices.ContainsFunc(config.Cfg.Available, func(a config.SwitcherAvailable) bool {
+			return a.Name == v
+		}) {
 			for k, m := range available {
 				if m.General().Name == v {
 					explicits = append(explicits, available[k])

@@ -67,9 +67,14 @@ type Config struct {
 	JSRuntime           string         `koanf:"js_runtime"`
 
 	// internal
-	Available []string `koanf:"-"`
-	Hidden    []string `koanf:"-"`
-	IsService bool     `koanf:"-"`
+	Available []SwitcherAvailable `koanf:"-"`
+	Hidden    []string            `koanf:"-"`
+	IsService bool                `koanf:"-"`
+}
+
+type SwitcherAvailable struct {
+	Name string `koanf:"-"`
+	Icon string `koanf:"-"`
 }
 
 type Keys struct {

@@ -21,12 +21,13 @@ func (s Switcher) Entries(term string) []*util.Entry {
 	entries := []*util.Entry{}
 
 	for _, v := range config.Cfg.Available {
-		if v == "switcher" || slices.Contains(config.Cfg.Hidden, v) {
+		if v.Name == "switcher" || slices.Contains(config.Cfg.Hidden, v.Name) {
 			continue
 		}
 
 		e := util.Entry{
-			Label:      v,
+			Label:      v.Name,
+			Icon:       v.Icon,
 			Sub:        "switcher",
 			Exec:       "",
 			Categories: []string{"switcher"},

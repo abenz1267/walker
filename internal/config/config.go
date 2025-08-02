@@ -41,7 +41,6 @@ const (
 
 type Config struct {
 	ActivationMode      ActivationMode `koanf:"activation_mode"`
-	AppLaunchPrefix     string         `koanf:"app_launch_prefix"`
 	AsWindow            bool           `koanf:"as_window"`
 	Bar                 Bar            `koanf:"bar"`
 	Builtins            Builtins       `koanf:"builtins"`
@@ -214,6 +213,7 @@ type BlacklistItems []Blacklist
 
 type GeneralModule struct {
 	Stream             bool
+	LaunchPrefix       string         `koanf:"launch_prefix"`
 	AutoSelect         bool           `koanf:"auto_select"`
 	Blacklist          BlacklistItems `koanf:"blacklist"`
 	Delay              int            `koanf:"delay"`

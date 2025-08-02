@@ -437,7 +437,7 @@ func activateItem(keepOpen, alt bool) {
 		toRun = fmt.Sprintf("%s %s", toRun, split[1])
 	}
 
-	cmd := exec.Command("sh", "-c", util.WrapWithPrefix(config.Cfg.AppLaunchPrefix, toRun))
+	cmd := exec.Command("sh", "-c", util.WrapWithPrefix(module.General().LaunchPrefix, toRun))
 
 	if entry.Path != "" {
 		cmd.Dir = entry.Path

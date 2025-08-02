@@ -164,7 +164,7 @@ func (ai *AI) RunLastMessageInTerminal() {
 	shell := os.Getenv("SHELL")
 
 	toRun := fmt.Sprintf("%s %s -e sh -c \"%s; exec %s\"", ai.terminal, config.Cfg.TerminalTitleFlag, last, shell)
-	cmd := exec.Command("sh", "-c", util.WrapWithPrefix(config.Cfg.AppLaunchPrefix, toRun))
+	cmd := exec.Command("sh", "-c", util.WrapWithPrefix(ai.General().LaunchPrefix, toRun))
 
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Setpgid:    true,

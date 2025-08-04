@@ -174,7 +174,15 @@ func (c *Clipboard) watch() {
 	pid := os.Getpid()
 	cmd := exec.Command("sh", "-c", fmt.Sprintf("wl-paste --watch kill -USR1 %d", pid))
 
-	_ = cmd.Run()
+	err := cmd.Start()
+	if err != nil {
+		slog.Error("clipboard", "watch", err)
+		os.Exit(1)
+	}
+
+	go func() {
+		cmd.Wait()
+	}()
 }
 
 func (c *Clipboard) Update() {

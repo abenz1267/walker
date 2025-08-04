@@ -577,11 +577,15 @@ func setupFactory() *gtk.SignalListItemFactory {
 						}
 					} else {
 						if filepath.IsAbs(ii) {
-							if val, ok := cachedBuggyShitImages[ii]; ok {
-								icon = val
+							if filepath.Ext(ii) == ".svg" {
+								if val, ok := cachedBuggyShitImages[ii]; ok {
+									icon = val
+								} else {
+									cachedBuggyShitImages[ii] = gtk.NewImageFromFile(ii)
+									icon = cachedBuggyShitImages[ii]
+								}
 							} else {
-								cachedBuggyShitImages[ii] = gtk.NewImageFromFile(ii)
-								icon = cachedBuggyShitImages[ii]
+								icon = gtk.NewImageFromFile(ii)
 							}
 						} else {
 							i := elements.iconTheme.LookupIcon(ii, fallbacks, layout.IconSizeIntMap[layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)

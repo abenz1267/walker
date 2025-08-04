@@ -17,6 +17,7 @@ import (
 	"time"
 
 	"github.com/abenz1267/walker/internal/config"
+	"github.com/abenz1267/walker/internal/modules"
 	"github.com/abenz1267/walker/internal/modules/clipboard"
 	"github.com/abenz1267/walker/internal/state"
 	"github.com/abenz1267/walker/internal/ui"
@@ -184,6 +185,14 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 		state.IsDmenu = options.Contains("dmenu")
 
 		if state.IsDmenu {
+			if !app.Flags().Has(gio.ApplicationIsService) && state.Dmenu == nil {
+				state.Dmenu = &modules.Dmenu{
+					DmenuShowChan: state.DmenuShowChan,
+				}
+
+				state.Dmenu.Setup()
+			}
+
 			state.ExplicitModules = []string{"dmenu"}
 
 			stream := options.Contains("stream")

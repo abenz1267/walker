@@ -33,23 +33,24 @@ import (
 )
 
 var (
-	elements          *Elements
-	startupTheme      string
-	layout            *config.UI
-	mergedLayouts     map[string]*config.UI
-	themes            map[string]*config.UI
-	common            *Common
-	explicits         []modules.Workable
-	toUse             []modules.Workable
-	available         []modules.Workable
-	hstry             history.History
-	appstate          *state.AppState
-	thumbnails        map[string][]byte
-	thumbnailsMutex   sync.Mutex
-	debouncedProcess  func(f func())
-	debouncedOnSelect func(f func())
-	layoutErr         error
-	hasBaseSetup      bool
+	elements              *Elements
+	startupTheme          string
+	layout                *config.UI
+	mergedLayouts         map[string]*config.UI
+	themes                map[string]*config.UI
+	common                *Common
+	explicits             []modules.Workable
+	toUse                 []modules.Workable
+	available             []modules.Workable
+	hstry                 history.History
+	appstate              *state.AppState
+	thumbnails            map[string][]byte
+	thumbnailsMutex       sync.Mutex
+	debouncedProcess      func(f func())
+	debouncedOnSelect     func(f func())
+	layoutErr             error
+	hasBaseSetup          bool
+	cachedBuggyShitImages map[string]*gtk.Image
 )
 
 type Common struct {
@@ -96,6 +97,7 @@ func Show(app *gtk.Application) {
 func Activate(state *state.AppState) func(app *gtk.Application) {
 	appstate = state
 	thumbnails = make(map[string][]byte)
+	cachedBuggyShitImages = make(map[string]*gtk.Image)
 
 	if !hasBaseSetup {
 		os.MkdirAll(util.ThumbnailsDir(), 0755)
@@ -575,7 +577,12 @@ func setupFactory() *gtk.SignalListItemFactory {
 						}
 					} else {
 						if filepath.IsAbs(ii) {
-							icon = gtk.NewImageFromFile(ii)
+							if val, ok := cachedBuggyShitImages[ii]; ok {
+								icon = val
+							} else {
+								cachedBuggyShitImages[ii] = gtk.NewImageFromFile(ii)
+								icon = cachedBuggyShitImages[ii]
+							}
 						} else {
 							i := elements.iconTheme.LookupIcon(ii, fallbacks, layout.IconSizeIntMap[layout.Window.Box.Scroll.List.Item.Icon.IconSize], 1, gtk.GetLocaleDirection(), 0)
 

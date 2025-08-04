@@ -135,7 +135,7 @@ show_icon_when_single = true
 
 [builtins.clipboard]
 always_put_new_on_top = true
-exec = "wl-copy"
+exec = "wl-copy -n"
 weight = 5
 name = "clipboard"
 avoid_line_breaks = true

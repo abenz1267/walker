@@ -62,6 +62,21 @@ func main() {
 	app = gtk.NewApplication(appName, gio.ApplicationHandlesCommandLine)
 	app.Connect("activate", ui.Activate(state))
 	app.ConnectCommandLine(handleCmd(state))
+	app.ConnectHandleLocalOptions(func(options *glib.VariantDict) int {
+		if options.Contains("config") {
+			state.ExplicitConfig = options.LookupValue("config", glib.NewVariantType("s")).String()
+		}
+
+		if config.Cfg == nil {
+			state.ConfigError = config.Init(state.ExplicitConfig)
+		}
+
+		if !state.ModulesStarted && app.Flags().Has(gio.ApplicationIsService) {
+			state.StartServiceableModules()
+		}
+
+		return -1
+	})
 
 	addFlags(app)
 	app.Flags()
@@ -166,18 +181,6 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 			return 0
 		}
 
-		if options.Contains("config") {
-			state.ExplicitConfig = options.LookupValue("config", glib.NewVariantType("s")).String()
-		}
-
-		if config.Cfg == nil {
-			state.ConfigError = config.Init(state.ExplicitConfig)
-		}
-
-		if !state.ModulesStarted && app.Flags().Has(gio.ApplicationIsService) {
-			state.StartServiceableModules()
-		}
-
 		state.WidthOverwrite = gtkStringToInt(options.LookupValue("width", glib.NewVariantType("s")))
 		state.HeightOverwrite = gtkStringToInt(options.LookupValue("height", glib.NewVariantType("s")))
 		state.AutoSelect = options.Contains("autoselect")
@@ -185,7 +188,7 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 		state.IsDmenu = options.Contains("dmenu")
 
 		if state.IsDmenu {
-			if !app.Flags().Has(gio.ApplicationIsService) && state.Dmenu == nil {
+			if !app.Flags().Has(gio.ApplicationIsService) || state.Dmenu == nil {
 				state.Dmenu = &modules.Dmenu{
 					DmenuShowChan: state.DmenuShowChan,
 				}

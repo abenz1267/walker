@@ -173,7 +173,7 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 			state.ConfigError = config.Init(state.ExplicitConfig)
 		}
 
-		if !state.ModulesStarted {
+		if !state.ModulesStarted && app.Flags().Has(gio.ApplicationIsService) {
 			state.StartServiceableModules()
 		}
 

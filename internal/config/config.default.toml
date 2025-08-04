@@ -135,7 +135,7 @@ show_icon_when_single = true
 
 [builtins.clipboard]
 always_put_new_on_top = true
-exec = "wl-copy -n"
+exec = "wl-copy"
 weight = 5
 icon = "user-bookmarks"
 name = "clipboard"

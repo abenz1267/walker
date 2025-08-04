@@ -141,20 +141,6 @@ func getType() string {
 	return fields[0]
 }
 
-func getContent() (string, string) {
-	cmd := exec.Command("wl-paste", "-n")
-	out, err := cmd.CombinedOutput()
-	if err != nil {
-		return "", ""
-	}
-
-	txt := string(out)
-	hash := md5.Sum([]byte(txt))
-	strg := hex.EncodeToString(hash[:])
-
-	return txt, strg
-}
-
 func saveTmpImg(ext string) string {
 	cmd := exec.Command("wl-paste")
 
@@ -196,7 +182,7 @@ func (c *Clipboard) Update() {
 		return
 	}
 
-	cmd := exec.Command("wl-paste")
+	cmd := exec.Command("wl-paste", "-n")
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		if strings.Contains(string(out), "Nothing is copied") {

@@ -71,8 +71,12 @@ func main() {
 			state.ConfigError = config.Init(state.ExplicitConfig)
 		}
 
-		if !state.ModulesStarted && app.Flags().Has(gio.ApplicationIsService) {
-			state.StartServiceableModules()
+		if state.IsService {
+			if !state.ModulesStarted {
+				state.StartServiceableModules()
+			}
+
+			go listenActivationSocket()
 		}
 
 		return -1
@@ -82,8 +86,6 @@ func main() {
 	app.Flags()
 
 	if state.IsService {
-		go listenActivationSocket()
-
 		app.Hold()
 
 		signal_chan := make(chan os.Signal, 1)
@@ -149,6 +151,7 @@ func addFlags(app *gtk.Application) {
 
 func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int {
 	return func(cmd *gio.ApplicationCommandLine) int {
+		fmt.Println("GOT CONN cmd")
 		options := cmd.OptionsDict()
 
 		if options.Contains("version") {
@@ -323,10 +326,6 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 
 func listenActivationSocket() {
 	os.Remove(SocketReopen)
-
-	for config.Cfg == nil {
-		time.Sleep(1 * time.Second)
-	}
 
 	l, _ := net.ListenUnix("unix", &net.UnixAddr{
 		Name: SocketReopen,

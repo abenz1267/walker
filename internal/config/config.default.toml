@@ -181,7 +181,7 @@ typeahead = true
 [builtins.finder]
 use_fd = false
 fd_flags = "--ignore-vcs --type file --type directory"
-cmd_alt = "xdg-open $(dirname ~/%RESULT%)"
+cmd_alt = "xdg-open \"$(dirname \"$HOME/%RESULT%\")\""
 weight = 5
 icon = "folder"
 name = "finder"

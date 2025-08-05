@@ -4,6 +4,8 @@ Walker is a highly extendable application launcher that doesn't hold back on fea
 
 ![Screenshot](https://github.com/abenz1267/walker/blob/master/assets/images.png?raw=true)
 
+[![Discord](https://img.shields.io/discord/1402235361463242964?logo=discord)](https://discord.gg/mGQWBQHASt)
+
 ## Features
 
 - plugin support: simple stdin/stdout (external or via configuration, see wiki)

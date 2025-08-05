@@ -151,7 +151,6 @@ func addFlags(app *gtk.Application) {
 
 func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int {
 	return func(cmd *gio.ApplicationCommandLine) int {
-		fmt.Println("GOT CONN cmd")
 		options := cmd.OptionsDict()
 
 		if options.Contains("version") {

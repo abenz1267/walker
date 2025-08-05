@@ -151,9 +151,19 @@ func initialUISetup(app *gtk.Application) {
 
 	config.Cfg.IsService = appstate.IsService
 
-	if !ls.IsSupported() {
-		config.Cfg.AsWindow = true
-	}
+	// THIS NEEDS TO BE IN A GOROUTINE. OTHERWISE IT WOULD SOMETIMES JUST BLOCK. FUCK THIS SHIT.
+	var wg sync.WaitGroup
+	go func(wg *sync.WaitGroup) {
+		wg.Add(1)
+		defer wg.Done()
+		if !ls.IsSupported() {
+			config.Cfg.AsWindow = true
+			appstate.SupportsLayerShell = false
+		} else {
+			appstate.SupportsLayerShell = true
+		}
+	}(&wg)
+	wg.Wait()
 
 	layout, layoutErr = config.GetLayout(theme, themeBase)
 
@@ -171,13 +181,17 @@ func initialUISetup(app *gtk.Application) {
 
 		elements = setupElementsPassword(app)
 
-		setupLayerShell()
+		if appstate.SupportsLayerShell {
+			setupLayerShell()
+		}
 	} else {
 		setupCommon(app)
 
 		elements = setupElements(app)
 
-		setupLayerShell()
+		if appstate.SupportsLayerShell {
+			setupLayerShell()
+		}
 
 		setupModules()
 
@@ -979,10 +993,6 @@ func setupLayerShell() {
 		box := gtk.NewBox(gtk.OrientationVertical, 0)
 		elements.appwin.SetTitlebar(box)
 		return
-	}
-
-	if !ls.IsSupported() {
-		log.Panicln("gtk-layer-shell not supported")
 	}
 
 	ls.InitForWindow(&elements.appwin.Window)

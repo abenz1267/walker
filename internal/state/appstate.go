@@ -57,6 +57,7 @@ type AppState struct {
 	WidthOverwrite      int
 	HeightOverwrite     int
 	OldSizeData         *OldSizeData
+	SupportsLayerShell  bool
 }
 
 func Get() *AppState {

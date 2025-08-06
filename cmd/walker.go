@@ -309,7 +309,7 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 
 		app.Activate()
 
-		if state.IsDmenu {
+		if state.IsDmenu && state.IsService {
 			go func() {
 				result := <-state.DmenuResultChan
 				cmd.PrintLiteral(fmt.Sprintf("%s\n", result))

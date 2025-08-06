@@ -525,11 +525,7 @@ func handleSwitcher(module string) {
 
 func handleDmenuResult(result string) {
 	if appstate.IsService {
-		for _, v := range toUse {
-			if v.General().Name == "dmenu" {
-				appstate.DmenuResultChan <- result
-			}
-		}
+		appstate.DmenuResultChan <- result
 	} else {
 		fmt.Println(result)
 	}

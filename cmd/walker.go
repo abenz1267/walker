@@ -13,6 +13,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 
@@ -30,6 +31,8 @@ import (
 
 //go:embed version.txt
 var version string
+
+var mut sync.Mutex
 
 var (
 	now          = time.Now().UnixMilli()
@@ -151,6 +154,8 @@ func addFlags(app *gtk.Application) {
 
 func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int {
 	return func(cmd *gio.ApplicationCommandLine) int {
+		mut.Lock()
+		defer mut.Unlock()
 		options := cmd.OptionsDict()
 
 		if options.Contains("version") {

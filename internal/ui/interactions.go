@@ -153,6 +153,10 @@ func setupInteractions(appstate *state.AppState) {
 		gesture := gtk.NewGestureClick()
 		gesture.SetPropagationPhase(gtk.PropagationPhase(3))
 		gesture.Connect("pressed", func(gesture *gtk.GestureClick, n int) {
+			if appstate.IsDmenu {
+				handleDmenuResult("CNCLD")
+			}
+
 			if appstate.IsService {
 				quit(false)
 			} else {
@@ -340,6 +344,18 @@ func activateItem(keepOpen, alt bool) {
 
 	executeEvent(config.EventActivate, entry.Label)
 
+	if appstate.IsDmenu {
+		handleDmenuResult(entry.Value)
+
+		if appstate.IsService {
+			quit(true)
+		} else {
+			closeAfterActivation(keepOpen, selectNext)
+		}
+
+		return
+	}
+
 	if !keepOpen && entry.Sub != "Walker" && entry.Sub != "switcher" && config.Cfg.IsService && entry.SpecialFunc == nil {
 		go quit(true)
 	}
@@ -392,19 +408,6 @@ func activateItem(keepOpen, alt bool) {
 	// check if desktop app is terminal
 	if entry.Module == config.Cfg.Builtins.Finder.Name && !alt {
 		forceTerminal = forceTerminalForFile(strings.TrimPrefix(entry.Exec, "xdg-open "))
-	}
-
-	if appstate.IsDmenu {
-
-		handleDmenuResult(entry.Value)
-
-		if appstate.IsService {
-			quit(true)
-		} else {
-			closeAfterActivation(keepOpen, selectNext)
-		}
-
-		return
 	}
 
 	if entry.Sub == "Walker" {

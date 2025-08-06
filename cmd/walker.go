@@ -188,6 +188,11 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 		state.HeightOverwrite = gtkStringToInt(options.LookupValue("height", glib.NewVariantType("s")))
 		state.AutoSelect = options.Contains("autoselect")
 		state.Hidebar = options.Contains("hidebar")
+
+		if state.IsDmenu {
+			state.DmenuResultChan <- "ABRT"
+		}
+
 		state.IsDmenu = options.Contains("dmenu")
 
 		if state.IsDmenu {
@@ -310,8 +315,14 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 				result := <-state.DmenuResultChan
 				cmd.PrintLiteral(fmt.Sprintf("%s\n", result))
 
-				if result == "CNCLD" {
+				if result == "CNCLD" || result == "ABRT" {
 					cmd.SetExitStatus(130)
+				}
+
+				if result != "ABRT" {
+					for state.IsRunning {
+						time.Sleep(1 * time.Millisecond)
+					}
 				}
 
 				cmd.Done()

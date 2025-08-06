@@ -105,6 +105,7 @@ func main() {
 
 				switch signal {
 				case syscall.SIGHUP, syscall.SIGINT, syscall.SIGTERM, syscall.SIGKILL, syscall.SIGQUIT:
+
 					os.Exit(0)
 				case syscall.SIGUSR1:
 					if state.Clipboard != nil {
@@ -309,7 +310,7 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 
 		app.Activate()
 
-		if state.IsDmenu && state.IsService {
+		if state.IsDmenu {
 			go func() {
 				result := <-state.DmenuResultChan
 				cmd.PrintLiteral(fmt.Sprintf("%s\n", result))

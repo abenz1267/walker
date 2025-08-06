@@ -532,11 +532,7 @@ func handleSwitcher(module string) {
 }
 
 func handleDmenuResult(result string) {
-	if appstate.IsService {
-		appstate.DmenuResultChan <- result
-	} else {
-		fmt.Println(result)
-	}
+	appstate.DmenuResultChan <- result
 }
 
 func setStdin(cmd *exec.Cmd, piped *util.Piped) {

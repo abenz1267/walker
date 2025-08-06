@@ -152,12 +152,16 @@ func addFlags(app *gtk.Application) {
 
 func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int {
 	return func(cmd *gio.ApplicationCommandLine) int {
+		for state.IsRunning {
+			time.Sleep(1 * time.Millisecond)
+		}
+
 		options := cmd.OptionsDict()
 
 		if options.Contains("version") {
 			cmd.PrintLiteral(fmt.Sprintf("%s", version))
-			// cmd.Done()
-			// return 0
+			cmd.Done()
+			return 0
 		}
 
 		if options.Contains("clear-clipboard") {

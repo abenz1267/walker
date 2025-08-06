@@ -395,13 +395,12 @@ func activateItem(keepOpen, alt bool) {
 	}
 
 	if appstate.IsDmenu {
-		if appstate.IsService {
-			go quit(true)
-		}
 
 		handleDmenuResult(entry.Value)
 
-		if !appstate.IsService {
+		if appstate.IsService {
+			quit(true)
+		} else {
 			closeAfterActivation(keepOpen, selectNext)
 		}
 

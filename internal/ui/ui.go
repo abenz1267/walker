@@ -838,7 +838,7 @@ func reopen() {
 					handleDmenuResult("CNCLD")
 				}
 
-				quit(false)
+				Quit(false)
 			} else {
 				exit(false, false)
 			}

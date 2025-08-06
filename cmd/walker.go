@@ -191,6 +191,10 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 		state.IsDmenu = options.Contains("dmenu")
 
 		if state.IsDmenu {
+			if state.IsRunning {
+				ui.Quit(false)
+			}
+
 			if !app.Flags().Has(gio.ApplicationIsService) || state.Dmenu == nil {
 				state.Dmenu = &modules.Dmenu{
 					DmenuShowChan: state.DmenuShowChan,

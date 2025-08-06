@@ -154,7 +154,7 @@ func setupInteractions(appstate *state.AppState) {
 		gesture.SetPropagationPhase(gtk.PropagationPhase(3))
 		gesture.Connect("pressed", func(gesture *gtk.GestureClick, n int) {
 			if appstate.IsService {
-				quit(false)
+				Quit(false)
 			} else {
 				exit(false, false)
 			}
@@ -341,7 +341,7 @@ func activateItem(keepOpen, alt bool) {
 	executeEvent(config.EventActivate, entry.Label)
 
 	if !keepOpen && entry.Sub != "Walker" && entry.Sub != "switcher" && config.Cfg.IsService && entry.SpecialFunc == nil {
-		go quit(true)
+		go Quit(true)
 	}
 
 	module := findModule(entry.Module, toUse, explicits)
@@ -399,7 +399,7 @@ func activateItem(keepOpen, alt bool) {
 		handleDmenuResult(entry.Value)
 
 		if appstate.IsService {
-			quit(true)
+			Quit(true)
 		} else {
 			closeAfterActivation(keepOpen, selectNext)
 		}
@@ -559,7 +559,7 @@ func closeAfterActivation(keepOpen, next bool) {
 	}
 
 	if !keepOpen && appstate.IsRunning {
-		quit(true)
+		Quit(true)
 		return
 	}
 
@@ -633,7 +633,7 @@ func timeoutReset() {
 
 				if !isAi && !blockTimeout {
 					if appstate.IsService {
-						glib.IdleAdd(quit)
+						glib.IdleAdd(Quit)
 					} else {
 						glib.IdleAdd(exit)
 					}
@@ -1092,7 +1092,7 @@ func usageModifier(entry *util.Entry) int {
 	return 0
 }
 
-func quit(ignoreEvent bool) {
+func Quit(ignoreEvent bool) {
 	appstate.DmenuStreamId = 0
 
 	if !ignoreEvent {

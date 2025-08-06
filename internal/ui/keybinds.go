@@ -269,7 +269,7 @@ func aiExecuteLast() bool {
 
 	ai := findModule(config.Cfg.Builtins.AI.Name, toUse, explicits).(*aiModule.AI)
 	ai.RunLastMessageInTerminal()
-	quit(true)
+	Quit(true)
 
 	return true
 }
@@ -349,7 +349,7 @@ func quitKeybind() bool {
 	}
 
 	if config.Cfg.IsService {
-		quit(false)
+		Quit(false)
 		return true
 	} else {
 		exit(false, true)

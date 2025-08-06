@@ -395,8 +395,16 @@ func activateItem(keepOpen, alt bool) {
 	}
 
 	if appstate.IsDmenu {
+		if appstate.IsService {
+			go quit(true)
+		}
+
 		handleDmenuResult(entry.Value)
-		closeAfterActivation(keepOpen, selectNext)
+
+		if !appstate.IsService {
+			closeAfterActivation(keepOpen, selectNext)
+		}
+
 		return
 	}
 
@@ -1111,7 +1119,6 @@ func quit(ignoreEvent bool) {
 		resetSingleModule()
 	}
 
-	appstate.IsRunning = false
 	appstate.IsSingle = false
 	appstate.AutoSelect = false
 	appstate.Hidebar = false
@@ -1173,6 +1180,7 @@ func quit(ignoreEvent bool) {
 	runtime.GC()
 	debug.FreeOSMemory()
 
+	appstate.IsRunning = false
 	common.app.Hold()
 }
 

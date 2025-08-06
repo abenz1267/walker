@@ -628,7 +628,7 @@ func timeoutReset() {
 				}
 
 				if appstate.IsDmenu {
-					handleDmenuResult("")
+					handleDmenuResult("CNCLD")
 				}
 
 				if !isAi && !blockTimeout {

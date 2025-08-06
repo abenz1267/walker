@@ -830,7 +830,7 @@ func reopen() {
 
 	setWindowClasses = []string{}
 
-	if appstate.IsRunning {
+	if appstate.IsRunning && !appstate.IsDmenu {
 		if config.Cfg.CloseWhenOpen {
 			if appstate.IsService {
 

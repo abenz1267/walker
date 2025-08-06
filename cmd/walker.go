@@ -13,7 +13,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -31,8 +30,6 @@ import (
 
 //go:embed version.txt
 var version string
-
-var mut sync.Mutex
 
 var (
 	now          = time.Now().UnixMilli()
@@ -155,14 +152,12 @@ func addFlags(app *gtk.Application) {
 
 func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int {
 	return func(cmd *gio.ApplicationCommandLine) int {
-		mut.Lock()
-		defer mut.Unlock()
 		options := cmd.OptionsDict()
 
 		if options.Contains("version") {
-			cmd.PrintLiteral(fmt.Sprintf("%s\n", version))
-			cmd.Done()
-			return 0
+			cmd.PrintLiteral(fmt.Sprintf("%s", version))
+			// cmd.Done()
+			// return 0
 		}
 
 		if options.Contains("clear-clipboard") {
@@ -240,6 +235,7 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 				stdin := cmd.Stdin()
 				if stdin == nil {
 					fmt.Println("No stdin available")
+					cmd.Done()
 					return 1
 				}
 
@@ -284,7 +280,6 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 					}
 				}
 			}
-
 		} else {
 			if options.Contains("modules") {
 				m := strings.Split(options.LookupValue("modules", glib.NewVariantType("s")).String(), ",")

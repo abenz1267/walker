@@ -33,6 +33,13 @@
       walker = pkgs.callPackage ./nix/package.nix {};
     });
 
+    overlays = {
+      default = self.overlays.walker;
+      walker = final: prev: {
+        walker = self.packages.${prev.system}.walker;
+      };
+    };
+
     homeManagerModules = {
       default = self.homeManagerModules.walker;
       walker = import ./nix/modules/home-manager.nix self;

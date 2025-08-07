@@ -27,6 +27,7 @@ type AppState struct {
 	ActiveItem          *int
 	Hidebar             bool
 	AutoSelect          bool
+	Preselected         *int
 	Clipboard           modules.Workable
 	ConfigError         error
 	IsDebug             bool

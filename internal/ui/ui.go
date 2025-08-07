@@ -948,8 +948,16 @@ func afterUI() {
 					module = toUse[0]
 				}
 
-				if !module.General().KeepSelection {
-					common.selection.SetSelected(0)
+				if appstate.IsDmenu && appstate.Preselected != nil {
+					if *appstate.Preselected < 0 {
+						common.selection.SetSelected(common.selection.NItems() - 1)
+					} else {
+						common.selection.SetSelected(uint(*appstate.Preselected))
+					}
+				} else {
+					if !module.General().KeepSelection {
+						common.selection.SetSelected(0)
+					}
 				}
 			} else {
 				common.selection.SetSelected(0)

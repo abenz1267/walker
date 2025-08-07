@@ -136,17 +136,18 @@ func addFlags(app *gtk.Application) {
 	app.AddMainOption("query", 'q', glib.OptionFlagNone, glib.OptionArgString, "initial query", "")
 	app.AddMainOption("version", 'v', glib.OptionFlagNone, glib.OptionArgNone, "print version", "")
 	app.AddMainOption("forceprint", 'f', glib.OptionFlagNone, glib.OptionArgNone, "forces printing input if no item is selected", "")
-	app.AddMainOption("active", 'a', glib.OptionFlagNone, glib.OptionArgString, "active item", "")
 	app.AddMainOption("enableautostart", 'A', glib.OptionFlagNone, glib.OptionArgNone, "creates a desktop file for autostarting on login", "")
 	app.AddMainOption("disableautostart", 'D', glib.OptionFlagNone, glib.OptionArgNone, "removes the autostart desktop file", "")
 	app.AddMainOption("createuserconfig", 'C', glib.OptionFlagNone, glib.OptionArgNone, "writes the default config to xdg_user_config", "")
 
 	// dmenu flags
+	app.AddMainOption("active", 'a', glib.OptionFlagNone, glib.OptionArgString, "active item (visually) (dmenu)", "")
+	app.AddMainOption("preselect", 'p', glib.OptionFlagNone, glib.OptionArgString, "preselected item (dmenu)", "")
 	app.AddMainOption("dmenu", 'd', glib.OptionFlagNone, glib.OptionArgNone, "run in dmenu mode", "")
-	app.AddMainOption("label", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label", "")
-	app.AddMainOption("icon", 'i', glib.OptionFlagNone, glib.OptionArgString, "column to use for the icon", "")
-	app.AddMainOption("value", 'V', glib.OptionFlagNone, glib.OptionArgString, "column to use for the value", "")
-	app.AddMainOption("separator", 't', glib.OptionFlagNone, glib.OptionArgString, "column separator", "")
+	app.AddMainOption("label", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label (dmenu)", "")
+	app.AddMainOption("icon", 'i', glib.OptionFlagNone, glib.OptionArgString, "column to use for the icon (dmenu)", "")
+	app.AddMainOption("value", 'V', glib.OptionFlagNone, glib.OptionArgString, "column to use for the value (dmenu)", "")
+	app.AddMainOption("separator", 't', glib.OptionFlagNone, glib.OptionArgString, "column separator (dmenu)", "")
 	app.AddMainOption("stream", 's', glib.OptionFlagNone, glib.OptionArgNone, "stream data (dmenu)", "")
 }
 
@@ -155,6 +156,7 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 		options := cmd.OptionsDict()
 
 		if options.Contains("version") {
+			cmd.PrintLiteral(fmt.Sprintf("Running Service: %t\n", state.IsService))
 			cmd.PrintLiteral(fmt.Sprintf("%s", version))
 			cmd.Done()
 			return 0
@@ -234,6 +236,13 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 				state.ActiveItem = &val
 			} else {
 				state.ActiveItem = nil
+			}
+
+			if options.Contains("preselect") {
+				val := gtkStringToInt(options.LookupValue("preselect", glib.NewVariantType("s"))) - 1
+				state.Preselected = &val
+			} else {
+				state.Preselected = nil
 			}
 
 			if !slices.Contains(config.Cfg.Disabled, state.Dmenu.General().Name) {

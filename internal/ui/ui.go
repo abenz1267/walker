@@ -223,6 +223,12 @@ func initialUISetup(app *gtk.Application) {
 	}
 
 	applySizeOverwrite()
+
+	if config.Cfg.AsWindow {
+		box := gtk.NewBox(gtk.OrientationVertical, 0)
+		elements.appwin.SetTitlebar(box)
+	}
+
 	elements.appwin.SetVisible(true)
 
 	glib.IdleAdd(func() {
@@ -1003,12 +1009,6 @@ func afterUI() {
 }
 
 func setupLayerShell() {
-	if config.Cfg.AsWindow {
-		box := gtk.NewBox(gtk.OrientationVertical, 0)
-		elements.appwin.SetTitlebar(box)
-		return
-	}
-
 	ls.InitForWindow(&elements.appwin.Window)
 	ls.SetNamespace(&elements.appwin.Window, "walker")
 

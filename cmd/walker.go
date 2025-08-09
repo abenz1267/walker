@@ -142,7 +142,7 @@ func addFlags(app *gtk.Application) {
 
 	// dmenu flags
 	app.AddMainOption("active", 'a', glib.OptionFlagNone, glib.OptionArgString, "active item (visually) (dmenu)", "")
-	app.AddMainOption("preselect", 'p', glib.OptionFlagNone, glib.OptionArgString, "preselected item (dmenu)", "")
+	app.AddMainOption("preselect", 'P', glib.OptionFlagNone, glib.OptionArgString, "preselected item (dmenu)", "")
 	app.AddMainOption("dmenu", 'd', glib.OptionFlagNone, glib.OptionArgNone, "run in dmenu mode", "")
 	app.AddMainOption("label", 'l', glib.OptionFlagNone, glib.OptionArgString, "column to use for the label (dmenu)", "")
 	app.AddMainOption("icon", 'i', glib.OptionFlagNone, glib.OptionArgString, "column to use for the icon (dmenu)", "")

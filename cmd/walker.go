@@ -322,10 +322,11 @@ func handleCmd(state *state.AppState) func(cmd *gio.ApplicationCommandLine) int 
 		if state.IsDmenu {
 			go func() {
 				result := <-state.DmenuResultChan
-				cmd.PrintLiteral(fmt.Sprintf("%s\n", result))
 
 				if result == "CNCLD" || result == "ABRT" {
 					cmd.SetExitStatus(130)
+				} else {
+					cmd.PrintLiteral(fmt.Sprintf("%s\n", result))
 				}
 
 				if result != "ABRT" {

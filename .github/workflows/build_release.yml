@@ -124,13 +124,39 @@ jobs:
       - name: Generate changelog
         id: changelog
         run: |
-          if [ -f CHANGELOG.md ]; then
-            echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
-            sed -n "/^## \[${{ steps.version.outputs.VERSION }}\]/,/^## \[/p" CHANGELOG.md | sed '$d' >> $GITHUB_OUTPUT
-            echo "EOF" >> $GITHUB_OUTPUT
+          # Get the previous tag
+          PREVIOUS_TAG=$(git tag --sort=-version:refname | grep -v "${{ steps.version.outputs.VERSION }}" | head -n 1)
+
+          if [ -z "$PREVIOUS_TAG" ]; then
+            echo "No previous tag found, generating changelog from first commit"
+            RANGE=""
           else
-            echo "CHANGELOG=Release ${{ steps.version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+            echo "Previous tag: $PREVIOUS_TAG"
+            RANGE="$PREVIOUS_TAG..HEAD"
           fi
+
+          # Generate changelog
+          echo "CHANGELOG<<EOF" >> $GITHUB_OUTPUT
+          echo "## What's Changed" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+
+          # Get commits since last tag and format them
+          if [ -n "$RANGE" ]; then
+            git log $RANGE --pretty=format:"* %s (%an)" --no-merges | head -50 >> $GITHUB_OUTPUT
+          else
+            git log --pretty=format:"* %s (%an)" --no-merges | head -50 >> $GITHUB_OUTPUT
+          fi
+
+          echo "" >> $GITHUB_OUTPUT
+          echo "" >> $GITHUB_OUTPUT
+
+          if [ -n "$PREVIOUS_TAG" ]; then
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/$PREVIOUS_TAG...${{ steps.version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+          else
+            echo "**Full Changelog**: https://github.com/${{ github.repository }}/commits/${{ steps.version.outputs.VERSION }}" >> $GITHUB_OUTPUT
+          fi
+
+          echo "EOF" >> $GITHUB_OUTPUT
 
       - name: Create Release
         uses: softprops/action-gh-release@v2

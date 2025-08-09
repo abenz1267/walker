@@ -247,8 +247,13 @@ func disableAM(refocus bool) {
 			elements.appwin.RemoveCSSClass("activation")
 
 			if refocus {
-				elements.input.SetFocusable(true)
-				elements.input.GrabFocus()
+				if appstate.Hidebar || layout.Window.Box.Search.Hide {
+					elements.grid.SetFocusable(true)
+					elements.grid.GrabFocus()
+				} else {
+					elements.input.SetFocusable(true)
+					elements.input.GrabFocus()
+				}
 			}
 		})
 	}
@@ -299,6 +304,12 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				val = gdk.KEY_Tab
 			}
 
+			if layout.Window.Box.Scroll.List.Grid {
+				if val == gdk.KEY_Down || val == gdk.KEY_Up || val == gdk.KEY_Left || val == gdk.KEY_Right {
+					return false
+				}
+			}
+
 			hasBind := binds.execute(int(val), modifier)
 
 			if hasBind {
@@ -317,11 +328,26 @@ func handleGlobalKeysPressed(val uint, code uint, modifier gdk.ModifierType) boo
 				}
 			}
 
-			if !hasFocus {
-				elements.input.GrabFocus()
-				char := gdk.KeyvalToUnicode(val)
-				elements.input.SetText(elements.input.Text() + string(rune(char)))
-				elements.input.SetPosition(-1)
+			if !hasFocus && !layout.Window.Box.Search.Hide {
+				if !layout.Window.Box.Scroll.List.Grid {
+					elements.input.GrabFocus()
+					char := gdk.KeyvalToUnicode(val)
+					elements.input.SetText(elements.input.Text() + string(rune(char)))
+					elements.input.SetPosition(-1)
+				} else {
+					if val == gdk.KEY_BackSpace {
+						text := elements.input.Text()
+
+						if len(text) > 0 {
+							elements.input.SetText(text[:len(text)-1])
+							elements.input.SetPosition(-1)
+						}
+					} else {
+						char := gdk.KeyvalToUnicode(val)
+						elements.input.SetText(elements.input.Text() + string(rune(char)))
+						elements.input.SetPosition(-1)
+					}
+				}
 			}
 
 			return false

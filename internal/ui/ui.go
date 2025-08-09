@@ -225,12 +225,20 @@ func initialUISetup(app *gtk.Application) {
 	applySizeOverwrite()
 	elements.appwin.SetVisible(true)
 
-	if appstate.Password {
-		elements.password.GrabFocus()
-		timeoutReset()
-	} else {
-		elements.input.GrabFocus()
-	}
+	glib.IdleAdd(func() {
+		if appstate.Password {
+			elements.password.GrabFocus()
+			timeoutReset()
+		} else {
+			if appstate.Hidebar || layout.Window.Box.Search.Hide || layout.Window.Box.Scroll.List.Grid {
+				elements.grid.SetFocusable(true)
+				elements.grid.GrabFocus()
+			} else {
+				elements.input.SetFocusable(true)
+				elements.input.GrabFocus()
+			}
+		}
+	})
 
 	appstate.HasUI = true
 	appstate.IsRunning = true
@@ -893,8 +901,10 @@ func reopen() {
 
 	glib.IdleAdd(func() {
 		if appstate.Hidebar || layout.Window.Box.Search.Hide {
+			elements.search.SetFocusable(false)
 			elements.search.SetVisible(false)
 		} else {
+			elements.search.SetFocusable(true)
 			elements.search.SetVisible(true)
 		}
 
@@ -914,18 +924,19 @@ func reopen() {
 
 	handleTimeout()
 
-	if appstate.InitialQuery != "" {
-		glib.IdleAdd(func() {
+	glib.IdleAdd(func() {
+		if appstate.InitialQuery != "" {
 			elements.input.SetText(appstate.InitialQuery)
 			elements.input.SetPosition(-1)
+		}
+
+		if appstate.Hidebar || layout.Window.Box.Search.Hide {
+			elements.grid.SetFocusable(true)
+			elements.grid.GrabFocus()
+		} else {
+			elements.input.SetFocusable(true)
 			elements.input.GrabFocus()
-		})
-
-		return
-	}
-
-	glib.IdleAdd(func() {
-		elements.input.GrabFocus()
+		}
 		process()
 	})
 }

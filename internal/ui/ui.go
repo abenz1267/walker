@@ -151,20 +151,6 @@ func initialUISetup(app *gtk.Application) {
 
 	config.Cfg.IsService = appstate.IsService
 
-	// THIS NEEDS TO BE IN A GOROUTINE. OTHERWISE IT WOULD SOMETIMES JUST BLOCK. FUCK THIS SHIT.
-	var wg sync.WaitGroup
-	go func(wg *sync.WaitGroup) {
-		wg.Add(1)
-		defer wg.Done()
-		if !ls.IsSupported() {
-			config.Cfg.AsWindow = true
-			appstate.SupportsLayerShell = false
-		} else {
-			appstate.SupportsLayerShell = true
-		}
-	}(&wg)
-	wg.Wait()
-
 	layout, layoutErr = config.GetLayout(theme, themeBase)
 
 	if appstate.Password {
@@ -1106,7 +1092,10 @@ func setupLayout(theme string, base []string) {
 	}
 
 	setupCss(theme, base)
-	setupLayerShellAnchors()
+
+	if appstate.SupportsLayerShell {
+		setupLayerShellAnchors()
+	}
 
 	settings = gio.NewSettings("org.gnome.desktop.interface")
 	setThemeClass(settings.String("color-scheme"))

@@ -23,6 +23,7 @@ import (
 	"github.com/abenz1267/walker/internal/ui"
 	"github.com/abenz1267/walker/internal/util"
 	"github.com/adrg/xdg"
+	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -77,6 +78,13 @@ func main() {
 			}
 
 			go listenActivationSocket()
+		}
+
+		if !gtk4layershell.IsSupported() {
+			config.Cfg.AsWindow = true
+			state.SupportsLayerShell = false
+		} else {
+			state.SupportsLayerShell = true
 		}
 
 		return -1

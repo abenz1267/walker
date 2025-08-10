@@ -52,7 +52,9 @@ func setupModules() {
 			text = appstate.ExplicitPlaceholder
 		}
 
-		elements.input.SetObjectProperty("placeholder-text", text)
+		if text != "" {
+			elements.input.SetObjectProperty("placeholder-text", text)
+		}
 	}
 
 	checkForLayout := toUse

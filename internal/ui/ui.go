@@ -167,10 +167,6 @@ func initialUISetup(app *gtk.Application) {
 
 	layout, layoutErr = config.GetLayout(theme, themeBase)
 
-	if appstate.ExplicitPlaceholder != "" {
-		config.Cfg.Search.Placeholder = appstate.ExplicitPlaceholder
-	}
-
 	if appstate.Password {
 		cssProvider := gtk.NewCSSProvider()
 		gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), cssProvider, gtk.STYLE_PROVIDER_PRIORITY_USER)
@@ -447,6 +443,10 @@ func setupElements(app *gtk.Application) *Elements {
 
 	if config.Cfg.Search.Placeholder != "" {
 		ui.input.SetObjectProperty("placeholder-text", config.Cfg.Search.Placeholder)
+	}
+
+	if appstate.ExplicitPlaceholder != "" {
+		ui.input.SetObjectProperty("placeholder-text", appstate.ExplicitPlaceholder)
 	}
 
 	return ui
@@ -925,7 +925,9 @@ func reopen() {
 			text = appstate.ExplicitPlaceholder
 		}
 
-		elements.input.SetObjectProperty("placeholder-text", text)
+		if text != "" {
+			elements.input.SetObjectProperty("placeholder-text", text)
+		}
 	}
 
 	handleTimeout()

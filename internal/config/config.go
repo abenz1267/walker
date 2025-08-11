@@ -354,6 +354,7 @@ type Applications struct {
 	ContextAware  bool               `koanf:"context_aware"`
 	PrioritizeNew bool               `koanf:"prioritize_new"`
 	ShowGeneric   bool               `koanf:"show_generic"`
+	CmdAlt        string             `koanf:"cmd_alt"`
 }
 
 type ApplicationActions struct {

@@ -67,6 +67,7 @@ switcher_only = true
 [builtins.applications]
 weight = 5
 name = "applications"
+cmd_alt = "%EXEC%"
 placeholder = "Applications"
 prioritize_new = true
 hide_actions_with_empty_query = true

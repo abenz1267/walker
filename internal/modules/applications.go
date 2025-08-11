@@ -476,9 +476,14 @@ func (a *Applications) walkFunc(visited map[string]struct{}, d string, apps *[]A
 				app.Actions[k].Searchable = path
 				app.Actions[k].Searchable2 = app.Generic.Searchable2
 				app.Actions[k].IsAction = true
+				desktopID := strings.TrimSuffix(info.Name(), ".desktop")
+				a.applyCmdAlt(app.Actions[k], desktopID)
 			}
 
 			app.Generic.Categories = append(app.Generic.Categories, keywords...)
+
+			desktopID := strings.TrimSuffix(info.Name(), ".desktop")
+			a.applyCmdAlt(app.Generic, desktopID)
 
 			*apps = append(*apps, app)
 
@@ -649,4 +654,26 @@ func parseExec(execLine string) ([]string, error) {
 	}
 
 	return parts, nil
+}
+
+// inside parsing, after you’ve built the util.Entry e for an app:
+func (a *Applications) applyCmdAlt(e *util.Entry, desktopID string) {
+	if a.config.CmdAlt == "" {
+		return
+	}
+	alt := a.config.CmdAlt
+	alt = strings.ReplaceAll(alt, "%EXEC%", e.Exec)
+	alt = strings.ReplaceAll(alt, "%DESKTOP_ID%", desktopID)
+	alt = strings.ReplaceAll(alt, "%NAME%", e.Label)
+
+	binName := ""
+	if e.Exec != "" {
+		execParts := strings.Fields(e.Exec)
+		if len(execParts) > 0 {
+			binName = filepath.Base(execParts[0])
+		}
+	}
+	alt = strings.ReplaceAll(alt, "%BIN%", binName)
+
+	e.ExecAlt = alt
 }

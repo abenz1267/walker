@@ -656,7 +656,6 @@ func parseExec(execLine string) ([]string, error) {
 	return parts, nil
 }
 
-// inside parsing, after you’ve built the util.Entry e for an app:
 func (a *Applications) applyCmdAlt(e *util.Entry, desktopID string) {
 	if a.config.CmdAlt == "" {
 		return

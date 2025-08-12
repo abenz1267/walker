@@ -678,6 +678,9 @@ func timeoutReset() {
 
 func handleTimeout() {
 	if config.Cfg.Timeout > 0 {
+		// Start the timeout timer immediately when window is shown
+		timeoutReset()
+		
 		if appstate.Password {
 			elements.password.Connect("changed", timeoutReset)
 			return

@@ -662,9 +662,13 @@ func timeoutReset() {
 
 				if !isAi && !blockTimeout {
 					if appstate.IsService {
-						glib.IdleAdd(quit)
+						glib.IdleAdd(func() {
+							quit(true)
+						})
 					} else {
-						glib.IdleAdd(exit)
+						glib.IdleAdd(func() {
+							exit(true, false)
+						})
 					}
 				}
 			}

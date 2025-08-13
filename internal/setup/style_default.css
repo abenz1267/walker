@@ -1,0 +1,57 @@
+scrollbar {
+  all: unset;
+  opacity: 0;
+}
+
+#window {
+  background: none;
+}
+
+#box {
+  padding: 10px;
+  box-shadow:
+    0 19px 38px rgba(0, 0, 0, 0.3),
+    0 15px 12px rgba(0, 0, 0, 0.22);
+  /*  NEEDS TO BE TRANSPARENT CUZ OF HYPRLAND BUG */
+  background: alpha(@window_bg_color, 0.99);
+}
+
+#search-container {
+}
+
+#input {
+}
+
+#scroll {
+}
+
+#list {
+}
+
+#item-box {
+}
+
+#item-text-box {
+}
+
+#item-text {
+}
+
+#item-subtext {
+  font-size: 12px;
+  opacity: 0.8;
+}
+
+#item-image {
+}
+
+.calc #item-text {
+  font-size: 24px;
+}
+
+.calc #item-subtext {
+}
+
+.symbols #item-image {
+  font-size: 18px;
+}

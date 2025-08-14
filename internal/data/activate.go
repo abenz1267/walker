@@ -8,14 +8,19 @@ import (
 	"google.golang.org/protobuf/proto"
 )
 
-func Activate(pos uint, query string) {
+type ArgumentParser interface {
+	Parse(string) string
+}
+
+func Activate(pos uint, query string, action string) {
 	item := Items.At(int(pos))
+	// TODO: parse arguments
 
 	req := pb.ActivateRequest{
 		Qid:        item.Qid,
 		Provider:   item.Item.Provider,
 		Identifier: item.Item.Identifier,
-		Action:     "",
+		Action:     action,
 		Arguments:  "",
 	}
 

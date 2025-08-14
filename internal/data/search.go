@@ -32,7 +32,7 @@ func InputChanged(input *gtk.Entry) {
 
 var conn net.Conn
 
-func init() {
+func Init() {
 	var err error
 
 	conn, err = net.Dial("unix", socket)
@@ -63,6 +63,20 @@ func StartListening() {
 			continue
 		}
 
+		if header[0] == 254 {
+			msg := make([]byte, 5)
+			_, err = io.ReadFull(reader, msg)
+			if err != nil {
+				panic(err)
+			}
+
+			glib.IdleAdd(func() {
+				Items.Splice(0, Items.Len())
+			})
+
+			continue
+		}
+
 		length := binary.BigEndian.Uint32(header[1:5])
 
 		msg := make([]byte, 5+length)
@@ -73,8 +87,8 @@ func StartListening() {
 
 		payload := msg[5:]
 
-		resp := &pb.QueryResponse{}
-		if err := proto.Unmarshal(payload, resp); err != nil {
+		resp := pb.QueryResponse{}
+		if err := proto.Unmarshal(payload, &resp); err != nil {
 			panic(err)
 		}
 
@@ -87,7 +101,7 @@ func StartListening() {
 						if resp.Item.Text == "%DELETE%" {
 							Items.Splice(i, 1)
 						} else {
-							Items.Splice(i, 1, []*pb.QueryResponse{resp}...)
+							Items.Splice(i, 1, []pb.QueryResponse{resp}...)
 						}
 
 						break
@@ -102,7 +116,7 @@ func StartListening() {
 					}
 				}
 
-				Items.Append(resp)
+				Items.Splice(Items.Len(), 0, resp)
 			}
 		})
 	}

@@ -3,6 +3,8 @@ package main
 import (
 	_ "embed"
 	"fmt"
+	"os"
+	"slices"
 
 	"github.com/abenz1267/walker/internal/setup"
 )
@@ -11,6 +13,10 @@ import (
 var version string
 
 func main() {
+	if slices.Contains(os.Args, "-v") || slices.Contains(os.Args, "--version") {
+		fmt.Println(version)
+		return
+	}
+
 	setup.GTK()
-	fmt.Println(version)
 }

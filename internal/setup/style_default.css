@@ -7,7 +7,7 @@ scrollbar {
   background: none;
 }
 
-#box {
+#box-wrapper {
   padding: 10px;
   box-shadow:
     0 19px 38px rgba(0, 0, 0, 0.3),
@@ -16,10 +16,19 @@ scrollbar {
   background: alpha(@window_bg_color, 0.99);
 }
 
+#preview-box {
+}
+
+#box {
+}
+
 #search-container {
 }
 
 #input {
+}
+
+#placeholder {
 }
 
 #scroll {

@@ -11,10 +11,10 @@ type Item struct {
 	Subtext string
 }
 
-var Items *gioutil.ListModel[*pb.QueryResponse]
+var Items *gioutil.ListModel[pb.QueryResponse]
 
 func GetSelection() *gtk.SingleSelection {
-	Items = gioutil.NewListModel[*pb.QueryResponse]()
+	Items = gioutil.NewListModel[pb.QueryResponse]()
 
 	selection := gtk.NewSingleSelection(Items.ListModel)
 	selection.SetAutoselect(true)

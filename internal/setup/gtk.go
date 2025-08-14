@@ -1,17 +1,15 @@
 package setup
 
 import (
-	"context"
 	"os"
-	"path/filepath"
-	"strings"
+	"slices"
 
 	_ "embed"
 
-	"github.com/abenz1267/elephant/pkg/pb/pb"
+	"github.com/abenz1267/walker/internal/config"
 	"github.com/abenz1267/walker/internal/data"
+	"github.com/abenz1267/walker/internal/setup/previews"
 	"github.com/diamondburned/gotk4-layer-shell/pkg/gtk4layershell"
-	coreglib "github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
@@ -36,6 +34,9 @@ var itemFiles string
 //go:embed item_symbols.xml
 var itemSymbols string
 
+//go:embed preview_default.xml
+var previewDefault string
+
 //go:embed style_default.css
 var styleDefault []byte
 
@@ -48,30 +49,32 @@ var (
 	currentBuilder     LayoutBuilder
 	selection          *gtk.SingleSelection
 	homedir            string
+	hasUI              = false
+	app                *gtk.Application
+	isService          = false
+	isRunning          = false
 )
 
 type LayoutBuilder struct {
 	window          *gtk.Window
 	box             *gtk.Box
+	boxwrapper      *gtk.Box
+	preview         *gtk.Box
 	searchcontainer *gtk.Box
 	input           *gtk.Entry
 	scroll          *gtk.ScrolledWindow
 	list            *gtk.ListView
 	grid            *gtk.GridView
-}
-
-type ItemBuilder struct {
-	box     *gtk.Box
-	text    *gtk.Label
-	subtext *gtk.Label
-	image   *gtk.Image
+	placeholder     *gtk.Label
 }
 
 func GTK() {
 	homedir, _ = os.UserHomeDir()
 	supportsLayerShell = gtk4layershell.IsSupported()
 
-	app := gtk.NewApplication(name, gio.ApplicationHandlesCommandLine)
+	app = gtk.NewApplication(name, gio.ApplicationHandlesCommandLine)
+
+	isService = slices.Contains(os.Args, "--gapplication-service")
 
 	app.ConnectHandleLocalOptions(func(dict *glib.VariantDict) int {
 		return -1
@@ -87,8 +90,7 @@ func GTK() {
 
 	app.ConnectActivate(func() {
 		setupBuilders()
-		setupInteractions(app)
-		activate(app)
+		activate()
 	})
 
 	app.Hold()
@@ -103,26 +105,60 @@ func setupBuilders() {
 	lb := LayoutBuilder{
 		window:          builder.GetObject("Window").Cast().(*gtk.Window),
 		box:             builder.GetObject("Box").Cast().(*gtk.Box),
+		boxwrapper:      builder.GetObject("BoxWrapper").Cast().(*gtk.Box),
+		preview:         builder.GetObject("Preview").Cast().(*gtk.Box),
 		searchcontainer: builder.GetObject("SearchContainer").Cast().(*gtk.Box),
 		input:           builder.GetObject("Input").Cast().(*gtk.Entry),
 		scroll:          builder.GetObject("Scroll").Cast().(*gtk.ScrolledWindow),
+		placeholder:     builder.GetObject("Placeholder").Cast().(*gtk.Label),
 	}
 
 	lb.window.SetName("window")
 	lb.box.SetName("box")
+	lb.boxwrapper.SetName("box-wrapper")
+	lb.preview.SetName("preview")
 	lb.searchcontainer.SetName("search-container")
 	lb.input.SetName("input")
 	lb.scroll.SetName("scroll")
+	lb.placeholder.SetName("placeholder")
 
 	var isList bool
 
 	selection = data.GetSelection()
 	selection.SetAutoselect(true)
 	selection.ConnectItemsChanged(func(pos, removed, added uint) {
+		if data.Items.Len() > 0 {
+			currentBuilder.placeholder.SetVisible(false)
+			currentBuilder.scroll.SetVisible(true)
+		} else {
+			currentBuilder.placeholder.SetVisible(true)
+			currentBuilder.scroll.SetVisible(false)
+		}
+
 		selection.SetSelected(0)
+
+		if currentBuilder.preview != nil {
+			for item := range data.Items.All() {
+				if v, ok := previews.Previewers[item.Item.Provider]; ok {
+					v.Handle(item.Item, currentBuilder.preview, gtk.NewBuilderFromString(previewDefault))
+				} else {
+					currentBuilder.preview.SetVisible(false)
+				}
+
+				break
+			}
+		}
 	})
 
 	selection.ConnectSelectionChanged(func(pos, item uint) {
+		if currentBuilder.preview != nil {
+			i := data.Items.At(int(selection.Selected()))
+
+			if v, ok := previews.Previewers[i.Item.Provider]; ok {
+				v.Handle(i.Item, currentBuilder.preview, gtk.NewBuilderFromString(previewDefault))
+			}
+		}
+
 		if currentBuilder.grid != nil {
 			currentBuilder.grid.ScrollTo(selection.Selected(), gtk.ListScrollNone, nil)
 		} else {
@@ -145,9 +181,6 @@ func setupBuilders() {
 		lb.list.SetSingleClickActivate(true)
 		lb.list.SetCanTarget(false)
 		lb.list.SetCanFocus(false)
-		lb.list.ConnectActivate(func(pos uint) {
-			data.Activate(pos, currentBuilder.input.Text())
-		})
 	}
 
 	lb.input.ConnectChanged(func() {
@@ -162,7 +195,22 @@ func setupBuilders() {
 	itemBuilders["symbols"] = itemSymbols
 }
 
-func activate(app *gtk.Application) {
+func activate() {
+	if hasUI {
+		if config.LoadedConfig.CloseWhenOpen && isRunning {
+			quit()
+			return
+		}
+
+		currentWindow.SetVisible(true)
+		isRunning = true
+		return
+	}
+
+	config.Load()
+	previews.Load()
+	data.Init()
+
 	initCSS()
 	initShell(layoutBuilders["default"].window)
 
@@ -174,231 +222,12 @@ func activate(app *gtk.Application) {
 
 	go data.StartListening()
 
+	setupBinds()
+	setupKeyEvents(app, currentBuilder.window)
+
 	currentWindow.SetVisible(true)
-}
-
-func getFactory() *gtk.SignalListItemFactory {
-	f := gtk.NewSignalListItemFactory()
-
-	f.ConnectSetup(func(object *coreglib.Object) {
-	})
-
-	f.ConnectUnbind(func(object *coreglib.Object) {
-		item := object.Cast().(*gtk.ListItem)
-		box := item.Child().(*gtk.Box)
-
-		for box.FirstChild() != nil {
-			box.Remove(box.FirstChild())
-		}
-	})
-
-	f.ConnectBind(func(object *coreglib.Object) {
-		item := object.Cast().(*gtk.ListItem)
-		resp := data.Items.At(int(item.Position()))
-		val := resp.Item
-
-		switch val.Provider {
-		case "files":
-			builder := gtk.NewBuilderFromString(itemBuilders["files"])
-
-			box := builder.GetObject("ItemBox").Cast().(*gtk.Box)
-			box.AddCSSClass(val.Provider)
-			box.SetName("item-box")
-
-			text := builder.GetObject("ItemText").Cast().(*gtk.Label)
-			text.SetName("item-text")
-
-			image := builder.GetObject("ItemImage").Cast().(*gtk.Image)
-			image.SetName("item-image")
-
-			if val.Fuzzyinfo != nil {
-				if !text.Wrap() {
-					if val.Fuzzyinfo.Start > int32(len(val.Text))/2 {
-						text.SetEllipsize(1)
-					} else {
-						text.SetEllipsize(3)
-					}
-				}
-			}
-
-			if text != nil {
-				text.SetLabel(strings.TrimPrefix(val.Text, homedir))
-			}
-
-			fileinfo := gio.NewFileForPath(val.Text)
-
-			info, err := fileinfo.QueryInfo(context.Background(), "standard::icon", gio.FileQueryInfoNone)
-			if err == nil {
-				fi := info.Icon()
-				image.SetFromGIcon(fi)
-			}
-
-			if image != nil && val.Icon != "" {
-				if filepath.IsAbs(val.Icon) {
-					image.SetFromFile(val.Icon)
-				} else {
-					image.SetFromIconName(val.Icon)
-				}
-			}
-
-			item.SetChild(box)
-		case "symbols":
-			builder := gtk.NewBuilderFromString(itemBuilders["symbols"])
-
-			box := builder.GetObject("ItemBox").Cast().(*gtk.Box)
-			box.AddCSSClass(val.Provider)
-			box.SetName("item-box")
-
-			text := builder.GetObject("ItemText").Cast().(*gtk.Label)
-			text.SetName("item-text")
-
-			image := builder.GetObject("ItemImage").Cast().(*gtk.Label)
-			image.SetName("item-image")
-			image.SetLabel(val.Text)
-
-			if val.Fuzzyinfo != nil {
-				if !text.Wrap() {
-					if val.Fuzzyinfo.Start > int32(len(val.Subtext))/2 {
-						text.SetEllipsize(1)
-					} else {
-						text.SetEllipsize(3)
-					}
-				}
-			}
-
-			text.SetLabel(val.Subtext)
-
-			item.SetChild(box)
-		case "calc":
-			builder := gtk.NewBuilderFromString(itemBuilders["calc"])
-
-			box := builder.GetObject("ItemBox").Cast().(*gtk.Box)
-			box.AddCSSClass(val.Provider)
-			box.SetName("item-box")
-
-			text := builder.GetObject("ItemText").Cast().(*gtk.Label)
-			text.SetName("item-text")
-
-			subtext := builder.GetObject("ItemSubtext").Cast().(*gtk.Label)
-			subtext.SetName("item-subtext")
-
-			if text != nil {
-				text.SetLabel(val.Text)
-			}
-
-			if subtext != nil {
-				if val.Subtext != "" {
-					subtext.SetLabel(val.Subtext)
-				} else {
-					subtext.SetVisible(false)
-				}
-			}
-
-			item.SetChild(box)
-		case "clipboard":
-			builder := gtk.NewBuilderFromString(itemBuilders["clipboard"])
-
-			box := builder.GetObject("ItemBox").Cast().(*gtk.Box)
-			box.AddCSSClass(val.Provider)
-			box.SetName("item-box")
-
-			text := builder.GetObject("ItemText").Cast().(*gtk.Label)
-			text.SetName("item-text")
-
-			subtext := builder.GetObject("ItemSubtext").Cast().(*gtk.Label)
-			subtext.SetName("item-subtext")
-
-			image := builder.GetObject("ItemImage").Cast().(*gtk.Image)
-			image.SetName("item-image")
-
-			if text != nil {
-				text.SetLabel(val.Text)
-			}
-
-			if subtext != nil {
-				if val.Subtext != "" {
-					subtext.SetLabel(val.Subtext)
-				} else {
-					subtext.SetVisible(false)
-				}
-			}
-
-			if val.Type == pb.QueryResponse_FILE {
-				text.SetLabel(val.Mimetype)
-				image.SetFromFile(val.Text)
-			} else {
-				image.SetVisible(false)
-			}
-
-			item.SetChild(box)
-		default:
-			builder := gtk.NewBuilderFromString(itemBuilders["default"])
-
-			box := builder.GetObject("ItemBox").Cast().(*gtk.Box)
-			box.AddCSSClass(val.Provider)
-			box.SetName("item-box")
-
-			text := builder.GetObject("ItemText").Cast().(*gtk.Label)
-			text.SetName("item-text")
-
-			subtext := builder.GetObject("ItemSubtext").Cast().(*gtk.Label)
-			subtext.SetName("item-subtext")
-
-			image := builder.GetObject("ItemImage").Cast().(*gtk.Image)
-			image.SetName("item-image")
-
-			if text != nil {
-				text.SetLabel(val.Text)
-			}
-
-			if subtext != nil {
-				if val.Subtext != "" {
-					subtext.SetLabel(val.Subtext)
-				} else {
-					subtext.SetVisible(false)
-				}
-			}
-
-			if image != nil && val.Icon != "" {
-				if filepath.IsAbs(val.Icon) {
-					image.SetFromFile(val.Icon)
-				} else {
-					image.SetFromIconName(val.Icon)
-				}
-			}
-
-			item.SetChild(box)
-		}
-	})
-
-	return f
-}
-
-func setupInteractions(app *gtk.Application) {
-	controller := gtk.NewEventControllerKey()
-	controller.SetPropagationPhase(gtk.PropagationPhase(1))
-	controller.ConnectKeyPressed(func(val uint, code uint, modifier gdk.ModifierType) bool {
-		switch val {
-		case gdk.KEY_Return:
-			data.Activate(selection.Selected(), currentBuilder.input.Text())
-			app.Quit()
-			return true
-		case gdk.KEY_Escape:
-			app.Quit()
-			return true
-		case gdk.KEY_Down:
-			selection.SetSelected(selection.Selected() + 1)
-			return true
-		case gdk.KEY_Up:
-			selection.SetSelected(selection.Selected() - 1)
-			return true
-		default:
-		}
-
-		return false
-	})
-
-	layoutBuilders["default"].window.AddController(controller)
+	hasUI = true
+	isRunning = true
 }
 
 func initShell(window *gtk.Window) {

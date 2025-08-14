@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"></requires>
+  <object class="GtkBox" id="PreviewBox">
+    <property name="height-request">300</property>
+    <property name="width-request">400</property>
+    <child>
+      <object class="GtkStack" id="PreviewStack">
+        <property name="hexpand">true</property>
+        <property name="vexpand">true</property>
+      </object>
+    </child>
+  </object>
+</interface>

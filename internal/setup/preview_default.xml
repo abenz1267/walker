@@ -2,10 +2,16 @@
 <interface>
   <requires lib="gtk" version="4.0"></requires>
   <object class="GtkBox" id="PreviewBox">
+    <style>
+      <class name="preview-box"></class>
+    </style>
     <property name="height-request">300</property>
     <property name="width-request">400</property>
     <child>
       <object class="GtkStack" id="PreviewStack">
+        <style>
+          <class name="preview-stack"></class>
+        </style>
         <property name="hexpand">true</property>
         <property name="vexpand">true</property>
       </object>

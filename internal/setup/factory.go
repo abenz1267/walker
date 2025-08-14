@@ -40,13 +40,9 @@ func getFactory() *gtk.SignalListItemFactory {
 
 			box := builder.GetObject("ItemBox").Cast().(*gtk.Box)
 			box.AddCSSClass(val.Provider)
-			box.SetName("item-box")
 
 			text := builder.GetObject("ItemText").Cast().(*gtk.Label)
-			text.SetName("item-text")
-
 			image := builder.GetObject("ItemImage").Cast().(*gtk.Image)
-			image.SetName("item-image")
 
 			if val.Fuzzyinfo != nil {
 				if !text.Wrap() {
@@ -84,13 +80,10 @@ func getFactory() *gtk.SignalListItemFactory {
 
 			box := builder.GetObject("ItemBox").Cast().(*gtk.Box)
 			box.AddCSSClass(val.Provider)
-			box.SetName("item-box")
 
 			text := builder.GetObject("ItemText").Cast().(*gtk.Label)
-			text.SetName("item-text")
 
 			image := builder.GetObject("ItemImage").Cast().(*gtk.Label)
-			image.SetName("item-image")
 			image.SetLabel(val.Text)
 
 			if val.Fuzzyinfo != nil {
@@ -111,13 +104,10 @@ func getFactory() *gtk.SignalListItemFactory {
 
 			box := builder.GetObject("ItemBox").Cast().(*gtk.Box)
 			box.AddCSSClass(val.Provider)
-			box.SetName("item-box")
 
 			text := builder.GetObject("ItemText").Cast().(*gtk.Label)
-			text.SetName("item-text")
 
 			subtext := builder.GetObject("ItemSubtext").Cast().(*gtk.Label)
-			subtext.SetName("item-subtext")
 
 			if text != nil {
 				text.SetLabel(val.Text)
@@ -137,16 +127,12 @@ func getFactory() *gtk.SignalListItemFactory {
 
 			box := builder.GetObject("ItemBox").Cast().(*gtk.Box)
 			box.AddCSSClass(val.Provider)
-			box.SetName("item-box")
 
 			text := builder.GetObject("ItemText").Cast().(*gtk.Label)
-			text.SetName("item-text")
 
 			subtext := builder.GetObject("ItemSubtext").Cast().(*gtk.Label)
-			subtext.SetName("item-subtext")
 
 			image := builder.GetObject("ItemImage").Cast().(*gtk.Image)
-			image.SetName("item-image")
 
 			if text != nil {
 				text.SetLabel(strings.TrimSpace(val.Text))
@@ -170,16 +156,12 @@ func getFactory() *gtk.SignalListItemFactory {
 
 			box := builder.GetObject("ItemBox").Cast().(*gtk.Box)
 			box.AddCSSClass(val.Provider)
-			box.SetName("item-box")
 
 			text := builder.GetObject("ItemText").Cast().(*gtk.Label)
-			text.SetName("item-text")
 
 			subtext := builder.GetObject("ItemSubtext").Cast().(*gtk.Label)
-			subtext.SetName("item-subtext")
 
 			image := builder.GetObject("ItemImage").Cast().(*gtk.Image)
-			image.SetName("item-image")
 
 			if text != nil {
 				text.SetLabel(val.Text)

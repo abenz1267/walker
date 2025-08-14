@@ -113,15 +113,6 @@ func setupBuilders() {
 		placeholder:     builder.GetObject("Placeholder").Cast().(*gtk.Label),
 	}
 
-	lb.window.SetName("window")
-	lb.box.SetName("box")
-	lb.boxwrapper.SetName("box-wrapper")
-	lb.preview.SetName("preview")
-	lb.searchcontainer.SetName("search-container")
-	lb.input.SetName("input")
-	lb.scroll.SetName("scroll")
-	lb.placeholder.SetName("placeholder")
-
 	var isList bool
 
 	selection = data.GetSelection()
@@ -169,13 +160,11 @@ func setupBuilders() {
 	lb.list, isList = builder.GetObject("List").Cast().(*gtk.ListView)
 	if !isList {
 		lb.grid = builder.GetObject("List").Cast().(*gtk.GridView)
-		lb.grid.SetName("list")
 		lb.grid.SetSingleClickActivate(true)
 		lb.grid.SetModel(selection)
 		lb.grid.SetCanTarget(false)
 		lb.grid.SetCanFocus(false)
 	} else {
-		lb.list.SetName("list")
 		lb.list.SetModel(selection)
 		lb.list.SetFactory(&getFactory().ListItemFactory)
 		lb.list.SetSingleClickActivate(true)

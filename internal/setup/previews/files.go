@@ -33,7 +33,6 @@ func NewFilePreview(builder *gtk.Builder) *FilePreview {
 	fp := &FilePreview{}
 
 	fp.Box = builder.GetObject("PreviewBox").Cast().(*gtk.Box)
-	fp.Box.SetName("preview-box")
 
 	fp.previewArea = builder.GetObject("PreviewStack").Cast().(*gtk.Stack)
 

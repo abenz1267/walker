@@ -2,6 +2,9 @@
 <interface>
   <requires lib="gtk" version="4.0"></requires>
   <object class="GtkBox" id="ItemBox">
+    <style>
+      <class name="item-box"></class>
+    </style>
     <property name="orientation">horizontal</property>
     <property name="halign">fill</property>
     <property name="hexpand-set">true</property>
@@ -9,6 +12,9 @@
     <property name="spacing">10</property>
     <child>
       <object class="GtkImage" id="ItemImage">
+        <style>
+          <class name="item-image"></class>
+        </style>
         <property name="pixel-size">48</property>
         <property name="icon-name">accessories-calculator</property>
       </object>
@@ -18,12 +24,18 @@
         <property name="orientation">vertical</property>
         <child>
           <object class="GtkLabel" id="ItemText">
+            <style>
+              <class name="item-text"></class>
+            </style>
             <property name="vexpand">true</property>
             <property name="xalign">0</property>
           </object>
         </child>
         <child>
           <object class="GtkLabel" id="ItemSubtext">
+            <style>
+              <class name="item-subtext"></class>
+            </style>
             <property name="xalign">0</property>
           </object>
         </child>

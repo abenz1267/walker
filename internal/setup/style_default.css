@@ -3,11 +3,11 @@ scrollbar {
   opacity: 0;
 }
 
-#window {
+.window {
   background: none;
 }
 
-#box-wrapper {
+.box-wrapper {
   padding: 10px;
   box-shadow:
     0 19px 38px rgba(0, 0, 0, 0.3),
@@ -16,51 +16,51 @@ scrollbar {
   background: alpha(@window_bg_color, 0.99);
 }
 
-#preview-box {
+.preview-box {
 }
 
-#box {
+.box {
 }
 
-#search-container {
+.search-container {
 }
 
-#input {
+.input {
 }
 
-#placeholder {
+.placeholder {
 }
 
-#scroll {
+.scroll {
 }
 
-#list {
+.list {
 }
 
-#item-box {
+.item-box {
 }
 
-#item-text-box {
+.item-text-box {
 }
 
-#item-text {
+.item-text {
 }
 
-#item-subtext {
+.item-subtext {
   font-size: 12px;
   opacity: 0.8;
 }
 
-#item-image {
+.item-image {
 }
 
-.calc #item-text {
+.calc .item-text {
   font-size: 24px;
 }
 
-.calc #item-subtext {
+.calc .item-subtext {
 }
 
-.symbols #item-image {
+.symbols .item-image {
   font-size: 18px;
 }

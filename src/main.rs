@@ -1,0 +1,646 @@
+mod config;
+mod data;
+mod keybinds;
+mod preview;
+
+mod protos;
+use gtk4::gio::prelude::{FileExt, ListModelExt};
+use gtk4::glib::clone::Downgrade;
+use gtk4::glib::object::CastNone;
+use gtk4::glib::subclass::types::ObjectSubclassIsExt;
+use gtk4::prelude::{BoxExt, EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
+use gtk4::{Box, Entry, Image, ListItem, ListScrollFlags, ScrolledWindow, gio};
+use gtk4::{gio::ListStore, glib::object::Cast};
+use protos::generated_proto::query::query_response::Item;
+
+use config::get_config;
+
+use std::path::Path;
+use std::{
+    cell::RefCell,
+    sync::{Mutex, OnceLock},
+};
+
+use gtk4::{
+    Application, Builder, CssProvider, EventControllerKey, Label, ListView, SignalListItemFactory,
+    SingleSelection, Window,
+    gdk::Display,
+    gio::{
+        ApplicationFlags,
+        prelude::{ApplicationExt, ApplicationExtManual},
+    },
+    glib::{self},
+    prelude::{GtkApplicationExt, GtkWindowExt, WidgetExt},
+};
+use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
+
+use crate::data::{activate, init_socket, input_changed, start_listening};
+use crate::keybinds::{
+    ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, AFTER_CLOSE, AFTER_RELOAD, get_provider_bind,
+};
+use crate::{
+    keybinds::{ACTION_CLOSE, get_bind, setup_binds},
+    protos::generated_proto::query::{QueryResponse, query_response::Type},
+};
+
+static HAS_UI: OnceLock<bool> = OnceLock::new();
+static IS_VISIBLE: Mutex<bool> = Mutex::new(false);
+static IS_SERVICE: OnceLock<bool> = OnceLock::new();
+
+thread_local! {
+    static STOREITEMS: RefCell<Option<ListStore>> = RefCell::new(None);
+    static SELECTION: RefCell<Option<SingleSelection>> = RefCell::new(None);
+    static LIST: RefCell<Option<ListView>> = RefCell::new(None);
+}
+
+// GObject wrapper for QueryResponse
+mod imp {
+    use crate::protos::generated_proto::query::QueryResponse;
+
+    use super::*;
+    use gtk4::subclass::prelude::*;
+    use std::cell::RefCell;
+
+    #[derive(Debug, Default)]
+    pub struct QueryResponseObject {
+        pub response: RefCell<Option<QueryResponse>>,
+    }
+
+    #[glib::object_subclass]
+    impl ObjectSubclass for QueryResponseObject {
+        const NAME: &'static str = "QueryResponseObject";
+        type Type = super::QueryResponseObject;
+    }
+
+    impl ObjectImpl for QueryResponseObject {}
+}
+
+glib::wrapper! {
+    pub struct QueryResponseObject(ObjectSubclass<imp::QueryResponseObject>);
+}
+
+impl QueryResponseObject {
+    pub fn new(response: QueryResponse) -> Self {
+        let obj: Self = glib::Object::builder().build();
+        obj.imp().response.replace(Some(response));
+        obj
+    }
+
+    pub fn response(&self) -> QueryResponse {
+        self.imp().response.borrow().as_ref().unwrap().clone()
+    }
+}
+
+fn main() -> glib::ExitCode {
+    config::load().unwrap();
+    preview::load_previewers();
+    setup_binds().unwrap();
+
+    let app = Application::builder()
+        .application_id("dev.benz.walker")
+        .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
+        .build();
+
+    let hold_guard = RefCell::new(None);
+    let windows: RefCell<Option<Vec<Window>>> = RefCell::new(None);
+
+    app.connect_handle_local_options(|_app, _dict| return -1);
+
+    app.connect_command_line(|app, _cmd| {
+        app.activate();
+        return 0;
+    });
+
+    app.connect_activate(move |app| {
+        if HAS_UI.get().is_some() {
+            let visible = *IS_VISIBLE.lock().unwrap();
+
+            if let Some(cfg) = get_config() {
+                if cfg.close_when_open && visible {
+                    windows.borrow().as_ref().unwrap()[0].set_visible(false);
+                    let mut visible = IS_VISIBLE.lock().unwrap();
+                    *visible = false;
+                } else {
+                    windows.borrow().as_ref().unwrap()[0].present();
+                    let mut visible = IS_VISIBLE.lock().unwrap();
+                    *visible = true;
+                }
+            }
+        } else {
+            *windows.borrow_mut() = Some(setup_windows(app));
+
+            init_socket().unwrap();
+            start_listening();
+            setup_css();
+
+            windows
+                .borrow()
+                .as_ref()
+                .unwrap()
+                .iter()
+                .for_each(|window| {
+                    setup_layer_shell(window);
+                });
+
+            windows.borrow().as_ref().unwrap()[0].present();
+
+            HAS_UI.set(true).expect("failed to set HAS_UI");
+
+            input_changed("".to_string());
+
+            let mut visible = IS_VISIBLE.lock().unwrap();
+            *visible = true;
+        }
+    });
+
+    app.connect_startup(move |app| {
+        if app.flags().contains(ApplicationFlags::IS_SERVICE) {
+            IS_SERVICE.set(true).expect("failed to set IS_SERVICE");
+            *hold_guard.borrow_mut() = Some(app.hold());
+        }
+    });
+
+    app.run()
+}
+
+fn setup_windows(app: &Application) -> Vec<Window> {
+    // TODO: create window per layout?
+    let mut windows: Vec<Window> = Vec::new();
+
+    let builder = Builder::new();
+    let _ = builder.add_from_string(include_str!("../resources/layout_default.xml"));
+
+    let window: Window = builder
+        .object("Window")
+        .expect("Couldn't get 'Window' from UI file");
+    window.set_application(Some(app));
+    window.set_css_classes(&vec![]);
+
+    windows.push(window.clone());
+
+    let app_clone = app.clone();
+
+    let input: Entry = builder.object("Input").unwrap();
+    let input_clone = input.clone();
+    let builder_copy = builder.clone();
+    input.connect_changed(move |input| {
+        input_changed(input.text().to_string());
+    });
+
+    let controller = EventControllerKey::new();
+    controller.set_propagation_phase(gtk4::PropagationPhase::Capture);
+
+    controller.connect_key_pressed(move |_, k, _, m| {
+        if let Some(action) = get_bind(k, m) {
+            match action.action.as_str() {
+                ACTION_CLOSE => quit(&app_clone),
+                ACTION_SELECT_NEXT => select_next(),
+                ACTION_SELECT_PREVIOUS => select_previous(),
+                _ => {}
+            }
+
+            return true.into();
+        }
+
+        let handled = with_store(|items| {
+            with_selection(|selection| {
+                if items.n_items() == 0 {
+                    return false;
+                }
+
+                let selected_item = match selection.selected_item() {
+                    Some(item) => item,
+                    None => return false,
+                };
+
+                let response_obj = match selected_item.downcast::<QueryResponseObject>() {
+                    Ok(obj) => obj,
+                    Err(_) => return false,
+                };
+
+                let response = response_obj.response();
+                let item = match response.item.as_ref() {
+                    Some(item) => item,
+                    None => return false,
+                };
+
+                if let Some(action) = get_provider_bind(&item.provider, k, m) {
+                    if let Err(e) =
+                        activate(response, &input_clone.text().to_string(), &action.action)
+                    {
+                        eprintln!("Activation failed: {}", e);
+                        return false;
+                    }
+
+                    match action.after.as_str() {
+                        AFTER_CLOSE => quit(&app_clone),
+                        AFTER_RELOAD => {
+                            crate::data::input_changed(input_clone.text().to_string());
+                        }
+                        _ => {}
+                    }
+
+                    return true;
+                }
+
+                false
+            })
+            .unwrap_or(false)
+        })
+        .unwrap_or(false);
+
+        if handled {
+            return true.into();
+        }
+
+        return false.into();
+    });
+
+    let scroll: ScrolledWindow = builder
+        .object("Scroll")
+        .expect("can't get scroll from layout");
+
+    let list: ListView = builder.object("List").expect("can't get list from layout");
+
+    LIST.with(|s| {
+        *s.borrow_mut() = Some(list.clone());
+    });
+
+    let items = ListStore::new::<QueryResponseObject>();
+    STOREITEMS.with(|s| {
+        *s.borrow_mut() = Some(items.clone());
+    });
+
+    let placeholder: Label = builder.object("Placeholder").expect("no placeholder found");
+    let selection = SingleSelection::new(Some(items.clone()));
+
+    SELECTION.with(|s| {
+        *s.borrow_mut() = Some(selection.clone());
+    });
+
+    if selection.n_items() == 0 {
+        placeholder.set_visible(true);
+    } else {
+        placeholder.set_visible(false);
+    }
+
+    selection.set_autoselect(true);
+    selection.connect_items_changed(move |s, pos, removed, added| {
+        handle_preview(&builder_copy);
+
+        if s.n_items() == 0 {
+            placeholder.set_visible(true);
+            scroll.set_visible(false);
+        } else {
+            placeholder.set_visible(false);
+            scroll.set_visible(true);
+        }
+    });
+
+    let builder_copy = builder.clone();
+
+    if let Some(preview) = builder.object::<Box>("PreviewBox") {
+        preview.set_visible(false);
+    }
+
+    selection.connect_selection_changed(move |_, pos, item| {
+        with_list(|list| {
+            with_selection(|selection| {
+                handle_preview(&builder_copy);
+                list.scroll_to(selection.selected(), ListScrollFlags::NONE, None);
+            });
+        });
+    });
+
+    let factory = SignalListItemFactory::new();
+    factory.connect_unbind(|_, item| {
+        let item = item
+            .downcast_ref::<gtk4::ListItem>()
+            .expect("failed casting to ListItem");
+
+        let child = item.child();
+        let itembox = child
+            .and_downcast_ref::<gtk4::Box>()
+            .expect("failed to cast to box");
+
+        while let Some(child) = itembox.first_child() {
+            itembox.remove(&child);
+        }
+    });
+
+    factory.connect_bind(|_, item| {
+        let item = item
+            .downcast_ref::<gtk4::ListItem>()
+            .expect("failed casting to ListItem");
+
+        let itemitem = item.item();
+        let response_obj = itemitem
+            .and_downcast_ref::<QueryResponseObject>()
+            .expect("The item has to be a QueryResponseObject");
+
+        let response = response_obj.response();
+
+        if let Some(i) = response.item.as_ref() {
+            match i.provider.as_str() {
+                "files" => create_files_item(&item, &i),
+                "symbols" => create_symbols_item(&item, &i),
+                "calc" => create_calc_item(&item, &i),
+                "clipboard" => create_clipboard_item(&item, &i),
+                _ => create_desktopappications_item(&item, &i),
+            }
+        }
+    });
+
+    list.set_model(Some(&selection));
+    list.set_factory(Some(&factory));
+    list.set_single_click_activate(true);
+
+    window.add_controller(controller);
+
+    return windows;
+}
+
+fn create_desktopappications_item(l: &ListItem, i: &Item) {
+    let b = Builder::new();
+    let _ = b.add_from_string(include_str!("../resources/item_default.xml"));
+    let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
+    itembox.add_css_class(&i.provider);
+    l.set_child(Some(&itembox));
+
+    if let Some(text) = b.object::<Label>("ItemText") {
+        text.set_label(&i.text);
+    }
+
+    if let Some(text) = b.object::<Label>("ItemSubtext") {
+        if i.subtext.is_empty() {
+            text.set_visible(false);
+        } else {
+            text.set_label(&i.subtext);
+        }
+    }
+
+    if let Some(image) = b.object::<Image>("ItemImage") {
+        if !i.icon.is_empty() {
+            if Path::new(&i.icon).is_absolute() {
+                image.set_from_file(Some(&i.icon));
+            } else {
+                image.set_icon_name(Some(&i.icon));
+            }
+        }
+    }
+}
+
+fn create_clipboard_item(l: &ListItem, i: &Item) {
+    let b = Builder::new();
+    let _ = b.add_from_string(include_str!("../resources/item_clipboard.xml"));
+    let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
+    itembox.add_css_class(&i.provider);
+    l.set_child(Some(&itembox));
+
+    if let Some(text) = b.object::<Label>("ItemText") {
+        text.set_label(&i.text.trim());
+    }
+
+    if let Some(text) = b.object::<Label>("ItemSubtext") {
+        text.set_label(&i.subtext);
+    }
+
+    if let Some(image) = b.object::<Image>("ItemImage") {
+        match i.type_.enum_value() {
+            Ok(Type::FILE) => {
+                image.set_from_file(Some(&i.text));
+
+                if let Some(text) = b.object::<Label>("ItemText") {
+                    text.set_visible(false);
+                }
+            }
+            Ok(Type::REGULAR) => {
+                image.set_visible(false);
+            }
+            Err(_) => {
+                println!("Unknown type!");
+            }
+        }
+    }
+}
+
+fn create_symbols_item(l: &ListItem, i: &Item) {
+    let b = Builder::new();
+    let _ = b.add_from_string(include_str!("../resources/item_symbols.xml"));
+    let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
+    itembox.add_css_class(&i.provider);
+    l.set_child(Some(&itembox));
+
+    if let Some(text) = b.object::<Label>("ItemText") {
+        text.set_label(&i.subtext);
+    }
+
+    if let Some(text) = b.object::<Label>("ItemSubtext") {
+        text.set_label(&i.subtext);
+    }
+
+    if let Some(image) = b.object::<Label>("ItemImage") {
+        if !i.text.is_empty() {
+            image.set_label(&i.text);
+        }
+    }
+}
+
+fn create_calc_item(l: &ListItem, i: &Item) {
+    let b = Builder::new();
+    let _ = b.add_from_string(include_str!("../resources/item_calc.xml"));
+    let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
+    itembox.add_css_class(&i.provider);
+    l.set_child(Some(&itembox));
+
+    if let Some(text) = b.object::<Label>("ItemText") {
+        text.set_label(&i.text);
+    }
+
+    if let Some(text) = b.object::<Label>("ItemSubtext") {
+        text.set_label(&i.subtext);
+    }
+}
+
+fn create_files_item(l: &ListItem, i: &Item) {
+    let b = Builder::new();
+    let _ = b.add_from_string(include_str!("../resources/item_files.xml"));
+    let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
+    itembox.add_css_class(&i.provider);
+    l.set_child(Some(&itembox));
+
+    if let Some(text) = b.object::<Label>("ItemText") {
+        text.set_label(&i.text);
+    }
+
+    if let Some(image) = b.object::<Image>("ItemImage") {
+        let file = gio::File::for_path(&i.text);
+        let image_weak = Downgrade::downgrade(&image);
+
+        file.query_info_async(
+            "standard::icon",
+            gio::FileQueryInfoFlags::NONE,
+            glib::Priority::DEFAULT,
+            gio::Cancellable::NONE,
+            move |result| {
+                if let Some(image) = image_weak.upgrade() {
+                    match result {
+                        Ok(info) => {
+                            if let Some(icon) = info.icon() {
+                                image.set_from_gicon(&icon);
+                            }
+                        }
+                        Err(e) => {
+                            eprintln!("Failed to query file info: {}", e);
+                        }
+                    }
+                }
+            },
+        );
+    }
+}
+
+fn quit(app: &Application) {
+    if app.flags().contains(ApplicationFlags::IS_SERVICE) {
+        app.active_window().unwrap().set_visible(false);
+
+        let mut visible = IS_VISIBLE.lock().unwrap();
+        *visible = false;
+    } else {
+        app.quit();
+    }
+}
+
+fn select_next() {
+    with_selection(|selection| {
+        if let Some(cfg) = get_config() {
+            if cfg.selection_wrap {
+                let current = selection.selected();
+                let n_items = selection.n_items();
+                if n_items > 0 {
+                    let next = if current + 1 >= n_items {
+                        0
+                    } else {
+                        current + 1
+                    };
+                    selection.set_selected(next);
+                }
+            } else {
+                let current = selection.selected();
+                let n_items = selection.n_items();
+                if current + 1 < n_items {
+                    selection.set_selected(current + 1);
+                }
+            }
+        }
+    });
+}
+
+fn select_previous() {
+    with_selection(|selection| {
+        if let Some(cfg) = get_config() {
+            if cfg.selection_wrap {
+                let current = selection.selected();
+                let n_items = selection.n_items();
+                if n_items > 0 {
+                    let prev = if current == 0 {
+                        n_items - 1
+                    } else {
+                        current - 1
+                    };
+                    selection.set_selected(prev);
+                }
+            } else {
+                let current = selection.selected();
+                if current > 0 {
+                    selection.set_selected(current - 1);
+                }
+            }
+        }
+    });
+}
+
+fn setup_css() {
+    let css_provider = CssProvider::new();
+    css_provider.load_from_string(include_str!("../resources/style_default.css"));
+
+    gtk4::style_context_add_provider_for_display(
+        &Display::default().expect("Could not connect to a display."),
+        &css_provider,
+        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
+    );
+}
+
+fn setup_layer_shell(win: &Window) {
+    if !gtk4_layer_shell::is_supported() {
+        return;
+    }
+
+    if let Some(cfg) = get_config() {
+        win.init_layer_shell();
+        win.set_namespace(Some("walker"));
+        win.set_exclusive_zone(-1);
+        win.set_layer(Layer::Overlay);
+        win.set_keyboard_mode(KeyboardMode::OnDemand);
+
+        win.set_anchor(Edge::Left, cfg.positions.anchor_left);
+        win.set_anchor(Edge::Right, cfg.positions.anchor_right);
+        win.set_anchor(Edge::Top, cfg.positions.anchor_top);
+        win.set_anchor(Edge::Bottom, cfg.positions.anchor_bottom);
+    }
+}
+
+pub fn with_selection<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&SingleSelection) -> R,
+{
+    SELECTION.with(|s| s.borrow().as_ref().map(f))
+}
+
+pub fn with_list<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&ListView) -> R,
+{
+    LIST.with(|s| s.borrow().as_ref().map(f))
+}
+
+pub fn with_store<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&ListStore) -> R,
+{
+    STOREITEMS.with(|s| s.borrow().as_ref().map(f))
+}
+
+fn get_selected_item() -> Option<Item> {
+    let result = with_selection(|selection| {
+        selection
+            .selected_item()?
+            .downcast::<QueryResponseObject>()
+            .ok()?
+            .response()
+            .item
+            .as_ref()
+            .cloned()
+    });
+
+    result.flatten()
+}
+
+fn handle_preview(builder: &Builder) {
+    if let Some(preview) = builder.object::<Box>("Preview") {
+        if let Some(item) = get_selected_item() {
+            if crate::preview::has_previewer(&item.provider) {
+                let builder = Builder::new();
+                let _ = builder.add_from_string(include_str!("../resources/preview_default.xml"));
+
+                crate::preview::handle_preview(&item.provider, &item, &preview, &builder);
+
+                preview.set_visible(true);
+            } else {
+                preview.set_visible(false);
+            }
+        } else {
+            preview.set_visible(false);
+        }
+    }
+}

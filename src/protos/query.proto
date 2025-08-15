@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./pb";
+
+message QueryRequest {
+  repeated string providers = 1;
+  string query = 2;
+  int32 maxresults = 3;
+  bool exactsearch = 4;
+}
+
+message QueryResponse {
+  int32 qid = 1;
+  int32 iid = 2;
+
+  enum Type {
+      REGULAR = 0;
+      FILE = 1;
+  }
+
+  message Item {
+    message FuzzyInfo {
+      int32 start = 1;
+      string field = 2;
+      repeated int32 positions = 3;
+    }
+
+	string identifier = 1;
+	string text = 2;
+	string subtext = 3;
+	string icon = 4;
+	string provider = 5;
+	int32 score = 6;
+	FuzzyInfo fuzzyinfo = 7;
+    Type type = 8;
+    string mimetype = 9;
+  }
+
+   Item item = 3;
+}

@@ -16,7 +16,6 @@
         <property name="margin-top">300</property>
         <property name="valign">start</property>
         <property name="halign">center</property>
-        <property name="spacing">10</property>
         <child>
           <object class="GtkBox" id="Box">
             <style>

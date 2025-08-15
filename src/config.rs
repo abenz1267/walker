@@ -84,6 +84,15 @@ pub struct Providers {
 
     #[serde(flatten)]
     pub symbols: Symbols,
+
+    #[serde(flatten)]
+    pub menues: Menues,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Menues {
+    #[serde(default = "default_enter")]
+    pub activate: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -96,9 +105,6 @@ pub struct Calc {
 
     #[serde(default = "default_ctrl_d")]
     pub delete: String,
-
-    #[serde(default = "default_calc_icon")]
-    pub icon: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -111,27 +117,18 @@ pub struct Providerlist {
 pub struct DesktopApplications {
     #[serde(default = "default_enter")]
     pub start: String,
-
-    #[serde(default = "default_desktopapplications_icon")]
-    pub icon: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Runner {
     #[serde(default = "default_enter")]
     pub start: String,
-
-    #[serde(default = "default_runner_icon")]
-    pub icon: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Symbols {
     #[serde(default = "default_enter")]
     pub copy: String,
-
-    #[serde(default = "default_symbols_icon")]
-    pub icon: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -147,9 +144,6 @@ pub struct Files {
 
     #[serde(default = "default_ctrl_c")]
     pub copy_file: String,
-
-    #[serde(default = "default_files_icon")]
-    pub icon: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -168,9 +162,6 @@ pub struct Clipboard {
 
     #[serde(default = "default_ctrl_d")]
     pub delete: String,
-
-    #[serde(default = "default_clipboard_icon")]
-    pub icon: String,
 }
 
 static LOADED_CONFIG: OnceLock<Config> = OnceLock::new();
@@ -218,24 +209,6 @@ fn default_prefixes() -> Vec<Prefix> {
         },
     ]
 }
-fn default_files_icon() -> String {
-    "folder".to_string()
-}
-fn default_calc_icon() -> String {
-    "accessories-calculator".to_string()
-}
-fn default_symbols_icon() -> String {
-    "face-smile".to_string()
-}
-fn default_desktopapplications_icon() -> String {
-    "applications-other".to_string()
-}
-fn default_runner_icon() -> String {
-    "utilities-terminal".to_string()
-}
-fn default_clipboard_icon() -> String {
-    "user-bookmarks".to_string()
-}
 fn default_enter() -> String {
     "enter".to_string()
 }
@@ -280,6 +253,7 @@ impl Default for Config {
                     "desktopapplications".to_string(),
                     "calc".to_string(),
                     "runner".to_string(),
+                    "menues".to_string(),
                 ],
                 empty: vec!["desktopapplications".to_string()],
                 prefixes: vec![
@@ -304,8 +278,10 @@ impl Default for Config {
                         provider: "clipboard".to_string(),
                     },
                 ],
+                menues: Menues {
+                    activate: "enter".to_string(),
+                },
                 clipboard: Clipboard {
-                    icon: "user-bookmarks".to_string(),
                     time_format: "dd.MM. - hh:mm".to_string(),
                     copy: "enter".to_string(),
                     delete: "ctrl d".to_string(),
@@ -314,28 +290,23 @@ impl Default for Config {
                     activate: "enter".to_string(),
                 },
                 calc: Calc {
-                    icon: "accessories-calculator".to_string(),
                     copy: "enter".to_string(),
                     save: "ctrl s".to_string(),
                     delete: "ctrl d".to_string(),
                 },
                 desktop_applications: DesktopApplications {
-                    icon: "applications-other".to_string(),
                     start: "enter".to_string(),
                 },
                 files: Files {
-                    icon: "folder".to_string(),
                     open: "enter".to_string(),
                     open_dir: "ctrl enter".to_string(),
                     copy_path: "ctrl shift C".to_string(),
                     copy_file: "ctrl c".to_string(),
                 },
                 runner: Runner {
-                    icon: "utilities-terminal".to_string(),
                     start: "enter".to_string(),
                 },
                 symbols: Symbols {
-                    icon: "face-smile".to_string(),
                     copy: "enter".to_string(),
                 },
             },

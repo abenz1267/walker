@@ -1,6 +1,9 @@
 use crate::config::get_config;
 use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
+use crate::protos::generated_proto::subscribe::SubscribeRequest;
+use crate::protos::generated_proto::subscribe::SubscribeResponse;
+use crate::{IS_VISIBLE, with_input, with_windows};
 use gtk4::{glib, prelude::*};
 use protobuf::Message;
 use std::io::{BufReader, Read, Write};
@@ -9,6 +12,7 @@ use std::sync::Mutex;
 use std::thread;
 
 static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
+static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 pub static SWITCHER_PROVIDER: Mutex<String> = Mutex::new(String::new());
 
 pub fn input_changed(text: String) {
@@ -23,6 +27,11 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
     let conn = UnixStream::connect(&socket_path)?;
     *CONN.lock().unwrap() = Some(conn);
 
+    let menuconn = UnixStream::connect(&socket_path)?;
+    *MENUCONN.lock().unwrap() = Some(menuconn);
+
+    subscribe_menu().unwrap();
+
     Ok(())
 }
 
@@ -32,6 +41,63 @@ pub fn start_listening() {
             eprintln!("Listen loop error: {}", e);
         }
     });
+
+    thread::spawn(|| {
+        if let Err(e) = listen_menues_loop() {
+            eprintln!("Listen menu_loop error: {}", e);
+        }
+    });
+}
+
+fn listen_menues_loop() -> Result<(), Box<dyn std::error::Error>> {
+    let mut conn_guard = MENUCONN.lock().unwrap();
+    let conn = conn_guard.as_mut().ok_or("Connection not initialized")?;
+
+    let mut conn_clone = conn.try_clone()?;
+    drop(conn_guard);
+
+    let mut reader = BufReader::new(&mut conn_clone);
+
+    loop {
+        let mut header = [0u8; 5];
+        match reader.read_exact(&mut header) {
+            Ok(_) => {}
+            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => continue,
+            Err(e) => return Err(e.into()),
+        }
+
+        match header[0] {
+            0 => {
+                let length = u32::from_be_bytes([header[1], header[2], header[3], header[4]]);
+
+                let mut payload = vec![0u8; length as usize];
+                reader.read_exact(&mut payload)?;
+
+                let mut resp = SubscribeResponse::new();
+                resp.merge_from_bytes(&payload)?;
+
+                let mut provider = SWITCHER_PROVIDER.lock().unwrap();
+                *provider = resp.value;
+
+                glib::idle_add_once(|| {
+                    with_input(|i| {
+                        i.set_text("");
+                        i.emit_by_name::<()>("changed", &[]);
+                    });
+
+                    with_windows(|windows| {
+                        windows[0].present();
+                    });
+
+                    let mut visible = IS_VISIBLE.lock().unwrap();
+                    *visible = true;
+                });
+            }
+            _ => {
+                continue;
+            }
+        }
+    }
 }
 
 fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
@@ -205,15 +271,12 @@ pub fn activate(
         return Ok(());
     }
 
-    // TODO: parse arguments using ArgumentParser
-    let arguments = String::new(); // For now, empty arguments
-
     let mut req = ActivateRequest::new();
     req.qid = item.qid;
     req.provider = item.item.provider.clone();
     req.identifier = item.item.identifier.clone();
     req.action = action.to_string();
-    req.arguments = arguments;
+    req.arguments = query.to_string();
 
     let payload = req.write_to_bytes()?;
 
@@ -228,6 +291,33 @@ pub fn activate(
 
     {
         let mut conn_guard = CONN.lock().unwrap();
+        if let Some(conn) = conn_guard.as_mut() {
+            conn.write_all(&buffer)?;
+        } else {
+            return Err("Connection not available".into());
+        }
+    }
+
+    Ok(())
+}
+
+fn subscribe_menu() -> Result<(), Box<dyn std::error::Error>> {
+    let mut req = SubscribeRequest::new();
+    req.provider = "menues".to_string();
+
+    let payload = req.write_to_bytes()?;
+
+    let mut buffer = Vec::new();
+
+    buffer.push(2);
+
+    let length = payload.len() as u32;
+    buffer.extend_from_slice(&length.to_be_bytes());
+
+    buffer.extend_from_slice(&payload);
+
+    {
+        let mut conn_guard = MENUCONN.lock().unwrap();
         if let Some(conn) = conn_guard.as_mut() {
             conn.write_all(&buffer)?;
         } else {

@@ -33,6 +33,8 @@ pub const ACTION_SYMBOLS_COPY: &str = "copy";
 
 pub const ACTION_PROVIDERLIST_ACTIVATE: &str = "activate";
 
+pub const ACTION_MENUES_ACTIVATE: &str = "activate";
+
 #[derive(Debug, Clone)]
 pub struct Action {
     pub action: String,
@@ -178,6 +180,13 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
         ACTION_PROVIDERLIST_ACTIVATE,
         AFTER_CLEAR_RELOAD,
         "providerlist",
+    )?;
+
+    parse_bind(
+        &config.providers.menues.activate,
+        ACTION_MENUES_ACTIVATE,
+        AFTER_CLOSE, // not really?
+        "menues",
     )?;
 
     Ok(())

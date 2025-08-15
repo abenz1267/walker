@@ -4,7 +4,10 @@ mod keybinds;
 mod preview;
 
 mod protos;
-use gtk4::gio::prelude::{FileExt, ListModelExt};
+use gtk4::gio::prelude::{
+    ApplicationCommandLineExt, DataInputStreamExtManual, FileExt, ListModelExt,
+};
+use gtk4::glib::OptionFlags;
 use gtk4::glib::clone::Downgrade;
 use gtk4::glib::object::{CastNone, ObjectExt};
 use gtk4::glib::subclass::types::ObjectSubclassIsExt;
@@ -36,8 +39,8 @@ use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 
 use crate::data::{SWITCHER_PROVIDER, activate, init_socket, input_changed, start_listening};
 use crate::keybinds::{
-    ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, AFTER_CLEAR_RELOAD, AFTER_CLOSE, AFTER_RELOAD,
-    get_provider_bind,
+    ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, AFTER_CLEAR_RELOAD, AFTER_CLOSE, AFTER_NOTHING,
+    AFTER_RELOAD, get_provider_bind,
 };
 use crate::{
     keybinds::{ACTION_CLOSE, get_bind, setup_binds},
@@ -49,6 +52,7 @@ static IS_VISIBLE: Mutex<bool> = Mutex::new(false);
 static IS_SERVICE: OnceLock<bool> = OnceLock::new();
 
 thread_local! {
+    static WINDOWS: RefCell<Option<Vec<Window>>> = RefCell::new(None);
     static STOREITEMS: RefCell<Option<ListStore>> = RefCell::new(None);
     static SELECTION: RefCell<Option<SingleSelection>> = RefCell::new(None);
     static LIST: RefCell<Option<ListView>> = RefCell::new(None);
@@ -98,17 +102,57 @@ fn main() -> glib::ExitCode {
     preview::load_previewers();
     setup_binds().unwrap();
 
+    init_socket().unwrap();
+    start_listening();
+
     let app = Application::builder()
         .application_id("dev.benz.walker")
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 
     let hold_guard = RefCell::new(None);
-    let windows: RefCell<Option<Vec<Window>>> = RefCell::new(None);
 
     app.connect_handle_local_options(|_app, _dict| return -1);
+    app.add_main_option(
+        "dmenu",
+        b'd'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::None,
+        "dmenu",
+        None,
+    );
 
-    app.connect_command_line(|app, _cmd| {
+    app.connect_command_line(|app, cmd| {
+        let options = cmd.options_dict();
+
+        if options.contains("dmenu") {
+            let stdin = cmd.stdin();
+
+            let data_stream = gio::DataInputStream::new(&stdin.unwrap());
+
+            loop {
+                match data_stream.read_line(gio::Cancellable::NONE) {
+                    Ok(line_slice) => {
+                        if line_slice.is_empty() {
+                            println!("End of input");
+                            break;
+                        }
+
+                        if let Ok(line_str) = std::str::from_utf8(&line_slice) {
+                            let trimmed = line_str.trim();
+                            if !trimmed.is_empty() {
+                                println!("Read: {}", trimmed);
+                            }
+                        }
+                    }
+                    Err(e) => {
+                        eprintln!("Error reading: {}", e);
+                        break;
+                    }
+                }
+            }
+        }
+
         app.activate();
         return 0;
     });
@@ -121,28 +165,26 @@ fn main() -> glib::ExitCode {
                 if cfg.close_when_open && visible {
                     quit(app);
                 } else {
-                    windows.borrow().as_ref().unwrap()[0].present();
+                    with_windows(|windows| {
+                        windows[0].present();
+                    });
+
                     let mut visible = IS_VISIBLE.lock().unwrap();
                     *visible = true;
                 }
             }
         } else {
-            *windows.borrow_mut() = Some(setup_windows(app));
+            setup_windows(app);
 
-            init_socket().unwrap();
-            start_listening();
             setup_css();
 
-            windows
-                .borrow()
-                .as_ref()
-                .unwrap()
-                .iter()
-                .for_each(|window| {
+            with_windows(|windows| {
+                windows.iter().for_each(|window| {
                     setup_layer_shell(window);
                 });
 
-            windows.borrow().as_ref().unwrap()[0].present();
+                windows[0].present();
+            });
 
             HAS_UI.set(true).expect("failed to set HAS_UI");
 
@@ -163,7 +205,7 @@ fn main() -> glib::ExitCode {
     app.run()
 }
 
-fn setup_windows(app: &Application) -> Vec<Window> {
+fn setup_windows(app: &Application) {
     // TODO: create window per layout?
     let mut windows: Vec<Window> = Vec::new();
 
@@ -228,31 +270,46 @@ fn setup_windows(app: &Application) -> Vec<Window> {
                     Some(item) => item,
                     None => return false,
                 };
+                let item_clone = item.clone();
 
-                if let Some(action) = get_provider_bind(&item.provider, k, m) {
+                let mut provider = item.provider.clone();
+
+                if provider.starts_with("menues:") {
+                    provider = "menues".to_string();
+                }
+
+                if let Some(action) = get_provider_bind(&provider, k, m) {
                     if let Err(_) =
                         activate(response, &input_clone.text().to_string(), &action.action)
                     {
                         return false;
                     }
 
-                    match action.after.as_str() {
-                        AFTER_CLOSE => quit(&app_clone),
+                    let after = if item_clone.identifier.starts_with("keepopen:") {
+                        AFTER_CLEAR_RELOAD
+                    } else {
+                        action.after.as_str()
+                    };
+
+                    match after {
+                        AFTER_CLOSE => {
+                            quit(&app_clone);
+                            return true;
+                        }
                         AFTER_CLEAR_RELOAD => {
                             with_input(|i| {
                                 i.set_text("");
+                                i.emit_by_name::<()>("changed", &[]);
                             });
                         }
-                        AFTER_RELOAD => {
-                            crate::data::input_changed(input_clone.text().to_string());
-                        }
+                        AFTER_RELOAD => crate::data::input_changed(input_clone.text().to_string()),
                         _ => {}
                     }
 
                     return true;
                 }
 
-                false
+                return false;
             })
             .unwrap_or(false)
         })
@@ -367,7 +424,9 @@ fn setup_windows(app: &Application) -> Vec<Window> {
 
     window.add_controller(controller);
 
-    return windows;
+    WINDOWS.with(|s| {
+        *s.borrow_mut() = Some(windows.clone());
+    });
 }
 
 fn create_desktopappications_item(l: &ListItem, i: &Item) {
@@ -520,18 +579,12 @@ fn create_providerlist_item(l: &ListItem, i: &Item) {
     }
 
     if let Some(image) = b.object::<Image>("ItemImage") {
-        if let Some(cfg) = get_config() {
-            let icon = match i.identifier.as_str() {
-                "calc" => &cfg.providers.calc.icon,
-                "desktopapplications" => &cfg.providers.desktop_applications.icon,
-                "runner" => &cfg.providers.runner.icon,
-                "symbols" => &cfg.providers.symbols.icon,
-                "clipboard" => &cfg.providers.clipboard.icon,
-                "files" => &cfg.providers.files.icon,
-                _ => "application-x-executable",
-            };
-
-            image.set_icon_name(Some(&icon));
+        if !i.icon.is_empty() {
+            if Path::new(&i.icon).is_absolute() {
+                image.set_from_file(Some(&i.icon));
+            } else {
+                image.set_icon_name(Some(&i.icon));
+            }
         }
     }
 }
@@ -662,6 +715,13 @@ where
     F: FnOnce(&Entry) -> R,
 {
     INPUT.with(|s| s.borrow().as_ref().map(f))
+}
+
+pub fn with_windows<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&Vec<Window>) -> R,
+{
+    WINDOWS.with(|s| s.borrow().as_ref().map(f))
 }
 
 fn get_selected_item() -> Option<Item> {

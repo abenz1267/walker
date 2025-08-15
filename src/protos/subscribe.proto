@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./pb";
+
+message SubscribeRequest {
+  int32 interval = 1;
+  string provider = 2;
+  string query = 3;
+}
+
+message SubscribeResponse {
+  string value = 2;
+}

@@ -1,5 +1,4 @@
 use serde::{Deserialize, Serialize};
-use std::process::Command;
 use std::sync::OnceLock;
 
 fn default_true() -> bool {
@@ -69,6 +68,9 @@ pub struct Providers {
     pub calc: Calc,
 
     #[serde(flatten)]
+    pub providerlist: Providerlist,
+
+    #[serde(flatten)]
     pub clipboard: Clipboard,
 
     #[serde(flatten)]
@@ -94,24 +96,42 @@ pub struct Calc {
 
     #[serde(default = "default_ctrl_d")]
     pub delete: String,
+
+    #[serde(default = "default_calc_icon")]
+    pub icon: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Providerlist {
+    #[serde(default = "default_enter")]
+    pub activate: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DesktopApplications {
     #[serde(default = "default_enter")]
     pub start: String,
+
+    #[serde(default = "default_desktopapplications_icon")]
+    pub icon: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Runner {
     #[serde(default = "default_enter")]
     pub start: String,
+
+    #[serde(default = "default_runner_icon")]
+    pub icon: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Symbols {
     #[serde(default = "default_enter")]
     pub copy: String,
+
+    #[serde(default = "default_symbols_icon")]
+    pub icon: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -127,6 +147,9 @@ pub struct Files {
 
     #[serde(default = "default_ctrl_c")]
     pub copy_file: String,
+
+    #[serde(default = "default_files_icon")]
+    pub icon: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -145,16 +168,12 @@ pub struct Clipboard {
 
     #[serde(default = "default_ctrl_d")]
     pub delete: String,
-}
 
-#[derive(Debug, Clone)]
-pub struct Provider {
-    pub name: String,
-    pub name_pretty: String,
+    #[serde(default = "default_clipboard_icon")]
+    pub icon: String,
 }
 
 static LOADED_CONFIG: OnceLock<Config> = OnceLock::new();
-static AVAILABLE_PROVIDERS: OnceLock<Vec<Provider>> = OnceLock::new();
 
 fn default_close() -> String {
     "escape".to_string()
@@ -178,6 +197,10 @@ fn default_empty() -> Vec<String> {
 fn default_prefixes() -> Vec<Prefix> {
     vec![
         Prefix {
+            prefix: ";".to_string(),
+            provider: "providerlist".to_string(),
+        },
+        Prefix {
             prefix: "/".to_string(),
             provider: "files".to_string(),
         },
@@ -194,6 +217,24 @@ fn default_prefixes() -> Vec<Prefix> {
             provider: "clipboard".to_string(),
         },
     ]
+}
+fn default_files_icon() -> String {
+    "folder".to_string()
+}
+fn default_calc_icon() -> String {
+    "accessories-calculator".to_string()
+}
+fn default_symbols_icon() -> String {
+    "face-smile".to_string()
+}
+fn default_desktopapplications_icon() -> String {
+    "applications-other".to_string()
+}
+fn default_runner_icon() -> String {
+    "utilities-terminal".to_string()
+}
+fn default_clipboard_icon() -> String {
+    "user-bookmarks".to_string()
 }
 fn default_enter() -> String {
     "enter".to_string()
@@ -243,6 +284,10 @@ impl Default for Config {
                 empty: vec!["desktopapplications".to_string()],
                 prefixes: vec![
                     Prefix {
+                        prefix: ";".to_string(),
+                        provider: "providerlist".to_string(),
+                    },
+                    Prefix {
                         prefix: "/".to_string(),
                         provider: "files".to_string(),
                     },
@@ -260,28 +305,37 @@ impl Default for Config {
                     },
                 ],
                 clipboard: Clipboard {
+                    icon: "user-bookmarks".to_string(),
                     time_format: "dd.MM. - hh:mm".to_string(),
                     copy: "enter".to_string(),
                     delete: "ctrl d".to_string(),
                 },
+                providerlist: Providerlist {
+                    activate: "enter".to_string(),
+                },
                 calc: Calc {
+                    icon: "accessories-calculator".to_string(),
                     copy: "enter".to_string(),
                     save: "ctrl s".to_string(),
                     delete: "ctrl d".to_string(),
                 },
                 desktop_applications: DesktopApplications {
+                    icon: "applications-other".to_string(),
                     start: "enter".to_string(),
                 },
                 files: Files {
+                    icon: "folder".to_string(),
                     open: "enter".to_string(),
                     open_dir: "ctrl enter".to_string(),
                     copy_path: "ctrl shift C".to_string(),
                     copy_file: "ctrl c".to_string(),
                 },
                 runner: Runner {
+                    icon: "utilities-terminal".to_string(),
                     start: "enter".to_string(),
                 },
                 symbols: Symbols {
+                    icon: "face-smile".to_string(),
                     copy: "enter".to_string(),
                 },
             },
@@ -290,8 +344,6 @@ impl Default for Config {
 }
 
 pub fn load() -> Result<(), Box<dyn std::error::Error>> {
-    load_provider_data()?;
-
     let config = Config::default();
 
     LOADED_CONFIG
@@ -303,37 +355,4 @@ pub fn load() -> Result<(), Box<dyn std::error::Error>> {
 
 pub fn get_config() -> Option<&'static Config> {
     LOADED_CONFIG.get()
-}
-
-pub fn get_available_providers() -> Option<&'static Vec<Provider>> {
-    AVAILABLE_PROVIDERS.get()
-}
-
-fn load_provider_data() -> Result<(), Box<dyn std::error::Error>> {
-    let output = Command::new("elephant").arg("listproviders").output()?;
-
-    if !output.status.success() {
-        return Err("Command failed".into());
-    }
-
-    let mut providers = Vec::new();
-    let output_str = String::from_utf8(output.stdout)?;
-
-    for line in output_str.lines() {
-        let info = line.trim();
-        let parts: Vec<&str> = info.split(':').collect();
-
-        if parts.len() >= 2 {
-            providers.push(Provider {
-                name: parts[1].to_string(),
-                name_pretty: parts[0].to_string(),
-            });
-        }
-    }
-
-    AVAILABLE_PROVIDERS
-        .set(providers)
-        .map_err(|_| "Failed to set available providers")?;
-
-    Ok(())
 }

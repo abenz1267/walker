@@ -6,7 +6,7 @@ mod preview;
 mod protos;
 use gtk4::gio::prelude::{FileExt, ListModelExt};
 use gtk4::glib::clone::Downgrade;
-use gtk4::glib::object::CastNone;
+use gtk4::glib::object::{CastNone, ObjectExt};
 use gtk4::glib::subclass::types::ObjectSubclassIsExt;
 use gtk4::prelude::{BoxExt, EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
 use gtk4::{Box, Entry, Image, ListItem, ListScrollFlags, ScrolledWindow, gio};
@@ -34,9 +34,10 @@ use gtk4::{
 };
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 
-use crate::data::{activate, init_socket, input_changed, start_listening};
+use crate::data::{SWITCHER_PROVIDER, activate, init_socket, input_changed, start_listening};
 use crate::keybinds::{
-    ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, AFTER_CLOSE, AFTER_RELOAD, get_provider_bind,
+    ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, AFTER_CLEAR_RELOAD, AFTER_CLOSE, AFTER_RELOAD,
+    get_provider_bind,
 };
 use crate::{
     keybinds::{ACTION_CLOSE, get_bind, setup_binds},
@@ -51,6 +52,7 @@ thread_local! {
     static STOREITEMS: RefCell<Option<ListStore>> = RefCell::new(None);
     static SELECTION: RefCell<Option<SingleSelection>> = RefCell::new(None);
     static LIST: RefCell<Option<ListView>> = RefCell::new(None);
+    static INPUT: RefCell<Option<Entry>> = RefCell::new(None);
 }
 
 // GObject wrapper for QueryResponse
@@ -117,9 +119,7 @@ fn main() -> glib::ExitCode {
 
             if let Some(cfg) = get_config() {
                 if cfg.close_when_open && visible {
-                    windows.borrow().as_ref().unwrap()[0].set_visible(false);
-                    let mut visible = IS_VISIBLE.lock().unwrap();
-                    *visible = false;
+                    quit(app);
                 } else {
                     windows.borrow().as_ref().unwrap()[0].present();
                     let mut visible = IS_VISIBLE.lock().unwrap();
@@ -181,6 +181,11 @@ fn setup_windows(app: &Application) -> Vec<Window> {
     let app_clone = app.clone();
 
     let input: Entry = builder.object("Input").unwrap();
+
+    INPUT.with(|s| {
+        *s.borrow_mut() = Some(input.clone());
+    });
+
     let input_clone = input.clone();
     let builder_copy = builder.clone();
     input.connect_changed(move |input| {
@@ -225,15 +230,19 @@ fn setup_windows(app: &Application) -> Vec<Window> {
                 };
 
                 if let Some(action) = get_provider_bind(&item.provider, k, m) {
-                    if let Err(e) =
+                    if let Err(_) =
                         activate(response, &input_clone.text().to_string(), &action.action)
                     {
-                        eprintln!("Activation failed: {}", e);
                         return false;
                     }
 
                     match action.after.as_str() {
                         AFTER_CLOSE => quit(&app_clone),
+                        AFTER_CLEAR_RELOAD => {
+                            with_input(|i| {
+                                i.set_text("");
+                            });
+                        }
                         AFTER_RELOAD => {
                             crate::data::input_changed(input_clone.text().to_string());
                         }
@@ -346,6 +355,7 @@ fn setup_windows(app: &Application) -> Vec<Window> {
                 "symbols" => create_symbols_item(&item, &i),
                 "calc" => create_calc_item(&item, &i),
                 "clipboard" => create_clipboard_item(&item, &i),
+                "providerlist" => create_providerlist_item(&item, &i),
                 _ => create_desktopappications_item(&item, &i),
             }
         }
@@ -490,9 +500,7 @@ fn create_files_item(l: &ListItem, i: &Item) {
                                 image.set_from_gicon(&icon);
                             }
                         }
-                        Err(e) => {
-                            eprintln!("Failed to query file info: {}", e);
-                        }
+                        Err(_) => {}
                     }
                 }
             },
@@ -500,9 +508,47 @@ fn create_files_item(l: &ListItem, i: &Item) {
     }
 }
 
+fn create_providerlist_item(l: &ListItem, i: &Item) {
+    let b = Builder::new();
+    let _ = b.add_from_string(include_str!("../resources/item_providerlist.xml"));
+    let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
+    itembox.add_css_class(&i.provider);
+    l.set_child(Some(&itembox));
+
+    if let Some(text) = b.object::<Label>("ItemText") {
+        text.set_label(&i.text);
+    }
+
+    if let Some(image) = b.object::<Image>("ItemImage") {
+        if let Some(cfg) = get_config() {
+            let icon = match i.identifier.as_str() {
+                "calc" => &cfg.providers.calc.icon,
+                "desktopapplications" => &cfg.providers.desktop_applications.icon,
+                "runner" => &cfg.providers.runner.icon,
+                "symbols" => &cfg.providers.symbols.icon,
+                "clipboard" => &cfg.providers.clipboard.icon,
+                "files" => &cfg.providers.files.icon,
+                _ => "application-x-executable",
+            };
+
+            image.set_icon_name(Some(&icon));
+        }
+    }
+}
+
 fn quit(app: &Application) {
     if app.flags().contains(ApplicationFlags::IS_SERVICE) {
         app.active_window().unwrap().set_visible(false);
+
+        let mut provider = SWITCHER_PROVIDER.lock().unwrap();
+        *provider = "".to_string();
+
+        glib::idle_add_once(|| {
+            with_input(|i| {
+                i.set_text("");
+                i.emit_by_name::<()>("changed", &[]);
+            });
+        });
 
         let mut visible = IS_VISIBLE.lock().unwrap();
         *visible = false;
@@ -609,6 +655,13 @@ where
     F: FnOnce(&ListStore) -> R,
 {
     STOREITEMS.with(|s| s.borrow().as_ref().map(f))
+}
+
+pub fn with_input<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&Entry) -> R,
+{
+    INPUT.with(|s| s.borrow().as_ref().map(f))
 }
 
 fn get_selected_item() -> Option<Item> {

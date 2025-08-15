@@ -9,17 +9,15 @@ use std::sync::Mutex;
 use std::thread;
 
 static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
-static PROVIDER: Mutex<String> = Mutex::new(String::new());
+pub static SWITCHER_PROVIDER: Mutex<String> = Mutex::new(String::new());
 
 pub fn input_changed(text: String) {
-    if text.is_empty() {
-        *PROVIDER.lock().unwrap() = String::new();
-    }
-
     query(&text).unwrap();
 }
 
 pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
+    *SWITCHER_PROVIDER.lock().unwrap() = String::new();
+
     let socket_path = std::env::temp_dir().join("elephant.sock");
 
     let conn = UnixStream::connect(&socket_path)?;
@@ -143,20 +141,25 @@ fn add_new_item(resp: QueryResponse) {
 }
 
 fn query(text: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let mut provider = PROVIDER.lock().unwrap();
+    let switcher_provider = SWITCHER_PROVIDER.lock().unwrap();
     let mut query_text = text.to_string();
+    let mut provider = "".to_string();
 
-    if let Some(config) = get_config() {
-        for prefix in &config.providers.prefixes {
-            if text.starts_with(&prefix.prefix) {
-                *provider = prefix.provider.clone();
-                query_text = text
-                    .strip_prefix(&prefix.prefix)
-                    .unwrap_or(text)
-                    .to_string();
-                break;
+    if switcher_provider.is_empty() {
+        if let Some(config) = get_config() {
+            for prefix in &config.providers.prefixes {
+                if text.starts_with(&prefix.prefix) {
+                    provider = prefix.provider.clone();
+                    query_text = text
+                        .strip_prefix(&prefix.prefix)
+                        .unwrap_or(text)
+                        .to_string();
+                    break;
+                }
             }
         }
+    } else {
+        provider = switcher_provider.to_string();
     }
 
     let mut req = QueryRequest::new();
@@ -195,6 +198,13 @@ pub fn activate(
     query: &str,
     action: &str,
 ) -> Result<(), Box<dyn std::error::Error>> {
+    // handle switcher
+    if item.item.provider == "providerlist" {
+        let mut provider = SWITCHER_PROVIDER.lock().unwrap();
+        *provider = item.item.identifier.clone();
+        return Ok(());
+    }
+
     // TODO: parse arguments using ArgumentParser
     let arguments = String::new(); // For now, empty arguments
 

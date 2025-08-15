@@ -245,9 +245,7 @@ impl FilePreview {
                                 image.set_from_gicon(&icon);
                             }
                         }
-                        Err(e) => {
-                            eprintln!("Failed to query file info: {}", e);
-                        }
+                        Err(_) => {}
                     }
                 }
             },

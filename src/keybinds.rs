@@ -11,6 +11,7 @@ pub const ACTION_SELECT_PREVIOUS: &str = "%PREVIOUS%";
 pub const AFTER_CLOSE: &str = "%CLOSE%";
 pub const AFTER_NOTHING: &str = "%NOTHING%";
 pub const AFTER_RELOAD: &str = "%RELOAD%";
+pub const AFTER_CLEAR_RELOAD: &str = "%CLEAR_RELOAD%";
 
 pub const ACTION_CALC_COPY: &str = "copy";
 pub const ACTION_CALC_DELETE: &str = "delete";
@@ -26,9 +27,11 @@ pub const ACTION_FILES_COPY_PATH: &str = "copypath";
 pub const ACTION_FILES_OPEN: &str = "open";
 pub const ACTION_FILES_OPEN_DIR: &str = "opendir";
 
-pub const ACTION_RUNNER_START: &str = "";
+pub const ACTION_RUNNER_START: &str = "start";
 
-pub const ACTION_SYMBOLS_COPY: &str = "";
+pub const ACTION_SYMBOLS_COPY: &str = "copy";
+
+pub const ACTION_PROVIDERLIST_ACTIVATE: &str = "activate";
 
 #[derive(Debug, Clone)]
 pub struct Action {
@@ -168,6 +171,13 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
         ACTION_SYMBOLS_COPY,
         AFTER_CLOSE,
         "symbols",
+    )?;
+
+    parse_bind(
+        &config.providers.providerlist.activate,
+        ACTION_PROVIDERLIST_ACTIVATE,
+        AFTER_CLEAR_RELOAD,
+        "providerlist",
     )?;
 
     Ok(())

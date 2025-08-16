@@ -4,15 +4,15 @@ mod keybinds;
 mod preview;
 
 mod protos;
-use gtk4::gio::prelude::{
-    ApplicationCommandLineExt, DataInputStreamExtManual, FileExt, ListModelExt,
-};
+use gtk4::gio::prelude::{ApplicationCommandLineExt, FileExt, ListModelExt};
 use gtk4::glib::OptionFlags;
 use gtk4::glib::clone::Downgrade;
 use gtk4::glib::object::{CastNone, ObjectExt};
 use gtk4::glib::subclass::types::ObjectSubclassIsExt;
 use gtk4::prelude::{BoxExt, EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
-use gtk4::{Box, Entry, Image, ListItem, ListScrollFlags, ScrolledWindow, gio};
+use gtk4::{
+    Box, Entry, EventControllerMotion, Image, ListItem, ListScrollFlags, ScrolledWindow, gio,
+};
 use gtk4::{gio::ListStore, glib::object::Cast};
 use protos::generated_proto::query::query_response::Item;
 
@@ -57,6 +57,8 @@ thread_local! {
     static SELECTION: RefCell<Option<SingleSelection>> = RefCell::new(None);
     static LIST: RefCell<Option<ListView>> = RefCell::new(None);
     static INPUT: RefCell<Option<Entry>> = RefCell::new(None);
+    static MOUSE_X: RefCell<Option<f64>> = RefCell::new(None);
+    static MOUSE_Y: RefCell<Option<f64>> = RefCell::new(None);
 }
 
 // GObject wrapper for QueryResponse
@@ -113,17 +115,23 @@ fn main() -> glib::ExitCode {
     let hold_guard = RefCell::new(None);
 
     app.connect_handle_local_options(|_app, _dict| return -1);
+
     app.add_main_option(
-        "provider",
-        b'p'.into(),
+        "version",
+        b'v'.into(),
         OptionFlags::NONE,
-        glib::OptionArg::String,
-        "launch explicit provider",
+        glib::OptionArg::None,
+        "show version",
         None,
     );
 
     app.connect_command_line(|app, cmd| {
         let options = cmd.options_dict();
+
+        if options.contains("version") {
+            cmd.print_literal("1.0.0-beta\n");
+            return 0;
+        }
 
         app.activate();
         return 0;
@@ -203,6 +211,8 @@ fn setup_windows(app: &Application) {
     let input_clone = input.clone();
     let builder_copy = builder.clone();
     input.connect_changed(move |input| {
+        disable_mouse();
+
         let text = input.text().to_string();
 
         if let Some(cfg) = get_config() {
@@ -417,6 +427,36 @@ fn setup_windows(app: &Application) {
     list.set_factory(Some(&factory));
     list.set_single_click_activate(true);
 
+    let motion = EventControllerMotion::new();
+    motion.connect_motion(|_, x, y| {
+        with_mouse_x(|mx| {
+            with_mouse_y(|my| {
+                if *mx == 0.0 || *my == 0.0 {
+                    *mx = x;
+                    *my = y;
+                    return;
+                }
+
+                if x != *mx || y != *my {
+                    with_list(|l| {
+                        if !l.can_target() {
+                            l.set_can_target(true);
+                        }
+                    });
+                }
+            });
+        });
+    });
+
+    MOUSE_X.with(|s| {
+        *s.borrow_mut() = Some(0.0);
+    });
+
+    MOUSE_Y.with(|s| {
+        *s.borrow_mut() = Some(0.0);
+    });
+
+    window.add_controller(motion);
     window.add_controller(controller);
 
     WINDOWS.with(|s| {
@@ -620,6 +660,8 @@ fn quit(app: &Application) {
 }
 
 fn select_next() {
+    disable_mouse();
+
     with_selection(|selection| {
         if let Some(cfg) = get_config() {
             if cfg.selection_wrap {
@@ -661,6 +703,8 @@ fn toggle_exact() {
 }
 
 fn select_previous() {
+    disable_mouse();
+
     with_selection(|selection| {
         if let Some(cfg) = get_config() {
             if cfg.selection_wrap {
@@ -751,6 +795,26 @@ where
     WINDOWS.with(|s| s.borrow().as_ref().map(f))
 }
 
+pub fn with_mouse_x<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&mut f64) -> R,
+{
+    MOUSE_X.with(|s| {
+        let mut borrow = s.borrow_mut();
+        borrow.as_mut().map(f)
+    })
+}
+
+pub fn with_mouse_y<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&mut f64) -> R,
+{
+    MOUSE_Y.with(|s| {
+        let mut borrow = s.borrow_mut();
+        borrow.as_mut().map(f)
+    })
+}
+
 fn get_selected_item() -> Option<Item> {
     let result = with_selection(|selection| {
         selection
@@ -783,4 +847,16 @@ fn handle_preview(builder: &Builder) {
             preview.set_visible(false);
         }
     }
+}
+
+fn disable_mouse() {
+    with_mouse_x(|x| {
+        with_mouse_y(|y| {
+            with_list(|l| {
+                *y = 0.0;
+                *x = 0.0;
+                l.set_can_target(false);
+            })
+        })
+    });
 }

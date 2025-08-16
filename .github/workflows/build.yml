@@ -1,0 +1,102 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-x86_64:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          libgtk-4-dev \
+          protobuf-compiler \
+          meson \
+          ninja-build \
+          libwayland-dev \
+          wayland-protocols \
+          gobject-introspection \
+          libgirepository1.0-dev \
+          gtk-doc-tools \
+          valac
+
+        # Install gtk4-layer-shell from source
+        git clone https://github.com/wmww/gtk4-layer-shell.git /tmp/gtk4-layer-shell
+        cd /tmp/gtk4-layer-shell
+        meson setup build --prefix=/usr
+        ninja -C build
+        sudo ninja -C build install
+        sudo ldconfig
+
+    - name: Install Rust
+      uses: dtolnay/rust-toolchain@stable
+
+    - name: Build
+      run: cargo build --release --target x86_64-unknown-linux-gnu
+
+    - name: Strip binary
+      run: strip target/x86_64-unknown-linux-gnu/release/walker
+
+    - name: Create archive
+      run: |
+        cd target/x86_64-unknown-linux-gnu/release
+        tar -czf walker-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz walker
+        mv walker-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz ../../../
+
+    - name: Upload artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: walker-x86_64-unknown-linux-gnu
+        path: walker-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz
+
+  release:
+    needs: [build-x86_64]
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Download all artifacts
+      uses: actions/download-artifact@v4
+
+    - name: Generate changelog
+      run: |
+        # Get previous tag
+        PREV_TAG=$(git describe --tags --abbrev=0 HEAD^ 2>/dev/null || echo "")
+
+        # Generate changelog
+        echo "# Changes in ${{ github.ref_name }}" > CHANGELOG.md
+        echo "" >> CHANGELOG.md
+
+        if [ -n "$PREV_TAG" ]; then
+          echo "## Commits since $PREV_TAG:" >> CHANGELOG.md
+          git log --pretty=format:"- %s (%h)" $PREV_TAG..HEAD >> CHANGELOG.md
+        else
+          echo "## All commits:" >> CHANGELOG.md
+          git log --pretty=format:"- %s (%h)" >> CHANGELOG.md
+        fi
+
+        echo "" >> CHANGELOG.md
+        echo "## Downloads:" >> CHANGELOG.md
+        echo "- [walker-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/walker-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz) - AMD64/x86_64" >> CHANGELOG.md
+
+    - name: Create release
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          walker-x86_64-unknown-linux-gnu/walker-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz
+        body_path: CHANGELOG.md
+        draft: false
+        prerelease: ${{ contains(github.ref_name, 'beta') || contains(github.ref_name, 'alpha') || contains(github.ref_name, 'rc') }}
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

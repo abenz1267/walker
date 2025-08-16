@@ -253,8 +253,8 @@ fn setup_windows(app: &Application) {
 
                 let mut provider = item.provider.clone();
 
-                if provider.starts_with("menues:") {
-                    provider = "menues".to_string();
+                if provider.starts_with("menus:") {
+                    provider = "menus".to_string();
                 }
 
                 if let Some(action) = get_provider_bind(&provider, k, m) {

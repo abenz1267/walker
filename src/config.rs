@@ -98,11 +98,11 @@ pub struct Providers {
     pub symbols: Symbols,
 
     #[serde(flatten)]
-    pub menues: Menues,
+    pub menus: Menus,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Menues {
+pub struct Menus {
     #[serde(default = "default_enter")]
     pub activate: String,
 }
@@ -287,7 +287,7 @@ impl Default for Config {
                     "desktopapplications".to_string(),
                     "calc".to_string(),
                     "runner".to_string(),
-                    "menues".to_string(),
+                    "menus".to_string(),
                 ],
                 empty: vec!["desktopapplications".to_string()],
                 prefixes: vec![
@@ -312,7 +312,7 @@ impl Default for Config {
                         provider: "clipboard".to_string(),
                     },
                 ],
-                menues: Menues {
+                menus: Menus {
                     activate: "enter".to_string(),
                 },
                 clipboard: Clipboard {

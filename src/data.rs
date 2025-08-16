@@ -43,13 +43,13 @@ pub fn start_listening() {
     });
 
     thread::spawn(|| {
-        if let Err(e) = listen_menues_loop() {
+        if let Err(e) = listen_menus_loop() {
             eprintln!("Listen menu_loop error: {}", e);
         }
     });
 }
 
-fn listen_menues_loop() -> Result<(), Box<dyn std::error::Error>> {
+fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
     let mut conn_guard = MENUCONN.lock().unwrap();
     let conn = conn_guard.as_mut().ok_or("Connection not initialized")?;
 
@@ -318,7 +318,7 @@ pub fn activate(
 
 fn subscribe_menu() -> Result<(), Box<dyn std::error::Error>> {
     let mut req = SubscribeRequest::new();
-    req.provider = "menues".to_string();
+    req.provider = "menus".to_string();
 
     let payload = req.write_to_bytes()?;
 

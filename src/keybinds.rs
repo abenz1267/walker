@@ -35,7 +35,7 @@ pub const ACTION_SYMBOLS_COPY: &str = "copy";
 
 pub const ACTION_PROVIDERLIST_ACTIVATE: &str = "activate";
 
-pub const ACTION_MENUES_ACTIVATE: &str = "activate";
+pub const ACTION_MENUS_ACTIVATE: &str = "activate";
 
 #[derive(Debug, Clone)]
 pub struct Action {
@@ -198,10 +198,10 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     parse_bind(
-        &config.providers.menues.activate,
-        ACTION_MENUES_ACTIVATE,
+        &config.providers.menus.activate,
+        ACTION_MENUS_ACTIVATE,
         AFTER_CLOSE, // not really?
-        "menues",
+        "menus",
     )?;
 
     Ok(())

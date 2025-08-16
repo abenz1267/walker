@@ -210,14 +210,7 @@ fn query(text: &str) -> Result<(), Box<dyn std::error::Error>> {
     let switcher_provider = SWITCHER_PROVIDER.lock().unwrap();
     let mut query_text = text.to_string();
     let mut provider = "".to_string();
-
-    if let Some(cfg) = get_config() {
-        let delimiter = &cfg.global_argument_delimiter;
-
-        if let Some((before, _)) = query_text.split_once(delimiter) {
-            query_text = before.to_string();
-        }
-    }
+    let mut exact = false;
 
     if switcher_provider.is_empty() {
         if let Some(config) = get_config() {
@@ -236,9 +229,23 @@ fn query(text: &str) -> Result<(), Box<dyn std::error::Error>> {
         provider = switcher_provider.to_string();
     }
 
+    if let Some(cfg) = get_config() {
+        let delimiter = &cfg.global_argument_delimiter;
+
+        if let Some((before, _)) = query_text.split_once(delimiter) {
+            query_text = before.to_string();
+        }
+
+        if let Some(stripped) = query_text.strip_prefix(&cfg.exact_search_prefix) {
+            exact = true;
+            query_text = stripped.to_string();
+        }
+    }
+
     let mut req = QueryRequest::new();
     req.query = query_text;
     req.maxresults = 50;
+    req.exactsearch = exact;
 
     if !provider.is_empty() {
         req.providers.push(provider.clone());

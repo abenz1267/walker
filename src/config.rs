@@ -16,6 +16,9 @@ pub struct Config {
     #[serde(default = "default_argument_delimiter")]
     pub global_argument_delimiter: String,
 
+    #[serde(default = "default_exact_search")]
+    pub exact_search_prefix: String,
+
     #[serde(flatten)]
     pub providers: Providers,
 
@@ -54,6 +57,9 @@ pub struct Keybinds {
 
     #[serde(default = "default_previous")]
     pub previous: String,
+
+    #[serde(default = "default_toggle_exact")]
+    pub toggle_exact: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -178,6 +184,9 @@ fn default_close() -> String {
 fn default_argument_delimiter() -> String {
     "#".to_string()
 }
+fn default_exact_search() -> String {
+    "'".to_string()
+}
 fn default_start_terminal() -> String {
     "ctrl enter".to_string()
 }
@@ -186,6 +195,9 @@ fn default_next() -> String {
 }
 fn default_previous() -> String {
     "Up".to_string()
+}
+fn default_toggle_exact() -> String {
+    "ctrl e".to_string()
 }
 fn default_providers() -> Vec<String> {
     vec![
@@ -246,6 +258,7 @@ fn default_time_format() -> String {
 impl Default for Config {
     fn default() -> Self {
         Config {
+            exact_search_prefix: "'".to_string(),
             global_argument_delimiter: "#".to_string(),
             selection_wrap: true,
             additional_theme_location: None,
@@ -257,6 +270,7 @@ impl Default for Config {
             },
             close_when_open: true,
             keybinds: Keybinds {
+                toggle_exact: "ctrl e".to_string(),
                 close: "esc".to_string(),
                 next: "down".to_string(),
                 previous: "up".to_string(),

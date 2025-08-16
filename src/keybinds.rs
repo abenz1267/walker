@@ -7,6 +7,7 @@ use std::sync::{Arc, Mutex, OnceLock};
 pub const ACTION_CLOSE: &str = "%CLOSE%";
 pub const ACTION_SELECT_NEXT: &str = "%NEXT%";
 pub const ACTION_SELECT_PREVIOUS: &str = "%PREVIOUS%";
+pub const ACTION_TOGGLE_EXACT: &str = "%TOGGLE_EXACT%";
 
 pub const AFTER_CLOSE: &str = "%CLOSE%";
 pub const AFTER_NOTHING: &str = "%NOTHING%";
@@ -94,6 +95,12 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
     parse_bind(
         &config.keybinds.previous,
         ACTION_SELECT_PREVIOUS,
+        AFTER_NOTHING,
+        "",
+    )?;
+    parse_bind(
+        &config.keybinds.toggle_exact,
+        ACTION_TOGGLE_EXACT,
         AFTER_NOTHING,
         "",
     )?;

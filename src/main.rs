@@ -39,8 +39,8 @@ use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 
 use crate::data::{SWITCHER_PROVIDER, activate, init_socket, input_changed, start_listening};
 use crate::keybinds::{
-    ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, AFTER_CLEAR_RELOAD, AFTER_CLOSE, AFTER_NOTHING,
-    AFTER_RELOAD, get_provider_bind,
+    ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD,
+    AFTER_CLOSE, AFTER_NOTHING, AFTER_RELOAD, get_provider_bind,
 };
 use crate::{
     keybinds::{ACTION_CLOSE, get_bind, setup_binds},
@@ -249,6 +249,7 @@ fn setup_windows(app: &Application) {
                 ACTION_CLOSE => quit(&app_clone),
                 ACTION_SELECT_NEXT => select_next(),
                 ACTION_SELECT_PREVIOUS => select_previous(),
+                ACTION_TOGGLE_EXACT => toggle_exact(),
                 _ => {}
             }
 
@@ -650,6 +651,22 @@ fn select_next() {
                 if current + 1 < n_items {
                     selection.set_selected(current + 1);
                 }
+            }
+        }
+    });
+}
+
+fn toggle_exact() {
+    with_input(|i| {
+        if let Some(cfg) = get_config() {
+            if i.text().starts_with(&cfg.exact_search_prefix) {
+                if let Some(t) = i.text().strip_prefix(&cfg.exact_search_prefix) {
+                    i.set_text(t);
+                    i.set_position(-1);
+                }
+            } else {
+                i.set_text(&format!("{}{}", cfg.exact_search_prefix, i.text()));
+                i.set_position(-1);
             }
         }
     });

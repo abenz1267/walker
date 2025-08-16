@@ -16,7 +16,6 @@
           <class name="item-image"></class>
         </style>
         <property name="pixel-size">48</property>
-        <property name="icon-name">accessories-calculator</property>
       </object>
     </child>
     <child>

@@ -529,6 +529,20 @@ fn create_calc_item(l: &ListItem, i: &Item) {
     if let Some(text) = b.object::<Label>("ItemSubtext") {
         text.set_label(&i.subtext);
     }
+
+    if let Some(image) = b.object::<Image>("ItemImage") {
+        if l.position() == 0 {
+            if !i.icon.is_empty() {
+                if Path::new(&i.icon).is_absolute() {
+                    image.set_from_file(Some(&i.icon));
+                } else {
+                    image.set_icon_name(Some(&i.icon));
+                }
+            }
+        } else {
+            image.set_visible(false);
+        }
+    }
 }
 
 fn create_files_item(l: &ListItem, i: &Item) {

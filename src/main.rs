@@ -4,6 +4,7 @@ mod keybinds;
 mod preview;
 
 mod protos;
+use gtk4::gdk::Key;
 use gtk4::gio::prelude::{
     ApplicationCommandLineExt, DataInputStreamExtManual, FileExt, ListModelExt,
 };
@@ -40,7 +41,7 @@ use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 use crate::data::{SWITCHER_PROVIDER, activate, init_socket, input_changed, start_listening};
 use crate::keybinds::{
     ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD,
-    AFTER_CLOSE, AFTER_NOTHING, AFTER_RELOAD, get_provider_bind,
+    AFTER_CLOSE, AFTER_NOTHING, AFTER_RELOAD, get_modifiers, get_provider_bind,
 };
 use crate::{
     keybinds::{ACTION_CLOSE, get_bind, setup_binds},
@@ -298,9 +299,25 @@ fn setup_windows(app: &Application) {
                         action.after.as_str()
                     };
 
+                    let mut dont_close = false;
+
+                    if let Some(cfg) = get_config() {
+                        if let Some(keep_open) =
+                            get_modifiers().get(cfg.keep_open_modifier.as_str())
+                        {
+                            if *keep_open == m {
+                                dont_close = true
+                            }
+                        }
+                    }
+
                     match after {
                         AFTER_CLOSE => {
-                            quit(&app_clone);
+                            if dont_close {
+                                select_next();
+                            } else {
+                                quit(&app_clone);
+                            }
                             return true;
                         }
                         AFTER_CLEAR_RELOAD => {

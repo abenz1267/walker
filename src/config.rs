@@ -16,6 +16,9 @@ pub struct Config {
     #[serde(default = "default_argument_delimiter")]
     pub global_argument_delimiter: String,
 
+    #[serde(default = "default_keep_open")]
+    pub keep_open_modifier: String,
+
     #[serde(default = "default_exact_search")]
     pub exact_search_prefix: String,
 
@@ -184,6 +187,9 @@ fn default_close() -> String {
 fn default_argument_delimiter() -> String {
     "#".to_string()
 }
+fn default_keep_open() -> String {
+    "shift".to_string()
+}
 fn default_exact_search() -> String {
     "'".to_string()
 }
@@ -258,6 +264,7 @@ fn default_time_format() -> String {
 impl Default for Config {
     fn default() -> Self {
         Config {
+            keep_open_modifier: "shift".to_string(),
             exact_search_prefix: "'".to_string(),
             global_argument_delimiter: "#".to_string(),
             selection_wrap: true,

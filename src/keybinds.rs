@@ -1,5 +1,5 @@
-use crate::config;
-use gtk4::gdk::{self, Key};
+use crate::config::{self, get_config};
+use gtk4::gdk::{self, Key, ModifierType};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
 
@@ -58,7 +58,7 @@ fn get_provider_binds()
     PROVIDER_BINDS.get_or_init(|| Arc::new(Mutex::new(HashMap::new())))
 }
 
-fn get_modifiers() -> HashMap<&'static str, gdk::ModifierType> {
+pub fn get_modifiers() -> HashMap<&'static str, gdk::ModifierType> {
     let mut map = HashMap::new();
     map.insert("ctrl", gdk::ModifierType::CONTROL_MASK);
     map.insert("lctrl", gdk::ModifierType::CONTROL_MASK);
@@ -307,11 +307,24 @@ pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
 }
 
 pub fn get_provider_bind(provider: &str, key: Key, modifier: gdk::ModifierType) -> Option<Action> {
-    get_provider_binds()
-        .lock()
-        .unwrap()
-        .get(provider)?
-        .get(&key)?
-        .get(&modifier)
-        .cloned()
+    if let Some(cfg) = get_config() {
+        let modifiers = get_modifiers();
+        let mut modifier = modifier;
+
+        if let Some(keep_open) = modifiers.get(cfg.keep_open_modifier.as_str()) {
+            if *keep_open == modifier {
+                modifier = gdk::ModifierType::empty();
+            }
+        }
+
+        get_provider_binds()
+            .lock()
+            .unwrap()
+            .get(provider)?
+            .get(&key)?
+            .get(&modifier)
+            .cloned()
+    } else {
+        None
+    }
 }

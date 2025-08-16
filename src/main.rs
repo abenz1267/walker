@@ -231,7 +231,13 @@ fn setup_windows(app: &Application) {
     let input_clone = input.clone();
     let builder_copy = builder.clone();
     input.connect_changed(move |input| {
-        input_changed(input.text().to_string());
+        let text = input.text().to_string();
+
+        if let Some(cfg) = get_config() {
+            if !text.contains(&cfg.global_argument_delimiter) {
+                input_changed(text);
+            }
+        }
     });
 
     let controller = EventControllerKey::new();

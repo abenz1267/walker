@@ -13,6 +13,9 @@ pub struct Config {
     #[serde(default = "default_true")]
     pub selection_wrap: bool,
 
+    #[serde(default = "default_argument_delimiter")]
+    pub global_argument_delimiter: String,
+
     #[serde(flatten)]
     pub providers: Providers,
 
@@ -123,6 +126,9 @@ pub struct DesktopApplications {
 pub struct Runner {
     #[serde(default = "default_enter")]
     pub start: String,
+
+    #[serde(default = "default_start_terminal")]
+    pub start_terminal: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -168,6 +174,12 @@ static LOADED_CONFIG: OnceLock<Config> = OnceLock::new();
 
 fn default_close() -> String {
     "escape".to_string()
+}
+fn default_argument_delimiter() -> String {
+    "#".to_string()
+}
+fn default_start_terminal() -> String {
+    "ctrl enter".to_string()
 }
 fn default_next() -> String {
     "Down".to_string()
@@ -234,6 +246,7 @@ fn default_time_format() -> String {
 impl Default for Config {
     fn default() -> Self {
         Config {
+            global_argument_delimiter: "#".to_string(),
             selection_wrap: true,
             additional_theme_location: None,
             positions: Position {
@@ -305,6 +318,7 @@ impl Default for Config {
                 },
                 runner: Runner {
                     start: "enter".to_string(),
+                    start_terminal: "ctrl enter".to_string(),
                 },
                 symbols: Symbols {
                     copy: "enter".to_string(),

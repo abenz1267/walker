@@ -211,6 +211,14 @@ fn query(text: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut query_text = text.to_string();
     let mut provider = "".to_string();
 
+    if let Some(cfg) = get_config() {
+        let delimiter = &cfg.global_argument_delimiter;
+
+        if let Some((before, _)) = query_text.split_once(delimiter) {
+            query_text = before.to_string();
+        }
+    }
+
     if switcher_provider.is_empty() {
         if let Some(config) = get_config() {
             for prefix in &config.providers.prefixes {

@@ -27,7 +27,8 @@ pub const ACTION_FILES_COPY_PATH: &str = "copypath";
 pub const ACTION_FILES_OPEN: &str = "open";
 pub const ACTION_FILES_OPEN_DIR: &str = "opendir";
 
-pub const ACTION_RUNNER_START: &str = "start";
+pub const ACTION_RUNNER_START: &str = "run";
+pub const ACTION_RUNNER_START_TERMINAL: &str = "runterminal";
 
 pub const ACTION_SYMBOLS_COPY: &str = "copy";
 
@@ -164,6 +165,13 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
     parse_bind(
         &config.providers.runner.start,
         ACTION_RUNNER_START,
+        AFTER_CLOSE,
+        "runner",
+    )?;
+
+    parse_bind(
+        &config.providers.runner.start_terminal,
+        ACTION_RUNNER_START_TERMINAL,
         AFTER_CLOSE,
         "runner",
     )?;

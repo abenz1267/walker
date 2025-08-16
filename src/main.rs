@@ -672,6 +672,8 @@ fn setup_css() {
 
 fn setup_layer_shell(win: &Window) {
     if !gtk4_layer_shell::is_supported() {
+        let titlebar = Box::new(gtk4::Orientation::Vertical, 0);
+        win.set_titlebar(Some(&titlebar));
         return;
     }
 

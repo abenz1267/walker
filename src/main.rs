@@ -4,7 +4,6 @@ mod keybinds;
 mod preview;
 
 mod protos;
-use gtk4::gdk::Key;
 use gtk4::gio::prelude::{
     ApplicationCommandLineExt, DataInputStreamExtManual, FileExt, ListModelExt,
 };
@@ -41,7 +40,7 @@ use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 use crate::data::{SWITCHER_PROVIDER, activate, init_socket, input_changed, start_listening};
 use crate::keybinds::{
     ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD,
-    AFTER_CLOSE, AFTER_NOTHING, AFTER_RELOAD, get_modifiers, get_provider_bind,
+    AFTER_CLOSE, AFTER_RELOAD, get_modifiers, get_provider_bind,
 };
 use crate::{
     keybinds::{ACTION_CLOSE, get_bind, setup_binds},
@@ -115,44 +114,16 @@ fn main() -> glib::ExitCode {
 
     app.connect_handle_local_options(|_app, _dict| return -1);
     app.add_main_option(
-        "dmenu",
-        b'd'.into(),
+        "provider",
+        b'p'.into(),
         OptionFlags::NONE,
-        glib::OptionArg::None,
-        "dmenu",
+        glib::OptionArg::String,
+        "launch explicit provider",
         None,
     );
 
     app.connect_command_line(|app, cmd| {
         let options = cmd.options_dict();
-
-        if options.contains("dmenu") {
-            let stdin = cmd.stdin();
-
-            let data_stream = gio::DataInputStream::new(&stdin.unwrap());
-
-            loop {
-                match data_stream.read_line(gio::Cancellable::NONE) {
-                    Ok(line_slice) => {
-                        if line_slice.is_empty() {
-                            println!("End of input");
-                            break;
-                        }
-
-                        if let Ok(line_str) = std::str::from_utf8(&line_slice) {
-                            let trimmed = line_str.trim();
-                            if !trimmed.is_empty() {
-                                println!("Read: {}", trimmed);
-                            }
-                        }
-                    }
-                    Err(e) => {
-                        eprintln!("Error reading: {}", e);
-                        break;
-                    }
-                }
-            }
-        }
 
         app.activate();
         return 0;

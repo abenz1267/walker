@@ -54,6 +54,11 @@ func setupCommands() {
 	}
 	commands["clearclipboard"] = func() bool {
 		m := findModule("clipboard", available)
+
+		if m == nil {
+			return true
+		}
+
 		m.(*clipboard.Clipboard).Clear()
 
 		return true

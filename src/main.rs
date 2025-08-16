@@ -4,6 +4,9 @@ mod keybinds;
 mod preview;
 
 mod protos;
+use gtk4::gdk::ContentProvider;
+use gtk4::gio::File;
+use gtk4::gio::ffi::g_file_new_for_path;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, FileExt, ListModelExt};
 use gtk4::glib::OptionFlags;
 use gtk4::glib::clone::Downgrade;
@@ -11,7 +14,8 @@ use gtk4::glib::object::{CastNone, ObjectExt};
 use gtk4::glib::subclass::types::ObjectSubclassIsExt;
 use gtk4::prelude::{BoxExt, EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
 use gtk4::{
-    Box, Entry, EventControllerMotion, Image, ListItem, ListScrollFlags, ScrolledWindow, gio,
+    Box, DragSource, Entry, EventControllerMotion, Image, ListItem, ListScrollFlags,
+    ScrolledWindow, gio,
 };
 use gtk4::{gio::ListStore, glib::object::Cast};
 use protos::generated_proto::query::query_response::Item;
@@ -52,6 +56,7 @@ static IS_VISIBLE: Mutex<bool> = Mutex::new(false);
 static IS_SERVICE: OnceLock<bool> = OnceLock::new();
 
 thread_local! {
+    static APP: RefCell<Option<Application>> = RefCell::new(None);
     static WINDOWS: RefCell<Option<Vec<Window>>> = RefCell::new(None);
     static STOREITEMS: RefCell<Option<ListStore>> = RefCell::new(None);
     static SELECTION: RefCell<Option<SingleSelection>> = RefCell::new(None);
@@ -111,6 +116,10 @@ fn main() -> glib::ExitCode {
         .application_id("dev.benz.walker")
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
+
+    APP.with(|s| {
+        *s.borrow_mut() = Some(app.clone());
+    });
 
     let hold_guard = RefCell::new(None);
 
@@ -583,9 +592,36 @@ fn create_calc_item(l: &ListItem, i: &Item) {
 fn create_files_item(l: &ListItem, i: &Item) {
     let b = Builder::new();
     let _ = b.add_from_string(include_str!("../resources/item_files.xml"));
-    let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
+    let itembox: Box = b.object("ItemBox").expect("failed to get ItemBox");
     itembox.add_css_class(&i.provider);
     l.set_child(Some(&itembox));
+
+    let drag_source = DragSource::new();
+    let text = i.text.clone();
+
+    drag_source.connect_prepare(move |_, _, _| {
+        let file = File::for_path(&text);
+        let uri_string = format!("{}\n", file.uri());
+        let b = glib::Bytes::from(uri_string.as_bytes());
+
+        let cp = ContentProvider::for_bytes("text/uri-list", &b);
+
+        Some(cp)
+    });
+
+    drag_source.connect_drag_begin(|_, _| {
+        with_windows(|w| {
+            w[0].set_visible(false);
+        });
+    });
+
+    drag_source.connect_drag_end(|_, _, _| {
+        with_app(|app| {
+            quit(app);
+        });
+    });
+
+    itembox.add_controller(drag_source);
 
     if let Some(text) = b.object::<Label>("ItemText") {
         text.set_label(&i.text);
@@ -779,6 +815,13 @@ where
     F: FnOnce(&ListStore) -> R,
 {
     STOREITEMS.with(|s| s.borrow().as_ref().map(f))
+}
+
+pub fn with_app<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&Application) -> R,
+{
+    APP.with(|s| s.borrow().as_ref().map(f))
 }
 
 pub fn with_input<F, R>(f: F) -> Option<R>

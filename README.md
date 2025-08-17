@@ -45,13 +45,13 @@ cargo build --release
 Launch Walker with:
 
 ```bash
-walker
+walker --gapplication-service
 ```
 
-Or run as a service:
+To open it, simply call:
 
 ```bash
-walker --gapplication-service
+walker
 ```
 
 ### Keyboard Shortcuts
@@ -166,4 +166,3 @@ This project is licensed under the GNU General Public License v3.0 - see the [LI
 ## Development Status
 
 This is a beta version (1.0.0-beta) undergoing active development. Features and APIs may change before the stable 1.0 release.
-

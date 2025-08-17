@@ -23,6 +23,8 @@ use protos::generated_proto::query::query_response::Item;
 use config::get_config;
 
 use std::path::Path;
+use std::thread;
+use std::time::Duration;
 use std::{
     cell::RefCell,
     sync::{Mutex, OnceLock},
@@ -104,14 +106,13 @@ impl QueryResponseObject {
     }
 }
 
+fn wait_for_file(path: &str) {
+    while !Path::new(path).exists() {
+        thread::sleep(Duration::from_millis(10));
+    }
+}
+
 fn main() -> glib::ExitCode {
-    config::load().unwrap();
-    preview::load_previewers();
-    setup_binds().unwrap();
-
-    init_socket().unwrap();
-    start_listening();
-
     let app = Application::builder()
         .application_id("dev.benz.walker")
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
@@ -162,7 +163,25 @@ fn main() -> glib::ExitCode {
                     *visible = true;
                 }
             }
-        } else {
+        }
+    });
+
+    app.connect_startup(move |app| {
+        if app.flags().contains(ApplicationFlags::IS_SERVICE) {
+            IS_SERVICE.set(true).expect("failed to set IS_SERVICE");
+            *hold_guard.borrow_mut() = Some(app.hold());
+
+            println!("Waiting for elephant to start...");
+            wait_for_file("/tmp/elephant.sock");
+            println!("Elephant started!");
+
+            config::load().unwrap();
+            preview::load_previewers();
+            setup_binds().unwrap();
+
+            init_socket().unwrap();
+            start_listening();
+
             setup_windows(app);
 
             setup_css();
@@ -171,23 +190,11 @@ fn main() -> glib::ExitCode {
                 windows.iter().for_each(|window| {
                     setup_layer_shell(window);
                 });
-
-                windows[0].present();
             });
 
             HAS_UI.set(true).expect("failed to set HAS_UI");
 
             input_changed("".to_string());
-
-            let mut visible = IS_VISIBLE.lock().unwrap();
-            *visible = true;
-        }
-    });
-
-    app.connect_startup(move |app| {
-        if app.flags().contains(ApplicationFlags::IS_SERVICE) {
-            IS_SERVICE.set(true).expect("failed to set IS_SERVICE");
-            *hold_guard.borrow_mut() = Some(app.hold());
         }
     });
 

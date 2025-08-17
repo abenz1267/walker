@@ -21,7 +21,7 @@ Walker offers multiple provider types for different use cases:
 
 ```bash
 # Clone the repository
-git clone https://github.com/user/walker.git
+git clone https://github.com/abenz1267/walker.git
 cd walker
 
 # Build with Cargo

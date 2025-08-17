@@ -14,7 +14,7 @@ Walker offers multiple provider types for different use cases:
 - **Clipboard History**: Access clipboard history with `:` prefix
 - **Symbol Picker**: Insert special symbols with `.` prefix
 - **Provider List**: Switch between providers with `;` prefix
-- **Menu Integration**: System menu integration support
+- **Menu Integration**: Create custom menus with elephant and let walker display them
 
 ## Installation
 

@@ -6,7 +6,6 @@ mod preview;
 mod protos;
 use gtk4::gdk::ContentProvider;
 use gtk4::gio::File;
-use gtk4::gio::ffi::g_file_new_for_path;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, FileExt, ListModelExt};
 use gtk4::glib::OptionFlags;
 use gtk4::glib::clone::Downgrade;
@@ -195,6 +194,8 @@ fn main() -> glib::ExitCode {
             HAS_UI.set(true).expect("failed to set HAS_UI");
 
             input_changed("".to_string());
+        } else {
+            println!("run walker --gapplication-service before using walker")
         }
     });
 
@@ -372,7 +373,7 @@ fn setup_windows(app: &Application) {
     }
 
     selection.set_autoselect(true);
-    selection.connect_items_changed(move |s, pos, removed, added| {
+    selection.connect_items_changed(move |s, _, _, _| {
         handle_preview(&builder_copy);
 
         if s.n_items() == 0 {
@@ -390,7 +391,7 @@ fn setup_windows(app: &Application) {
         preview.set_visible(false);
     }
 
-    selection.connect_selection_changed(move |_, pos, item| {
+    selection.connect_selection_changed(move |_, _, _| {
         with_list(|list| {
             with_selection(|selection| {
                 handle_preview(&builder_copy);
@@ -796,10 +797,10 @@ fn setup_layer_shell(win: &Window) {
         win.set_layer(Layer::Overlay);
         win.set_keyboard_mode(KeyboardMode::OnDemand);
 
-        win.set_anchor(Edge::Left, cfg.positions.anchor_left);
-        win.set_anchor(Edge::Right, cfg.positions.anchor_right);
-        win.set_anchor(Edge::Top, cfg.positions.anchor_top);
-        win.set_anchor(Edge::Bottom, cfg.positions.anchor_bottom);
+        win.set_anchor(Edge::Left, true);
+        win.set_anchor(Edge::Right, true);
+        win.set_anchor(Edge::Top, true);
+        win.set_anchor(Edge::Bottom, true);
     }
 }
 

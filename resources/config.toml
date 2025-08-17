@@ -1,0 +1,67 @@
+close_when_open = true
+selection_wrap = false
+global_argument_delimiter = "#"
+keep_open_modifier = "shift"
+exact_search_prefix = "'"
+
+[keybinds]
+close = "esc"
+next = "down"
+previous = "up"
+toggle_exact = "ctrl e"
+
+[providers]
+default = ["desktopapplications", "calc", "runner", "menu"]
+empty = ["desktopapplications"]
+
+[[providers.prefixes]]
+prefix = ";"
+provider = "providerlist"
+
+[[providers.prefixes]]
+prefix = "/"
+provider = "files"
+
+[[providers.prefixes]]
+prefix = "."
+provider = "symbols"
+
+[[providers.prefixes]]
+prefix = "="
+provider = "calc"
+
+[[providers.prefixes]]
+prefix = ":"
+provider = "clipboard"
+
+[providers.calc]
+copy = "enter"
+save = "ctrl s"
+delete = "ctrl d"
+
+[providers.providerlist]
+activate = "enter"
+
+[providers.clipboard]
+time_format = "dd.MM. - hh:mm"
+copy = "enter"
+delete = "ctrl d"
+
+[providers.desktopapplications]
+start = "enter"
+
+[providers.files]
+open = "enter"
+open_dir = "ctrl enter"
+copy_path = "ctrl shift C"
+copy_file = "ctrl c"
+
+[providers.runner]
+start = "enter"
+start_terminal = "shift enter"
+
+[providers.symbols]
+copy = "enter"
+
+[providers.menus]
+activate = "enter"

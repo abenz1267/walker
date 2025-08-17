@@ -48,7 +48,3 @@ pub fn handle_preview(provider: &str, item: &Item, preview: &GtkBox, builder: &B
 pub fn has_previewer(provider: &str) -> bool {
     PREVIEWERS.with(|previewers| previewers.borrow().contains_key(provider))
 }
-
-pub fn get_registered_providers() -> Vec<String> {
-    PREVIEWERS.with(|previewers| previewers.borrow().keys().cloned().collect())
-}

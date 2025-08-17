@@ -138,7 +138,7 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     parse_bind(
-        &config.providers.desktop_applications.start,
+        &config.providers.desktopapplications.start,
         ACTION_DESKTOP_APPLICATIONS_START,
         AFTER_CLOSE,
         "desktopapplications",

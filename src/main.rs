@@ -320,8 +320,11 @@ fn setup_windows(app: &Application) {
                         }
                         AFTER_CLEAR_RELOAD => {
                             with_input(|i| {
-                                i.set_text("");
-                                i.emit_by_name::<()>("changed", &[]);
+                                if i.text().is_empty() {
+                                    i.emit_by_name::<()>("changed", &[]);
+                                } else {
+                                    i.set_text("");
+                                }
                             });
                         }
                         AFTER_RELOAD => crate::data::input_changed(input_clone.text().to_string()),

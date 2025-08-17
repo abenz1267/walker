@@ -16,6 +16,7 @@ default = [
   "calc",
   "runner",
   "menu",
+  "websearch",
 ] # providers to be queried by default
 empty = ["desktopapplications"] # providers to be queried when query is empty
 
@@ -36,6 +37,10 @@ prefix = "="
 provider = "calc"
 
 [[providers.prefixes]]
+prefix = "@"
+provider = "websearch"
+
+[[providers.prefixes]]
 prefix = ":"
 provider = "clipboard"
 
@@ -43,6 +48,9 @@ provider = "clipboard"
 copy = "enter"
 save = "ctrl s"
 delete = "ctrl d"
+
+[providers.websearch]
+search = "enter"
 
 [providers.providerlist]
 activate = "enter"

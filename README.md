@@ -10,6 +10,7 @@ Walker offers multiple provider types for different use cases:
 - **Calculator**: Perform mathematical calculations with `=` prefix
 - **File Browser**: Navigate and open files with `/` prefix
 - **Command Runner**: Execute shell commands
+- **Websearch**: Search the web with custom-defined engines
 - **Clipboard History**: Access clipboard history with `:` prefix
 - **Symbol Picker**: Insert special symbols with `.` prefix
 - **Provider List**: Switch between providers with `;` prefix

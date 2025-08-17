@@ -60,6 +60,12 @@ pub struct Providers {
     pub runner: Runner,
     pub symbols: Symbols,
     pub menus: Menus,
+    pub websearch: Websearch,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Websearch {
+    pub search: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

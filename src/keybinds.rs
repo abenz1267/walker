@@ -37,6 +37,8 @@ pub const ACTION_PROVIDERLIST_ACTIVATE: &str = "activate";
 
 pub const ACTION_MENUS_ACTIVATE: &str = "activate";
 
+pub const ACTION_WEBSEARCH_SEARCH: &str = "search";
+
 #[derive(Debug, Clone)]
 pub struct Action {
     pub action: String,
@@ -202,6 +204,13 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
         ACTION_MENUS_ACTIVATE,
         AFTER_CLOSE, // not really?
         "menus",
+    )?;
+
+    parse_bind(
+        &config.providers.websearch.search,
+        ACTION_WEBSEARCH_SEARCH,
+        AFTER_CLOSE,
+        "websearch",
     )?;
 
     Ok(())

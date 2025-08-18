@@ -171,6 +171,7 @@ fn main() -> glib::ExitCode {
             } else {
                 with_input(|i| {
                     i.emit_by_name::<()>("changed", &[]);
+                    i.grab_focus();
                 });
 
                 with_windows(|windows| {

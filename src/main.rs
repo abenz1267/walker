@@ -4,6 +4,7 @@ mod keybinds;
 mod preview;
 
 mod protos;
+use chrono::DateTime;
 use gtk4::gdk::ContentProvider;
 use gtk4::gio::File;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, FileExt, ListModelExt};
@@ -543,7 +544,17 @@ fn create_clipboard_item(l: &ListItem, i: &Item) {
     }
 
     if let Some(text) = b.object::<Label>("ItemSubtext") {
-        text.set_label(&i.subtext);
+        if let Some(cfg) = get_config() {
+            match DateTime::parse_from_rfc2822(&i.subtext) {
+                Ok(dt) => {
+                    let formatted = dt.format(&cfg.providers.clipboard.time_format).to_string();
+                    text.set_label(&formatted);
+                }
+                Err(_) => {
+                    text.set_label(&i.subtext);
+                }
+            }
+        }
     }
 
     if let Some(image) = b.object::<Image>("ItemImage") {

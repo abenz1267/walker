@@ -56,7 +56,7 @@ search = "enter"
 activate = "enter"
 
 [providers.clipboard]
-time_format = "dd.MM. - hh:mm"
+time_format = "%d.%m. - %H:%M"
 copy = "enter"
 delete = "ctrl d"
 

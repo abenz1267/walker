@@ -866,8 +866,7 @@ fn start_theme_watcher(theme_name: String) {
         )
         .expect("Failed to create watcher");
 
-        if let Err(e) = watcher.watch(&path, RecursiveMode::NonRecursive) {
-            eprintln!("Failed to watch file {:?}: {}", path, e);
+        if let Err(_) = watcher.watch(&path, RecursiveMode::NonRecursive) {
             return;
         }
 

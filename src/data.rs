@@ -3,7 +3,7 @@ use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
-use crate::{IS_VISIBLE, with_input, with_windows};
+use crate::{IS_SERVICE, IS_VISIBLE, with_input, with_windows};
 use gtk4::{glib, prelude::*};
 use protobuf::Message;
 use std::io::{BufReader, Read, Write};

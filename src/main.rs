@@ -193,7 +193,9 @@ fn main() -> glib::ExitCode {
 }
 
 fn init_ui(app: &Application) {
-    IS_SERVICE.set(true).expect("failed to set IS_SERVICE");
+    if app.flags().contains(ApplicationFlags::IS_SERVICE) {
+        IS_SERVICE.set(true).expect("failed to set IS_SERVICE");
+    }
 
     println!("Waiting for elephant to start...");
     wait_for_file("/tmp/elephant.sock");

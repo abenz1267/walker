@@ -622,8 +622,9 @@ fn create_files_item(l: &ListItem, i: &Item) {
     itembox.add_css_class(&i.provider);
     l.set_child(Some(&itembox));
 
-    let drag_source = DragSource::new();
     let text = i.text.clone();
+
+    let drag_source = DragSource::new();
 
     drag_source.connect_prepare(move |_, _, _| {
         let file = File::for_path(&text);

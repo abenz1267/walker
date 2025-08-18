@@ -1,11 +1,13 @@
 use super::{LatestOnlyThrottler, PreviewHandler};
-use crate::get_selected_item;
 use crate::protos::generated_proto::query::query_response::Item;
+use crate::{get_selected_item, quit, with_app, with_windows};
+use gtk4::gdk::ContentProvider;
+use gtk4::gio::File;
 use gtk4::glib::clone::Downgrade;
 use gtk4::glib::{self};
 use gtk4::{
-    Box as GtkBox, Builder, ContentFit, Image, Orientation, Picture, PolicyType, ScrolledWindow,
-    Stack, TextView, WrapMode,
+    Box as GtkBox, Builder, ContentFit, DragSource, Image, Orientation, Picture, PolicyType,
+    ScrolledWindow, Stack, TextView, WrapMode,
 };
 use gtk4::{gio, prelude::*};
 use std::fs;
@@ -63,6 +65,31 @@ impl PreviewHandler for FilesPreviewHandler {
             while let Some(child) = preview_clone.first_child() {
                 child.unparent();
             }
+
+            let drag_source = DragSource::new();
+
+            let path_copy = path.to_string();
+            drag_source.connect_prepare(move |_, _, _| {
+                let file = File::for_path(&path_copy);
+                let uri_string = format!("{}\n", file.uri());
+                let b = glib::Bytes::from(uri_string.as_bytes());
+                let cp = ContentProvider::for_bytes("text/uri-list", &b);
+                Some(cp)
+            });
+
+            drag_source.connect_drag_begin(|_, _| {
+                with_windows(|w| {
+                    w[0].set_visible(false);
+                });
+            });
+
+            drag_source.connect_drag_end(|_, _, _| {
+                with_app(|app| {
+                    quit(app);
+                });
+            });
+
+            file_preview.box_widget.add_controller(drag_source);
 
             preview_clone.append(&file_preview.box_widget);
 

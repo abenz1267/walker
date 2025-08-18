@@ -4,12 +4,14 @@ use std::sync::OnceLock;
 
 static LOADED_CONFIG: OnceLock<Elephant> = OnceLock::new();
 const DEFAULT_CONFIG: &str = include_str!("../resources/config.toml");
+pub const DEFAULT_STYLE: &str = include_str!("../resources/style_default.css");
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Elephant {
     pub close_when_open: bool,
     pub selection_wrap: bool,
     pub global_argument_delimiter: String,
+    pub theme: String,
     pub keep_open_modifier: String,
     pub exact_search_prefix: String,
     pub providers: Providers,
@@ -37,6 +39,16 @@ fn get_user_config_path() -> String {
             path.to_string_lossy().to_string()
         })
         .unwrap_or_else(|| "~/.config/walker/config.toml".to_string())
+}
+
+fn get_user_theme_path() -> String {
+    dirs::config_dir()
+        .map(|mut path| {
+            path.push("walker");
+            path.push("themes");
+            path.to_string_lossy().to_string()
+        })
+        .unwrap_or_else(|| "~/.config/walker/themes/".to_string())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

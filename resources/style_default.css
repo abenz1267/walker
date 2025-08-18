@@ -3,11 +3,6 @@ scrollbar {
   opacity: 0;
 }
 
-.window {
-  background: none;
-  background: red;
-}
-
 .box-wrapper {
   box-shadow:
     0 19px 38px rgba(0, 0, 0, 0.3),

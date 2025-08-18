@@ -18,17 +18,19 @@ use gtk4::{
     ScrolledWindow, gio,
 };
 use gtk4::{gio::ListStore, glib::object::Cast};
+use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use protos::generated_proto::query::query_response::Item;
 
 use config::get_config;
 
 use std::path::Path;
-use std::thread;
+use std::sync::mpsc;
 use std::time::Duration;
 use std::{
     cell::RefCell,
     sync::{Mutex, OnceLock},
 };
+use std::{fs, thread};
 
 use gtk4::{
     Application, Builder, CssProvider, EventControllerKey, Label, ListView, SignalListItemFactory,
@@ -43,6 +45,7 @@ use gtk4::{
 };
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 
+use crate::config::{DEFAULT_STYLE, Elephant};
 use crate::data::{SWITCHER_PROVIDER, activate, init_socket, input_changed, start_listening};
 use crate::keybinds::{
     ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD,
@@ -57,6 +60,7 @@ static IS_VISIBLE: Mutex<bool> = Mutex::new(false);
 static IS_SERVICE: OnceLock<bool> = OnceLock::new();
 
 thread_local! {
+    static CSSPROVIDER: RefCell<Option<CssProvider>> = RefCell::new(None);
     static APP: RefCell<Option<Application>> = RefCell::new(None);
     static WINDOWS: RefCell<Option<Vec<Window>>> = RefCell::new(None);
     static STOREITEMS: RefCell<Option<ListStore>> = RefCell::new(None);
@@ -209,9 +213,11 @@ fn init_ui(app: &Application) {
     init_socket().unwrap();
     start_listening();
 
-    setup_windows(app);
-
-    setup_css();
+    let cfg = get_config().unwrap();
+    setup_windows(app, cfg);
+    setup_css_provider();
+    setup_css(cfg.theme.clone());
+    start_theme_watcher(cfg.theme.clone());
 
     with_windows(|windows| {
         windows.iter().for_each(|window| {
@@ -220,7 +226,7 @@ fn init_ui(app: &Application) {
     });
 }
 
-fn setup_windows(app: &Application) {
+fn setup_windows(app: &Application, cfg: &Elephant) {
     // TODO: create window per layout?
     let mut windows: Vec<Window> = Vec::new();
 
@@ -804,15 +810,85 @@ fn select_previous() {
     });
 }
 
-fn setup_css() {
+fn setup_css(theme: String) {
+    let css: String;
+
+    if theme == "default" {
+        css = DEFAULT_STYLE.to_string();
+    } else {
+        let mut path = dirs::config_dir()
+            .ok_or("Could not find config directory")
+            .unwrap();
+
+        path.push("walker");
+        path.push("themes");
+        path.push(theme);
+        path.push("style.css");
+
+        css = fs::read_to_string(&path).unwrap();
+    }
+
+    with_css_provider(|p| {
+        p.load_from_string(&css);
+    });
+}
+
+fn setup_css_provider() {
     let css_provider = CssProvider::new();
-    css_provider.load_from_string(include_str!("../resources/style_default.css"));
 
     gtk4::style_context_add_provider_for_display(
         &Display::default().expect("Could not connect to a display."),
         &css_provider,
         gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
     );
+
+    CSSPROVIDER.with(|s| {
+        *s.borrow_mut() = Some(css_provider.clone());
+    });
+}
+
+fn start_theme_watcher(theme_name: String) {
+    let mut path = dirs::config_dir()
+        .ok_or("Could not find config directory")
+        .unwrap();
+
+    path.push("walker");
+    path.push("themes");
+    path.push(&theme_name);
+    path.push("style.css");
+
+    thread::spawn(move || {
+        let (tx, rx) = mpsc::channel();
+
+        let mut watcher = RecommendedWatcher::new(
+            move |result: Result<Event, notify::Error>| {
+                if let Err(_) = tx.send(result) {
+                    return;
+                }
+            },
+            Config::default(),
+        )
+        .expect("Failed to create watcher");
+
+        if let Err(e) = watcher.watch(&path, RecursiveMode::NonRecursive) {
+            eprintln!("Failed to watch file {:?}: {}", path, e);
+            return;
+        }
+
+        let theme_name_for_callback = theme_name.clone();
+
+        for result in rx {
+            match result {
+                Ok(_event) => {
+                    let theme_name_clone = theme_name_for_callback.clone();
+                    glib::idle_add_once(move || {
+                        setup_css(theme_name_clone);
+                    });
+                }
+                Err(error) => println!("Watch error: {:?}", error),
+            }
+        }
+    });
 }
 
 fn setup_layer_shell(win: &Window) {
@@ -876,6 +952,13 @@ where
     F: FnOnce(&Vec<Window>) -> R,
 {
     WINDOWS.with(|s| s.borrow().as_ref().map(f))
+}
+
+pub fn with_css_provider<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&CssProvider) -> R,
+{
+    CSSPROVIDER.with(|s| s.borrow().as_ref().map(f))
 }
 
 pub fn with_mouse_x<F, R>(f: F) -> Option<R>

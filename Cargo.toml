@@ -12,6 +12,7 @@ mime_guess = "2.0"
 chrono = { version = "0.4", features = ["clock"] }
 config = "0.15.14"
 dirs = "6.0.0"
+notify = "8.2.0"
 
 [build-dependencies]
 protobuf-codegen = "3.4"

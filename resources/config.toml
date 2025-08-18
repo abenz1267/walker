@@ -3,6 +3,7 @@ selection_wrap = false          # wrap list if at bottom or top
 global_argument_delimiter = "#" # query: firefox#https://benz.dev => part after delimiter will be ignored when querying. this should be the same as in the elephant config
 keep_open_modifier = "shift"    # won't close on activation, but rather select the next item in the list
 exact_search_prefix = "'"       # disable fuzzy searching
+theme = "default"               # theme to use
 
 [keybinds]
 close = "esc"

@@ -393,11 +393,7 @@ fn setup_windows(app: &Application, cfg: &Elephant) {
         *s.borrow_mut() = Some(selection.clone());
     });
 
-    if selection.n_items() == 0 {
-        placeholder.set_visible(true);
-    } else {
-        placeholder.set_visible(false);
-    }
+    placeholder.set_visible(false);
 
     selection.set_autoselect(true);
     selection.connect_items_changed(move |s, _, _, _| {

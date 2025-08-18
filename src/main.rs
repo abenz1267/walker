@@ -7,10 +7,10 @@ mod protos;
 use gtk4::gdk::ContentProvider;
 use gtk4::gio::File;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, FileExt, ListModelExt};
-use gtk4::glib::OptionFlags;
 use gtk4::glib::clone::Downgrade;
 use gtk4::glib::object::{CastNone, ObjectExt};
 use gtk4::glib::subclass::types::ObjectSubclassIsExt;
+use gtk4::glib::{OptionFlags, VariantTy};
 use gtk4::prelude::{BoxExt, EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
 use gtk4::{
     Box, DragSource, Entry, EventControllerMotion, Image, ListItem, ListScrollFlags,
@@ -52,7 +52,6 @@ use crate::{
     protos::generated_proto::query::{QueryResponse, query_response::Type},
 };
 
-static HAS_UI: OnceLock<bool> = OnceLock::new();
 static IS_VISIBLE: Mutex<bool> = Mutex::new(false);
 static IS_SERVICE: OnceLock<bool> = OnceLock::new();
 
@@ -134,6 +133,15 @@ fn main() -> glib::ExitCode {
         None,
     );
 
+    app.add_main_option(
+        "provider",
+        b'p'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::String,
+        "exclusive provider to query",
+        None,
+    );
+
     app.connect_command_line(|app, cmd| {
         let options = cmd.options_dict();
 
@@ -142,64 +150,70 @@ fn main() -> glib::ExitCode {
             return 0;
         }
 
+        if options.contains("provider") {
+            let mut provider = SWITCHER_PROVIDER.lock().unwrap();
+
+            if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
+                *provider = val.str().unwrap().to_string();
+            }
+        }
+
         app.activate();
         return 0;
     });
 
     app.connect_activate(move |app| {
-        if HAS_UI.get().is_some() {
-            let visible = *IS_VISIBLE.lock().unwrap();
+        let visible = *IS_VISIBLE.lock().unwrap();
 
-            if let Some(cfg) = get_config() {
-                if cfg.close_when_open && visible {
-                    quit(app);
-                } else {
-                    with_windows(|windows| {
-                        windows[0].present();
-                    });
+        if let Some(cfg) = get_config() {
+            if cfg.close_when_open && visible {
+                quit(app);
+            } else {
+                with_input(|i| {
+                    i.emit_by_name::<()>("changed", &[]);
+                });
 
-                    let mut visible = IS_VISIBLE.lock().unwrap();
-                    *visible = true;
-                }
+                with_windows(|windows| {
+                    windows[0].present();
+                });
+
+                let mut visible = IS_VISIBLE.lock().unwrap();
+                *visible = true;
             }
         }
     });
 
     app.connect_startup(move |app| {
-        if app.flags().contains(ApplicationFlags::IS_SERVICE) {
-            IS_SERVICE.set(true).expect("failed to set IS_SERVICE");
-            *hold_guard.borrow_mut() = Some(app.hold());
-
-            println!("Waiting for elephant to start...");
-            wait_for_file("/tmp/elephant.sock");
-            println!("Elephant started!");
-
-            config::load().unwrap();
-            preview::load_previewers();
-            setup_binds().unwrap();
-
-            init_socket().unwrap();
-            start_listening();
-
-            setup_windows(app);
-
-            setup_css();
-
-            with_windows(|windows| {
-                windows.iter().for_each(|window| {
-                    setup_layer_shell(window);
-                });
-            });
-
-            HAS_UI.set(true).expect("failed to set HAS_UI");
-
-            input_changed("".to_string());
-        } else {
-            println!("run walker --gapplication-service before using walker")
-        }
+        *hold_guard.borrow_mut() = Some(app.hold());
+        init_ui(app);
     });
 
     app.run()
+}
+
+fn init_ui(app: &Application) {
+    IS_SERVICE.set(true).expect("failed to set IS_SERVICE");
+
+    println!("Waiting for elephant to start...");
+    wait_for_file("/tmp/elephant.sock");
+    println!("Elephant started!");
+
+    config::load().unwrap();
+    preview::load_previewers();
+    setup_binds().unwrap();
+
+    init_socket().unwrap();
+    start_listening();
+
+    setup_windows(app);
+
+    setup_css();
+
+    with_windows(|windows| {
+        windows.iter().for_each(|window| {
+            setup_layer_shell(window);
+        });
+    });
 }
 
 fn setup_windows(app: &Application) {

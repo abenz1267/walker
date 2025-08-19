@@ -30,7 +30,7 @@ use std::{
     cell::RefCell,
     sync::{Mutex, OnceLock},
 };
-use std::{fs, thread};
+use std::{env, fs, thread};
 
 use gtk4::{
     Application, Builder, CssProvider, EventControllerKey, Label, ListView, SignalListItemFactory,
@@ -666,7 +666,11 @@ fn create_files_item(l: &ListItem, i: &Item) {
     itembox.add_controller(drag_source);
 
     if let Some(text) = b.object::<Label>("ItemText") {
-        text.set_label(&i.text);
+        if let Ok(home) = env::var("HOME") {
+            if let Some(stripped) = i.text.strip_prefix(&home) {
+                text.set_label(stripped);
+            }
+        }
     }
 
     if let Some(image) = b.object::<Image>("ItemImage") {

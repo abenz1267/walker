@@ -244,6 +244,7 @@ fn query(text: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     let mut req = QueryRequest::new();
     req.query = query_text;
+    // TODO: per provider config
     req.maxresults = 50;
     req.exactsearch = exact;
 

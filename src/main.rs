@@ -70,6 +70,7 @@ thread_local! {
     static LIST: RefCell<Option<ListView>> = RefCell::new(None);
     static INPUT: RefCell<Option<Entry>> = RefCell::new(None);
     static PLACEHOLDER: RefCell<Option<Label>> = RefCell::new(None);
+    static KEYBINDS: RefCell<Option<Label>> = RefCell::new(None);
     static MOUSE_X: RefCell<Option<f64>> = RefCell::new(None);
     static MOUSE_Y: RefCell<Option<f64>> = RefCell::new(None);
 }
@@ -418,6 +419,12 @@ fn setup_windows(app: &Application, cfg: &Elephant) {
         *s.borrow_mut() = Some(placeholder.clone());
     });
 
+    let keybinds: Label = builder.object("Keybinds").expect("no keybind label found");
+
+    KEYBINDS.with(|s| {
+        *s.borrow_mut() = Some(keybinds.clone());
+    });
+
     let selection = SingleSelection::new(Some(items.clone()));
 
     SELECTION.with(|s| {
@@ -433,9 +440,11 @@ fn setup_windows(app: &Application, cfg: &Elephant) {
         if s.n_items() == 0 {
             placeholder.set_visible(true);
             scroll.set_visible(false);
+            clear_keybind_hint();
         } else {
             placeholder.set_visible(false);
             scroll.set_visible(true);
+            set_keybind_hint();
         }
     });
 
@@ -450,6 +459,8 @@ fn setup_windows(app: &Application, cfg: &Elephant) {
             with_selection(|selection| {
                 handle_preview(&builder_copy);
                 list.scroll_to(selection.selected(), ListScrollFlags::NONE, None);
+
+                set_keybind_hint();
             });
         });
     });
@@ -984,6 +995,13 @@ where
     PLACEHOLDER.with(|s| s.borrow().as_ref().map(f))
 }
 
+pub fn with_keybinds<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&Label) -> R,
+{
+    KEYBINDS.with(|s| s.borrow().as_ref().map(f))
+}
+
 pub fn with_windows<F, R>(f: F) -> Option<R>
 where
     F: FnOnce(&Vec<Window>) -> R,
@@ -1061,5 +1079,116 @@ fn disable_mouse() {
                 l.set_can_target(false);
             })
         })
+    });
+}
+
+fn set_keybinds_desktopapplications() {
+    with_keybinds(|k| {
+        if let Some(cfg) = get_config() {
+            let text = format!("start: {}", cfg.providers.desktopapplications.start);
+            k.set_text(&text);
+        }
+    });
+}
+
+fn set_keybinds_clipboard() {
+    with_keybinds(|k| {
+        if let Some(cfg) = get_config() {
+            let text = format!(
+                "copy: {} - delete: {}",
+                cfg.providers.clipboard.copy, cfg.providers.clipboard.delete
+            );
+            k.set_text(&text);
+        }
+    });
+}
+
+fn set_keybinds_menus() {
+    with_keybinds(|k| {
+        if let Some(cfg) = get_config() {
+            let text = format!("activate: {}", cfg.providers.menus.activate);
+            k.set_text(&text);
+        }
+    });
+}
+
+fn set_keybinds_calc() {
+    with_keybinds(|k| {
+        if let Some(cfg) = get_config() {
+            let text = format!(
+                "copy: {} - save: {} - delete: {}",
+                cfg.providers.calc.copy, cfg.providers.calc.save, cfg.providers.calc.delete
+            );
+            k.set_text(&text);
+        }
+    });
+}
+
+fn set_keybinds_symbols() {
+    with_keybinds(|k| {
+        if let Some(cfg) = get_config() {
+            let text = format!("copy: {}", cfg.providers.symbols.copy,);
+            k.set_text(&text);
+        }
+    });
+}
+
+fn set_keybinds_providerlist() {
+    with_keybinds(|k| {
+        if let Some(cfg) = get_config() {
+            let text = format!("select: {}", cfg.providers.providerlist.activate);
+            k.set_text(&text);
+        }
+    });
+}
+
+fn set_keybinds_runner() {
+    with_keybinds(|k| {
+        if let Some(cfg) = get_config() {
+            let text = format!(
+                "run: {} - run in terminal: {}",
+                cfg.providers.runner.start, cfg.providers.runner.start_terminal
+            );
+            k.set_text(&text);
+        }
+    });
+}
+
+fn set_keybinds_files() {
+    with_keybinds(|k| {
+        if let Some(cfg) = get_config() {
+            let text = format!(
+                "open: {} - open dir: {} - copy: {} - copy path: {}",
+                cfg.providers.files.open,
+                cfg.providers.files.open_dir,
+                cfg.providers.files.copy_file,
+                cfg.providers.files.copy_path
+            );
+            k.set_text(&text);
+        }
+    });
+}
+
+fn set_keybind_hint() {
+    if let Some(item) = get_selected_item() {
+        match item.provider.as_str() {
+            "desktopapplications" => set_keybinds_desktopapplications(),
+            "files" => set_keybinds_files(),
+            "symbols" => set_keybinds_symbols(),
+            "calc" => set_keybinds_calc(),
+            "runner" => set_keybinds_runner(),
+            "providerlist" => set_keybinds_providerlist(),
+            "clipboard" => set_keybinds_clipboard(),
+            provider if provider.starts_with("menus:") => set_keybinds_menus(),
+            _ => clear_keybind_hint(),
+        }
+    } else {
+        clear_keybind_hint();
+    }
+}
+
+fn clear_keybind_hint() {
+    with_keybinds(|k| {
+        k.set_text("");
     });
 }

@@ -94,6 +94,14 @@
                 </child>
               </object>
             </child>
+            <child>
+              <object class="GtkLabel" id="Keybinds">
+                <style>
+                  <class name="keybind-hints"></class>
+                </style>
+                <property name="xalign">1</property>
+              </object>
+            </child>
           </object>
         </child>
       </object>

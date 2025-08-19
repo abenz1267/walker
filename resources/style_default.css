@@ -14,10 +14,10 @@ scrollbar {
 }
 
 .box {
-  border: 1px solid alpha(@window_bg_color, 0.5);
 }
 
 .search-container {
+  background: @window_bg_color;
 }
 
 .input placeholder {
@@ -40,6 +40,7 @@ scrollbar {
 }
 
 .content-container {
+  background: @window_bg_color;
 }
 
 .placeholder {
@@ -67,6 +68,14 @@ scrollbar {
 }
 
 .item-image {
+}
+
+.keybind-hints {
+  padding: 10px;
+  font-size: 14px;
+  color: @theme_fg_color;
+  opacity: 0.5;
+  background: lighter(@window_bg_color);
 }
 
 .preview {

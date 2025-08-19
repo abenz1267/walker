@@ -16,7 +16,7 @@ use gtk4::prelude::{
     BoxExt, EditableExt, EntryExt, EventControllerExt, ListItemExt, SelectionModelExt,
 };
 use gtk4::{
-    Box, DragSource, Entry, EventControllerMotion, Image, ListItem, ListScrollFlags,
+    Box, DragSource, Entry, EventControllerMotion, Image, ListItem, ListScrollFlags, Picture,
     ScrolledWindow, gio,
 };
 use gtk4::{gio::ListStore, glib::object::Cast};
@@ -590,10 +590,10 @@ fn create_clipboard_item(l: &ListItem, i: &Item) {
         }
     }
 
-    if let Some(image) = b.object::<Image>("ItemImage") {
+    if let Some(image) = b.object::<Picture>("ItemImage") {
         match i.type_.enum_value() {
             Ok(Type::FILE) => {
-                image.set_from_file(Some(&i.text));
+                image.set_filename(Some(&i.text));
 
                 if let Some(text) = b.object::<Label>("ItemText") {
                     text.set_visible(false);

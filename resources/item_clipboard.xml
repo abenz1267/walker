@@ -7,12 +7,12 @@
     </style>
     <property name="orientation">vertical</property>
     <child>
-      <object class="GtkImage" id="ItemImage">
+      <object class="GtkPicture" id="ItemImage">
         <style>
           <class name="item-image"></class>
         </style>
-        <property name="pixel-size">300</property>
-        <property name="halign">start</property>
+        <property name="content-fit">cover</property>
+        <property name="height-request">100</property>
       </object>
     </child>
     <child>

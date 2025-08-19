@@ -12,7 +12,9 @@ use gtk4::glib::clone::Downgrade;
 use gtk4::glib::object::{CastNone, ObjectExt};
 use gtk4::glib::subclass::types::ObjectSubclassIsExt;
 use gtk4::glib::{OptionFlags, VariantTy};
-use gtk4::prelude::{BoxExt, EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
+use gtk4::prelude::{
+    BoxExt, EditableExt, EntryExt, EventControllerExt, ListItemExt, SelectionModelExt,
+};
 use gtk4::{
     Box, DragSource, Entry, EventControllerMotion, Image, ListItem, ListScrollFlags,
     ScrolledWindow, gio,
@@ -67,6 +69,7 @@ thread_local! {
     static SELECTION: RefCell<Option<SingleSelection>> = RefCell::new(None);
     static LIST: RefCell<Option<ListView>> = RefCell::new(None);
     static INPUT: RefCell<Option<Entry>> = RefCell::new(None);
+    static PLACEHOLDER: RefCell<Option<Label>> = RefCell::new(None);
     static MOUSE_X: RefCell<Option<f64>> = RefCell::new(None);
     static MOUSE_Y: RefCell<Option<f64>> = RefCell::new(None);
 }
@@ -174,6 +177,29 @@ fn main() -> glib::ExitCode {
             if cfg.close_when_open && visible {
                 quit(app);
             } else {
+                let provider = SWITCHER_PROVIDER.lock().unwrap();
+                let p;
+
+                if provider.is_empty() {
+                    p = "default";
+                } else {
+                    p = &provider;
+                }
+
+                if let Some(placeholders) = &get_config().unwrap().placeholders {
+                    if let Some(placeholder) = placeholders.get(p) {
+                        with_input(|i| {
+                            i.set_placeholder_text(Some(&placeholder.input));
+                        });
+
+                        with_placeholder(|p| {
+                            p.set_text(&placeholder.list);
+                        });
+                    }
+                }
+
+                drop(provider);
+
                 with_input(|i| {
                     i.emit_by_name::<()>("changed", &[]);
                     i.grab_focus();
@@ -387,6 +413,11 @@ fn setup_windows(app: &Application, cfg: &Elephant) {
     });
 
     let placeholder: Label = builder.object("Placeholder").expect("no placeholder found");
+
+    PLACEHOLDER.with(|s| {
+        *s.borrow_mut() = Some(placeholder.clone());
+    });
+
     let selection = SingleSelection::new(Some(items.clone()));
 
     SELECTION.with(|s| {
@@ -944,6 +975,13 @@ where
     F: FnOnce(&Entry) -> R,
 {
     INPUT.with(|s| s.borrow().as_ref().map(f))
+}
+
+pub fn with_placeholder<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&Label) -> R,
+{
+    PLACEHOLDER.with(|s| s.borrow().as_ref().map(f))
 }
 
 pub fn with_windows<F, R>(f: F) -> Option<R>

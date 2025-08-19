@@ -1,5 +1,4 @@
 scrollbar {
-  all: unset;
   opacity: 0;
 }
 
@@ -15,13 +14,32 @@ scrollbar {
 }
 
 .box {
-  padding: 10px;
+  border: 1px solid alpha(@window_bg_color, 0.5);
 }
 
 .search-container {
 }
 
+.input placeholder {
+  opacity: 0.5;
+}
+
 .input {
+  font-size: 20px;
+  border-radius: 0;
+  padding: 10px;
+  box-shadow: none;
+  outline: none;
+  padding-left: 18px;
+}
+
+.input:focus,
+.input:active {
+  box-shadow: none;
+  outline: none;
+}
+
+.content-container {
 }
 
 .placeholder {
@@ -34,6 +52,7 @@ scrollbar {
 }
 
 .item-box {
+  padding: 10px;
 }
 
 .item-text-box {
@@ -48,6 +67,9 @@ scrollbar {
 }
 
 .item-image {
+}
+
+.preview {
 }
 
 .calc .item-text {

@@ -5,6 +5,9 @@ keep_open_modifier = "shift"    # won't close on activation, but rather select t
 exact_search_prefix = "'"       # disable fuzzy searching
 theme = "default"               # theme to use
 
+[placeholders]
+"default" = { input = "Search", list = "No Results" } # placeholders for input and empty list, key is the providers name, so f.e. "desktopapplications" or "menus:other"
+
 [keybinds]
 close = "esc"
 next = "down"

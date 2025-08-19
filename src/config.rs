@@ -1,6 +1,6 @@
 use config::{Config, ConfigError, File, FileFormat};
 use serde::{Deserialize, Serialize};
-use std::sync::OnceLock;
+use std::{collections::HashMap, sync::OnceLock};
 
 static LOADED_CONFIG: OnceLock<Elephant> = OnceLock::new();
 const DEFAULT_CONFIG: &str = include_str!("../resources/config.toml");
@@ -17,6 +17,13 @@ pub struct Elephant {
     pub providers: Providers,
     pub keybinds: Keybinds,
     pub additional_theme_location: Option<String>,
+    pub placeholders: Option<HashMap<String, Placeholder>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Placeholder {
+    pub input: String,
+    pub list: String,
 }
 
 impl Elephant {

@@ -24,7 +24,6 @@
             <property name="orientation">vertical</property>
             <property name="hexpand-set">true</property>
             <property name="hexpand">true</property>
-            <property name="spacing">10</property>
             <child>
               <object class="GtkBox" id="SearchContainer">
                 <style>
@@ -47,46 +46,54 @@
               </object>
             </child>
             <child>
-              <object class="GtkLabel" id="Placeholder">
+              <object class="GtkBox" id="ContentContainer">
                 <style>
-                  <class name="placeholder"></class>
+                  <class name="content-container"></class>
                 </style>
-                <property name="label">No Results</property>
-                <property name="height-request">400</property>
-                <property name="width-request">400</property>
-              </object>
-            </child>
-            <child>
-              <object class="GtkScrolledWindow" id="Scroll">
-                <style>
-                  <class name="scroll"></class>
-                </style>
-                <property name="overlay-scrolling">true</property>
-                <property name="max-content-width">400</property>
-                <property name="min-content-width">400</property>
-                <property name="max-content-height">400</property>
-                <property name="min-content-height">400</property>
-                <property name="propagate-natural-height">true</property>
-                <property name="propagate-natural-width">true</property>
-                <property name="hscrollbar-policy">automatic</property>
-                <property name="vscrollbar-policy">automatic</property>
+                <property name="orientation">horizontal</property>
                 <child>
-                  <object class="GtkListView" id="List">
+                  <object class="GtkLabel" id="Placeholder">
                     <style>
-                      <class name="list"></class>
+                      <class name="placeholder"></class>
                     </style>
-                    <property name="can-focus">true</property>
+                    <property name="label">No Results</property>
+                    <property name="height-request">400</property>
+                    <property name="width-request">500</property>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkScrolledWindow" id="Scroll">
+                    <style>
+                      <class name="scroll"></class>
+                    </style>
+                    <property name="overlay-scrolling">true</property>
+                    <property name="max-content-width">500</property>
+                    <property name="min-content-width">500</property>
+                    <property name="max-content-height">400</property>
+                    <property name="min-content-height">400</property>
+                    <property name="propagate-natural-height">true</property>
+                    <property name="propagate-natural-width">true</property>
+                    <property name="hscrollbar-policy">automatic</property>
+                    <property name="vscrollbar-policy">automatic</property>
+                    <child>
+                      <object class="GtkListView" id="List">
+                        <style>
+                          <class name="list"></class>
+                        </style>
+                        <property name="can-focus">true</property>
+                      </object>
+                    </child>
+                  </object>
+                </child>
+                <child>
+                  <object class="GtkBox" id="Preview">
+                    <style>
+                      <class name="preview"></class>
+                    </style>
                   </object>
                 </child>
               </object>
             </child>
-          </object>
-        </child>
-        <child>
-          <object class="GtkBox" id="Preview">
-            <style>
-              <class name="preview"></class>
-            </style>
           </object>
         </child>
       </object>

@@ -870,7 +870,7 @@ fn setup_css_provider() {
     gtk4::style_context_add_provider_for_display(
         &Display::default().expect("Could not connect to a display."),
         &css_provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_APPLICATION,
+        gtk4::STYLE_PROVIDER_PRIORITY_USER,
     );
 
     CSSPROVIDER.with(|s| {

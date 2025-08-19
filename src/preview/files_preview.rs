@@ -4,12 +4,13 @@ use crate::{get_selected_item, quit, with_app, with_windows};
 use gtk4::gdk::ContentProvider;
 use gtk4::gio::File;
 use gtk4::glib::clone::Downgrade;
-use gtk4::glib::{self};
+use gtk4::glib::{self, Bytes};
 use gtk4::{
-    Box as GtkBox, Builder, ContentFit, DragSource, Image, Orientation, Picture, PolicyType,
+    Box as GtkBox, Builder, ContentFit, DragSource, Image, Label, Orientation, Picture, PolicyType,
     ScrolledWindow, Stack, TextView, WrapMode,
 };
 use gtk4::{gio, prelude::*};
+use poppler::{Document, Page};
 use std::fs;
 use std::path::Path;
 use std::rc::Rc;
@@ -153,6 +154,8 @@ impl FilePreview {
 
         let result = if mime_type.starts_with("image/") {
             self.preview_image(file_path)
+        } else if mime_type == "application/pdf" {
+            self.preview_pdf(file_path)
         } else if mime_type.starts_with("text/") {
             self.preview_text(file_path)
         } else {
@@ -167,6 +170,7 @@ impl FilePreview {
         if let Some(extension) = path.extension() {
             if let Some(ext_str) = extension.to_str() {
                 let mime_type = match ext_str {
+                    "pdf" => Some("application/pdf"),
                     "go" => Some("text/x-go"),
                     "rs" => Some("text/x-rust"),
                     "py" => Some("text/x-python"),
@@ -191,6 +195,101 @@ impl FilePreview {
         }
 
         Ok("application/octet-stream".to_string())
+    }
+
+    fn preview_pdf(&self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let uri = format!("file://{}", file_path);
+        let document =
+            Document::from_file(&uri, None).map_err(|e| format!("Failed to load PDF: {}", e))?;
+
+        let pdf = GtkBox::new(Orientation::Vertical, 0);
+
+        if let Some(page) = document.page(0) {
+            match self.render_pdf_page(&page) {
+                Ok(page_widget) => {
+                    pdf.append(&page_widget);
+                }
+                Err(e) => {
+                    eprintln!("Failed to render PDF page: {}", e);
+                }
+            }
+        }
+
+        let scrolled = ScrolledWindow::new();
+        scrolled.set_child(Some(&pdf));
+        scrolled.set_policy(PolicyType::Never, PolicyType::Automatic);
+        scrolled.set_width_request(800);
+
+        self.preview_area.add_child(&scrolled);
+        self.preview_area.set_visible_child(&scrolled);
+
+        Ok(())
+    }
+
+    fn render_pdf_page(&self, page: &Page) -> Result<GtkBox, Box<dyn std::error::Error>> {
+        let page_container = GtkBox::new(Orientation::Vertical, 5);
+        page_container.set_halign(gtk4::Align::Fill);
+        page_container.set_hexpand(true);
+
+        let (width, height) = page.size();
+
+        let target_width = 800.0;
+        let display_scale = target_width / width;
+
+        let render_scale = display_scale * 2.0;
+        let render_width = (width * render_scale) as i32;
+        let render_height = (height * render_scale) as i32;
+
+        let mut surface =
+            cairo::ImageSurface::create(cairo::Format::ARgb32, render_width, render_height)?;
+
+        {
+            let ctx = cairo::Context::new(&surface)?;
+
+            ctx.set_antialias(cairo::Antialias::Best);
+            ctx.scale(render_scale, render_scale);
+
+            ctx.set_source_rgb(1.0, 1.0, 1.0);
+            ctx.paint()?;
+
+            page.render(&ctx);
+
+            ctx.target().flush();
+        }
+
+        surface.flush();
+        let surface_data = surface.data()?;
+        let bytes_vec: Vec<u8> = surface_data.to_vec();
+
+        let mut rgba_data = Vec::with_capacity(bytes_vec.len());
+        for chunk in bytes_vec.chunks_exact(4) {
+            rgba_data.push(chunk[2]); // R
+            rgba_data.push(chunk[1]); // G
+            rgba_data.push(chunk[0]); // B
+            rgba_data.push(chunk[3]); // A
+        }
+
+        let bytes = Bytes::from(&rgba_data);
+        let texture = gtk4::gdk::MemoryTexture::new(
+            render_width,
+            render_height,
+            gtk4::gdk::MemoryFormat::R8g8b8a8,
+            &bytes,
+            (render_width * 4) as usize,
+        );
+
+        let picture = Picture::for_paintable(&texture);
+        picture.set_content_fit(ContentFit::Cover);
+        picture.set_halign(gtk4::Align::Start);
+        picture.set_valign(gtk4::Align::Start);
+        picture.set_width_request(800);
+
+        let display_height = (height * display_scale) as i32;
+        picture.set_height_request(display_height);
+
+        page_container.append(&picture);
+
+        Ok(page_container)
     }
 
     fn preview_image(&self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {

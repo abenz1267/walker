@@ -100,6 +100,8 @@ impl AppState {
 
 #[derive(Debug, Clone)]
 struct WindowData {
+    builder: Builder,
+    preview_builder: RefCell<Option<Builder>>,
     mouse_x: Cell<f64>,
     mouse_y: Cell<f64>,
     app: Application,
@@ -336,6 +338,8 @@ fn setup_window(app: &Application) {
     let selection = SingleSelection::new(Some(items.clone()));
 
     let ui = WindowData {
+        builder: builder.clone(),
+        preview_builder: RefCell::new(None),
         scroll,
         mouse_x: 0.0.into(),
         mouse_y: 0.0.into(),
@@ -473,11 +477,8 @@ fn setup_window(app: &Application) {
         p.set_visible(false);
     }
 
-    let builder_copy = builder.clone();
     ui.selection.set_autoselect(true);
     ui.selection.connect_items_changed(move |s, _, _, _| {
-        handle_preview(&builder_copy);
-
         with_window(|w| {
             if s.n_items() == 0 {
                 if let Some(p) = &w.placeholder {
@@ -503,15 +504,13 @@ fn setup_window(app: &Application) {
         });
     });
 
-    let builder_copy = builder.clone();
-
     if let Some(preview) = builder.object::<Box>("PreviewBox") {
         preview.set_visible(false);
     }
 
     ui.selection.connect_selection_changed(move |_, _, _| {
         with_window(|w| {
-            handle_preview(&builder_copy);
+            handle_preview();
             w.list
                 .scroll_to(w.selection.selected(), ListScrollFlags::NONE, None);
 
@@ -1010,24 +1009,33 @@ fn get_selected_item() -> Option<Item> {
     return result;
 }
 
-fn handle_preview(builder: &Builder) {
-    if let Some(preview) = builder.object::<Box>("Preview") {
-        if let Some(item) = get_selected_item() {
-            if crate::preview::has_previewer(&item.provider) {
-                let builder = Builder::new();
-                let _ = builder
-                    .add_from_string(include_str!("../resources/themes/default/preview.xml"));
+fn handle_preview() {
+    with_window(|w| {
+        if let Some(preview) = w.builder.object::<Box>("Preview") {
+            if let Some(item) = get_selected_item() {
+                if crate::preview::has_previewer(&item.provider) {
+                    let builder = {
+                        let mut preview_builder = w.preview_builder.borrow_mut();
+                        if preview_builder.is_none() {
+                            let builder = Builder::new();
+                            let _ = builder
+                                .add_from_string(include_str!("../resources/themes/default/preview.xml"));
+                            *preview_builder = Some(builder);
+                        }
+                        preview_builder.as_ref().unwrap().clone()
+                    };
 
-                crate::preview::handle_preview(&item.provider, &item, &preview, &builder);
+                    crate::preview::handle_preview(&item.provider, &item, &preview, &builder);
 
-                preview.set_visible(true);
+                    preview.set_visible(true);
+                } else {
+                    preview.set_visible(false);
+                }
             } else {
                 preview.set_visible(false);
             }
-        } else {
-            preview.set_visible(false);
         }
-    }
+    });
 }
 
 fn disable_mouse() {

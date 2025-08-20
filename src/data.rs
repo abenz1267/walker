@@ -3,7 +3,7 @@ use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
-use crate::{set_keybind_hint, with_state, with_window};
+use crate::{handle_preview, set_keybind_hint, with_state, with_window};
 use gtk4::{glib, prelude::*};
 use protobuf::Message;
 use std::io::{BufReader, Read, Write};
@@ -117,6 +117,7 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
             255 => {
                 glib::idle_add_once(|| {
                     set_keybind_hint();
+                    handle_preview();
                 });
                 continue;
             }

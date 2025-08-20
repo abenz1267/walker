@@ -1,4 +1,4 @@
-use super::{LatestOnlyThrottler, PreviewHandler};
+use super::PreviewHandler;
 use crate::protos::generated_proto::query::query_response::Item;
 use crate::{get_selected_item, quit, with_window};
 use gtk4::gdk::ContentProvider;
@@ -11,20 +11,19 @@ use gtk4::{
 };
 use gtk4::{gio, prelude::*};
 use poppler::{Document, Page};
+use std::cell::RefCell;
 use std::fs;
 use std::path::Path;
-use std::rc::Rc;
-use std::time::Duration;
 
 #[derive(Debug)]
 pub struct FilesPreviewHandler {
-    throttler: Rc<LatestOnlyThrottler>,
+    cached_preview: RefCell<Option<FilePreview>>,
 }
 
 impl FilesPreviewHandler {
     pub fn new() -> Self {
         Self {
-            throttler: Rc::new(LatestOnlyThrottler::new(Duration::from_millis(5))),
+            cached_preview: RefCell::new(None),
         }
     }
 }
@@ -37,77 +36,90 @@ impl PreviewHandler for FilesPreviewHandler {
 
         let item_clone = item.clone();
 
-        self.throttler.execute(&file_path, move |path| {
-            if !Path::new(path).exists() {
+        if !Path::new(&file_path).exists() {
+            return;
+        }
+
+        if let Some(current) = get_selected_item() {
+            if current != item_clone {
                 return;
             }
+        } else {
+            return;
+        }
 
-            if let Some(current) = get_selected_item() {
-                if current != item_clone {
-                    return;
+        let mut cached_preview = self.cached_preview.borrow_mut();
+        if cached_preview.is_none() {
+            match FilePreview::new_with_builder(&builder_clone).or_else(|_| FilePreview::new()) {
+                Ok(preview) => {
+                    *cached_preview = Some(preview);
                 }
-            } else {
-                return;
-            }
-
-            let mut file_preview = match FilePreview::new_with_builder(&builder_clone)
-                .or_else(|_| FilePreview::new())
-            {
-                Ok(preview) => preview,
                 Err(_e) => {
                     return;
                 }
-            };
-
-            if let Err(_e) = file_preview.preview_file(path) {
-                return;
             }
+        }
 
-            while let Some(child) = preview_clone.first_child() {
-                child.unparent();
+        let file_preview = cached_preview.as_mut().unwrap();
+        if let Err(_e) = file_preview.preview_file(&file_path) {
+            return;
+        }
+
+        while let Some(child) = preview_clone.first_child() {
+            child.unparent();
+        }
+
+        let existing_controllers: Vec<_> = preview_clone.observe_controllers()
+            .into_iter()
+            .filter_map(|result| result.ok())
+            .collect();
+        for controller in existing_controllers {
+            if let Ok(drag_source) = controller.downcast::<DragSource>() {
+                preview_clone.remove_controller(&drag_source);
             }
+        }
 
-            let drag_source = DragSource::new();
+        let drag_source = DragSource::new();
 
-            let path_copy = path.to_string();
-            drag_source.connect_prepare(move |_, _, _| {
-                let file = File::for_path(&path_copy);
-                let uri_string = format!("{}\n", file.uri());
-                let b = glib::Bytes::from(uri_string.as_bytes());
-                let cp = ContentProvider::for_bytes("text/uri-list", &b);
-                Some(cp)
+        let path_copy = file_path.to_string();
+        drag_source.connect_prepare(move |_, _, _| {
+            let file = File::for_path(&path_copy);
+            let uri_string = format!("{}\n", file.uri());
+            let b = glib::Bytes::from(uri_string.as_bytes());
+            let cp = ContentProvider::for_bytes("text/uri-list", &b);
+            Some(cp)
+        });
+
+        drag_source.connect_drag_begin(|_, _| {
+            with_window(|w| {
+                w.window.set_visible(false);
             });
+        });
 
-            drag_source.connect_drag_begin(|_, _| {
-                with_window(|w| {
-                    w.window.set_visible(false);
-                });
+        drag_source.connect_drag_end(|_, _, _| {
+            with_window(|w| {
+                quit(&w.app);
             });
+        });
 
-            drag_source.connect_drag_end(|_, _, _| {
-                with_window(|w| {
-                    quit(&w.app);
-                });
-            });
+        file_preview.box_widget.set_can_target(false);
+        preview_clone.add_controller(drag_source);
 
-            file_preview.box_widget.set_can_target(false);
-            preview_clone.add_controller(drag_source);
+        preview_clone.append(&file_preview.box_widget);
 
-            preview_clone.append(&file_preview.box_widget);
-
-            if let Some(current) = get_selected_item() {
-                if current == item_clone {
-                    preview_clone.set_visible(true);
-                } else {
-                    preview_clone.set_visible(false);
-                }
+        if let Some(current) = get_selected_item() {
+            if current == item_clone {
+                preview_clone.set_visible(true);
             } else {
                 preview_clone.set_visible(false);
             }
-        });
+        } else {
+            preview_clone.set_visible(false);
+        }
     }
 }
 
+#[derive(Debug)]
 pub struct FilePreview {
     pub box_widget: GtkBox,
     preview_area: Stack,
@@ -147,9 +159,7 @@ impl FilePreview {
     pub fn preview_file(&mut self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
         self.current_file = file_path.to_string();
 
-        while let Some(child) = self.preview_area.first_child() {
-            child.unparent();
-        }
+        self.clear_preview();
 
         let mime_type = self.detect_mime_type(file_path)?;
 
@@ -164,6 +174,12 @@ impl FilePreview {
         };
 
         result
+    }
+
+    fn clear_preview(&self) {
+        while let Some(child) = self.preview_area.first_child() {
+            self.preview_area.remove(&child);
+        }
     }
 
     fn detect_mime_type(&self, file_path: &str) -> Result<String, Box<dyn std::error::Error>> {
@@ -216,6 +232,8 @@ impl FilePreview {
             }
         }
 
+        std::mem::drop(document);
+
         let scrolled = ScrolledWindow::new();
         scrolled.set_child(Some(&pdf));
         scrolled.set_policy(PolicyType::Never, PolicyType::Automatic);
@@ -256,21 +274,27 @@ impl FilePreview {
             page.render(&ctx);
 
             ctx.target().flush();
+            std::mem::drop(ctx);
         }
 
         surface.flush();
-        let surface_data = surface.data()?;
-        let bytes_vec: Vec<u8> = surface_data.to_vec();
 
-        let mut rgba_data = Vec::with_capacity(bytes_vec.len());
-        for chunk in bytes_vec.chunks_exact(4) {
-            rgba_data.push(chunk[2]); // R
-            rgba_data.push(chunk[1]); // G
-            rgba_data.push(chunk[0]); // B
-            rgba_data.push(chunk[3]); // A
-        }
+        let bytes = {
+            let surface_data = surface.data()?;
+            let mut rgba_data = Vec::with_capacity(surface_data.len());
 
-        let bytes = Bytes::from(&rgba_data);
+            for chunk in surface_data.chunks_exact(4) {
+                rgba_data.push(chunk[2]); // R
+                rgba_data.push(chunk[1]); // G
+                rgba_data.push(chunk[0]); // B
+                rgba_data.push(chunk[3]); // A
+            }
+
+            Bytes::from(&rgba_data)
+        };
+
+        std::mem::drop(surface);
+
         let texture = gtk4::gdk::MemoryTexture::new(
             render_width,
             render_height,
@@ -359,24 +383,19 @@ impl FilePreview {
         icon.set_icon_size(gtk4::IconSize::Large);
         let icon_weak = Downgrade::downgrade(&icon);
 
-        file.query_info_async(
+        let info = file.query_info(
             "standard::icon",
             gio::FileQueryInfoFlags::NONE,
-            glib::Priority::DEFAULT,
             gio::Cancellable::NONE,
-            move |result| {
-                if let Some(image) = icon_weak.upgrade() {
-                    match result {
-                        Ok(info) => {
-                            if let Some(icon) = info.icon() {
-                                image.set_from_gicon(&icon);
-                            }
-                        }
-                        Err(_) => {}
-                    }
-                }
-            },
         );
+
+        if let Ok(info) = info {
+            if let Some(image) = icon_weak.upgrade() {
+                if let Some(icon) = info.icon() {
+                    image.set_from_gicon(&icon);
+                }
+            }
+        }
 
         container.append(&icon);
 

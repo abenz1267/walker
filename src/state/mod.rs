@@ -8,6 +8,30 @@ use std::sync::OnceLock;
 
 thread_local! {
     static STATE: OnceLock<AppState> = OnceLock::new();
+    pub static CSS_PROVIDER: RefCell<Option<CssProvider>> = RefCell::new(None);
+}
+
+pub fn set_css_provider(provider: CssProvider) {
+    CSS_PROVIDER.with(|p| {
+        *p.borrow_mut() = Some(provider);
+    });
+}
+
+pub fn has_css_provider() -> bool {
+    CSS_PROVIDER.with(|p| p.borrow().is_some())
+}
+
+pub fn clear_css_provider() {
+    CSS_PROVIDER.with(|p| {
+        *p.borrow_mut() = None;
+    });
+}
+
+pub fn with_css_provider<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&CssProvider) -> R,
+{
+    CSS_PROVIDER.with(|p| p.borrow().as_ref().map(f))
 }
 
 #[derive(Debug, Clone)]
@@ -124,7 +148,6 @@ pub struct WindowData {
     pub mouse_x: Cell<f64>,
     pub mouse_y: Cell<f64>,
     pub app: Application,
-    pub css_provider: CssProvider,
     pub window: Window,
     pub selection: SingleSelection,
     pub list: GridView,

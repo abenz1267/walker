@@ -12,7 +12,6 @@ pub trait PreviewHandler: Debug {
     fn handle(&self, item: &Item, preview: &GtkBox, builder: &Builder);
 }
 
-// Use thread_local instead of static since GTK widgets aren't Send + Sync
 thread_local! {
     static PREVIEWERS: RefCell<HashMap<String, Box<dyn PreviewHandler>>> = RefCell::new(HashMap::new());
 }

@@ -1,4 +1,5 @@
-use crate::config::{DEFAULT_STYLE, get_config, get_user_theme_path};
+use crate::config::get_config;
+use crate::state::{has_css_provider, set_css_provider, with_css_provider};
 use crate::ui::window::with_window;
 use gtk4::gdk::Display;
 use gtk4::prelude::GtkWindowExt;
@@ -173,23 +174,20 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
 pub fn setup_css(theme: String) {
     with_themes(|t| {
         if let Some(t) = t.get(&theme) {
-            with_window(|w| {
-                w.css_provider.load_from_string(&t.css);
+            with_css_provider(|p| {
+                p.load_from_string(&t.css);
             });
         }
     });
 }
 
-pub fn setup_css_provider() -> CssProvider {
-    let css_provider = CssProvider::new();
+pub fn setup_css_provider() {
+    let display = Display::default().unwrap();
+    let p = CssProvider::new();
 
-    gtk4::style_context_add_provider_for_display(
-        &Display::default().expect("Could not connect to a display."),
-        &css_provider,
-        gtk4::STYLE_PROVIDER_PRIORITY_USER,
-    );
+    gtk4::style_context_add_provider_for_display(&display, &p, gtk4::STYLE_PROVIDER_PRIORITY_USER);
 
-    return css_provider;
+    set_css_provider(p);
 }
 
 pub fn start_theme_watcher(theme_name: String) {

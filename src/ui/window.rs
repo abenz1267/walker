@@ -9,7 +9,7 @@ use crate::{
     },
     renderers::create_item,
     state::{WindowData, with_state},
-    theme::{setup_css_provider, setup_layer_shell, with_themes},
+    theme::{setup_layer_shell, with_themes},
 };
 use gtk4::prelude::GtkWindowExt;
 use gtk4::prelude::WidgetExt;
@@ -41,6 +41,19 @@ where
     WINDOWS.with(|window| {
         let data = window.get().expect("Window not initialized");
         f(data)
+    })
+}
+
+pub fn with_window_mut<F, R>(f: F) -> R
+where
+    F: FnOnce(&WindowData) -> R,
+{
+    with_state(|s| {
+        WINDOWS.with(|windows| {
+            let windows_map = windows.get().unwrap();
+            let window_data = windows_map.get(&s.get_theme()).unwrap();
+            f(window_data)
+        })
     })
 }
 
@@ -88,7 +101,6 @@ pub fn setup_window(app: &Application) {
                 mouse_x: 0.0.into(),
                 mouse_y: 0.0.into(),
                 app: app.clone(),
-                css_provider: setup_css_provider(),
                 window,
                 selection,
                 list,
@@ -376,7 +388,6 @@ pub fn quit(app: &Application) {
             s.set_parameter_height(0);
             s.set_parameter_width(0);
             s.set_no_search(false);
-            s.set_theme("default");
             s.is_visible.set(false);
 
             with_window(|w| {

@@ -32,7 +32,7 @@ use gtk4::{
 use crate::data::{init_socket, start_listening};
 use crate::keybinds::setup_binds;
 use crate::renderers::setup_item_transformers;
-use crate::theme::{setup_css, setup_themes, start_theme_watcher};
+use crate::theme::{setup_css, setup_css_provider, setup_themes, start_theme_watcher};
 use crate::ui::window::{handle_preview, quit, setup_window, with_window};
 
 // GObject wrapper for QueryResponse
@@ -165,6 +165,10 @@ fn main() -> glib::ExitCode {
                     s.set_theme(val.str().unwrap());
                 }
             });
+        } else {
+            with_state(|s| {
+                s.set_theme("default");
+            });
         }
 
         if options.contains("height") {
@@ -275,13 +279,13 @@ fn init_ui(app: &Application) {
     init_socket().unwrap();
     start_listening();
 
+    setup_css_provider();
     setup_themes();
     setup_item_transformers();
     setup_window(app);
 
     with_state(|s| {
-        setup_css(s.get_theme());
-        start_theme_watcher(s.get_theme());
+        // start_theme_watcher(s.get_theme());
 
         with_window(|w| {
             s.set_initial_width(w.scroll.max_content_width());

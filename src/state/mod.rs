@@ -1,6 +1,6 @@
 use gtk4::gio::ListStore;
 use gtk4::{
-    Application, Builder, CssProvider, Entry, Label, ListView, ScrolledWindow, SingleSelection,
+    Application, Builder, CssProvider, Entry, GridView, Label, ScrolledWindow, SingleSelection,
     Window,
 };
 use std::cell::{Cell, RefCell};
@@ -67,7 +67,7 @@ pub struct WindowData {
     pub css_provider: CssProvider,
     pub window: Window,
     pub selection: SingleSelection,
-    pub list: ListView,
+    pub list: GridView,
     pub input: Entry,
     pub items: ListStore,
     pub placeholder: Option<Label>,

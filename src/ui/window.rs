@@ -10,7 +10,6 @@ use crate::{
     state::{WindowData, with_state},
     theme::{setup_css_provider, setup_layer_shell},
 };
-use gtk4::glib::object::{CastNone, ObjectExt};
 use gtk4::prelude::GtkWindowExt;
 use gtk4::prelude::WidgetExt;
 use gtk4::prelude::{BoxExt, EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
@@ -19,6 +18,10 @@ use gtk4::{
     ScrolledWindow, SignalListItemFactory, SingleSelection, Window,
 };
 use gtk4::{Box, ListScrollFlags};
+use gtk4::{
+    GridView,
+    glib::object::{CastNone, ObjectExt},
+};
 use gtk4::{gio::ListStore, glib::object::Cast};
 use gtk4::{
     gio::prelude::{ApplicationExt, ListModelExt},
@@ -51,7 +54,7 @@ pub fn setup_window(app: &Application) {
     let scroll: ScrolledWindow = builder
         .object("Scroll")
         .expect("can't get scroll from layout");
-    let list: ListView = builder.object("List").expect("can't get list from layout");
+    let list: GridView = builder.object("List").expect("can't get list from layout");
     let items = ListStore::new::<QueryResponseObject>();
     let placeholder: Option<Label> = builder.object("Placeholder");
     let keybinds: Option<Label> = builder.object("Keybinds");

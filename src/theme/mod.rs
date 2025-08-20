@@ -93,15 +93,16 @@ pub fn setup_layer_shell(win: &Window) {
         return;
     }
 
-    let _cfg = get_config();
+    let cfg = get_config();
+
     win.init_layer_shell();
     win.set_namespace(Some("walker"));
     win.set_exclusive_zone(-1);
     win.set_layer(Layer::Overlay);
     win.set_keyboard_mode(KeyboardMode::OnDemand);
 
-    win.set_anchor(Edge::Left, true);
-    win.set_anchor(Edge::Right, true);
-    win.set_anchor(Edge::Top, true);
-    win.set_anchor(Edge::Bottom, true);
+    win.set_anchor(Edge::Left, cfg.shell.anchor_left);
+    win.set_anchor(Edge::Right, cfg.shell.anchor_right);
+    win.set_anchor(Edge::Top, cfg.shell.anchor_top);
+    win.set_anchor(Edge::Bottom, cfg.shell.anchor_top);
 }

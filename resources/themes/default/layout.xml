@@ -66,6 +66,7 @@
                     <style>
                       <class name="scroll"></class>
                     </style>
+                    <property name="can_focus">false</property>
                     <property name="overlay-scrolling">true</property>
                     <property name="max-content-width">500</property>
                     <property name="min-content-width">500</property>
@@ -76,11 +77,12 @@
                     <property name="hscrollbar-policy">automatic</property>
                     <property name="vscrollbar-policy">automatic</property>
                     <child>
-                      <object class="GtkListView" id="List">
+                      <object class="GtkGridView" id="List">
                         <style>
                           <class name="list"></class>
                         </style>
-                        <property name="can-focus">true</property>
+                        <property name="max_columns">1</property>
+                        <property name="can_focus">false</property>
                       </object>
                     </child>
                   </object>

@@ -6,6 +6,7 @@
       <class name="item-box"></class>
     </style>
     <property name="orientation">vertical</property>
+    <property name="spacing">0</property>
     <child>
       <object class="GtkPicture" id="ItemImage">
         <style>
@@ -16,23 +17,34 @@
       </object>
     </child>
     <child>
-      <object class="GtkLabel" id="ItemText">
+      <object class="GtkBox" id="ItemTextBox">
         <style>
-          <class name="item-text"></class>
+          <class name="item-text-box"></class>
         </style>
+        <property name="orientation">vertical</property>
         <property name="vexpand">true</property>
-        <property name="xalign">0</property>
-        <property name="lines">1</property>
-        <property name="ellipsize">3</property>
-        <property name="single-line-mode">true</property>
-      </object>
-    </child>
-    <child>
-      <object class="GtkLabel" id="ItemSubtext">
-        <style>
-          <class name="item-subtext"></class>
-        </style>
-        <property name="xalign">0</property>
+        <property name="vexpand-set">true</property>
+        <property name="spacing">0</property>
+        <child>
+          <object class="GtkLabel" id="ItemText">
+            <style>
+              <class name="item-text"></class>
+            </style>
+            <property name="vexpand">true</property>
+            <property name="xalign">0</property>
+            <property name="lines">1</property>
+            <property name="ellipsize">3</property>
+            <property name="single-line-mode">true</property>
+          </object>
+        </child>
+        <child>
+          <object class="GtkLabel" id="ItemSubtext">
+            <style>
+              <class name="item-subtext"></class>
+            </style>
+            <property name="xalign">0</property>
+          </object>
+        </child>
       </object>
     </child>
   </object>

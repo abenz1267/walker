@@ -17,8 +17,17 @@ pub struct Elephant {
     pub exact_search_prefix: String,
     pub providers: Providers,
     pub keybinds: Keybinds,
+    pub shell: Shell,
     pub additional_theme_location: Option<String>,
     pub placeholders: Option<HashMap<String, Placeholder>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Shell {
+    pub anchor_top: bool,
+    pub anchor_bottom: bool,
+    pub anchor_left: bool,
+    pub anchor_right: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

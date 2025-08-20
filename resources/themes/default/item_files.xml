@@ -6,10 +6,7 @@
       <class name="item-box"></class>
     </style>
     <property name="orientation">horizontal</property>
-    <property name="halign">fill</property>
-    <property name="hexpand-set">true</property>
-    <property name="hexpand">true</property>
-    <property name="spacing">10</property>
+    <property name="spacing">0</property>
     <child>
       <object class="GtkImage" id="ItemImage">
         <style>
@@ -19,14 +16,26 @@
       </object>
     </child>
     <child>
-      <object class="GtkLabel" id="ItemText">
+      <object class="GtkBox" id="ItemTextBox">
         <style>
-          <class name="item-text"></class>
+          <class name="item-text-box"></class>
         </style>
-        <property name="wrap">false</property>
+        <property name="orientation">vertical</property>
         <property name="vexpand">true</property>
-        <property name="xalign">0</property>
-        <property name="ellipsize">1</property>
+        <property name="vexpand-set">true</property>
+        <property name="spacing">0</property>
+        <child>
+          <object class="GtkLabel" id="ItemText">
+            <style>
+              <class name="item-text"></class>
+            </style>
+            <property name="wrap">false</property>
+            <property name="vexpand_set">true</property>
+            <property name="vexpand">true</property>
+            <property name="xalign">0</property>
+            <property name="ellipsize">1</property>
+          </object>
+        </child>
       </object>
     </child>
   </object>

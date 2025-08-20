@@ -30,7 +30,7 @@ scrollbar {
   padding: 10px;
   box-shadow: none;
   outline: none;
-  padding-left: 18px;
+  padding-left: 10px;
 }
 
 .input:focus,
@@ -52,11 +52,18 @@ scrollbar {
 .list {
 }
 
+child,
+child > * {
+  padding: 0;
+  margin: 0;
+}
+
 .item-box {
   padding: 10px;
 }
 
 .item-text-box {
+  all: unset;
 }
 
 .item-text {

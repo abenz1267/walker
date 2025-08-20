@@ -12,9 +12,14 @@ thread_local! {
 
 #[derive(Debug, Clone)]
 pub struct AppState {
+    initial_height: Cell<i32>,
+    initial_width: Cell<i32>,
+    parameter_height: Cell<i32>,
+    parameter_width: Cell<i32>,
     last_query: RefCell<String>,
     provider: RefCell<String>,
     is_service: Cell<bool>,
+    no_search: Cell<bool>,
     pub(crate) is_visible: Cell<bool>,
 }
 
@@ -25,6 +30,11 @@ impl AppState {
             last_query: RefCell::new(String::new()),
             is_service: Cell::new(false),
             is_visible: Cell::new(false),
+            no_search: Cell::new(false),
+            initial_height: Cell::new(0),
+            parameter_height: Cell::new(0),
+            parameter_width: Cell::new(0),
+            initial_width: Cell::new(0),
         }
     }
 
@@ -55,6 +65,46 @@ impl AppState {
     pub fn set_is_visible(&self, is_visible: bool) {
         self.is_visible.set(is_visible);
     }
+
+    pub fn is_no_search(&self) -> bool {
+        self.no_search.get()
+    }
+
+    pub fn set_no_search(&self, val: bool) {
+        self.no_search.set(val);
+    }
+
+    pub fn set_initial_height(&self, height: i32) {
+        self.initial_height.set(height);
+    }
+
+    pub fn set_initial_width(&self, width: i32) {
+        self.initial_width.set(width);
+    }
+
+    pub fn get_initial_height(&self) -> i32 {
+        return self.initial_height.get();
+    }
+
+    pub fn get_initial_width(&self) -> i32 {
+        return self.initial_width.get();
+    }
+
+    pub fn set_parameter_height(&self, height: i32) {
+        self.parameter_height.set(height);
+    }
+
+    pub fn set_parameter_width(&self, width: i32) {
+        self.parameter_width.set(width);
+    }
+
+    pub fn get_parameter_height(&self) -> i32 {
+        return self.parameter_height.get();
+    }
+
+    pub fn get_parameter_width(&self) -> i32 {
+        return self.parameter_width.get();
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -73,14 +123,14 @@ pub struct WindowData {
     pub placeholder: Option<Label>,
     pub keybinds: Option<Label>,
     pub scroll: ScrolledWindow,
+    pub search_container: gtk4::Box,
 }
 
-pub fn init_app_state() -> AppState {
+pub fn init_app_state() {
     let state = AppState::new();
     STATE.with(|s| {
         s.set(state.clone()).expect("failed initializing app state");
     });
-    state
 }
 
 pub fn with_state<F, R>(f: F) -> R

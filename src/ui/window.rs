@@ -59,8 +59,12 @@ pub fn setup_window(app: &Application) {
     let placeholder: Option<Label> = builder.object("Placeholder");
     let keybinds: Option<Label> = builder.object("Keybinds");
     let selection = SingleSelection::new(Some(items.clone()));
+    let search_container: Box = builder
+        .object("SearchContainer")
+        .expect("search container not found");
 
     let ui = WindowData {
+        search_container,
         builder: builder.clone(),
         preview_builder: std::cell::RefCell::new(None),
         scroll,
@@ -352,8 +356,18 @@ pub fn quit(app: &Application) {
 
         gtk4::glib::idle_add_once(|| {
             with_window(|w| {
+                w.search_container.set_visible(true);
                 w.input.set_text("");
                 w.input.emit_by_name::<()>("changed", &[]);
+                with_state(|s| {
+                    w.scroll.set_max_content_height(s.get_initial_height());
+                    w.scroll.set_min_content_height(s.get_initial_height());
+                    w.scroll.set_max_content_width(s.get_initial_width());
+                    w.scroll.set_min_content_width(s.get_initial_width());
+                    s.set_parameter_height(0);
+                    s.set_parameter_width(0);
+                    s.set_no_search(false);
+                });
             });
         });
     } else {

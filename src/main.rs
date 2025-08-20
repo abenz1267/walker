@@ -115,6 +115,24 @@ fn main() -> glib::ExitCode {
         None,
     );
 
+    app.add_main_option(
+        "height",
+        b'h'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::Int64,
+        "forced height",
+        None,
+    );
+
+    app.add_main_option(
+        "width",
+        b'w'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::Int64,
+        "forced width",
+        None,
+    );
+
     app.connect_command_line(|app, cmd| {
         let options = cmd.options_dict();
 
@@ -128,6 +146,28 @@ fn main() -> glib::ExitCode {
                 if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
                     s.set_provider(val.str().unwrap());
                 }
+            });
+        }
+
+        if options.contains("height") {
+            with_state(|s| {
+                if let Some(val) = options.lookup_value("height", Some(VariantTy::INT64)) {
+                    s.set_parameter_height(val.get::<i64>().unwrap() as i32);
+                }
+            });
+        }
+
+        if options.contains("width") {
+            with_state(|s| {
+                if let Some(val) = options.lookup_value("width", Some(VariantTy::INT64)) {
+                    s.set_parameter_width(val.get::<i64>().unwrap() as i32);
+                }
+            });
+        }
+
+        if options.contains("nosearch") {
+            with_state(|s| {
+                s.set_no_search(true);
             });
         }
 
@@ -162,6 +202,20 @@ fn main() -> glib::ExitCode {
                         }
                     }
 
+                    if s.get_parameter_height() != 0 {
+                        w.scroll.set_min_content_height(s.get_parameter_height());
+                        w.scroll.set_max_content_height(s.get_parameter_height());
+                    }
+
+                    if s.get_parameter_width() != 0 {
+                        w.scroll.set_min_content_width(s.get_parameter_width());
+                        w.scroll.set_max_content_width(s.get_parameter_width());
+                    }
+
+                    if s.is_no_search() {
+                        w.search_container.set_visible(false);
+                    }
+
                     w.input.emit_by_name::<()>("changed", &[]);
                     w.input.grab_focus();
 
@@ -176,8 +230,7 @@ fn main() -> glib::ExitCode {
     app.connect_startup(move |app| {
         *hold_guard.borrow_mut() = Some(app.hold());
 
-        let _s = init_app_state();
-
+        init_app_state();
         init_ui(app);
     });
 
@@ -206,4 +259,11 @@ fn init_ui(app: &Application) {
     setup_window(app);
     setup_css(cfg.theme.clone());
     start_theme_watcher(cfg.theme.clone());
+
+    with_state(|s| {
+        with_window(|w| {
+            s.set_initial_width(w.scroll.max_content_width());
+            s.set_initial_height(w.scroll.max_content_height());
+        });
+    });
 }

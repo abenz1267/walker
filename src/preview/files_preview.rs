@@ -90,7 +90,8 @@ impl PreviewHandler for FilesPreviewHandler {
                 });
             });
 
-            file_preview.box_widget.add_controller(drag_source);
+            file_preview.box_widget.set_can_target(false);
+            preview_clone.add_controller(drag_source);
 
             preview_clone.append(&file_preview.box_widget);
 

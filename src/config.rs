@@ -8,6 +8,7 @@ pub const DEFAULT_STYLE: &str = include_str!("../resources/themes/default/style.
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Elephant {
+    pub disable_mouse: bool,
     pub close_when_open: bool,
     pub selection_wrap: bool,
     pub global_argument_delimiter: String,

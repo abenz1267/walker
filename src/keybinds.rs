@@ -1,5 +1,5 @@
 use crate::config::{self, get_config};
-use gtk4::gdk::{self, Key, ModifierType};
+use gtk4::gdk::{self, Key};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
 

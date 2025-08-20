@@ -502,26 +502,33 @@ fn setup_window(app: &Application) {
 
     ui.list.set_model(Some(&ui.selection));
     ui.list.set_factory(Some(&factory));
-    ui.list.set_single_click_activate(true);
 
-    let motion = EventControllerMotion::new();
-    motion.connect_motion(|_, x, y| {
-        with_window(|w| {
-            if w.mouse_x.get() == 0.0 || w.mouse_y.get() == 0.0 {
-                w.mouse_x.set(x);
-                w.mouse_y.set(y);
-                return;
-            }
+    if get_config().disable_mouse {
+        ui.list.set_can_target(false);
+        ui.input.set_can_target(false);
+    } else {
+        ui.list.set_single_click_activate(true);
 
-            if x != w.mouse_x.get() || y != w.mouse_y.get() {
-                if !w.list.can_target() {
-                    w.list.set_can_target(true);
+        let motion = EventControllerMotion::new();
+        motion.connect_motion(|_, x, y| {
+            with_window(|w| {
+                if w.mouse_x.get() == 0.0 || w.mouse_y.get() == 0.0 {
+                    w.mouse_x.set(x);
+                    w.mouse_y.set(y);
+                    return;
                 }
-            }
-        });
-    });
 
-    ui.window.add_controller(motion);
+                if x != w.mouse_x.get() || y != w.mouse_y.get() {
+                    if !w.list.can_target() {
+                        w.list.set_can_target(true);
+                    }
+                }
+            });
+        });
+
+        ui.window.add_controller(motion);
+    }
+
     ui.window.add_controller(controller);
 }
 

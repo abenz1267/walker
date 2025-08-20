@@ -1,9 +1,11 @@
 use crate::config::get_config;
+use crate::handle_preview;
 use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
-use crate::{handle_preview, set_keybind_hint, with_state, with_window};
+use crate::state::with_state;
+use crate::ui::window::{set_keybind_hint, with_window};
 use gtk4::{glib, prelude::*};
 use protobuf::Message;
 use std::io::{BufReader, Read, Write};
@@ -181,6 +183,8 @@ fn update_existing_item(resp: QueryResponse) {
                 }
             }
         }
+
+        set_keybind_hint();
     });
 }
 

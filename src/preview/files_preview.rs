@@ -1,6 +1,7 @@
 use super::PreviewHandler;
 use crate::protos::generated_proto::query::query_response::Item;
-use crate::{get_selected_item, quit, with_window};
+use crate::ui::window::get_selected_item;
+use crate::{quit, with_window};
 use gtk4::gdk::ContentProvider;
 use gtk4::gio::File;
 use gtk4::glib::clone::Downgrade;
@@ -69,7 +70,8 @@ impl PreviewHandler for FilesPreviewHandler {
             child.unparent();
         }
 
-        let existing_controllers: Vec<_> = preview_clone.observe_controllers()
+        let existing_controllers: Vec<_> = preview_clone
+            .observe_controllers()
             .into_iter()
             .filter_map(|result| result.ok())
             .collect();

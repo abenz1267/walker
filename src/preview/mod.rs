@@ -1,8 +1,6 @@
 mod files_preview;
-mod throttler;
 
 pub use files_preview::FilesPreviewHandler;
-pub use throttler::LatestOnlyThrottler;
 
 use crate::protos::generated_proto::query::query_response::Item;
 use gtk4::{Box as GtkBox, Builder};

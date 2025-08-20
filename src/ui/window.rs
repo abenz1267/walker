@@ -7,8 +7,9 @@ use crate::{
         ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD, AFTER_CLOSE, AFTER_RELOAD, get_bind,
         get_modifiers, get_provider_bind,
     },
+    renderers::create_item,
     state::{WindowData, with_state},
-    theme::{setup_css_provider, setup_layer_shell},
+    theme::{setup_css_provider, setup_layer_shell, with_themes},
 };
 use gtk4::prelude::GtkWindowExt;
 use gtk4::prelude::WidgetExt;
@@ -27,76 +28,94 @@ use gtk4::{
     gio::prelude::{ApplicationExt, ListModelExt},
     prelude::GtkApplicationExt,
 };
-use std::sync::OnceLock;
+use std::{collections::HashMap, sync::OnceLock};
 
 thread_local! {
-    static WINDOW: OnceLock<WindowData> = OnceLock::new();
+    pub static WINDOWS: OnceLock<HashMap<String, WindowData>> = OnceLock::new();
+}
+
+pub fn with_windows<F, R>(f: F) -> R
+where
+    F: FnOnce(&HashMap<String, WindowData>) -> R,
+{
+    WINDOWS.with(|window| {
+        let data = window.get().expect("Window not initialized");
+        f(data)
+    })
 }
 
 pub fn with_window<F, R>(f: F) -> R
 where
     F: FnOnce(&WindowData) -> R,
 {
-    WINDOW.with(|window| {
-        let data = window.get().expect("Window not initialized");
-        f(data)
+    with_state(|s| {
+        WINDOWS.with(|windows| {
+            let windows_map = windows.get().unwrap();
+            windows_map.get(&s.get_theme()).map(f).unwrap()
+        })
     })
 }
 
 pub fn setup_window(app: &Application) {
-    let builder = Builder::new();
-    let _ = builder.add_from_string(include_str!("../../resources/themes/default/layout.xml"));
+    let mut windows: HashMap<String, WindowData> = HashMap::new();
 
-    let window: Window = builder
-        .object("Window")
-        .expect("Couldn't get 'Window' from UI file");
-    let input: Entry = builder.object("Input").unwrap();
-    let scroll: ScrolledWindow = builder
-        .object("Scroll")
-        .expect("can't get scroll from layout");
-    let list: GridView = builder.object("List").expect("can't get list from layout");
-    let items = ListStore::new::<QueryResponseObject>();
-    let placeholder: Option<Label> = builder.object("Placeholder");
-    let keybinds: Option<Label> = builder.object("Keybinds");
-    let selection = SingleSelection::new(Some(items.clone()));
-    let search_container: Box = builder
-        .object("SearchContainer")
-        .expect("search container not found");
+    with_themes(|t| {
+        for (key, val) in t {
+            let builder = Builder::new();
+            let _ = builder.add_from_string(&val.layout);
 
-    let ui = WindowData {
-        search_container,
-        builder: builder.clone(),
-        preview_builder: std::cell::RefCell::new(None),
-        scroll,
-        mouse_x: 0.0.into(),
-        mouse_y: 0.0.into(),
-        app: app.clone(),
-        css_provider: setup_css_provider(),
-        window,
-        selection,
-        list,
-        input,
-        items,
-        placeholder,
-        keybinds,
-    };
+            let window: Window = builder
+                .object("Window")
+                .expect("Couldn't get 'Window' from UI file");
+            let input: Entry = builder.object("Input").unwrap();
+            let scroll: ScrolledWindow = builder
+                .object("Scroll")
+                .expect("can't get scroll from layout");
+            let list: GridView = builder.object("List").expect("can't get list from layout");
+            let items = ListStore::new::<QueryResponseObject>();
+            let placeholder: Option<Label> = builder.object("Placeholder");
+            let keybinds: Option<Label> = builder.object("Keybinds");
+            let selection = SingleSelection::new(Some(items.clone()));
+            let search_container: Box = builder
+                .object("SearchContainer")
+                .expect("search container not found");
 
-    WINDOW.with(|window| {
-        window
-            .set(ui.clone())
-            .expect("failed initializing window data");
+            let ui = WindowData {
+                search_container,
+                builder: builder.clone(),
+                preview_builder: std::cell::RefCell::new(None),
+                scroll,
+                mouse_x: 0.0.into(),
+                mouse_y: 0.0.into(),
+                app: app.clone(),
+                css_provider: setup_css_provider(),
+                window,
+                selection,
+                list,
+                input,
+                items,
+                placeholder,
+                keybinds,
+            };
+
+            setup_window_behavior(&ui);
+            setup_input_handling(&ui);
+            setup_keyboard_handling(&ui);
+            setup_list_behavior(&ui);
+            setup_mouse_handling(&ui);
+
+            ui.window.set_application(Some(app));
+            ui.window.set_css_classes(&vec![]);
+
+            setup_layer_shell(&ui.window);
+
+            windows.insert(key.to_string(), ui);
+        }
     });
 
-    setup_window_behavior(&ui);
-    setup_input_handling(&ui);
-    setup_keyboard_handling(&ui);
-    setup_list_behavior(&ui);
-    setup_mouse_handling(&ui);
-
-    ui.window.set_application(Some(app));
-    ui.window.set_css_classes(&vec![]);
-
-    setup_layer_shell(&ui.window);
+    WINDOWS.with(|s| {
+        s.set(windows).expect("failed initializing windows");
+    });
 }
 
 fn setup_window_behavior(ui: &WindowData) {
@@ -294,16 +313,23 @@ fn setup_list_behavior(ui: &WindowData) {
 
         let response = response_obj.response();
 
-        if let Some(i) = response.item.as_ref() {
-            match i.provider.as_str() {
-                "files" => crate::renderers::create_files_item(&item, &i),
-                "symbols" => crate::renderers::create_symbols_item(&item, &i),
-                "calc" => crate::renderers::create_calc_item(&item, &i),
-                "clipboard" => crate::renderers::create_clipboard_item(&item, &i),
-                "providerlist" => crate::renderers::create_providerlist_item(&item, &i),
-                _ => crate::renderers::create_desktopappications_item(&item, &i),
-            }
-        }
+        with_state(|s| {
+            with_themes(|t| {
+                if let Some(theme) = t.get(&s.get_theme()) {
+                    if let Some(i) = response.item.as_ref() {
+                        let b = Builder::new();
+
+                        if let Some(s) = theme.items.get(&i.provider) {
+                            let _ = b.add_from_string(s);
+                        } else {
+                            let _ = b.add_from_string(theme.items.get("default").unwrap());
+                        }
+
+                        create_item(&item, &i, b);
+                    }
+                }
+            });
+        });
     });
 
     ui.list.set_model(Some(&ui.selection));
@@ -347,6 +373,10 @@ pub fn quit(app: &Application) {
 
         with_state(|s| {
             s.set_provider("");
+            s.set_parameter_height(0);
+            s.set_parameter_width(0);
+            s.set_no_search(false);
+            s.set_theme("default");
             s.is_visible.set(false);
 
             with_window(|w| {
@@ -364,9 +394,6 @@ pub fn quit(app: &Application) {
                     w.scroll.set_min_content_height(s.get_initial_height());
                     w.scroll.set_max_content_width(s.get_initial_width());
                     w.scroll.set_min_content_width(s.get_initial_width());
-                    s.set_parameter_height(0);
-                    s.set_parameter_width(0);
-                    s.set_no_search(false);
                 });
             });
         });

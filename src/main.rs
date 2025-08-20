@@ -31,7 +31,8 @@ use gtk4::{
 
 use crate::data::{init_socket, start_listening};
 use crate::keybinds::setup_binds;
-use crate::theme::{setup_css, start_theme_watcher};
+use crate::renderers::setup_item_transformers;
+use crate::theme::{setup_css, setup_themes, start_theme_watcher};
 use crate::ui::window::{handle_preview, quit, setup_window, with_window};
 
 // GObject wrapper for QueryResponse
@@ -133,6 +134,15 @@ fn main() -> glib::ExitCode {
         None,
     );
 
+    app.add_main_option(
+        "theme",
+        b't'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::String,
+        "theme to use",
+        None,
+    );
+
     app.connect_command_line(|app, cmd| {
         let options = cmd.options_dict();
 
@@ -145,6 +155,14 @@ fn main() -> glib::ExitCode {
             with_state(|s| {
                 if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
                     s.set_provider(val.str().unwrap());
+                }
+            });
+        }
+
+        if options.contains("theme") {
+            with_state(|s| {
+                if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
+                    s.set_theme(val.str().unwrap());
                 }
             });
         }
@@ -216,6 +234,8 @@ fn main() -> glib::ExitCode {
                         w.search_container.set_visible(false);
                     }
 
+                    setup_css(s.get_theme());
+
                     w.input.emit_by_name::<()>("changed", &[]);
                     w.input.grab_focus();
 
@@ -255,12 +275,14 @@ fn init_ui(app: &Application) {
     init_socket().unwrap();
     start_listening();
 
-    let cfg = get_config();
+    setup_themes();
+    setup_item_transformers();
     setup_window(app);
-    setup_css(cfg.theme.clone());
-    start_theme_watcher(cfg.theme.clone());
 
     with_state(|s| {
+        setup_css(s.get_theme());
+        start_theme_watcher(s.get_theme());
+
         with_window(|w| {
             s.set_initial_width(w.scroll.max_content_width());
             s.set_initial_height(w.scroll.max_content_height());

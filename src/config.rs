@@ -58,7 +58,7 @@ fn get_user_config_path() -> String {
         .unwrap_or_else(|| "~/.config/walker/config.toml".to_string())
 }
 
-fn get_user_theme_path() -> String {
+pub fn get_user_theme_path() -> String {
     dirs::config_dir()
         .map(|mut path| {
             path.push("walker");

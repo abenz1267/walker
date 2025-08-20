@@ -1,4 +1,3 @@
-use crate::protos::generated_proto::query::query_response::Type;
 use crate::ui::window::{quit, with_window};
 use crate::{config::get_config, protos::generated_proto::query::query_response::Item};
 use chrono::DateTime;
@@ -8,130 +7,99 @@ use gtk4::gio::prelude::FileExt;
 use gtk4::glib::clone::Downgrade;
 use gtk4::prelude::{ListItemExt, WidgetExt};
 use gtk4::{Box, Builder, DragSource, Image, Label, ListItem, Picture, gio, glib};
+use std::collections::HashMap;
+use std::sync::OnceLock;
 use std::{env, path::Path};
 
-pub fn create_desktopappications_item(l: &ListItem, i: &Item) {
-    let b = Builder::new();
-    let _ = b.add_from_string(include_str!("../../resources/themes/default/item.xml"));
-    let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
-    itembox.add_css_class(&i.provider);
-    l.set_child(Some(&itembox));
+thread_local! {
+    pub static TEXT_TRANSFORMERS: OnceLock<HashMap<String, fn(String, &Label)>> = OnceLock::new();
+    pub static SUBTEXT_TRANSFORMERS: OnceLock<HashMap<String, fn(String, &Label)>> = OnceLock::new();
+    pub static IMAGE_TRANSFORMERS: OnceLock<HashMap<String, fn(String, &Builder, &ListItem, &Item)>> = OnceLock::new();
+}
 
-    if let Some(text) = b.object::<Label>("ItemText") {
-        text.set_label(&i.text);
-    }
+pub fn with_text_transformers<F, R>(f: F) -> R
+where
+    F: FnOnce(&HashMap<String, fn(String, &Label)>) -> R,
+{
+    TEXT_TRANSFORMERS.with(|t| {
+        let data = t.get().expect("Text transformers not initialized");
+        f(data)
+    })
+}
 
-    if let Some(text) = b.object::<Label>("ItemSubtext") {
-        if i.subtext.is_empty() {
-            text.set_visible(false);
-        } else {
-            text.set_label(&i.subtext);
-        }
-    }
+pub fn with_image_transformers<F, R>(f: F) -> R
+where
+    F: FnOnce(&HashMap<String, fn(String, &Builder, &ListItem, &Item)>) -> R,
+{
+    IMAGE_TRANSFORMERS.with(|t| {
+        let data = t.get().expect("Image transformers not initialized");
+        f(data)
+    })
+}
 
+pub fn with_subtext_transformers<F, R>(f: F) -> R
+where
+    F: FnOnce(&HashMap<String, fn(String, &Label)>) -> R,
+{
+    SUBTEXT_TRANSFORMERS.with(|t| {
+        let data = t.get().expect("Subtext transformers not initialized");
+        f(data)
+    })
+}
+
+pub fn setup_item_transformers() {
+    let mut text: HashMap<String, fn(String, &Label)> = HashMap::new();
+
+    text.insert("default".to_string(), default_text_transformer);
+    text.insert("files".to_string(), files_text_transformer);
+    text.insert("clipboard".to_string(), clipboard_text_transformer);
+
+    TEXT_TRANSFORMERS.with(|t| {
+        t.set(text).expect("Text transformers already initialized");
+    });
+
+    let mut subtext: HashMap<String, fn(String, &Label)> = HashMap::new();
+
+    subtext.insert("default".to_string(), default_subtext_transformer);
+    subtext.insert("clipboard".to_string(), clipboard_subtext_transformer);
+
+    SUBTEXT_TRANSFORMERS.with(|t| {
+        t.set(subtext)
+            .expect("Text transformers already initialized");
+    });
+
+    let mut image: HashMap<String, fn(String, &Builder, &ListItem, &Item)> = HashMap::new();
+    image.insert("default".to_string(), default_image_transformer);
+    image.insert("clipboard".to_string(), clipboard_image_transformer);
+    image.insert("symbols".to_string(), symbols_image_transformer);
+    image.insert("calc".to_string(), calc_image_transformer);
+    image.insert("files".to_string(), files_image_transformer);
+
+    IMAGE_TRANSFORMERS.with(|t| {
+        t.set(image).expect("Text transformers already initialized");
+    });
+}
+
+fn default_image_transformer(img: String, b: &Builder, _: &ListItem, _: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
-        if !i.icon.is_empty() {
-            if Path::new(&i.icon).is_absolute() {
-                image.set_from_file(Some(&i.icon));
+        if !img.is_empty() {
+            if Path::new(&img).is_absolute() {
+                image.set_from_file(Some(&img));
             } else {
-                image.set_icon_name(Some(&i.icon));
+                image.set_icon_name(Some(&img));
             }
         }
     }
 }
 
-pub fn create_clipboard_item(l: &ListItem, i: &Item) {
-    let b = Builder::new();
-    let _ = b.add_from_string(include_str!(
-        "../../resources/themes/default/item_clipboard.xml"
-    ));
-    let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
-    itembox.add_css_class(&i.provider);
-    l.set_child(Some(&itembox));
-
-    if let Some(text) = b.object::<Label>("ItemText") {
-        text.set_label(&i.text.trim());
-    }
-
-    if let Some(text) = b.object::<Label>("ItemSubtext") {
-        match DateTime::parse_from_rfc2822(&i.subtext) {
-            Ok(dt) => {
-                let formatted = dt
-                    .format(&get_config().providers.clipboard.time_format)
-                    .to_string();
-                text.set_label(&formatted);
-            }
-            Err(_) => {
-                text.set_label(&i.subtext);
-            }
-        }
-    }
-
-    if let Some(image) = b.object::<Picture>("ItemImage") {
-        match i.type_.enum_value() {
-            Ok(Type::FILE) => {
-                image.set_filename(Some(&i.text));
-
-                if let Some(text) = b.object::<Label>("ItemText") {
-                    text.set_visible(false);
-                }
-            }
-            Ok(Type::REGULAR) => {
-                image.set_visible(false);
-            }
-            Err(_) => {
-                println!("Unknown type!");
-            }
-        }
-    }
-}
-
-pub fn create_symbols_item(l: &ListItem, i: &Item) {
-    let b = Builder::new();
-    let _ = b.add_from_string(include_str!(
-        "../../resources/themes/default/item_symbols.xml"
-    ));
-    let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
-    itembox.add_css_class(&i.provider);
-    l.set_child(Some(&itembox));
-
-    if let Some(text) = b.object::<Label>("ItemText") {
-        text.set_label(&i.subtext);
-    }
-
-    if let Some(text) = b.object::<Label>("ItemSubtext") {
-        text.set_label(&i.subtext);
-    }
-
-    if let Some(image) = b.object::<Label>("ItemImage") {
-        if !i.text.is_empty() {
-            image.set_label(&i.text);
-        }
-    }
-}
-
-pub fn create_calc_item(l: &ListItem, i: &Item) {
-    let b = Builder::new();
-    let _ = b.add_from_string(include_str!("../../resources/themes/default/item_calc.xml"));
-    let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
-    itembox.add_css_class(&i.provider);
-    l.set_child(Some(&itembox));
-
-    if let Some(text) = b.object::<Label>("ItemText") {
-        text.set_label(&i.text);
-    }
-
-    if let Some(text) = b.object::<Label>("ItemSubtext") {
-        text.set_label(&i.subtext);
-    }
-
+fn calc_image_transformer(img: String, b: &Builder, li: &ListItem, _: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
-        if l.position() == 0 {
-            if !i.icon.is_empty() {
-                if Path::new(&i.icon).is_absolute() {
-                    image.set_from_file(Some(&i.icon));
+        if li.position() == 0 {
+            if !img.is_empty() {
+                if Path::new(&img).is_absolute() {
+                    image.set_from_file(Some(&img));
                 } else {
-                    image.set_icon_name(Some(&i.icon));
+                    image.set_icon_name(Some(&img));
                 }
             }
         } else {
@@ -140,53 +108,9 @@ pub fn create_calc_item(l: &ListItem, i: &Item) {
     }
 }
 
-pub fn create_files_item(l: &ListItem, i: &Item) {
-    let b = Builder::new();
-    let _ = b.add_from_string(include_str!(
-        "../../resources/themes/default/item_files.xml"
-    ));
-    let itembox: Box = b.object("ItemBox").expect("failed to get ItemBox");
-    itembox.add_css_class(&i.provider);
-    l.set_child(Some(&itembox));
-
-    let text = i.text.clone();
-
-    let drag_source = DragSource::new();
-
-    drag_source.connect_prepare(move |_, _, _| {
-        let file = File::for_path(&text);
-        let uri_string = format!("{}\n", file.uri());
-        let b = glib::Bytes::from(uri_string.as_bytes());
-
-        let cp = ContentProvider::for_bytes("text/uri-list", &b);
-
-        Some(cp)
-    });
-
-    drag_source.connect_drag_begin(|_, _| {
-        with_window(|w| {
-            w.window.set_visible(false);
-        });
-    });
-
-    drag_source.connect_drag_end(|_, _, _| {
-        with_window(|w| {
-            quit(&w.app);
-        });
-    });
-
-    itembox.add_controller(drag_source);
-
-    if let Some(text) = b.object::<Label>("ItemText") {
-        if let Ok(home) = env::var("HOME") {
-            if let Some(stripped) = i.text.strip_prefix(&home) {
-                text.set_label(stripped);
-            }
-        }
-    }
-
+fn files_image_transformer(_: String, b: &Builder, _: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
-        let file = gio::File::for_path(&i.text);
+        let file = gio::File::for_path(&item.text);
         let image_weak = Downgrade::downgrade(&image);
 
         file.query_info_async(
@@ -210,26 +134,139 @@ pub fn create_files_item(l: &ListItem, i: &Item) {
     }
 }
 
-pub fn create_providerlist_item(l: &ListItem, i: &Item) {
-    let b = Builder::new();
-    let _ = b.add_from_string(include_str!(
-        "../../resources/themes/default/item_providerlist.xml"
-    ));
-    let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
-    itembox.add_css_class(&i.provider);
-    l.set_child(Some(&itembox));
-
-    if let Some(text) = b.object::<Label>("ItemText") {
-        text.set_label(&i.text);
-    }
-
-    if let Some(image) = b.object::<Image>("ItemImage") {
-        if !i.icon.is_empty() {
-            if Path::new(&i.icon).is_absolute() {
-                image.set_from_file(Some(&i.icon));
-            } else {
-                image.set_icon_name(Some(&i.icon));
-            }
+fn symbols_image_transformer(img: String, b: &Builder, _: &ListItem, _: &Item) {
+    if let Some(image) = b.object::<Label>("ItemImage") {
+        if !img.is_empty() {
+            image.set_label(&img);
         }
     }
+}
+
+fn clipboard_image_transformer(img: String, b: &Builder, _: &ListItem, _: &Item) {
+    if let Some(image) = b.object::<Picture>("ItemImage") {
+        if !img.is_empty() {
+            if Path::new(&img).is_absolute() {
+                image.set_filename(Some(&img));
+            } else {
+                image.set_filename(Some(&img));
+            }
+
+            if let Some(text) = b.object::<Label>("ItemText") {
+                text.set_visible(false);
+            }
+        } else {
+            image.set_visible(false);
+        }
+    }
+}
+
+fn files_text_transformer(text: String, label: &Label) {
+    if let Ok(home) = env::var("HOME") {
+        if let Some(stripped) = text.strip_prefix(&home) {
+            label.set_label(stripped);
+        }
+    }
+}
+
+fn clipboard_text_transformer(text: String, label: &Label) {
+    label.set_label(&text.trim());
+}
+
+fn default_text_transformer(text: String, label: &Label) {
+    if text.is_empty() {
+        label.set_visible(false);
+    } else {
+        label.set_text(&text);
+    }
+}
+
+fn default_subtext_transformer(text: String, label: &Label) {
+    if text.is_empty() {
+        label.set_visible(false);
+    } else {
+        label.set_text(&text);
+    }
+}
+
+fn clipboard_subtext_transformer(text: String, label: &Label) {
+    match DateTime::parse_from_rfc2822(&text) {
+        Ok(dt) => {
+            let formatted = dt
+                .format(&get_config().providers.clipboard.time_format)
+                .to_string();
+            label.set_label(&formatted);
+        }
+        Err(_) => {
+            label.set_label(&text);
+        }
+    }
+}
+
+pub fn create_item(list_item: &ListItem, item: &Item, b: Builder) {
+    let itembox: Box = b.object("ItemBox").expect("failed to get ItemBox");
+    itembox.add_css_class(&item.provider);
+    list_item.set_child(Some(&itembox));
+
+    if is_absolute_path(&item.text) {
+        itembox.add_controller(create_drag_source(item.text.clone()));
+    }
+
+    if let Some(text) = b.object::<Label>("ItemText") {
+        with_text_transformers(|t| {
+            if let Some(t) = t.get(&item.provider) {
+                t(item.text.clone(), &text);
+            } else {
+                t.get("default").unwrap()(item.text.clone(), &text);
+            }
+        });
+    }
+
+    if let Some(text) = b.object::<Label>("ItemSubtext") {
+        with_subtext_transformers(|t| {
+            if let Some(t) = t.get(&item.provider) {
+                t(item.subtext.clone(), &text);
+            } else {
+                t.get("default").unwrap()(item.subtext.clone(), &text);
+            }
+        });
+    }
+
+    with_image_transformers(|t| {
+        if let Some(t) = t.get(&item.provider) {
+            t(item.icon.clone(), &b, &list_item, &item);
+        } else {
+            t.get("default").unwrap()(item.icon.clone(), &b, &list_item, &item);
+        }
+    });
+}
+
+fn is_absolute_path(path: &str) -> bool {
+    Path::new(path).is_absolute()
+}
+
+pub fn create_drag_source(text: String) -> DragSource {
+    let drag_source = DragSource::new();
+    drag_source.connect_prepare(move |_, _, _| {
+        let file = File::for_path(&text);
+        let uri_string = format!("{}\n", file.uri());
+        let b = glib::Bytes::from(uri_string.as_bytes());
+
+        let cp = ContentProvider::for_bytes("text/uri-list", &b);
+
+        Some(cp)
+    });
+
+    drag_source.connect_drag_begin(|_, _| {
+        with_window(|w| {
+            w.window.set_visible(false);
+        });
+    });
+
+    drag_source.connect_drag_end(|_, _, _| {
+        with_window(|w| {
+            quit(&w.app);
+        });
+    });
+
+    drag_source
 }

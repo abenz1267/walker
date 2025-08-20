@@ -18,6 +18,7 @@ pub struct AppState {
     parameter_width: Cell<i32>,
     last_query: RefCell<String>,
     provider: RefCell<String>,
+    theme: RefCell<String>,
     is_service: Cell<bool>,
     no_search: Cell<bool>,
     pub(crate) is_visible: Cell<bool>,
@@ -27,6 +28,7 @@ impl AppState {
     pub fn new() -> Self {
         Self {
             provider: RefCell::new(String::new()),
+            theme: RefCell::new("default".to_string()),
             last_query: RefCell::new(String::new()),
             is_service: Cell::new(false),
             is_visible: Cell::new(false),
@@ -38,32 +40,40 @@ impl AppState {
         }
     }
 
+    pub fn get_theme(&self) -> String {
+        self.theme.borrow().clone()
+    }
+
+    pub fn set_theme(&self, val: &str) {
+        *self.theme.borrow_mut() = val.to_string();
+    }
+
     pub fn get_provider(&self) -> String {
         self.provider.borrow().clone()
     }
 
-    pub fn set_provider(&self, new_provider: &str) {
-        *self.provider.borrow_mut() = new_provider.to_string();
+    pub fn set_provider(&self, val: &str) {
+        *self.provider.borrow_mut() = val.to_string();
     }
 
     pub fn get_last_query(&self) -> String {
         self.last_query.borrow().clone()
     }
 
-    pub fn set_last_query(&self, new_provider: &str) {
-        *self.last_query.borrow_mut() = new_provider.to_string();
+    pub fn set_last_query(&self, val: &str) {
+        *self.last_query.borrow_mut() = val.to_string();
     }
 
-    pub fn set_is_service(&self, is_service: bool) {
-        self.is_service.set(is_service);
+    pub fn set_is_service(&self, val: bool) {
+        self.is_service.set(val);
     }
 
     pub fn is_visible(&self) -> bool {
         self.is_visible.get()
     }
 
-    pub fn set_is_visible(&self, is_visible: bool) {
-        self.is_visible.set(is_visible);
+    pub fn set_is_visible(&self, val: bool) {
+        self.is_visible.set(val);
     }
 
     pub fn is_no_search(&self) -> bool {
@@ -74,12 +84,12 @@ impl AppState {
         self.no_search.set(val);
     }
 
-    pub fn set_initial_height(&self, height: i32) {
-        self.initial_height.set(height);
+    pub fn set_initial_height(&self, val: i32) {
+        self.initial_height.set(val);
     }
 
-    pub fn set_initial_width(&self, width: i32) {
-        self.initial_width.set(width);
+    pub fn set_initial_width(&self, val: i32) {
+        self.initial_width.set(val);
     }
 
     pub fn get_initial_height(&self) -> i32 {
@@ -90,12 +100,12 @@ impl AppState {
         return self.initial_width.get();
     }
 
-    pub fn set_parameter_height(&self, height: i32) {
-        self.parameter_height.set(height);
+    pub fn set_parameter_height(&self, val: i32) {
+        self.parameter_height.set(val);
     }
 
-    pub fn set_parameter_width(&self, width: i32) {
-        self.parameter_width.set(width);
+    pub fn set_parameter_width(&self, val: i32) {
+        self.parameter_width.set(val);
     }
 
     pub fn get_parameter_height(&self) -> i32 {

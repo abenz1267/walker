@@ -40,7 +40,6 @@ scrollbar {
 }
 
 .content-container {
-  background: @window_bg_color;
 }
 
 .placeholder {
@@ -50,6 +49,7 @@ scrollbar {
 }
 
 .list {
+  background: @window_bg_color;
 }
 
 child,

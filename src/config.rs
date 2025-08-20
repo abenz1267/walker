@@ -65,6 +65,7 @@ pub struct Keybinds {
     pub next: String,
     pub previous: String,
     pub toggle_exact: String,
+    pub resume_last_query: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -12,6 +12,7 @@ thread_local! {
 
 #[derive(Debug, Clone)]
 pub struct AppState {
+    last_query: RefCell<String>,
     provider: RefCell<String>,
     is_service: Cell<bool>,
     pub(crate) is_visible: Cell<bool>,
@@ -21,6 +22,7 @@ impl AppState {
     pub fn new() -> Self {
         Self {
             provider: RefCell::new(String::new()),
+            last_query: RefCell::new(String::new()),
             is_service: Cell::new(false),
             is_visible: Cell::new(false),
         }
@@ -32,6 +34,14 @@ impl AppState {
 
     pub fn set_provider(&self, new_provider: &str) {
         *self.provider.borrow_mut() = new_provider.to_string();
+    }
+
+    pub fn get_last_query(&self) -> String {
+        self.last_query.borrow().clone()
+    }
+
+    pub fn set_last_query(&self, new_provider: &str) {
+        *self.last_query.borrow_mut() = new_provider.to_string();
     }
 
     pub fn set_is_service(&self, is_service: bool) {

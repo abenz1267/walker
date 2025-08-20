@@ -3,8 +3,9 @@ use crate::{
     config::get_config,
     data::{activate, input_changed},
     keybinds::{
-        ACTION_CLOSE, ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT,
-        AFTER_CLEAR_RELOAD, AFTER_CLOSE, AFTER_RELOAD, get_bind, get_modifiers, get_provider_bind,
+        ACTION_CLOSE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS,
+        ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD, AFTER_CLOSE, AFTER_RELOAD, get_bind,
+        get_modifiers, get_provider_bind,
     },
     state::{WindowData, with_state},
     theme::{setup_css_provider, setup_layer_shell},
@@ -159,10 +160,11 @@ fn setup_keyboard_handling(ui: &WindowData) {
     controller.connect_key_pressed(move |_, k, _, m| {
         if let Some(action) = get_bind(k, m) {
             match action.action.as_str() {
-                ACTION_CLOSE => quit(&app), // Use the cloned app
+                ACTION_CLOSE => quit(&app),
                 ACTION_SELECT_NEXT => select_next(),
                 ACTION_SELECT_PREVIOUS => select_previous(),
                 ACTION_TOGGLE_EXACT => toggle_exact(),
+                ACTION_RESUME_LAST_QUERY => resume_last_query(),
                 _ => {}
             }
 
@@ -223,7 +225,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                         if dont_close {
                             select_next();
                         } else {
-                            quit(&app); // Use the cloned app here too
+                            quit(&app);
                         }
                         return true;
                     }
@@ -338,6 +340,11 @@ pub fn quit(app: &Application) {
 
         with_state(|s| {
             s.set_provider("");
+            s.is_visible.set(false);
+
+            with_window(|w| {
+                s.set_last_query(&w.input.text());
+            });
         });
 
         gtk4::glib::idle_add_once(|| {
@@ -345,10 +352,6 @@ pub fn quit(app: &Application) {
                 w.input.set_text("");
                 w.input.emit_by_name::<()>("changed", &[]);
             });
-        });
-
-        with_state(|s| {
-            s.is_visible.set(false);
         });
     } else {
         app.quit();
@@ -403,6 +406,17 @@ pub fn select_previous() {
                 selection.set_selected(current - 1);
             }
         }
+    });
+}
+
+fn resume_last_query() {
+    with_window(|w| {
+        with_state(|s| {
+            if !s.get_last_query().is_empty() {
+                w.input.set_text(&s.get_last_query());
+                w.input.set_position(-1);
+            }
+        });
     });
 }
 

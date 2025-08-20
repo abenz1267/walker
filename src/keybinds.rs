@@ -8,6 +8,7 @@ pub const ACTION_CLOSE: &str = "%CLOSE%";
 pub const ACTION_SELECT_NEXT: &str = "%NEXT%";
 pub const ACTION_SELECT_PREVIOUS: &str = "%PREVIOUS%";
 pub const ACTION_TOGGLE_EXACT: &str = "%TOGGLE_EXACT%";
+pub const ACTION_RESUME_LAST_QUERY: &str = "%RESUME_LAST_QUERY%";
 
 pub const AFTER_CLOSE: &str = "%CLOSE%";
 pub const AFTER_NOTHING: &str = "%NOTHING%";
@@ -108,6 +109,13 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
     )?;
 
     parse_bind(
+        &config.keybinds.resume_last_query,
+        ACTION_RESUME_LAST_QUERY,
+        AFTER_NOTHING,
+        "",
+    )?;
+
+    parse_bind(
         &config.providers.clipboard.copy,
         ACTION_CLIPBOARD_COPY,
         AFTER_CLOSE,
@@ -202,7 +210,7 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
     parse_bind(
         &config.providers.menus.activate,
         ACTION_MENUS_ACTIVATE,
-        AFTER_CLOSE, // not really?
+        AFTER_CLOSE,
         "menus",
     )?;
 

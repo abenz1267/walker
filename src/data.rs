@@ -3,7 +3,7 @@ use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
-use crate::{IS_VISIBLE, set_keybind_hint, with_window};
+use crate::{set_keybind_hint, with_state, with_window};
 use gtk4::{glib, prelude::*};
 use protobuf::Message;
 use std::io::{BufReader, Read, Write};
@@ -13,15 +13,12 @@ use std::thread;
 
 static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
-pub static SWITCHER_PROVIDER: Mutex<String> = Mutex::new(String::new());
 
 pub fn input_changed(text: String) {
-    query(&text).unwrap();
+    query(&text);
 }
 
 pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
-    *SWITCHER_PROVIDER.lock().unwrap() = String::new();
-
     let socket_path = std::env::temp_dir().join("elephant.sock");
 
     let conn = UnixStream::connect(&socket_path)?;
@@ -76,8 +73,9 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
                 let mut resp = SubscribeResponse::new();
                 resp.merge_from_bytes(&payload)?;
 
-                let mut provider = SWITCHER_PROVIDER.lock().unwrap();
-                *provider = resp.value;
+                with_state(|s| {
+                    s.set_provider(&resp.value);
+                });
 
                 glib::idle_add_once(|| {
                     with_window(|w| {
@@ -86,8 +84,9 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
                         w.window.present();
                     });
 
-                    let mut visible = IS_VISIBLE.lock().unwrap();
-                    *visible = true;
+                    with_state(|s| {
+                        s.is_visible.set(true);
+                    });
                 });
             }
             _ => {
@@ -208,82 +207,76 @@ fn add_new_item(resp: QueryResponse) {
     });
 }
 
-fn query(text: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let switcher_provider = SWITCHER_PROVIDER.lock().unwrap();
-    let mut query_text = text.to_string();
-    let mut provider = "".to_string();
-    let mut exact = false;
-    let cfg = get_config();
+fn query(text: &str) {
+    with_state(|s| {
+        let mut query_text = text.to_string();
+        let mut exact = false;
+        let cfg = get_config();
+        let mut provider = s.get_provider();
 
-    if switcher_provider.is_empty() {
-        for prefix in &cfg.providers.prefixes {
-            if text.starts_with(&prefix.prefix) {
-                provider = prefix.provider.clone();
-                query_text = text
-                    .strip_prefix(&prefix.prefix)
-                    .unwrap_or(text)
-                    .to_string();
-                break;
+        if s.get_provider().is_empty() {
+            for prefix in &cfg.providers.prefixes {
+                if text.starts_with(&prefix.prefix) {
+                    provider = prefix.provider.clone();
+                    query_text = text
+                        .strip_prefix(&prefix.prefix)
+                        .unwrap_or(text)
+                        .to_string();
+                    break;
+                }
             }
         }
-    } else {
-        provider = switcher_provider.to_string();
-    }
 
-    let delimiter = &cfg.global_argument_delimiter;
+        let delimiter = &cfg.global_argument_delimiter;
 
-    if let Some((before, _)) = query_text.split_once(delimiter) {
-        query_text = before.to_string();
-    }
-
-    if let Some(stripped) = query_text.strip_prefix(&cfg.exact_search_prefix) {
-        exact = true;
-        query_text = stripped.to_string();
-    }
-
-    let mut req = QueryRequest::new();
-    req.query = query_text;
-    // TODO: per provider config
-    req.maxresults = 50;
-    req.exactsearch = exact;
-
-    if !provider.is_empty() {
-        req.providers.push(provider.clone());
-    } else {
-        if text.is_empty() {
-            req.providers = cfg.providers.empty.clone();
-        } else {
-            req.providers = cfg.providers.default.clone();
+        if let Some((before, _)) = query_text.split_once(delimiter) {
+            query_text = before.to_string();
         }
-    }
 
-    let payload = req.write_to_bytes()?;
+        if let Some(stripped) = query_text.strip_prefix(&cfg.exact_search_prefix) {
+            exact = true;
+            query_text = stripped.to_string();
+        }
 
-    let mut buffer = Vec::new();
-    buffer.push(0);
+        let mut req = QueryRequest::new();
+        req.query = query_text;
+        // TODO: per provider config
+        req.maxresults = 50;
+        req.exactsearch = exact;
 
-    let length = payload.len() as u32;
-    buffer.extend_from_slice(&length.to_be_bytes());
-    buffer.extend_from_slice(&payload);
+        if !provider.is_empty() {
+            req.providers.push(provider.clone());
+        } else {
+            if text.is_empty() {
+                req.providers = cfg.providers.empty.clone();
+            } else {
+                req.providers = cfg.providers.default.clone();
+            }
+        }
 
-    let mut conn_guard = CONN.lock().unwrap();
-    if let Some(conn) = conn_guard.as_mut() {
-        conn.write_all(&buffer)?;
-    }
+        let payload = req.write_to_bytes().unwrap();
 
-    Ok(())
+        let mut buffer = Vec::new();
+        buffer.push(0);
+
+        let length = payload.len() as u32;
+        buffer.extend_from_slice(&length.to_be_bytes());
+        buffer.extend_from_slice(&payload);
+
+        let mut conn_guard = CONN.lock().unwrap();
+        if let Some(conn) = conn_guard.as_mut() {
+            conn.write_all(&buffer).unwrap();
+        }
+    });
 }
 
-pub fn activate(
-    item: QueryResponse,
-    query: &str,
-    action: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
+pub fn activate(item: QueryResponse, query: &str, action: &str) {
     // handle switcher
     if item.item.provider == "providerlist" {
-        let mut provider = SWITCHER_PROVIDER.lock().unwrap();
-        *provider = item.item.identifier.clone();
-        return Ok(());
+        with_state(|s| {
+            s.set_provider(&item.item.identifier);
+        });
+        return;
     }
 
     let mut req = ActivateRequest::new();
@@ -293,7 +286,7 @@ pub fn activate(
     req.action = action.to_string();
     req.arguments = query.to_string();
 
-    let payload = req.write_to_bytes()?;
+    let payload = req.write_to_bytes().unwrap();
 
     let mut buffer = Vec::new();
 
@@ -307,13 +300,9 @@ pub fn activate(
     {
         let mut conn_guard = CONN.lock().unwrap();
         if let Some(conn) = conn_guard.as_mut() {
-            conn.write_all(&buffer)?;
-        } else {
-            return Err("Connection not available".into());
+            conn.write_all(&buffer).unwrap();
         }
     }
-
-    Ok(())
 }
 
 fn subscribe_menu() -> Result<(), Box<dyn std::error::Error>> {

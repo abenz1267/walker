@@ -29,10 +29,7 @@ use std::cell::Cell;
 use std::path::Path;
 use std::sync::mpsc;
 use std::time::Duration;
-use std::{
-    cell::RefCell,
-    sync::{Mutex, OnceLock},
-};
+use std::{cell::RefCell, sync::OnceLock};
 use std::{env, fs, thread};
 
 use gtk4::{
@@ -49,7 +46,7 @@ use gtk4::{
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 
 use crate::config::DEFAULT_STYLE;
-use crate::data::{SWITCHER_PROVIDER, activate, init_socket, input_changed, start_listening};
+use crate::data::{activate, init_socket, input_changed, start_listening};
 use crate::keybinds::{
     ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD,
     AFTER_CLOSE, AFTER_RELOAD, get_modifiers, get_provider_bind,
@@ -59,11 +56,46 @@ use crate::{
     protos::generated_proto::query::{QueryResponse, query_response::Type},
 };
 
-static IS_VISIBLE: Mutex<bool> = Mutex::new(false);
-static IS_SERVICE: OnceLock<bool> = OnceLock::new();
-
 thread_local! {
-static WINDOW: OnceLock<WindowData> = OnceLock::new();
+    static STATE: OnceLock<AppState> = OnceLock::new();
+    static WINDOW: OnceLock<WindowData> = OnceLock::new();
+}
+
+#[derive(Debug, Clone)]
+struct AppState {
+    provider: RefCell<String>,
+    is_service: Cell<bool>,
+    is_visible: Cell<bool>,
+}
+
+impl AppState {
+    fn new() -> Self {
+        Self {
+            provider: RefCell::new(String::new()),
+            is_service: Cell::new(false),
+            is_visible: Cell::new(false),
+        }
+    }
+
+    fn get_provider(&self) -> String {
+        self.provider.borrow().clone()
+    }
+
+    fn set_provider(&self, new_provider: &str) {
+        *self.provider.borrow_mut() = new_provider.to_string();
+    }
+
+    fn set_provider_owned(&self, new_provider: String) {
+        *self.provider.borrow_mut() = new_provider;
+    }
+
+    fn update_provider<F>(&self, f: F)
+    where
+        F: FnOnce(&mut String),
+    {
+        let mut provider = self.provider.borrow_mut();
+        f(&mut *provider);
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -80,6 +112,16 @@ struct WindowData {
     placeholder: Option<Label>,
     keybinds: Option<Label>,
     scroll: ScrolledWindow,
+}
+
+fn with_state<F, R>(f: F) -> R
+where
+    F: FnOnce(&AppState) -> R,
+{
+    STATE.with(|state| {
+        let data = state.get().expect("AppState not initialized");
+        f(data)
+    })
 }
 
 fn with_window<F, R>(f: F) -> R
@@ -156,6 +198,15 @@ fn main() -> glib::ExitCode {
     );
 
     app.add_main_option(
+        "nosearch",
+        b'n'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::None,
+        "hide search input",
+        None,
+    );
+
+    app.add_main_option(
         "provider",
         b'p'.into(),
         OptionFlags::NONE,
@@ -173,11 +224,11 @@ fn main() -> glib::ExitCode {
         }
 
         if options.contains("provider") {
-            let mut provider = SWITCHER_PROVIDER.lock().unwrap();
-
-            if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
-                *provider = val.str().unwrap().to_string();
-            }
+            with_state(|s| {
+                if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
+                    s.set_provider(val.str().unwrap());
+                }
+            });
         }
 
         app.activate();
@@ -185,46 +236,54 @@ fn main() -> glib::ExitCode {
     });
 
     app.connect_activate(move |app| {
-        let visible = *IS_VISIBLE.lock().unwrap();
-
-        let cfg = get_config();
-        if cfg.close_when_open && visible {
-            quit(app);
-        } else {
-            let provider = SWITCHER_PROVIDER.lock().unwrap();
-            let p;
-
-            if provider.is_empty() {
-                p = "default".to_string();
+        with_state(|s| {
+            let cfg = get_config();
+            if cfg.close_when_open && s.is_visible.get() {
+                quit(app);
             } else {
-                p = provider.clone();
-            }
+                let provider = s.get_provider();
+                let p;
 
-            drop(provider);
-
-            with_window(|w| {
-                if let Some(placeholders) = &cfg.placeholders {
-                    if let Some(placeholder) = placeholders.get(&p) {
-                        w.input.set_placeholder_text(Some(&placeholder.input));
-                        w.placeholder
-                            .as_ref()
-                            .map(|p| p.set_text(&placeholder.list));
-                    }
+                if provider.is_empty() {
+                    p = "default".to_string();
+                } else {
+                    p = provider.clone();
                 }
 
-                w.input.emit_by_name::<()>("changed", &[]);
-                w.input.grab_focus();
+                drop(provider);
 
-                w.window.present();
-            });
+                with_window(|w| {
+                    if let Some(placeholders) = &cfg.placeholders {
+                        if let Some(placeholder) = placeholders.get(&p) {
+                            w.input.set_placeholder_text(Some(&placeholder.input));
+                            w.placeholder
+                                .as_ref()
+                                .map(|p| p.set_text(&placeholder.list));
+                        }
+                    }
 
-            let mut visible = IS_VISIBLE.lock().unwrap();
-            *visible = true;
-        }
+                    w.input.emit_by_name::<()>("changed", &[]);
+                    w.input.grab_focus();
+
+                    w.window.present();
+                });
+
+                s.is_visible.set(true);
+            }
+        });
     });
 
     app.connect_startup(move |app| {
         *hold_guard.borrow_mut() = Some(app.hold());
+
+        let s = AppState::new();
+
+        STATE.with(|state| {
+            state
+                .set(s.clone())
+                .expect("failed initializing window data");
+        });
+
         init_ui(app);
     });
 
@@ -233,7 +292,9 @@ fn main() -> glib::ExitCode {
 
 fn init_ui(app: &Application) {
     if app.flags().contains(ApplicationFlags::IS_SERVICE) {
-        IS_SERVICE.set(true).expect("failed to set IS_SERVICE");
+        with_state(|s| {
+            s.is_service.set(true);
+        });
     }
 
     println!("Waiting for elephant to start...");
@@ -355,9 +416,7 @@ fn setup_window(app: &Application) {
             }
 
             if let Some(action) = get_provider_bind(&provider, k, m) {
-                if let Err(_) = activate(response, &w.input.text().to_string(), &action.action) {
-                    return false;
-                }
+                activate(response, &w.input.text().to_string(), &action.action);
 
                 let after = if item_clone.identifier.starts_with("keepopen:") {
                     AFTER_CLEAR_RELOAD
@@ -756,8 +815,9 @@ fn quit(app: &Application) {
     if app.flags().contains(ApplicationFlags::IS_SERVICE) {
         app.active_window().unwrap().set_visible(false);
 
-        let mut provider = SWITCHER_PROVIDER.lock().unwrap();
-        *provider = "".to_string();
+        with_state(|s| {
+            s.set_provider("");
+        });
 
         glib::idle_add_once(|| {
             with_window(|w| {
@@ -766,8 +826,9 @@ fn quit(app: &Application) {
             });
         });
 
-        let mut visible = IS_VISIBLE.lock().unwrap();
-        *visible = false;
+        with_state(|s| {
+            s.is_visible.set(false);
+        });
     } else {
         app.quit();
     }

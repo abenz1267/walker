@@ -90,7 +90,7 @@ fn get_special_keys() -> HashMap<&'static str, Key> {
 }
 
 pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
-    let config = config::get_config().ok_or("Config not loaded")?;
+    let config = config::get_config();
 
     parse_bind(&config.keybinds.close, ACTION_CLOSE, AFTER_CLOSE, "")?;
     parse_bind(&config.keybinds.next, ACTION_SELECT_NEXT, AFTER_NOTHING, "")?;
@@ -316,24 +316,21 @@ pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
 }
 
 pub fn get_provider_bind(provider: &str, key: Key, modifier: gdk::ModifierType) -> Option<Action> {
-    if let Some(cfg) = get_config() {
-        let modifiers = get_modifiers();
-        let mut modifier = modifier;
+    let cfg = get_config();
+    let modifiers = get_modifiers();
+    let mut modifier = modifier;
 
-        if let Some(keep_open) = modifiers.get(cfg.keep_open_modifier.as_str()) {
-            if *keep_open == modifier {
-                modifier = gdk::ModifierType::empty();
-            }
+    if let Some(keep_open) = modifiers.get(cfg.keep_open_modifier.as_str()) {
+        if *keep_open == modifier {
+            modifier = gdk::ModifierType::empty();
         }
-
-        get_provider_binds()
-            .lock()
-            .unwrap()
-            .get(provider)?
-            .get(&key)?
-            .get(&modifier)
-            .cloned()
-    } else {
-        None
     }
+
+    get_provider_binds()
+        .lock()
+        .unwrap()
+        .get(provider)?
+        .get(&key)?
+        .get(&modifier)
+        .cloned()
 }

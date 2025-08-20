@@ -4,7 +4,7 @@ use std::{collections::HashMap, sync::OnceLock};
 
 static LOADED_CONFIG: OnceLock<Elephant> = OnceLock::new();
 const DEFAULT_CONFIG: &str = include_str!("../resources/config.toml");
-pub const DEFAULT_STYLE: &str = include_str!("../resources/style_default.css");
+pub const DEFAULT_STYLE: &str = include_str!("../resources/themes/default/style.css");
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Elephant {
@@ -149,6 +149,6 @@ pub fn load() -> Result<(), Box<dyn std::error::Error>> {
     Ok(())
 }
 
-pub fn get_config() -> Option<&'static Elephant> {
-    LOADED_CONFIG.get()
+pub fn get_config() -> &'static Elephant {
+    LOADED_CONFIG.get().expect("config not initialized")
 }

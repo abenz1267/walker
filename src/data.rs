@@ -3,7 +3,7 @@ use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
-use crate::{IS_SERVICE, IS_VISIBLE, with_input, with_windows};
+use crate::{IS_VISIBLE, set_keybind_hint, with_window};
 use gtk4::{glib, prelude::*};
 use protobuf::Message;
 use std::io::{BufReader, Read, Write};
@@ -80,13 +80,10 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
                 *provider = resp.value;
 
                 glib::idle_add_once(|| {
-                    with_input(|i| {
-                        i.set_text("");
-                        i.emit_by_name::<()>("changed", &[]);
-                    });
-
-                    with_windows(|windows| {
-                        windows[0].present();
+                    with_window(|w| {
+                        w.input.set_text("");
+                        w.input.emit_by_name::<()>("changed", &[]);
+                        w.window.present();
                     });
 
                     let mut visible = IS_VISIBLE.lock().unwrap();
@@ -119,6 +116,9 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
 
         match header[0] {
             255 => {
+                glib::idle_add_once(|| {
+                    set_keybind_hint();
+                });
                 continue;
             }
             254 => {
@@ -155,13 +155,14 @@ fn handle_response(resp: QueryResponse, header_type: u8) {
 }
 
 fn clear_items() {
-    crate::with_store(|items| {
-        items.remove_all();
+    with_window(|w| {
+        w.items.remove_all();
     });
 }
 
 fn update_existing_item(resp: QueryResponse) {
-    crate::with_store(|items| {
+    with_window(|w| {
+        let items = &w.items;
         let n_items = items.n_items();
         for i in 0..n_items {
             if let Some(obj) = items.item(i).and_downcast::<crate::QueryResponseObject>() {
@@ -184,7 +185,8 @@ fn update_existing_item(resp: QueryResponse) {
 }
 
 fn add_new_item(resp: QueryResponse) {
-    crate::with_store(|items| {
+    with_window(|w| {
+        let items = &w.items;
         let n_items = items.n_items();
 
         if n_items > 0 {
@@ -211,35 +213,32 @@ fn query(text: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut query_text = text.to_string();
     let mut provider = "".to_string();
     let mut exact = false;
+    let cfg = get_config();
 
     if switcher_provider.is_empty() {
-        if let Some(config) = get_config() {
-            for prefix in &config.providers.prefixes {
-                if text.starts_with(&prefix.prefix) {
-                    provider = prefix.provider.clone();
-                    query_text = text
-                        .strip_prefix(&prefix.prefix)
-                        .unwrap_or(text)
-                        .to_string();
-                    break;
-                }
+        for prefix in &cfg.providers.prefixes {
+            if text.starts_with(&prefix.prefix) {
+                provider = prefix.provider.clone();
+                query_text = text
+                    .strip_prefix(&prefix.prefix)
+                    .unwrap_or(text)
+                    .to_string();
+                break;
             }
         }
     } else {
         provider = switcher_provider.to_string();
     }
 
-    if let Some(cfg) = get_config() {
-        let delimiter = &cfg.global_argument_delimiter;
+    let delimiter = &cfg.global_argument_delimiter;
 
-        if let Some((before, _)) = query_text.split_once(delimiter) {
-            query_text = before.to_string();
-        }
+    if let Some((before, _)) = query_text.split_once(delimiter) {
+        query_text = before.to_string();
+    }
 
-        if let Some(stripped) = query_text.strip_prefix(&cfg.exact_search_prefix) {
-            exact = true;
-            query_text = stripped.to_string();
-        }
+    if let Some(stripped) = query_text.strip_prefix(&cfg.exact_search_prefix) {
+        exact = true;
+        query_text = stripped.to_string();
     }
 
     let mut req = QueryRequest::new();
@@ -250,11 +249,11 @@ fn query(text: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     if !provider.is_empty() {
         req.providers.push(provider.clone());
-    } else if let Some(config) = get_config() {
+    } else {
         if text.is_empty() {
-            req.providers = config.providers.empty.clone();
+            req.providers = cfg.providers.empty.clone();
         } else {
-            req.providers = config.providers.default.clone();
+            req.providers = cfg.providers.default.clone();
         }
     }
 

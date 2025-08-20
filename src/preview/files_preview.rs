@@ -1,12 +1,12 @@
 use super::{LatestOnlyThrottler, PreviewHandler};
 use crate::protos::generated_proto::query::query_response::Item;
-use crate::{get_selected_item, quit, with_app, with_windows};
+use crate::{get_selected_item, quit, with_window};
 use gtk4::gdk::ContentProvider;
 use gtk4::gio::File;
 use gtk4::glib::clone::Downgrade;
 use gtk4::glib::{self, Bytes};
 use gtk4::{
-    Box as GtkBox, Builder, ContentFit, DragSource, Image, Label, Orientation, Picture, PolicyType,
+    Box as GtkBox, Builder, ContentFit, DragSource, Image, Orientation, Picture, PolicyType,
     ScrolledWindow, Stack, TextView, WrapMode,
 };
 use gtk4::{gio, prelude::*};
@@ -79,14 +79,14 @@ impl PreviewHandler for FilesPreviewHandler {
             });
 
             drag_source.connect_drag_begin(|_, _| {
-                with_windows(|w| {
-                    w[0].set_visible(false);
+                with_window(|w| {
+                    w.window.set_visible(false);
                 });
             });
 
             drag_source.connect_drag_end(|_, _, _| {
-                with_app(|app| {
-                    quit(app);
+                with_window(|w| {
+                    quit(&w.app);
                 });
             });
 

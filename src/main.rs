@@ -25,6 +25,7 @@ use protos::generated_proto::query::query_response::Item;
 
 use config::get_config;
 
+use std::cell::Cell;
 use std::path::Path;
 use std::sync::mpsc;
 use std::time::Duration;
@@ -47,7 +48,7 @@ use gtk4::{
 };
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 
-use crate::config::{DEFAULT_STYLE, Elephant};
+use crate::config::DEFAULT_STYLE;
 use crate::data::{SWITCHER_PROVIDER, activate, init_socket, input_changed, start_listening};
 use crate::keybinds::{
     ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD,
@@ -62,17 +63,33 @@ static IS_VISIBLE: Mutex<bool> = Mutex::new(false);
 static IS_SERVICE: OnceLock<bool> = OnceLock::new();
 
 thread_local! {
-    static CSSPROVIDER: RefCell<Option<CssProvider>> = RefCell::new(None);
-    static APP: RefCell<Option<Application>> = RefCell::new(None);
-    static WINDOWS: RefCell<Option<Vec<Window>>> = RefCell::new(None);
-    static STOREITEMS: RefCell<Option<ListStore>> = RefCell::new(None);
-    static SELECTION: RefCell<Option<SingleSelection>> = RefCell::new(None);
-    static LIST: RefCell<Option<ListView>> = RefCell::new(None);
-    static INPUT: RefCell<Option<Entry>> = RefCell::new(None);
-    static PLACEHOLDER: RefCell<Option<Label>> = RefCell::new(None);
-    static KEYBINDS: RefCell<Option<Label>> = RefCell::new(None);
-    static MOUSE_X: RefCell<Option<f64>> = RefCell::new(None);
-    static MOUSE_Y: RefCell<Option<f64>> = RefCell::new(None);
+static WINDOW: OnceLock<WindowData> = OnceLock::new();
+}
+
+#[derive(Debug, Clone)]
+struct WindowData {
+    mouse_x: Cell<f64>,
+    mouse_y: Cell<f64>,
+    app: Application,
+    css_provider: CssProvider,
+    window: Window,
+    selection: SingleSelection,
+    list: ListView,
+    input: Entry,
+    items: ListStore,
+    placeholder: Option<Label>,
+    keybinds: Option<Label>,
+    scroll: ScrolledWindow,
+}
+
+fn with_window<F, R>(f: F) -> R
+where
+    F: FnOnce(&WindowData) -> R,
+{
+    WINDOW.with(|window| {
+        let data = window.get().expect("Window not initialized");
+        f(data)
+    })
 }
 
 // GObject wrapper for QueryResponse
@@ -125,10 +142,6 @@ fn main() -> glib::ExitCode {
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 
-    APP.with(|s| {
-        *s.borrow_mut() = Some(app.clone());
-    });
-
     let hold_guard = RefCell::new(None);
 
     app.connect_handle_local_options(|_app, _dict| return -1);
@@ -174,45 +187,39 @@ fn main() -> glib::ExitCode {
     app.connect_activate(move |app| {
         let visible = *IS_VISIBLE.lock().unwrap();
 
-        if let Some(cfg) = get_config() {
-            if cfg.close_when_open && visible {
-                quit(app);
+        let cfg = get_config();
+        if cfg.close_when_open && visible {
+            quit(app);
+        } else {
+            let provider = SWITCHER_PROVIDER.lock().unwrap();
+            let p;
+
+            if provider.is_empty() {
+                p = "default".to_string();
             } else {
-                let provider = SWITCHER_PROVIDER.lock().unwrap();
-                let p;
+                p = provider.clone();
+            }
 
-                if provider.is_empty() {
-                    p = "default";
-                } else {
-                    p = &provider;
-                }
+            drop(provider);
 
-                if let Some(placeholders) = &get_config().unwrap().placeholders {
-                    if let Some(placeholder) = placeholders.get(p) {
-                        with_input(|i| {
-                            i.set_placeholder_text(Some(&placeholder.input));
-                        });
-
-                        with_placeholder(|p| {
-                            p.set_text(&placeholder.list);
-                        });
+            with_window(|w| {
+                if let Some(placeholders) = &cfg.placeholders {
+                    if let Some(placeholder) = placeholders.get(&p) {
+                        w.input.set_placeholder_text(Some(&placeholder.input));
+                        w.placeholder
+                            .as_ref()
+                            .map(|p| p.set_text(&placeholder.list));
                     }
                 }
 
-                drop(provider);
+                w.input.emit_by_name::<()>("changed", &[]);
+                w.input.grab_focus();
 
-                with_input(|i| {
-                    i.emit_by_name::<()>("changed", &[]);
-                    i.grab_focus();
-                });
+                w.window.present();
+            });
 
-                with_windows(|windows| {
-                    windows[0].present();
-                });
-
-                let mut visible = IS_VISIBLE.lock().unwrap();
-                *visible = true;
-            }
+            let mut visible = IS_VISIBLE.lock().unwrap();
+            *visible = true;
         }
     });
 
@@ -240,53 +247,64 @@ fn init_ui(app: &Application) {
     init_socket().unwrap();
     start_listening();
 
-    let cfg = get_config().unwrap();
-    setup_windows(app, cfg);
-    setup_css_provider();
+    let cfg = get_config();
+    setup_window(app);
     setup_css(cfg.theme.clone());
     start_theme_watcher(cfg.theme.clone());
 
-    with_windows(|windows| {
-        windows.iter().for_each(|window| {
-            setup_layer_shell(window);
-        });
+    with_window(|w| {
+        setup_layer_shell(&w.window);
     });
 }
 
-fn setup_windows(app: &Application, cfg: &Elephant) {
-    // TODO: create window per layout?
-    let mut windows: Vec<Window> = Vec::new();
-
+fn setup_window(app: &Application) {
     let builder = Builder::new();
-    let _ = builder.add_from_string(include_str!("../resources/layout_default.xml"));
+    let _ = builder.add_from_string(include_str!("../resources/themes/default/layout.xml"));
 
     let window: Window = builder
         .object("Window")
         .expect("Couldn't get 'Window' from UI file");
-    window.set_application(Some(app));
-    window.set_css_classes(&vec![]);
-
-    windows.push(window.clone());
-
-    let app_clone = app.clone();
-
     let input: Entry = builder.object("Input").unwrap();
+    let scroll: ScrolledWindow = builder
+        .object("Scroll")
+        .expect("can't get scroll from layout");
+    let list: ListView = builder.object("List").expect("can't get list from layout");
+    let items = ListStore::new::<QueryResponseObject>();
+    let placeholder: Option<Label> = builder.object("Placeholder");
+    let keybinds: Option<Label> = builder.object("Keybinds");
+    let selection = SingleSelection::new(Some(items.clone()));
 
-    INPUT.with(|s| {
-        *s.borrow_mut() = Some(input.clone());
+    let ui = WindowData {
+        scroll,
+        mouse_x: 0.0.into(),
+        mouse_y: 0.0.into(),
+        app: app.clone(),
+        css_provider: setup_css_provider(),
+        window,
+        selection,
+        list,
+        input,
+        items,
+        placeholder,
+        keybinds,
+    };
+
+    WINDOW.with(|window| {
+        window
+            .set(ui.clone())
+            .expect("failed initializing window data");
     });
 
-    let input_clone = input.clone();
-    let builder_copy = builder.clone();
-    input.connect_changed(move |input| {
+    ui.window.set_application(Some(app));
+    ui.window.set_css_classes(&vec![]);
+
+    ui.input.connect_changed(move |input| {
         disable_mouse();
 
         let text = input.text().to_string();
 
-        if let Some(cfg) = get_config() {
-            if !text.contains(&cfg.global_argument_delimiter) {
-                input_changed(text);
-            }
+        if !text.contains(&get_config().global_argument_delimiter) {
+            input_changed(text);
         }
     });
 
@@ -296,7 +314,7 @@ fn setup_windows(app: &Application, cfg: &Elephant) {
     controller.connect_key_pressed(move |_, k, _, m| {
         if let Some(action) = get_bind(k, m) {
             match action.action.as_str() {
-                ACTION_CLOSE => quit(&app_clone),
+                ACTION_CLOSE => quit(&ui.app),
                 ACTION_SELECT_NEXT => select_next(),
                 ACTION_SELECT_PREVIOUS => select_previous(),
                 ACTION_TOGGLE_EXACT => toggle_exact(),
@@ -306,90 +324,84 @@ fn setup_windows(app: &Application, cfg: &Elephant) {
             return true.into();
         }
 
-        let handled = with_store(|items| {
-            with_selection(|selection| {
-                if items.n_items() == 0 {
+        let handled = with_window(|w| {
+            let selection = &w.selection;
+            let items = &w.selection;
+            if items.n_items() == 0 {
+                return false;
+            }
+
+            let selected_item = match selection.selected_item() {
+                Some(item) => item,
+                None => return false,
+            };
+
+            let response_obj = match selected_item.downcast::<QueryResponseObject>() {
+                Ok(obj) => obj,
+                Err(_) => return false,
+            };
+
+            let response = response_obj.response();
+            let item = match response.item.as_ref() {
+                Some(item) => item,
+                None => return false,
+            };
+            let item_clone = item.clone();
+
+            let mut provider = item.provider.clone();
+
+            if provider.starts_with("menus:") {
+                provider = "menus".to_string();
+            }
+
+            if let Some(action) = get_provider_bind(&provider, k, m) {
+                if let Err(_) = activate(response, &w.input.text().to_string(), &action.action) {
                     return false;
                 }
 
-                let selected_item = match selection.selected_item() {
-                    Some(item) => item,
-                    None => return false,
+                let after = if item_clone.identifier.starts_with("keepopen:") {
+                    AFTER_CLEAR_RELOAD
+                } else {
+                    action.after.as_str()
                 };
 
-                let response_obj = match selected_item.downcast::<QueryResponseObject>() {
-                    Ok(obj) => obj,
-                    Err(_) => return false,
-                };
+                let mut dont_close = false;
 
-                let response = response_obj.response();
-                let item = match response.item.as_ref() {
-                    Some(item) => item,
-                    None => return false,
-                };
-                let item_clone = item.clone();
-
-                let mut provider = item.provider.clone();
-
-                if provider.starts_with("menus:") {
-                    provider = "menus".to_string();
+                if let Some(keep_open) =
+                    get_modifiers().get(get_config().keep_open_modifier.as_str())
+                {
+                    if *keep_open == m {
+                        dont_close = true
+                    }
                 }
 
-                if let Some(action) = get_provider_bind(&provider, k, m) {
-                    if let Err(_) =
-                        activate(response, &input_clone.text().to_string(), &action.action)
-                    {
-                        return false;
-                    }
-
-                    let after = if item_clone.identifier.starts_with("keepopen:") {
-                        AFTER_CLEAR_RELOAD
-                    } else {
-                        action.after.as_str()
-                    };
-
-                    let mut dont_close = false;
-
-                    if let Some(cfg) = get_config() {
-                        if let Some(keep_open) =
-                            get_modifiers().get(cfg.keep_open_modifier.as_str())
-                        {
-                            if *keep_open == m {
-                                dont_close = true
-                            }
+                match after {
+                    AFTER_CLOSE => {
+                        if dont_close {
+                            select_next();
+                        } else {
+                            quit(&ui.app);
                         }
+                        return true;
                     }
-
-                    match after {
-                        AFTER_CLOSE => {
-                            if dont_close {
-                                select_next();
+                    AFTER_CLEAR_RELOAD => {
+                        with_window(|w| {
+                            if w.input.text().is_empty() {
+                                w.input.emit_by_name::<()>("changed", &[]);
                             } else {
-                                quit(&app_clone);
+                                w.input.set_text("");
                             }
-                            return true;
-                        }
-                        AFTER_CLEAR_RELOAD => {
-                            with_input(|i| {
-                                if i.text().is_empty() {
-                                    i.emit_by_name::<()>("changed", &[]);
-                                } else {
-                                    i.set_text("");
-                                }
-                            });
-                        }
-                        AFTER_RELOAD => crate::data::input_changed(input_clone.text().to_string()),
-                        _ => {}
+                        });
                     }
-
-                    return true;
+                    AFTER_RELOAD => crate::data::input_changed(w.input.text().to_string()),
+                    _ => {}
                 }
 
-                return false;
-            })
-            .unwrap_or(false)
-        })
-        .unwrap_or(false);
+                return true;
+            }
+
+            return false;
+        });
 
         if handled {
             return true.into();
@@ -398,54 +410,38 @@ fn setup_windows(app: &Application, cfg: &Elephant) {
         return false.into();
     });
 
-    let scroll: ScrolledWindow = builder
-        .object("Scroll")
-        .expect("can't get scroll from layout");
+    if let Some(p) = ui.placeholder {
+        p.set_visible(false);
+    }
 
-    let list: ListView = builder.object("List").expect("can't get list from layout");
-
-    LIST.with(|s| {
-        *s.borrow_mut() = Some(list.clone());
-    });
-
-    let items = ListStore::new::<QueryResponseObject>();
-    STOREITEMS.with(|s| {
-        *s.borrow_mut() = Some(items.clone());
-    });
-
-    let placeholder: Label = builder.object("Placeholder").expect("no placeholder found");
-
-    PLACEHOLDER.with(|s| {
-        *s.borrow_mut() = Some(placeholder.clone());
-    });
-
-    let keybinds: Label = builder.object("Keybinds").expect("no keybind label found");
-
-    KEYBINDS.with(|s| {
-        *s.borrow_mut() = Some(keybinds.clone());
-    });
-
-    let selection = SingleSelection::new(Some(items.clone()));
-
-    SELECTION.with(|s| {
-        *s.borrow_mut() = Some(selection.clone());
-    });
-
-    placeholder.set_visible(false);
-
-    selection.set_autoselect(true);
-    selection.connect_items_changed(move |s, _, _, _| {
+    let builder_copy = builder.clone();
+    ui.selection.set_autoselect(true);
+    ui.selection.connect_items_changed(move |s, _, _, _| {
         handle_preview(&builder_copy);
 
-        if s.n_items() == 0 {
-            placeholder.set_visible(true);
-            scroll.set_visible(false);
-            clear_keybind_hint();
-        } else {
-            placeholder.set_visible(false);
-            scroll.set_visible(true);
-            set_keybind_hint();
-        }
+        with_window(|w| {
+            if s.n_items() == 0 {
+                if let Some(p) = &w.placeholder {
+                    p.set_visible(true);
+                }
+
+                w.scroll.set_visible(false);
+
+                if let Some(k) = &w.keybinds {
+                    clear_keybind_hint(k);
+                }
+            } else {
+                if let Some(p) = &w.placeholder {
+                    p.set_visible(false);
+                }
+
+                w.scroll.set_visible(true);
+
+                if let Some(k) = &w.keybinds {
+                    clear_keybind_hint(k);
+                }
+            }
+        });
     });
 
     let builder_copy = builder.clone();
@@ -454,14 +450,13 @@ fn setup_windows(app: &Application, cfg: &Elephant) {
         preview.set_visible(false);
     }
 
-    selection.connect_selection_changed(move |_, _, _| {
-        with_list(|list| {
-            with_selection(|selection| {
-                handle_preview(&builder_copy);
-                list.scroll_to(selection.selected(), ListScrollFlags::NONE, None);
+    ui.selection.connect_selection_changed(move |_, _, _| {
+        with_window(|w| {
+            handle_preview(&builder_copy);
+            w.list
+                .scroll_to(w.selection.selected(), ListScrollFlags::NONE, None);
 
-                set_keybind_hint();
-            });
+            set_keybind_hint();
         });
     });
 
@@ -505,50 +500,34 @@ fn setup_windows(app: &Application, cfg: &Elephant) {
         }
     });
 
-    list.set_model(Some(&selection));
-    list.set_factory(Some(&factory));
-    list.set_single_click_activate(true);
+    ui.list.set_model(Some(&ui.selection));
+    ui.list.set_factory(Some(&factory));
+    ui.list.set_single_click_activate(true);
 
     let motion = EventControllerMotion::new();
     motion.connect_motion(|_, x, y| {
-        with_mouse_x(|mx| {
-            with_mouse_y(|my| {
-                if *mx == 0.0 || *my == 0.0 {
-                    *mx = x;
-                    *my = y;
-                    return;
-                }
+        with_window(|w| {
+            if w.mouse_x.get() == 0.0 || w.mouse_y.get() == 0.0 {
+                w.mouse_x.set(x);
+                w.mouse_y.set(y);
+                return;
+            }
 
-                if x != *mx || y != *my {
-                    with_list(|l| {
-                        if !l.can_target() {
-                            l.set_can_target(true);
-                        }
-                    });
+            if x != w.mouse_x.get() || y != w.mouse_y.get() {
+                if !w.list.can_target() {
+                    w.list.set_can_target(true);
                 }
-            });
+            }
         });
     });
 
-    MOUSE_X.with(|s| {
-        *s.borrow_mut() = Some(0.0);
-    });
-
-    MOUSE_Y.with(|s| {
-        *s.borrow_mut() = Some(0.0);
-    });
-
-    window.add_controller(motion);
-    window.add_controller(controller);
-
-    WINDOWS.with(|s| {
-        *s.borrow_mut() = Some(windows.clone());
-    });
+    ui.window.add_controller(motion);
+    ui.window.add_controller(controller);
 }
 
 fn create_desktopappications_item(l: &ListItem, i: &Item) {
     let b = Builder::new();
-    let _ = b.add_from_string(include_str!("../resources/item_default.xml"));
+    let _ = b.add_from_string(include_str!("../resources/themes/default/item.xml"));
     let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
     itembox.add_css_class(&i.provider);
     l.set_child(Some(&itembox));
@@ -578,7 +557,9 @@ fn create_desktopappications_item(l: &ListItem, i: &Item) {
 
 fn create_clipboard_item(l: &ListItem, i: &Item) {
     let b = Builder::new();
-    let _ = b.add_from_string(include_str!("../resources/item_clipboard.xml"));
+    let _ = b.add_from_string(include_str!(
+        "../resources/themes/default/item_clipboard.xml"
+    ));
     let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
     itembox.add_css_class(&i.provider);
     l.set_child(Some(&itembox));
@@ -588,15 +569,15 @@ fn create_clipboard_item(l: &ListItem, i: &Item) {
     }
 
     if let Some(text) = b.object::<Label>("ItemSubtext") {
-        if let Some(cfg) = get_config() {
-            match DateTime::parse_from_rfc2822(&i.subtext) {
-                Ok(dt) => {
-                    let formatted = dt.format(&cfg.providers.clipboard.time_format).to_string();
-                    text.set_label(&formatted);
-                }
-                Err(_) => {
-                    text.set_label(&i.subtext);
-                }
+        match DateTime::parse_from_rfc2822(&i.subtext) {
+            Ok(dt) => {
+                let formatted = dt
+                    .format(&get_config().providers.clipboard.time_format)
+                    .to_string();
+                text.set_label(&formatted);
+            }
+            Err(_) => {
+                text.set_label(&i.subtext);
             }
         }
     }
@@ -622,7 +603,7 @@ fn create_clipboard_item(l: &ListItem, i: &Item) {
 
 fn create_symbols_item(l: &ListItem, i: &Item) {
     let b = Builder::new();
-    let _ = b.add_from_string(include_str!("../resources/item_symbols.xml"));
+    let _ = b.add_from_string(include_str!("../resources/themes/default/item_symbols.xml"));
     let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
     itembox.add_css_class(&i.provider);
     l.set_child(Some(&itembox));
@@ -644,7 +625,7 @@ fn create_symbols_item(l: &ListItem, i: &Item) {
 
 fn create_calc_item(l: &ListItem, i: &Item) {
     let b = Builder::new();
-    let _ = b.add_from_string(include_str!("../resources/item_calc.xml"));
+    let _ = b.add_from_string(include_str!("../resources/themes/default/item_calc.xml"));
     let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
     itembox.add_css_class(&i.provider);
     l.set_child(Some(&itembox));
@@ -674,7 +655,7 @@ fn create_calc_item(l: &ListItem, i: &Item) {
 
 fn create_files_item(l: &ListItem, i: &Item) {
     let b = Builder::new();
-    let _ = b.add_from_string(include_str!("../resources/item_files.xml"));
+    let _ = b.add_from_string(include_str!("../resources/themes/default/item_files.xml"));
     let itembox: Box = b.object("ItemBox").expect("failed to get ItemBox");
     itembox.add_css_class(&i.provider);
     l.set_child(Some(&itembox));
@@ -694,14 +675,14 @@ fn create_files_item(l: &ListItem, i: &Item) {
     });
 
     drag_source.connect_drag_begin(|_, _| {
-        with_windows(|w| {
-            w[0].set_visible(false);
+        with_window(|w| {
+            w.window.set_visible(false);
         });
     });
 
     drag_source.connect_drag_end(|_, _, _| {
-        with_app(|app| {
-            quit(app);
+        with_window(|w| {
+            quit(&w.app);
         });
     });
 
@@ -742,7 +723,9 @@ fn create_files_item(l: &ListItem, i: &Item) {
 
 fn create_providerlist_item(l: &ListItem, i: &Item) {
     let b = Builder::new();
-    let _ = b.add_from_string(include_str!("../resources/item_providerlist.xml"));
+    let _ = b.add_from_string(include_str!(
+        "../resources/themes/default/item_providerlist.xml"
+    ));
     let itembox: Box = b.object("ItemBox").expect("failed to get ItemRoot");
     itembox.add_css_class(&i.provider);
     l.set_child(Some(&itembox));
@@ -770,9 +753,9 @@ fn quit(app: &Application) {
         *provider = "".to_string();
 
         glib::idle_add_once(|| {
-            with_input(|i| {
-                i.set_text("");
-                i.emit_by_name::<()>("changed", &[]);
+            with_window(|w| {
+                w.input.set_text("");
+                w.input.emit_by_name::<()>("changed", &[]);
             });
         });
 
@@ -786,42 +769,41 @@ fn quit(app: &Application) {
 fn select_next() {
     disable_mouse();
 
-    with_selection(|selection| {
-        if let Some(cfg) = get_config() {
-            if cfg.selection_wrap {
-                let current = selection.selected();
-                let n_items = selection.n_items();
-                if n_items > 0 {
-                    let next = if current + 1 >= n_items {
-                        0
-                    } else {
-                        current + 1
-                    };
-                    selection.set_selected(next);
-                }
-            } else {
-                let current = selection.selected();
-                let n_items = selection.n_items();
-                if current + 1 < n_items {
-                    selection.set_selected(current + 1);
-                }
+    with_window(|w| {
+        let selection = &w.selection;
+        if get_config().selection_wrap {
+            let current = selection.selected();
+            let n_items = selection.n_items();
+            if n_items > 0 {
+                let next = if current + 1 >= n_items {
+                    0
+                } else {
+                    current + 1
+                };
+                selection.set_selected(next);
+            }
+        } else {
+            let current = selection.selected();
+            let n_items = selection.n_items();
+            if current + 1 < n_items {
+                selection.set_selected(current + 1);
             }
         }
     });
 }
 
 fn toggle_exact() {
-    with_input(|i| {
-        if let Some(cfg) = get_config() {
-            if i.text().starts_with(&cfg.exact_search_prefix) {
-                if let Some(t) = i.text().strip_prefix(&cfg.exact_search_prefix) {
-                    i.set_text(t);
-                    i.set_position(-1);
-                }
-            } else {
-                i.set_text(&format!("{}{}", cfg.exact_search_prefix, i.text()));
+    with_window(|w| {
+        let i = &w.input;
+        let cfg = get_config();
+        if i.text().starts_with(&cfg.exact_search_prefix) {
+            if let Some(t) = i.text().strip_prefix(&cfg.exact_search_prefix) {
+                i.set_text(t);
                 i.set_position(-1);
             }
+        } else {
+            i.set_text(&format!("{}{}", cfg.exact_search_prefix, i.text()));
+            i.set_position(-1);
         }
     });
 }
@@ -829,24 +811,23 @@ fn toggle_exact() {
 fn select_previous() {
     disable_mouse();
 
-    with_selection(|selection| {
-        if let Some(cfg) = get_config() {
-            if cfg.selection_wrap {
-                let current = selection.selected();
-                let n_items = selection.n_items();
-                if n_items > 0 {
-                    let prev = if current == 0 {
-                        n_items - 1
-                    } else {
-                        current - 1
-                    };
-                    selection.set_selected(prev);
-                }
-            } else {
-                let current = selection.selected();
-                if current > 0 {
-                    selection.set_selected(current - 1);
-                }
+    with_window(|w| {
+        let selection = &w.selection;
+        if get_config().selection_wrap {
+            let current = selection.selected();
+            let n_items = selection.n_items();
+            if n_items > 0 {
+                let prev = if current == 0 {
+                    n_items - 1
+                } else {
+                    current - 1
+                };
+                selection.set_selected(prev);
+            }
+        } else {
+            let current = selection.selected();
+            if current > 0 {
+                selection.set_selected(current - 1);
             }
         }
     });
@@ -870,12 +851,12 @@ fn setup_css(theme: String) {
         css = fs::read_to_string(&path).unwrap();
     }
 
-    with_css_provider(|p| {
-        p.load_from_string(&css);
+    with_window(|w| {
+        w.css_provider.load_from_string(&css);
     });
 }
 
-fn setup_css_provider() {
+fn setup_css_provider() -> CssProvider {
     let css_provider = CssProvider::new();
 
     gtk4::style_context_add_provider_for_display(
@@ -884,9 +865,7 @@ fn setup_css_provider() {
         gtk4::STYLE_PROVIDER_PRIORITY_USER,
     );
 
-    CSSPROVIDER.with(|s| {
-        *s.borrow_mut() = Some(css_provider.clone());
-    });
+    return css_provider;
 }
 
 fn start_theme_watcher(theme_name: String) {
@@ -939,116 +918,28 @@ fn setup_layer_shell(win: &Window) {
         return;
     }
 
-    if let Some(cfg) = get_config() {
-        win.init_layer_shell();
-        win.set_namespace(Some("walker"));
-        win.set_exclusive_zone(-1);
-        win.set_layer(Layer::Overlay);
-        win.set_keyboard_mode(KeyboardMode::OnDemand);
+    let cfg = get_config();
+    win.init_layer_shell();
+    win.set_namespace(Some("walker"));
+    win.set_exclusive_zone(-1);
+    win.set_layer(Layer::Overlay);
+    win.set_keyboard_mode(KeyboardMode::OnDemand);
 
-        win.set_anchor(Edge::Left, true);
-        win.set_anchor(Edge::Right, true);
-        win.set_anchor(Edge::Top, true);
-        win.set_anchor(Edge::Bottom, true);
-    }
-}
-
-pub fn with_selection<F, R>(f: F) -> Option<R>
-where
-    F: FnOnce(&SingleSelection) -> R,
-{
-    SELECTION.with(|s| s.borrow().as_ref().map(f))
-}
-
-pub fn with_list<F, R>(f: F) -> Option<R>
-where
-    F: FnOnce(&ListView) -> R,
-{
-    LIST.with(|s| s.borrow().as_ref().map(f))
-}
-
-pub fn with_store<F, R>(f: F) -> Option<R>
-where
-    F: FnOnce(&ListStore) -> R,
-{
-    STOREITEMS.with(|s| s.borrow().as_ref().map(f))
-}
-
-pub fn with_app<F, R>(f: F) -> Option<R>
-where
-    F: FnOnce(&Application) -> R,
-{
-    APP.with(|s| s.borrow().as_ref().map(f))
-}
-
-pub fn with_input<F, R>(f: F) -> Option<R>
-where
-    F: FnOnce(&Entry) -> R,
-{
-    INPUT.with(|s| s.borrow().as_ref().map(f))
-}
-
-pub fn with_placeholder<F, R>(f: F) -> Option<R>
-where
-    F: FnOnce(&Label) -> R,
-{
-    PLACEHOLDER.with(|s| s.borrow().as_ref().map(f))
-}
-
-pub fn with_keybinds<F, R>(f: F) -> Option<R>
-where
-    F: FnOnce(&Label) -> R,
-{
-    KEYBINDS.with(|s| s.borrow().as_ref().map(f))
-}
-
-pub fn with_windows<F, R>(f: F) -> Option<R>
-where
-    F: FnOnce(&Vec<Window>) -> R,
-{
-    WINDOWS.with(|s| s.borrow().as_ref().map(f))
-}
-
-pub fn with_css_provider<F, R>(f: F) -> Option<R>
-where
-    F: FnOnce(&CssProvider) -> R,
-{
-    CSSPROVIDER.with(|s| s.borrow().as_ref().map(f))
-}
-
-pub fn with_mouse_x<F, R>(f: F) -> Option<R>
-where
-    F: FnOnce(&mut f64) -> R,
-{
-    MOUSE_X.with(|s| {
-        let mut borrow = s.borrow_mut();
-        borrow.as_mut().map(f)
-    })
-}
-
-pub fn with_mouse_y<F, R>(f: F) -> Option<R>
-where
-    F: FnOnce(&mut f64) -> R,
-{
-    MOUSE_Y.with(|s| {
-        let mut borrow = s.borrow_mut();
-        borrow.as_mut().map(f)
-    })
+    win.set_anchor(Edge::Left, true);
+    win.set_anchor(Edge::Right, true);
+    win.set_anchor(Edge::Top, true);
+    win.set_anchor(Edge::Bottom, true);
 }
 
 fn get_selected_item() -> Option<Item> {
-    let result = with_selection(|selection| {
-        selection
-            .selected_item()?
-            .downcast::<QueryResponseObject>()
-            .ok()?
-            .response()
-            .item
-            .as_ref()
-            .cloned()
+    let result = with_window(|w| {
+        w.selection
+            .selected_item()
+            .and_then(|item| item.downcast::<QueryResponseObject>().ok())
+            .and_then(|obj| obj.response().item.as_ref().cloned())
     });
 
-    result.flatten()
+    return result;
 }
 
 fn handle_preview(builder: &Builder) {
@@ -1056,7 +947,8 @@ fn handle_preview(builder: &Builder) {
         if let Some(item) = get_selected_item() {
             if crate::preview::has_previewer(&item.provider) {
                 let builder = Builder::new();
-                let _ = builder.add_from_string(include_str!("../resources/preview_default.xml"));
+                let _ = builder
+                    .add_from_string(include_str!("../resources/themes/default/preview.xml"));
 
                 crate::preview::handle_preview(&item.provider, &item, &preview, &builder);
 
@@ -1071,124 +963,100 @@ fn handle_preview(builder: &Builder) {
 }
 
 fn disable_mouse() {
-    with_mouse_x(|x| {
-        with_mouse_y(|y| {
-            with_list(|l| {
-                *y = 0.0;
-                *x = 0.0;
-                l.set_can_target(false);
-            })
-        })
+    with_window(|w| {
+        w.mouse_x.set(0.0);
+        w.mouse_y.set(0.0);
+        w.list.set_can_target(false);
     });
 }
 
-fn set_keybinds_desktopapplications() {
-    with_keybinds(|k| {
-        if let Some(cfg) = get_config() {
-            let text = format!("start: {}", cfg.providers.desktopapplications.start);
-            k.set_text(&text);
-        }
-    });
+fn set_keybinds_desktopapplications(k: &Label) {
+    let text = format!(
+        "start: {}",
+        get_config().providers.desktopapplications.start
+    );
+    k.set_text(&text);
 }
 
-fn set_keybinds_clipboard() {
-    with_keybinds(|k| {
-        if let Some(cfg) = get_config() {
-            let text = format!(
-                "copy: {} - delete: {}",
-                cfg.providers.clipboard.copy, cfg.providers.clipboard.delete
-            );
-            k.set_text(&text);
-        }
-    });
+fn set_keybinds_clipboard(k: &Label) {
+    let cfg = get_config();
+    let text = format!(
+        "copy: {} - delete: {}",
+        cfg.providers.clipboard.copy, cfg.providers.clipboard.delete
+    );
+    k.set_text(&text);
 }
 
-fn set_keybinds_menus() {
-    with_keybinds(|k| {
-        if let Some(cfg) = get_config() {
-            let text = format!("activate: {}", cfg.providers.menus.activate);
-            k.set_text(&text);
-        }
-    });
+fn set_keybinds_menus(k: &Label) {
+    let cfg = get_config();
+    let text = format!("activate: {}", cfg.providers.menus.activate);
+    k.set_text(&text);
 }
 
-fn set_keybinds_calc() {
-    with_keybinds(|k| {
-        if let Some(cfg) = get_config() {
-            let text = format!(
-                "copy: {} - save: {} - delete: {}",
-                cfg.providers.calc.copy, cfg.providers.calc.save, cfg.providers.calc.delete
-            );
-            k.set_text(&text);
-        }
-    });
+fn set_keybinds_calc(k: &Label) {
+    let cfg = get_config();
+    let text = format!(
+        "copy: {} - save: {} - delete: {}",
+        cfg.providers.calc.copy, cfg.providers.calc.save, cfg.providers.calc.delete
+    );
+    k.set_text(&text);
 }
 
-fn set_keybinds_symbols() {
-    with_keybinds(|k| {
-        if let Some(cfg) = get_config() {
-            let text = format!("copy: {}", cfg.providers.symbols.copy,);
-            k.set_text(&text);
-        }
-    });
+fn set_keybinds_symbols(k: &Label) {
+    let cfg = get_config();
+    let text = format!("copy: {}", cfg.providers.symbols.copy,);
+    k.set_text(&text);
 }
 
-fn set_keybinds_providerlist() {
-    with_keybinds(|k| {
-        if let Some(cfg) = get_config() {
-            let text = format!("select: {}", cfg.providers.providerlist.activate);
-            k.set_text(&text);
-        }
-    });
+fn set_keybinds_providerlist(k: &Label) {
+    let cfg = get_config();
+    let text = format!("select: {}", cfg.providers.providerlist.activate);
+    k.set_text(&text);
 }
 
-fn set_keybinds_runner() {
-    with_keybinds(|k| {
-        if let Some(cfg) = get_config() {
-            let text = format!(
-                "run: {} - run in terminal: {}",
-                cfg.providers.runner.start, cfg.providers.runner.start_terminal
-            );
-            k.set_text(&text);
-        }
-    });
+fn set_keybinds_runner(k: &Label) {
+    let cfg = get_config();
+    let text = format!(
+        "run: {} - run in terminal: {}",
+        cfg.providers.runner.start, cfg.providers.runner.start_terminal
+    );
+    k.set_text(&text);
 }
 
-fn set_keybinds_files() {
-    with_keybinds(|k| {
-        if let Some(cfg) = get_config() {
-            let text = format!(
-                "open: {} - open dir: {} - copy: {} - copy path: {}",
-                cfg.providers.files.open,
-                cfg.providers.files.open_dir,
-                cfg.providers.files.copy_file,
-                cfg.providers.files.copy_path
-            );
-            k.set_text(&text);
-        }
-    });
+fn set_keybinds_files(k: &Label) {
+    let cfg = get_config();
+    let text = format!(
+        "open: {} - open dir: {} - copy: {} - copy path: {}",
+        cfg.providers.files.open,
+        cfg.providers.files.open_dir,
+        cfg.providers.files.copy_file,
+        cfg.providers.files.copy_path
+    );
+    k.set_text(&text);
 }
 
 fn set_keybind_hint() {
-    if let Some(item) = get_selected_item() {
-        match item.provider.as_str() {
-            "desktopapplications" => set_keybinds_desktopapplications(),
-            "files" => set_keybinds_files(),
-            "symbols" => set_keybinds_symbols(),
-            "calc" => set_keybinds_calc(),
-            "runner" => set_keybinds_runner(),
-            "providerlist" => set_keybinds_providerlist(),
-            "clipboard" => set_keybinds_clipboard(),
-            provider if provider.starts_with("menus:") => set_keybinds_menus(),
-            _ => clear_keybind_hint(),
+    with_window(|w| {
+        if let Some(k) = &w.keybinds {
+            if let Some(item) = get_selected_item() {
+                match item.provider.as_str() {
+                    "desktopapplications" => set_keybinds_desktopapplications(k),
+                    "files" => set_keybinds_files(k),
+                    "symbols" => set_keybinds_symbols(k),
+                    "calc" => set_keybinds_calc(k),
+                    "runner" => set_keybinds_runner(k),
+                    "providerlist" => set_keybinds_providerlist(k),
+                    "clipboard" => set_keybinds_clipboard(k),
+                    provider if provider.starts_with("menus:") => set_keybinds_menus(k),
+                    _ => clear_keybind_hint(k),
+                }
+            } else {
+                clear_keybind_hint(k);
+            }
         }
-    } else {
-        clear_keybind_hint();
-    }
+    });
 }
 
-fn clear_keybind_hint() {
-    with_keybinds(|k| {
-        k.set_text("");
-    });
+fn clear_keybind_hint(k: &Label) {
+    k.set_text("");
 }

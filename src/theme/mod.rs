@@ -246,7 +246,12 @@ pub fn setup_layer_shell(win: &Window) {
     win.set_namespace(Some("walker"));
     win.set_exclusive_zone(-1);
     win.set_layer(Layer::Overlay);
-    win.set_keyboard_mode(KeyboardMode::OnDemand);
+
+    if cfg.force_keyboard_focus {
+        win.set_keyboard_mode(KeyboardMode::Exclusive);
+    } else {
+        win.set_keyboard_mode(KeyboardMode::OnDemand);
+    }
 
     win.set_anchor(Edge::Left, cfg.shell.anchor_left);
     win.set_anchor(Edge::Right, cfg.shell.anchor_right);

@@ -15,6 +15,7 @@ Walker offers multiple provider types for different use cases:
 - **Symbol Picker**: Insert special symbols with `.` prefix
 - **Provider List**: Switch between providers with `;` prefix
 - **Menu Integration**: Create custom menus with elephant and let walker display them
+- **Dmenu**: Your good old dmenu ... with seamless menus!
 
 ## Installation
 
@@ -37,6 +38,8 @@ cargo build --release
 - GTK4 (version 4.6+)
 - gtk4-layer-shell
 - Protocol Buffers compiler
+- cairo
+- poppler-glib
 - make sure [elephant](https://github.com/abenz1267/elephant) is running before starting Walker
 
 ## Usage

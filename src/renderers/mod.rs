@@ -12,14 +12,14 @@ use std::sync::OnceLock;
 use std::{env, path::Path};
 
 thread_local! {
-    pub static TEXT_TRANSFORMERS: OnceLock<HashMap<String, fn(String, &Label)>> = OnceLock::new();
-    pub static SUBTEXT_TRANSFORMERS: OnceLock<HashMap<String, fn(String, &Label)>> = OnceLock::new();
-    pub static IMAGE_TRANSFORMERS: OnceLock<HashMap<String, fn(String, &Builder, &ListItem, &Item)>> = OnceLock::new();
+    pub static TEXT_TRANSFORMERS: OnceLock<HashMap<String, fn(&str, &Label)>> = OnceLock::new();
+    pub static SUBTEXT_TRANSFORMERS: OnceLock<HashMap<String, fn(&str, &Label)>> = OnceLock::new();
+    pub static IMAGE_TRANSFORMERS: OnceLock<HashMap<String, fn(&str, &Builder, &ListItem, &Item)>> = OnceLock::new();
 }
 
 pub fn with_text_transformers<F, R>(f: F) -> R
 where
-    F: FnOnce(&HashMap<String, fn(String, &Label)>) -> R,
+    F: FnOnce(&HashMap<String, fn(&str, &Label)>) -> R,
 {
     TEXT_TRANSFORMERS.with(|t| {
         let data = t.get().expect("Text transformers not initialized");
@@ -29,7 +29,7 @@ where
 
 pub fn with_image_transformers<F, R>(f: F) -> R
 where
-    F: FnOnce(&HashMap<String, fn(String, &Builder, &ListItem, &Item)>) -> R,
+    F: FnOnce(&HashMap<String, fn(&str, &Builder, &ListItem, &Item)>) -> R,
 {
     IMAGE_TRANSFORMERS.with(|t| {
         let data = t.get().expect("Image transformers not initialized");
@@ -39,7 +39,7 @@ where
 
 pub fn with_subtext_transformers<F, R>(f: F) -> R
 where
-    F: FnOnce(&HashMap<String, fn(String, &Label)>) -> R,
+    F: FnOnce(&HashMap<String, fn(&str, &Label)>) -> R,
 {
     SUBTEXT_TRANSFORMERS.with(|t| {
         let data = t.get().expect("Subtext transformers not initialized");
@@ -48,7 +48,7 @@ where
 }
 
 pub fn setup_item_transformers() {
-    let mut text: HashMap<String, fn(String, &Label)> = HashMap::new();
+    let mut text: HashMap<String, fn(&str, &Label)> = HashMap::new();
 
     text.insert("default".to_string(), default_text_transformer);
     text.insert("files".to_string(), files_text_transformer);
@@ -58,7 +58,7 @@ pub fn setup_item_transformers() {
         t.set(text).expect("Text transformers already initialized");
     });
 
-    let mut subtext: HashMap<String, fn(String, &Label)> = HashMap::new();
+    let mut subtext: HashMap<String, fn(&str, &Label)> = HashMap::new();
 
     subtext.insert("default".to_string(), default_subtext_transformer);
     subtext.insert("clipboard".to_string(), clipboard_subtext_transformer);
@@ -68,7 +68,7 @@ pub fn setup_item_transformers() {
             .expect("Text transformers already initialized");
     });
 
-    let mut image: HashMap<String, fn(String, &Builder, &ListItem, &Item)> = HashMap::new();
+    let mut image: HashMap<String, fn(&str, &Builder, &ListItem, &Item)> = HashMap::new();
     image.insert("default".to_string(), default_image_transformer);
     image.insert("clipboard".to_string(), clipboard_image_transformer);
     image.insert("symbols".to_string(), symbols_image_transformer);
@@ -80,7 +80,7 @@ pub fn setup_item_transformers() {
     });
 }
 
-fn default_image_transformer(img: String, b: &Builder, _: &ListItem, _: &Item) {
+fn default_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
         if !img.is_empty() {
             if Path::new(&img).is_absolute() {
@@ -92,7 +92,7 @@ fn default_image_transformer(img: String, b: &Builder, _: &ListItem, _: &Item) {
     }
 }
 
-fn calc_image_transformer(img: String, b: &Builder, li: &ListItem, _: &Item) {
+fn calc_image_transformer(img: &str, b: &Builder, li: &ListItem, _: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
         if li.position() == 0 {
             if !img.is_empty() {
@@ -108,7 +108,7 @@ fn calc_image_transformer(img: String, b: &Builder, li: &ListItem, _: &Item) {
     }
 }
 
-fn files_image_transformer(_: String, b: &Builder, _: &ListItem, item: &Item) {
+fn files_image_transformer(_: &str, b: &Builder, _: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
         let file = gio::File::for_path(&item.text);
         let image_weak = Downgrade::downgrade(&image);
@@ -134,7 +134,7 @@ fn files_image_transformer(_: String, b: &Builder, _: &ListItem, item: &Item) {
     }
 }
 
-fn symbols_image_transformer(img: String, b: &Builder, _: &ListItem, _: &Item) {
+fn symbols_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
     if let Some(image) = b.object::<Label>("ItemImage") {
         if !img.is_empty() {
             image.set_label(&img);
@@ -142,7 +142,7 @@ fn symbols_image_transformer(img: String, b: &Builder, _: &ListItem, _: &Item) {
     }
 }
 
-fn clipboard_image_transformer(img: String, b: &Builder, _: &ListItem, _: &Item) {
+fn clipboard_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
     if let Some(image) = b.object::<Picture>("ItemImage") {
         if !img.is_empty() {
             if Path::new(&img).is_absolute() {
@@ -160,7 +160,7 @@ fn clipboard_image_transformer(img: String, b: &Builder, _: &ListItem, _: &Item)
     }
 }
 
-fn files_text_transformer(text: String, label: &Label) {
+fn files_text_transformer(text: &str, label: &Label) {
     if let Ok(home) = env::var("HOME") {
         if let Some(stripped) = text.strip_prefix(&home) {
             label.set_label(stripped);
@@ -168,11 +168,11 @@ fn files_text_transformer(text: String, label: &Label) {
     }
 }
 
-fn clipboard_text_transformer(text: String, label: &Label) {
+fn clipboard_text_transformer(text: &str, label: &Label) {
     label.set_label(&text.trim());
 }
 
-fn default_text_transformer(text: String, label: &Label) {
+fn default_text_transformer(text: &str, label: &Label) {
     if text.is_empty() {
         label.set_visible(false);
     } else {
@@ -180,7 +180,7 @@ fn default_text_transformer(text: String, label: &Label) {
     }
 }
 
-fn default_subtext_transformer(text: String, label: &Label) {
+fn default_subtext_transformer(text: &str, label: &Label) {
     if text.is_empty() {
         label.set_visible(false);
     } else {
@@ -188,7 +188,7 @@ fn default_subtext_transformer(text: String, label: &Label) {
     }
 }
 
-fn clipboard_subtext_transformer(text: String, label: &Label) {
+fn clipboard_subtext_transformer(text: &str, label: &Label) {
     match DateTime::parse_from_rfc2822(&text) {
         Ok(dt) => {
             let formatted = dt
@@ -214,9 +214,9 @@ pub fn create_item(list_item: &ListItem, item: &Item, b: Builder) {
     if let Some(text) = b.object::<Label>("ItemText") {
         with_text_transformers(|t| {
             if let Some(t) = t.get(&item.provider) {
-                t(item.text.clone(), &text);
+                t(&item.text, &text);
             } else {
-                t.get("default").unwrap()(item.text.clone(), &text);
+                t.get("default").unwrap()(&item.text, &text);
             }
         });
     }
@@ -224,18 +224,18 @@ pub fn create_item(list_item: &ListItem, item: &Item, b: Builder) {
     if let Some(text) = b.object::<Label>("ItemSubtext") {
         with_subtext_transformers(|t| {
             if let Some(t) = t.get(&item.provider) {
-                t(item.subtext.clone(), &text);
+                t(&item.subtext, &text);
             } else {
-                t.get("default").unwrap()(item.subtext.clone(), &text);
+                t.get("default").unwrap()(&item.subtext, &text);
             }
         });
     }
 
     with_image_transformers(|t| {
         if let Some(t) = t.get(&item.provider) {
-            t(item.icon.clone(), &b, &list_item, &item);
+            t(&item.icon, &b, &list_item, &item);
         } else {
-            t.get("default").unwrap()(item.icon.clone(), &b, &list_item, &item);
+            t.get("default").unwrap()(&item.icon, &b, &list_item, &item);
         }
     });
 }

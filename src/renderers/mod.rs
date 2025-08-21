@@ -7,6 +7,7 @@ use gtk4::gio::prelude::FileExt;
 use gtk4::glib::clone::Downgrade;
 use gtk4::prelude::{ListItemExt, WidgetExt};
 use gtk4::{Box, Builder, DragSource, Image, Label, ListItem, Picture, gio, glib};
+use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 use std::sync::OnceLock;
 use std::{env, path::Path};
@@ -108,16 +109,29 @@ fn calc_image_transformer(img: &str, b: &Builder, li: &ListItem, _: &Item) {
     }
 }
 
-fn files_image_transformer(_: &str, b: &Builder, _: &ListItem, item: &Item) {
+fn files_image_transformer(_: &str, b: &Builder, list_item: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
         let file = gio::File::for_path(&item.text);
         let image_weak = Downgrade::downgrade(&image);
+        let list_item_weak = Downgrade::downgrade(list_item);
+        let cancellable = gio::Cancellable::new();
+        let cancellable_weak = Downgrade::downgrade(&cancellable);
+
+        if let Some(list_item) = list_item_weak.upgrade() {
+            list_item.connect_notify_local(Some("item"), move |list_item, _| {
+                if list_item.item().is_none() {
+                    if let Some(cancellable) = cancellable_weak.upgrade() {
+                        cancellable.cancel();
+                    }
+                }
+            });
+        }
 
         file.query_info_async(
             "standard::icon",
             gio::FileQueryInfoFlags::NONE,
             glib::Priority::DEFAULT,
-            gio::Cancellable::NONE,
+            Some(&cancellable),
             move |result| {
                 if let Some(image) = image_weak.upgrade() {
                     match result {

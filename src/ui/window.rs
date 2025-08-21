@@ -303,13 +303,14 @@ fn setup_list_behavior(ui: &WindowData) {
             .downcast_ref::<gtk4::ListItem>()
             .expect("failed casting to ListItem");
 
-        let child = item.child();
-        let itembox = child
-            .and_downcast_ref::<gtk4::Box>()
-            .expect("failed to cast to box");
-
-        while let Some(child) = itembox.first_child() {
-            itembox.remove(&child);
+        if let Some(child) = item.child() {
+            if let Some(itembox) = child.downcast_ref::<gtk4::Box>() {
+                while let Some(child) = itembox.first_child() {
+                    itembox.remove(&child);
+                }
+            }
+            
+            item.set_child(gtk4::Widget::NONE);
         }
     });
 

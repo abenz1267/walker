@@ -267,7 +267,7 @@ pub fn create_drag_source(text: &str) -> DragSource {
 
     drag_source.connect_drag_end(|_, _, _| {
         with_window(|w| {
-            quit(&w.app);
+            quit(&w.app, false);
         });
     });
 

@@ -54,9 +54,3 @@ pub fn clear_all_caches() {
         }
     });
 }
-
-pub fn clear_cache(provider: &str) {
-    get_previewer(provider, |handler| {
-        handler.clear_cache();
-    });
-}

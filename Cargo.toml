@@ -16,6 +16,7 @@ notify = "8.2.0"
 poppler-rs = "0.25.0"
 cairo-rs = "0.21.1"
 gdk-pixbuf = "0.21.1"
+nucleo-matcher = "0.3.1"
 
 [build-dependencies]
 protobuf-codegen = "3.4"

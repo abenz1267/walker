@@ -4,7 +4,6 @@ use std::{collections::HashMap, sync::OnceLock};
 
 static LOADED_CONFIG: OnceLock<Elephant> = OnceLock::new();
 const DEFAULT_CONFIG: &str = include_str!("../resources/config.toml");
-pub const DEFAULT_STYLE: &str = include_str!("../resources/themes/default/style.css");
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Elephant {
@@ -59,16 +58,6 @@ fn get_user_config_path() -> String {
         .unwrap_or_else(|| "~/.config/walker/config.toml".to_string())
 }
 
-pub fn get_user_theme_path() -> String {
-    dirs::config_dir()
-        .map(|mut path| {
-            path.push("walker");
-            path.push("themes");
-            path.to_string_lossy().to_string()
-        })
-        .unwrap_or_else(|| "~/.config/walker/themes/".to_string())
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Keybinds {
     pub close: String,
@@ -92,6 +81,7 @@ pub struct Providers {
     pub symbols: Symbols,
     pub menus: Menus,
     pub websearch: Websearch,
+    pub dmenu: Dmenu,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -125,6 +115,11 @@ pub struct DesktopApplications {
 pub struct Runner {
     pub start: String,
     pub start_terminal: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Dmenu {
+    pub select: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

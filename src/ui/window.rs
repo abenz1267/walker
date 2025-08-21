@@ -1,60 +1,38 @@
 use crate::{
-    QueryResponseObject,
+    GLOBAL_DMENU_SENDER, QueryResponseObject,
     config::get_config,
     data::{activate, input_changed},
     keybinds::{
         ACTION_CLOSE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS,
-        ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD, AFTER_CLOSE, AFTER_RELOAD, get_bind,
-        get_modifiers, get_provider_bind,
+        ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD, AFTER_CLOSE, AFTER_NOTHING, AFTER_RELOAD,
+        get_bind, get_modifiers, get_provider_bind,
     },
     renderers::create_item,
+    send_message,
     state::{WindowData, with_state},
     theme::{setup_layer_shell, with_themes},
 };
-use gtk4::prelude::{BoxExt, EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
+use gtk4::prelude::GtkWindowExt;
+use gtk4::prelude::WidgetExt;
+use gtk4::prelude::{EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
 use gtk4::{
-    Application, Builder, Entry, EventControllerKey, EventControllerMotion, Label, ListView,
-    ScrolledWindow, SignalListItemFactory, SingleSelection, Window,
+    Application, Builder, Entry, EventControllerKey, EventControllerMotion, Label, ScrolledWindow,
+    SignalListItemFactory, SingleSelection, Window,
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
     GridView,
     glib::object::{CastNone, ObjectExt},
 };
-use gtk4::{Image, Picture, prelude::GtkWindowExt};
-use gtk4::{ListItem, prelude::WidgetExt};
 use gtk4::{gio::ListStore, glib::object::Cast};
 use gtk4::{
     gio::prelude::{ApplicationExt, ListModelExt},
     prelude::GtkApplicationExt,
 };
-use std::{collections::HashMap, sync::OnceLock};
+use std::{collections::HashMap, process, sync::OnceLock};
 
 thread_local! {
     pub static WINDOWS: OnceLock<HashMap<String, WindowData>> = OnceLock::new();
-}
-
-pub fn with_windows<F, R>(f: F) -> R
-where
-    F: FnOnce(&HashMap<String, WindowData>) -> R,
-{
-    WINDOWS.with(|window| {
-        let data = window.get().expect("Window not initialized");
-        f(data)
-    })
-}
-
-pub fn with_window_mut<F, R>(f: F) -> R
-where
-    F: FnOnce(&WindowData) -> R,
-{
-    with_state(|s| {
-        WINDOWS.with(|windows| {
-            let windows_map = windows.get().unwrap();
-            let window_data = windows_map.get(&s.get_theme()).unwrap();
-            f(window_data)
-        })
-    })
 }
 
 pub fn with_window<F, R>(f: F) -> R
@@ -201,7 +179,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
     controller.connect_key_pressed(move |_, k, _, m| {
         if let Some(action) = get_bind(k, m) {
             match action.action.as_str() {
-                ACTION_CLOSE => quit(&app),
+                ACTION_CLOSE => quit(&app, true),
                 ACTION_SELECT_NEXT => select_next(),
                 ACTION_SELECT_PREVIOUS => select_previous(),
                 ACTION_TOGGLE_EXACT => toggle_exact(),
@@ -245,11 +223,17 @@ fn setup_keyboard_handling(ui: &WindowData) {
             if let Some(action) = get_provider_bind(&provider, k, m) {
                 activate(response, &w.input.text().to_string(), &action.action);
 
-                let after = if item_clone.identifier.starts_with("keepopen:") {
+                let mut after = if item_clone.identifier.starts_with("keepopen:") {
                     AFTER_CLEAR_RELOAD
                 } else {
                     action.after.as_str()
                 };
+
+                with_state(|s| {
+                    if s.is_dmenu_keep_open() && !s.is_dmenu_exit_after() {
+                        after = AFTER_NOTHING;
+                    }
+                });
 
                 let mut dont_close = false;
 
@@ -266,7 +250,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                         if dont_close {
                             select_next();
                         } else {
-                            quit(&app);
+                            quit(&app, false);
                         }
                         return true;
                     }
@@ -365,7 +349,13 @@ fn setup_mouse_handling(ui: &WindowData) {
     }
 }
 
-pub fn quit(app: &Application) {
+pub fn quit(app: &Application, cancelled: bool) {
+    GLOBAL_DMENU_SENDER.with(|sender| {
+        if sender.lock().unwrap().is_some() {
+            send_message("CNCLD".to_string()).unwrap();
+        }
+    });
+
     if app
         .flags()
         .contains(gtk4::gio::ApplicationFlags::IS_SERVICE)
@@ -392,6 +382,15 @@ pub fn quit(app: &Application) {
             s.set_no_search(false);
             s.is_visible.set(false);
 
+            if !s.is_dmenu_keep_open() {
+                s.set_is_dmenu(false);
+            }
+
+            if s.is_dmenu_exit_after() {
+                s.set_dmenu_exit_after(false);
+                s.set_dmenu_keep_open(false);
+            }
+
             with_window(|w| {
                 s.set_last_query(&w.input.text());
             });
@@ -411,6 +410,10 @@ pub fn quit(app: &Application) {
             });
         });
     } else {
+        if cancelled {
+            process::exit(130);
+        }
+
         app.quit();
     }
 }

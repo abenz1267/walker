@@ -114,7 +114,7 @@ impl PreviewHandler for FilesPreviewHandler {
 
         drag_source.connect_drag_end(|_, _, _| {
             with_window(|w| {
-                quit(&w.app);
+                quit(&w.app, false);
             });
         });
 

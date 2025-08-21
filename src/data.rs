@@ -1,12 +1,14 @@
 use crate::config::get_config;
-use crate::handle_preview;
 use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::state::with_state;
 use crate::ui::window::{set_keybind_hint, with_window};
+use crate::{QueryResponseObject, handle_preview, send_message};
 use gtk4::{glib, prelude::*};
+use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
+use nucleo_matcher::{Config, Matcher};
 use protobuf::Message;
 use std::io::{BufReader, Read, Write};
 use std::os::unix::net::UnixStream;
@@ -17,7 +19,78 @@ static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 
 pub fn input_changed(text: String) {
-    query(&text);
+    with_state(|s| {
+        if s.is_dmenu() {
+            sort_items_fuzzy(&text);
+        } else {
+            query(&text);
+        }
+    });
+}
+
+fn sort_items_fuzzy(query: &str) {
+    with_window(|w| {
+        let list_store = &w.items;
+
+        let mut items: Vec<QueryResponseObject> = Vec::new();
+        for i in 0..list_store.n_items() {
+            if let Some(item) = list_store.item(i) {
+                if let Ok(obj) = item.downcast::<QueryResponseObject>() {
+                    items.push(obj);
+                }
+            }
+        }
+
+        if query.is_empty() {
+            items.sort_by(|a, b| {
+                let score_a = a.response().item.as_ref().map(|i| i.score).unwrap_or(0);
+                let score_b = b.response().item.as_ref().map(|i| i.score).unwrap_or(0);
+                score_b.cmp(&score_a)
+            });
+        } else {
+            let texts: Vec<String> = items
+                .iter()
+                .map(|item| {
+                    item.response()
+                        .item
+                        .as_ref()
+                        .map(|i| i.text.clone())
+                        .unwrap_or_default()
+                })
+                .collect();
+
+            let mut matcher = Matcher::new(Config::DEFAULT.match_paths());
+            let pattern = Pattern::parse(query, CaseMatching::Ignore, Normalization::Smart);
+            let matches: Vec<(String, u32)> = pattern.match_list(texts, &mut matcher);
+
+            let score_map: std::collections::HashMap<&str, u32> = matches
+                .iter()
+                .map(|(text, score)| (text.as_str(), *score))
+                .collect();
+
+            items.sort_by(|a, b| {
+                let ra = a.response();
+                let text_a = ra.item.as_ref().map(|i| i.text.as_str()).unwrap_or("");
+                let rb = b.response();
+                let text_b = rb.item.as_ref().map(|i| i.text.as_str()).unwrap_or("");
+
+                let score_a = score_map.get(text_a);
+                let score_b = score_map.get(text_b);
+
+                match (score_a, score_b) {
+                    (Some(a), Some(b)) => b.cmp(a),              // Higher scores first
+                    (Some(_), None) => std::cmp::Ordering::Less, // Matched items first
+                    (None, Some(_)) => std::cmp::Ordering::Greater,
+                    (None, None) => text_a.cmp(text_b), // Alphabetical for non-matches
+                }
+            });
+        }
+
+        list_store.remove_all();
+        for item in items {
+            list_store.append(&item);
+        }
+    });
 }
 
 pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
@@ -277,6 +350,18 @@ fn query(text: &str) {
 }
 
 pub fn activate(item: QueryResponse, query: &str, action: &str) {
+    // handle dmenu
+    if item.item.provider == "dmenu" {
+        with_state(|s| {
+            if s.is_service() {
+                send_message(item.item.text.clone()).unwrap();
+            } else {
+                print!("{}", item.item.text.clone());
+            }
+        });
+        return;
+    }
+
     // handle switcher
     if item.item.provider == "providerlist" {
         with_state(|s| {

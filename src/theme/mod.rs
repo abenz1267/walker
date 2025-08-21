@@ -1,6 +1,5 @@
 use crate::config::get_config;
-use crate::state::{has_css_provider, set_css_provider, with_css_provider};
-use crate::ui::window::with_window;
+use crate::state::{set_css_provider, with_css_provider};
 use gtk4::gdk::Display;
 use gtk4::prelude::GtkWindowExt;
 use gtk4::{CssProvider, Window};

@@ -86,6 +86,9 @@ copy_file = "ctrl c"
 start = "enter"
 start_terminal = "shift enter"
 
+[providers.dmenu]
+select = "enter"
+
 [providers.symbols]
 copy = "enter"
 

@@ -199,10 +199,22 @@ impl FilePreview {
         while let Some(child) = self.preview_area.first_child() {
             if let Some(picture) = child.downcast_ref::<Picture>() {
                 picture.set_filename(Option::<&str>::None);
+                // Clear any paintable (includes PDF textures)
+                picture.set_paintable(gtk4::gdk::Paintable::NONE);
             }
 
             if let Some(image) = child.downcast_ref::<Image>() {
                 image.clear();
+            }
+
+            // Recursively clear any nested containers that might hold PDF widgets
+            if let Some(container) = child.downcast_ref::<gtk4::Box>() {
+                while let Some(nested_child) = container.first_child() {
+                    if let Some(nested_picture) = nested_child.downcast_ref::<Picture>() {
+                        nested_picture.set_paintable(gtk4::gdk::Paintable::NONE);
+                    }
+                    container.remove(&nested_child);
+                }
             }
 
             self.preview_area.remove(&child);
@@ -278,9 +290,16 @@ impl FilePreview {
         let target_width = 800.0;
         let display_scale = target_width / width;
 
-        let render_scale = display_scale * 2.0;
-        let render_width = (width * render_scale) as i32;
-        let render_height = (height * render_scale) as i32;
+        // Limit memory usage by capping the render scale and dimensions
+        let render_scale = (display_scale * 1.5).min(2.0); // Reduced from 2.0x and capped
+        let render_width = ((width * render_scale) as i32).min(1600); // Max 1600px wide
+        let render_height = ((height * render_scale) as i32).min(2400); // Max 2400px tall
+
+        // Check for reasonable memory usage (max ~15MB for ARGB32)
+        let estimated_size = (render_width * render_height * 4) as usize;
+        if estimated_size > 15 * 1024 * 1024 {
+            return Err("PDF page too large for preview".into());
+        }
 
         let mut surface =
             cairo::ImageSurface::create(cairo::Format::ARgb32, render_width, render_height)?;
@@ -304,18 +323,26 @@ impl FilePreview {
 
         let bytes = {
             let surface_data = surface.data()?;
+            
+            // Pre-allocate exact size needed
             let mut rgba_data = Vec::with_capacity(surface_data.len());
 
+            // Convert BGRA to RGBA in chunks to minimize temporary allocations
             for chunk in surface_data.chunks_exact(4) {
                 rgba_data.push(chunk[2]); // R
                 rgba_data.push(chunk[1]); // G
                 rgba_data.push(chunk[0]); // B
                 rgba_data.push(chunk[3]); // A
             }
-
+            
+            // Release surface_data mapping immediately
+            std::mem::drop(surface_data);
+            
             Bytes::from(&rgba_data)
+            // rgba_data is dropped here automatically
         };
 
+        // Explicitly drop surface to free Cairo memory
         std::mem::drop(surface);
 
         let texture = gtk4::gdk::MemoryTexture::new(

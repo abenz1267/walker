@@ -5,12 +5,10 @@ use chrono::DateTime;
 use gtk4::gdk::ContentProvider;
 use gtk4::gio::File;
 use gtk4::gio::prelude::FileExt;
-use gtk4::glib::clone::Downgrade;
 use gtk4::prelude::{ListItemExt, WidgetExt};
 use gtk4::{Box, Builder, DragSource, Image, Label, ListItem, Picture, gio, glib};
 use std::collections::HashMap;
 use std::sync::OnceLock;
-use std::sync::{Arc, Mutex};
 use std::{env, path::Path};
 
 thread_local! {
@@ -110,42 +108,21 @@ fn calc_image_transformer(img: &str, b: &Builder, li: &ListItem, _: &Item) {
     }
 }
 
-fn files_image_transformer(_: &str, b: &Builder, list_item: &ListItem, item: &Item) {
+fn files_image_transformer(_: &str, b: &Builder, _: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
         let file = gio::File::for_path(&item.text);
-        let image_weak = Downgrade::downgrade(&image);
-        let list_item_weak = Downgrade::downgrade(list_item);
-        let cancellable = gio::Cancellable::new();
-        let cancellable_weak = Downgrade::downgrade(&cancellable);
 
-        if let Some(list_item) = list_item_weak.upgrade() {
-            list_item.connect_notify_local(Some("item"), move |list_item, _| {
-                if list_item.item().is_none() {
-                    if let Some(cancellable) = cancellable_weak.upgrade() {
-                        cancellable.cancel();
-                    }
-                }
-            });
-        }
-
-        file.query_info_async(
+        let info = file.query_info(
             "standard::icon",
             gio::FileQueryInfoFlags::NONE,
-            glib::Priority::DEFAULT,
-            Some(&cancellable),
-            move |result| {
-                if let Some(image) = image_weak.upgrade() {
-                    match result {
-                        Ok(info) => {
-                            if let Some(icon) = info.icon() {
-                                image.set_from_gicon(&icon);
-                            }
-                        }
-                        Err(_) => {}
-                    }
-                }
-            },
+            gio::Cancellable::NONE,
         );
+
+        if let Ok(info) = info {
+            if let Some(icon) = info.icon() {
+                image.set_from_gicon(&icon);
+            }
+        }
     }
 }
 
@@ -231,7 +208,7 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
     list_item.set_child(Some(&itembox));
 
     if is_absolute_path(&item.text) {
-        itembox.add_controller(create_drag_source(item.text.clone()));
+        itembox.add_controller(create_drag_source(&item.text));
     }
 
     if let Some(text) = b.object::<Label>("ItemText") {
@@ -267,8 +244,9 @@ fn is_absolute_path(path: &str) -> bool {
     Path::new(path).is_absolute()
 }
 
-pub fn create_drag_source(text: String) -> DragSource {
+pub fn create_drag_source(text: &str) -> DragSource {
     let drag_source = DragSource::new();
+    let text = text.to_string();
     drag_source.connect_prepare(move |_, _, _| {
         let file = File::for_path(&text);
         let uri_string = format!("{}\n", file.uri());

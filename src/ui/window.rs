@@ -148,6 +148,9 @@ fn setup_window_behavior(ui: &WindowData) {
                 if let Some(k) = &w.keybinds {
                     clear_keybind_hint(k);
                 }
+
+                // Clear preview caches when no items are visible
+                crate::preview::clear_all_caches();
             } else {
                 if let Some(p) = &w.placeholder {
                     p.set_visible(false);
@@ -388,6 +391,19 @@ pub fn quit(app: &Application) {
         .contains(gtk4::gio::ApplicationFlags::IS_SERVICE)
     {
         app.active_window().unwrap().set_visible(false);
+
+        with_window(|w| {
+            if let Some(preview) = w.builder.object::<Box>("Preview") {
+                while let Some(child) = preview.first_child() {
+                    child.unparent();
+                }
+            }
+
+            w.preview_builder.borrow_mut().take();
+        });
+
+        // Clear all preview caches
+        crate::preview::clear_all_caches();
 
         with_state(|s| {
             s.set_provider("");

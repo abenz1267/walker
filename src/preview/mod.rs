@@ -10,6 +10,7 @@ use std::fmt::Debug;
 
 pub trait PreviewHandler: Debug {
     fn handle(&self, item: &Item, preview: &GtkBox, builder: &Builder);
+    fn clear_cache(&self) {}
 }
 
 thread_local! {
@@ -43,4 +44,19 @@ pub fn handle_preview(provider: &str, item: &Item, preview: &GtkBox, builder: &B
 
 pub fn has_previewer(provider: &str) -> bool {
     PREVIEWERS.with(|previewers| previewers.borrow().contains_key(provider))
+}
+
+pub fn clear_all_caches() {
+    PREVIEWERS.with(|previewers| {
+        let previewers = previewers.borrow();
+        for handler in previewers.values() {
+            handler.clear_cache();
+        }
+    });
+}
+
+pub fn clear_cache(provider: &str) {
+    get_previewer(provider, |handler| {
+        handler.clear_cache();
+    });
 }

@@ -30,11 +30,17 @@ impl FilesPreviewHandler {
 }
 
 impl PreviewHandler for FilesPreviewHandler {
+    fn clear_cache(&self) {
+        let mut cached_preview = self.cached_preview.borrow_mut();
+        if let Some(preview) = cached_preview.as_mut() {
+            preview.clear_preview();
+        }
+        *cached_preview = None;
+    }
     fn handle(&self, item: &Item, preview: &GtkBox, builder: &Builder) {
         let preview_clone = preview.clone();
         let builder_clone = builder.clone();
         let file_path = item.text.clone();
-
         let item_clone = item.clone();
 
         if !Path::new(&file_path).exists() {
@@ -49,6 +55,17 @@ impl PreviewHandler for FilesPreviewHandler {
             return;
         }
 
+        // Check if we need to clear cache for different file
+        {
+            let mut cached_preview = self.cached_preview.borrow_mut();
+            if let Some(existing) = cached_preview.as_ref() {
+                if existing.current_file != item.text {
+                    *cached_preview = None;
+                }
+            }
+        } // Drop the mutable borrow here
+
+        // Now borrow again for the actual work
         let mut cached_preview = self.cached_preview.borrow_mut();
         if cached_preview.is_none() {
             match FilePreview::new_with_builder(&builder_clone).or_else(|_| FilePreview::new()) {
@@ -180,6 +197,14 @@ impl FilePreview {
 
     fn clear_preview(&self) {
         while let Some(child) = self.preview_area.first_child() {
+            if let Some(picture) = child.downcast_ref::<Picture>() {
+                picture.set_filename(Option::<&str>::None);
+            }
+
+            if let Some(image) = child.downcast_ref::<Image>() {
+                image.clear();
+            }
+
             self.preview_area.remove(&child);
         }
     }
@@ -225,12 +250,8 @@ impl FilePreview {
 
         if let Some(page) = document.page(0) {
             match self.render_pdf_page(&page) {
-                Ok(page_widget) => {
-                    pdf.append(&page_widget);
-                }
-                Err(e) => {
-                    eprintln!("Failed to render PDF page: {}", e);
-                }
+                Ok(page_widget) => pdf.append(&page_widget),
+                Err(e) => eprintln!("Failed to render PDF page: {}", e),
             }
         }
 

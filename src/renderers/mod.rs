@@ -82,7 +82,6 @@ pub fn setup_item_transformers() {
 
 fn default_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
-        image.clear();
         if !img.is_empty() {
             if Path::new(&img).is_absolute() {
                 image.set_from_file(Some(&img));
@@ -234,13 +233,13 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
         });
     }
 
-    // with_image_transformers(|t| {
-    //     if let Some(t) = t.get(&item.provider) {
-    //         t(&item.icon, &b, &list_item, &item);
-    //     } else {
-    //         t.get("default").unwrap()(&item.icon, &b, &list_item, &item);
-    //     }
-    // });
+    with_image_transformers(|t| {
+        if let Some(t) = t.get(&item.provider) {
+            t(&item.icon, &b, &list_item, &item);
+        } else {
+            t.get("default").unwrap()(&item.icon, &b, &list_item, &item);
+        }
+    });
 }
 
 fn is_absolute_path(path: &str) -> bool {

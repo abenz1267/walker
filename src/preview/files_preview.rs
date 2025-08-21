@@ -4,7 +4,6 @@ use crate::ui::window::get_selected_item;
 use crate::{quit, with_window};
 use gtk4::gdk::ContentProvider;
 use gtk4::gio::File;
-use gtk4::glib::clone::Downgrade;
 use gtk4::glib::{self, Bytes};
 use gtk4::{
     Box as GtkBox, Builder, ContentFit, DragSource, Image, Orientation, Picture, PolicyType,
@@ -55,7 +54,6 @@ impl PreviewHandler for FilesPreviewHandler {
             return;
         }
 
-        // Check if we need to clear cache for different file
         {
             let mut cached_preview = self.cached_preview.borrow_mut();
             if let Some(existing) = cached_preview.as_ref() {
@@ -63,9 +61,8 @@ impl PreviewHandler for FilesPreviewHandler {
                     *cached_preview = None;
                 }
             }
-        } // Drop the mutable borrow here
+        }
 
-        // Now borrow again for the actual work
         let mut cached_preview = self.cached_preview.borrow_mut();
         if cached_preview.is_none() {
             match FilePreview::new_with_builder(&builder_clone).or_else(|_| FilePreview::new()) {
@@ -199,21 +196,40 @@ impl FilePreview {
         while let Some(child) = self.preview_area.first_child() {
             if let Some(picture) = child.downcast_ref::<Picture>() {
                 picture.set_filename(Option::<&str>::None);
-                // Clear any paintable (includes PDF textures)
                 picture.set_paintable(gtk4::gdk::Paintable::NONE);
             }
 
             if let Some(image) = child.downcast_ref::<Image>() {
                 image.clear();
+                image.set_icon_name(Option::<&str>::None);
             }
 
-            // Recursively clear any nested containers that might hold PDF widgets
             if let Some(container) = child.downcast_ref::<gtk4::Box>() {
                 while let Some(nested_child) = container.first_child() {
                     if let Some(nested_picture) = nested_child.downcast_ref::<Picture>() {
                         nested_picture.set_paintable(gtk4::gdk::Paintable::NONE);
                     }
+                    if let Some(nested_image) = nested_child.downcast_ref::<Image>() {
+                        nested_image.clear();
+                        nested_image.set_icon_name(Option::<&str>::None);
+                    }
                     container.remove(&nested_child);
+                }
+            }
+
+            if let Some(scrolled) = child.downcast_ref::<ScrolledWindow>() {
+                if let Some(scrolled_child) = scrolled.child() {
+                    if let Some(text_view) = scrolled_child.downcast_ref::<TextView>() {
+                        text_view.buffer().set_text("");
+                    }
+                    if let Some(picture) = scrolled_child.downcast_ref::<Picture>() {
+                        picture.set_filename(Option::<&str>::None);
+                        picture.set_paintable(gtk4::gdk::Paintable::NONE);
+                    }
+                    if let Some(image) = scrolled_child.downcast_ref::<Image>() {
+                        image.clear();
+                        image.set_icon_name(Option::<&str>::None);
+                    }
                 }
             }
 
@@ -290,12 +306,10 @@ impl FilePreview {
         let target_width = 800.0;
         let display_scale = target_width / width;
 
-        // Limit memory usage by capping the render scale and dimensions
-        let render_scale = (display_scale * 1.5).min(2.0); // Reduced from 2.0x and capped
-        let render_width = ((width * render_scale) as i32).min(1600); // Max 1600px wide
-        let render_height = ((height * render_scale) as i32).min(2400); // Max 2400px tall
+        let render_scale = (display_scale * 1.5).min(2.0);
+        let render_width = ((width * render_scale) as i32).min(1600);
+        let render_height = ((height * render_scale) as i32).min(2400);
 
-        // Check for reasonable memory usage (max ~15MB for ARGB32)
         let estimated_size = (render_width * render_height * 4) as usize;
         if estimated_size > 15 * 1024 * 1024 {
             return Err("PDF page too large for preview".into());
@@ -323,8 +337,7 @@ impl FilePreview {
 
         let bytes = {
             let surface_data = surface.data()?;
-            
-            // Pre-allocate exact size needed
+
             let mut rgba_data = Vec::with_capacity(surface_data.len());
 
             // Convert BGRA to RGBA in chunks to minimize temporary allocations
@@ -334,15 +347,12 @@ impl FilePreview {
                 rgba_data.push(chunk[0]); // B
                 rgba_data.push(chunk[3]); // A
             }
-            
-            // Release surface_data mapping immediately
+
             std::mem::drop(surface_data);
-            
+
             Bytes::from(&rgba_data)
-            // rgba_data is dropped here automatically
         };
 
-        // Explicitly drop surface to free Cairo memory
         std::mem::drop(surface);
 
         let texture = gtk4::gdk::MemoryTexture::new(
@@ -428,23 +438,20 @@ impl FilePreview {
         container.set_margin_end(20);
         container.set_size_request(250, 200);
 
-        let file = gio::File::for_path(file_path);
         let icon = Image::from_icon_name("text-x-generic");
         icon.set_icon_size(gtk4::IconSize::Large);
-        let icon_weak = Downgrade::downgrade(&icon);
 
-        let info = file.query_info(
+        // Try to get file-specific icon, but fallback gracefully to avoid memory issues
+        let file = gio::File::for_path(file_path);
+        if let Ok(info) = file.query_info(
             "standard::icon",
             gio::FileQueryInfoFlags::NONE,
             gio::Cancellable::NONE,
-        );
-
-        if let Ok(info) = info {
-            if let Some(image) = icon_weak.upgrade() {
-                if let Some(icon) = info.icon() {
-                    image.set_from_gicon(&icon);
-                }
+        ) {
+            if let Some(file_icon) = info.icon() {
+                icon.set_from_gicon(&file_icon);
             }
+            // Let info be dropped here to release any file metadata
         }
 
         container.append(&icon);

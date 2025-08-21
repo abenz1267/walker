@@ -160,7 +160,6 @@ fn clear_items() {
     with_window(|w| {
         w.items.remove_all();
     });
-    // Clear preview caches when clearing items (new query starting)
     crate::preview::clear_all_caches();
 }
 

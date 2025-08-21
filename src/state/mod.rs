@@ -50,7 +50,7 @@ impl AppState {
             provider: RefCell::new(String::new()),
             theme: RefCell::new("default".to_string()),
             placeholder: RefCell::new("default".to_string()),
-            initial_placeholder: RefCell::new("default".to_string()),
+            initial_placeholder: RefCell::new("".to_string()),
             last_query: RefCell::new(String::new()),
             is_service: Cell::new(false),
             is_visible: Cell::new(false),

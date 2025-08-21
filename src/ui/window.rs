@@ -395,9 +395,12 @@ pub fn quit(app: &Application, cancelled: bool) {
 
             with_window(|w| {
                 s.set_last_query(&w.input.text());
-                w.input
-                    .set_placeholder_text(Some(&s.get_initial_placeholder()));
-                s.set_initial_placeholder("");
+
+                if !s.get_initial_placeholder().is_empty() {
+                    w.input
+                        .set_placeholder_text(Some(&s.get_initial_placeholder()));
+                    s.set_initial_placeholder("");
+                }
             });
         });
 

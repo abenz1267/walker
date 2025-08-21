@@ -82,6 +82,7 @@ pub fn setup_item_transformers() {
 
 fn default_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
+        image.clear();
         if !img.is_empty() {
             if Path::new(&img).is_absolute() {
                 image.set_from_file(Some(&img));
@@ -136,6 +137,8 @@ fn symbols_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
 
 fn clipboard_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
     if let Some(image) = b.object::<Picture>("ItemImage") {
+        image.set_filename(Option::<&str>::None);
+
         if !img.is_empty() {
             if Path::new(&img).is_absolute() {
                 image.set_filename(Some(&img));

@@ -30,9 +30,12 @@ pub struct AppState {
     dmenu_exit_after: Cell<bool>,
     initial_height: Cell<i32>,
     initial_width: Cell<i32>,
+    dmenu_current: Cell<i64>,
     parameter_height: Cell<i32>,
     parameter_width: Cell<i32>,
     last_query: RefCell<String>,
+    placeholder: RefCell<String>,
+    initial_placeholder: RefCell<String>,
     provider: RefCell<String>,
     theme: RefCell<String>,
     is_service: Cell<bool>,
@@ -46,6 +49,8 @@ impl AppState {
         Self {
             provider: RefCell::new(String::new()),
             theme: RefCell::new("default".to_string()),
+            placeholder: RefCell::new("default".to_string()),
+            initial_placeholder: RefCell::new("default".to_string()),
             last_query: RefCell::new(String::new()),
             is_service: Cell::new(false),
             is_visible: Cell::new(false),
@@ -57,6 +62,7 @@ impl AppState {
             parameter_height: Cell::new(0),
             parameter_width: Cell::new(0),
             initial_width: Cell::new(0),
+            dmenu_current: Cell::new(0),
         }
     }
 
@@ -74,6 +80,22 @@ impl AppState {
 
     pub fn set_provider(&self, val: &str) {
         *self.provider.borrow_mut() = val.to_string();
+    }
+
+    pub fn get_initial_placeholder(&self) -> String {
+        self.initial_placeholder.borrow().clone()
+    }
+
+    pub fn set_initial_placeholder(&self, val: &str) {
+        *self.initial_placeholder.borrow_mut() = val.to_string();
+    }
+
+    pub fn get_placeholder(&self) -> String {
+        self.placeholder.borrow().clone()
+    }
+
+    pub fn set_placeholder(&self, val: &str) {
+        *self.placeholder.borrow_mut() = val.to_string();
     }
 
     pub fn get_last_query(&self) -> String {
@@ -162,6 +184,14 @@ impl AppState {
 
     pub fn get_parameter_width(&self) -> i32 {
         return self.parameter_width.get();
+    }
+
+    pub fn get_dmenu_current(&self) -> i64 {
+        return self.dmenu_current.get();
+    }
+
+    pub fn set_dmenu_current(&self, val: i64) {
+        return self.dmenu_current.set(val);
     }
 }
 

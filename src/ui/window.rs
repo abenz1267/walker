@@ -12,9 +12,9 @@ use crate::{
     state::{WindowData, with_state},
     theme::{setup_layer_shell, with_themes},
 };
-use gtk4::prelude::GtkWindowExt;
 use gtk4::prelude::WidgetExt;
 use gtk4::prelude::{EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
+use gtk4::prelude::{EntryExt, GtkWindowExt};
 use gtk4::{
     Application, Builder, Entry, EventControllerKey, EventControllerMotion, Label, ScrolledWindow,
     SignalListItemFactory, SingleSelection, Window,
@@ -380,7 +380,9 @@ pub fn quit(app: &Application, cancelled: bool) {
             s.set_parameter_height(0);
             s.set_parameter_width(0);
             s.set_no_search(false);
+            s.set_placeholder("");
             s.is_visible.set(false);
+            s.set_dmenu_current(0);
 
             if !s.is_dmenu_keep_open() {
                 s.set_is_dmenu(false);
@@ -393,6 +395,9 @@ pub fn quit(app: &Application, cancelled: bool) {
 
             with_window(|w| {
                 s.set_last_query(&w.input.text());
+                w.input
+                    .set_placeholder_text(Some(&s.get_initial_placeholder()));
+                s.set_initial_placeholder("");
             });
         });
 

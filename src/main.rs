@@ -12,7 +12,7 @@ use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual};
 use gtk4::glib::ControlFlow;
 use gtk4::glib::object::ObjectExt;
 use gtk4::glib::subclass::types::ObjectSubclassIsExt;
-use gtk4::prelude::{EntryExt, GtkWindowExt};
+use gtk4::prelude::{EditableExt, EntryExt, GtkWindowExt};
 
 use config::get_config;
 use state::{init_app_state, with_state};
@@ -125,11 +125,29 @@ fn main() -> glib::ExitCode {
     );
 
     app.add_main_option(
+        "placeholder",
+        b'i'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::String,
+        "input placeholder",
+        None,
+    );
+
+    app.add_main_option(
         "height",
         b'h'.into(),
         OptionFlags::NONE,
         glib::OptionArg::Int64,
         "forced height",
+        None,
+    );
+
+    app.add_main_option(
+        "current",
+        b'c'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::Int64,
+        "mark current value. dmenu only.",
         None,
     );
 
@@ -165,7 +183,7 @@ fn main() -> glib::ExitCode {
         b'k'.into(),
         OptionFlags::NONE,
         glib::OptionArg::None,
-        "keep walker open after selection. only when using service.",
+        "keep walker open after selection. only when using service. dmenu only.",
         None,
     );
 
@@ -174,7 +192,7 @@ fn main() -> glib::ExitCode {
         b'e'.into(),
         OptionFlags::NONE,
         glib::OptionArg::None,
-        "exit after this dmenu call. only when using service.",
+        "exit after this dmenu call. only when using service. dmenu only",
         None,
     );
 
@@ -216,10 +234,23 @@ fn main() -> glib::ExitCode {
             s.set_no_search(options.contains("nosearch"));
 
             if options.contains("dmenu") {
+                if options.contains("placeholder") {
+                    if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING))
+                    {
+                        s.set_placeholder(val.str().unwrap());
+                    }
+                }
+
                 if options.contains("keepopen")
                     && app.flags().contains(ApplicationFlags::IS_SERVICE)
                 {
                     s.set_dmenu_keep_open(true);
+                }
+
+                if options.contains("current") {
+                    if let Some(val) = options.lookup_value("current", Some(VariantTy::INT64)) {
+                        s.set_dmenu_current(val.get::<i64>().unwrap());
+                    }
                 }
 
                 s.set_dmenu_exit_after(options.contains("exit"));
@@ -241,6 +272,8 @@ fn main() -> glib::ExitCode {
                     let mut i = 0;
 
                     with_window(|w| {
+                        w.input.set_text("");
+
                         let items = &w.items;
                         items.remove_all();
 
@@ -321,6 +354,7 @@ fn main() -> glib::ExitCode {
     app.connect_activate(move |app| {
         with_state(|s| {
             let cfg = get_config();
+
             if cfg.close_when_open && s.is_visible() && !s.is_dmenu_keep_open() {
                 quit(app, false);
             } else if !s.is_dmenu_keep_open() || !s.is_visible() {
@@ -343,6 +377,14 @@ fn main() -> glib::ExitCode {
                                 .as_ref()
                                 .map(|p| p.set_text(&placeholder.list));
                         }
+                    }
+
+                    if !s.get_placeholder().is_empty() {
+                        if let Some(p) = w.input.placeholder_text() {
+                            s.set_initial_placeholder(&p);
+                        }
+
+                        w.input.set_placeholder_text(Some(&s.get_placeholder()));
                     }
 
                     if s.get_parameter_height() != 0 {
@@ -374,6 +416,11 @@ fn main() -> glib::ExitCode {
 
     app.connect_startup(move |app| {
         *hold_guard.borrow_mut() = Some(app.hold());
+
+        if !app.flags().contains(ApplicationFlags::IS_SERVICE) {
+            println!("make sure 'walker --gapplication-service' is running!");
+            process::exit(1);
+        }
 
         init_app_state();
         init_ui(app);

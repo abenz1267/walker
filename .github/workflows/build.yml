@@ -27,6 +27,7 @@ jobs:
           gobject-introspection \
           libgirepository1.0-dev \
           gtk-doc-tools \
+          libpoppler-glib-dev \
           valac
 
         # Install gtk4-layer-shell from source

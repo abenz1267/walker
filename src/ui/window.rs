@@ -309,7 +309,7 @@ fn setup_list_behavior(ui: &WindowData) {
                     itembox.remove(&child);
                 }
             }
-            
+
             item.set_child(gtk4::Widget::NONE);
         }
     });
@@ -330,15 +330,7 @@ fn setup_list_behavior(ui: &WindowData) {
             with_themes(|t| {
                 if let Some(theme) = t.get(&s.get_theme()) {
                     if let Some(i) = response.item.as_ref() {
-                        let b = Builder::new();
-
-                        if let Some(s) = theme.items.get(&i.provider) {
-                            let _ = b.add_from_string(s);
-                        } else {
-                            let _ = b.add_from_string(theme.items.get("default").unwrap());
-                        }
-
-                        create_item(&item, &i, b);
+                        create_item(&item, &i, theme);
                     }
                 }
             });

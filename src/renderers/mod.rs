@@ -1,3 +1,4 @@
+use crate::theme::Theme;
 use crate::ui::window::{quit, with_window};
 use crate::{config::get_config, protos::generated_proto::query::query_response::Item};
 use chrono::DateTime;
@@ -7,9 +8,9 @@ use gtk4::gio::prelude::FileExt;
 use gtk4::glib::clone::Downgrade;
 use gtk4::prelude::{ListItemExt, WidgetExt};
 use gtk4::{Box, Builder, DragSource, Image, Label, ListItem, Picture, gio, glib};
-use std::sync::{Arc, Mutex};
 use std::collections::HashMap;
 use std::sync::OnceLock;
+use std::sync::{Arc, Mutex};
 use std::{env, path::Path};
 
 thread_local! {
@@ -216,7 +217,15 @@ fn clipboard_subtext_transformer(text: &str, label: &Label) {
     }
 }
 
-pub fn create_item(list_item: &ListItem, item: &Item, b: Builder) {
+pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
+    let b = Builder::new();
+
+    if let Some(s) = theme.items.get(&item.provider) {
+        let _ = b.add_from_string(s);
+    } else {
+        let _ = b.add_from_string(theme.items.get("default").unwrap());
+    }
+
     let itembox: Box = b.object("ItemBox").expect("failed to get ItemBox");
     itembox.add_css_class(&item.provider);
     list_item.set_child(Some(&itembox));

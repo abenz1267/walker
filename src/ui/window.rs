@@ -11,7 +11,6 @@ use crate::{
     state::{WindowData, with_state},
     theme::{setup_layer_shell, with_themes},
 };
-use gtk4::prelude::WidgetExt;
 use gtk4::prelude::{BoxExt, EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
 use gtk4::{
     Application, Builder, Entry, EventControllerKey, EventControllerMotion, Label, ListView,
@@ -23,6 +22,7 @@ use gtk4::{
     glib::object::{CastNone, ObjectExt},
 };
 use gtk4::{Image, Picture, prelude::GtkWindowExt};
+use gtk4::{ListItem, prelude::WidgetExt};
 use gtk4::{gio::ListStore, glib::object::Cast};
 use gtk4::{
     gio::prelude::{ApplicationExt, ListModelExt},
@@ -307,27 +307,7 @@ fn setup_list_behavior(ui: &WindowData) {
             .downcast_ref::<gtk4::ListItem>()
             .expect("failed casting to ListItem");
 
-        if let Some(child) = item.child() {
-            if let Some(itembox) = child.downcast_ref::<gtk4::Box>() {
-                if let Some(image) = itembox
-                    .first_child()
-                    .and_then(|w| w.downcast::<Image>().ok())
-                {
-                    image.clear(); // Clear image content
-                }
-                if let Some(picture) = itembox
-                    .first_child()
-                    .and_then(|w| w.downcast::<Picture>().ok())
-                {
-                    picture.set_filename(Option::<&str>::None); // Clear picture content
-                }
-
-                while let Some(child) = itembox.first_child() {
-                    itembox.remove(&child);
-                }
-            }
-            item.set_child(gtk4::Widget::NONE);
-        }
+        item.set_child(None::<&gtk4::Widget>);
     });
 
     factory.connect_bind(|_, item| {

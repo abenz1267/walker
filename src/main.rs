@@ -437,12 +437,13 @@ fn init_ui(app: &Application) {
     }
 
     with_state(|s| {
-        if s.is_dmenu() {
+        if !s.is_dmenu() {
             println!("Waiting for elephant to start...");
         }
+
         wait_for_file("/tmp/elephant.sock");
 
-        if s.is_dmenu() {
+        if !s.is_dmenu() {
             println!("Elephant started!");
         }
     });

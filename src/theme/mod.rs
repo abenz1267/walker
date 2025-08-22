@@ -78,7 +78,7 @@ pub fn setup_themes() {
     let output = Command::new("elephant")
         .arg("listproviders")
         .output()
-        .unwrap();
+        .expect("couldn't run 'elephant'. Make sure it is installed.");
 
     let stdout = String::from_utf8(output.stdout).unwrap();
 

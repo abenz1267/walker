@@ -37,7 +37,7 @@ use crate::keybinds::setup_binds;
 use crate::protos::generated_proto::query::{QueryResponse, query_response};
 use crate::renderers::setup_item_transformers;
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
-use crate::ui::window::{handle_preview, quit, setup_window, with_window};
+use crate::ui::window::{WINDOWS, handle_preview, quit, setup_window, with_window};
 
 // GObject wrapper for QueryResponse
 mod imp {

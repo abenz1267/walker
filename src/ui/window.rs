@@ -42,7 +42,12 @@ where
     with_state(|s| {
         WINDOWS.with(|windows| {
             let windows_map = windows.get().unwrap();
-            windows_map.get(&s.get_theme()).map(f).unwrap()
+            let theme = s.get_theme();
+
+            windows_map.get(&theme).map(f).unwrap_or_else(|| {
+                println!("theme not found: {}", theme);
+                process::exit(130);
+            })
         })
     })
 }

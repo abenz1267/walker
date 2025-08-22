@@ -383,10 +383,7 @@ pub fn quit(app: &Application, cancelled: bool) {
             s.set_placeholder("");
             s.is_visible.set(false);
             s.set_dmenu_current(0);
-
-            if !s.is_dmenu_keep_open() {
-                s.set_is_dmenu(false);
-            }
+            s.set_is_dmenu(false);
 
             if s.is_dmenu_exit_after() {
                 s.set_dmenu_exit_after(false);

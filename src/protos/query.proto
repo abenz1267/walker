@@ -36,6 +36,7 @@ message QueryResponse {
 	FuzzyInfo fuzzyinfo = 7;
     Type type = 8;
     string mimetype = 9;
+    string preview = 10;
   }
 
    Item item = 3;

@@ -430,10 +430,10 @@ fn main() -> glib::ExitCode {
     app.connect_startup(move |app| {
         *hold_guard.borrow_mut() = Some(app.hold());
 
-        if !app.flags().contains(ApplicationFlags::IS_SERVICE) {
-            println!("make sure 'walker --gapplication-service' is running!");
-            process::exit(1);
-        }
+        // if !app.flags().contains(ApplicationFlags::IS_SERVICE) {
+        //     println!("make sure 'walker --gapplication-service' is running!");
+        //     process::exit(1);
+        // }
 
         init_app_state();
         init_ui(app);

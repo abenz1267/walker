@@ -39,7 +39,12 @@ impl PreviewHandler for FilesPreviewHandler {
     fn handle(&self, item: &Item, preview: &GtkBox, builder: &Builder) {
         let preview_clone = preview.clone();
         let builder_clone = builder.clone();
-        let file_path = item.text.clone();
+        let file_path = if item.preview.is_empty() {
+            item.text.clone()
+        } else {
+            item.preview.clone()
+        };
+
         let item_clone = item.clone();
 
         if !Path::new(&file_path).exists() {

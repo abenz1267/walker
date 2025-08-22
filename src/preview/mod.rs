@@ -21,6 +21,7 @@ pub fn load_previewers() {
     PREVIEWERS.with(|previewers| {
         let mut previewers = previewers.borrow_mut();
         previewers.insert("files".to_string(), Box::new(FilesPreviewHandler::new()));
+        previewers.insert("menus".to_string(), Box::new(FilesPreviewHandler::new()));
     });
 }
 

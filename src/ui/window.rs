@@ -549,8 +549,6 @@ pub fn handle_preview() {
                     };
 
                     crate::preview::handle_preview(&provider, &item, &preview, &builder);
-
-                    preview.set_visible(true);
                 } else {
                     preview.set_visible(false);
                 }

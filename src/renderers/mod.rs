@@ -90,6 +90,16 @@ fn default_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
                 image.set_icon_name(Some(&img));
             }
         }
+    } else if let Some(image) = b.object::<Picture>("ItemImage") {
+        image.set_filename(Option::<&str>::None);
+
+        if !img.is_empty() {
+            if Path::new(&img).is_absolute() {
+                image.set_filename(Some(&img));
+            } else {
+                image.set_filename(Some(&img));
+            }
+        }
     }
 }
 

@@ -17,7 +17,6 @@ use gtk4::prelude::{EditableExt, EntryExt, GtkWindowExt};
 use config::get_config;
 use state::{init_app_state, with_state};
 
-use std::process;
 use std::sync::{Mutex, mpsc};
 use std::time::Duration;
 use std::{path::Path, thread};
@@ -37,7 +36,7 @@ use crate::keybinds::setup_binds;
 use crate::protos::generated_proto::query::{QueryResponse, query_response};
 use crate::renderers::setup_item_transformers;
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
-use crate::ui::window::{WINDOWS, handle_preview, quit, setup_window, with_window};
+use crate::ui::window::{handle_preview, quit, setup_window, with_window};
 
 // GObject wrapper for QueryResponse
 mod imp {
@@ -226,8 +225,6 @@ fn main() -> glib::ExitCode {
                 if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
                     s.set_theme(val.str().unwrap());
                 }
-            } else {
-                s.set_theme("default");
             }
 
             if options.contains("height") {
@@ -459,21 +456,28 @@ fn init_ui(app: &Application) {
         if !s.is_dmenu() {
             println!("Elephant started!");
         }
-    });
 
-    config::load().unwrap();
-    preview::load_previewers();
-    setup_binds().unwrap();
+        config::load().unwrap();
 
-    init_socket().unwrap();
-    start_listening();
+        let theme = if get_config().theme.is_empty() {
+            "default"
+        } else {
+            &get_config().theme
+        };
 
-    setup_css_provider();
-    setup_themes();
-    setup_item_transformers();
-    setup_window(app);
+        s.set_theme(&theme);
 
-    with_state(|s| {
+        preview::load_previewers();
+        setup_binds().unwrap();
+
+        init_socket().unwrap();
+        start_listening();
+
+        setup_css_provider();
+        setup_themes();
+        setup_item_transformers();
+        setup_window(app);
+
         // start_theme_watcher(s.get_theme());
 
         with_window(|w| {

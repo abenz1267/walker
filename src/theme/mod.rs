@@ -85,7 +85,7 @@ pub fn setup_themes() {
     let mut providers: Vec<String> = stdout
         .lines()
         .filter_map(|line| {
-            line.split_once(':')
+            line.split_once(';')
                 .map(|(_, value)| format!("item_{}.xml", value.to_string()))
         })
         .collect();
@@ -159,7 +159,7 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
                     theme.preview = s;
                 }
             }
-            name if name.starts_with(".xml") && name.starts_with("item_") => {
+            name if name.ends_with(".xml") && name.starts_with("item_") => {
                 if let Some(s) = read_file(file) {
                     let key = name
                         .strip_prefix("item_")

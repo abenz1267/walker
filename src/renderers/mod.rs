@@ -91,15 +91,7 @@ fn default_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
             }
         }
     } else if let Some(image) = b.object::<Picture>("ItemImage") {
-        image.set_filename(Option::<&str>::None);
-
-        if !img.is_empty() {
-            if Path::new(&img).is_absolute() {
-                image.set_filename(Some(&img));
-            } else {
-                image.set_filename(Some(&img));
-            }
-        }
+        image.set_filename(Some(&img));
     }
 }
 
@@ -150,11 +142,7 @@ fn clipboard_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
         image.set_filename(Option::<&str>::None);
 
         if !img.is_empty() {
-            if Path::new(&img).is_absolute() {
-                image.set_filename(Some(&img));
-            } else {
-                image.set_filename(Some(&img));
-            }
+            image.set_filename(Some(&img));
 
             if let Some(text) = b.object::<Label>("ItemText") {
                 text.set_visible(false);

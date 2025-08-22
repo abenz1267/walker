@@ -41,6 +41,7 @@ pub struct AppState {
     is_service: Cell<bool>,
     no_search: Cell<bool>,
     is_dmenu: Cell<bool>,
+    is_param_close: Cell<bool>,
     pub(crate) is_visible: Cell<bool>,
 }
 
@@ -53,6 +54,7 @@ impl AppState {
             initial_placeholder: RefCell::new("".to_string()),
             last_query: RefCell::new(String::new()),
             is_service: Cell::new(false),
+            is_param_close: Cell::new(false),
             is_visible: Cell::new(false),
             no_search: Cell::new(false),
             is_dmenu: Cell::new(false),
@@ -116,6 +118,14 @@ impl AppState {
 
     pub fn set_is_visible(&self, val: bool) {
         self.is_visible.set(val);
+    }
+
+    pub fn is_param_close(&self) -> bool {
+        self.is_param_close.get()
+    }
+
+    pub fn set_param_close(&self, val: bool) {
+        self.is_param_close.set(val);
     }
 
     pub fn is_dmenu_keep_open(&self) -> bool {

@@ -370,12 +370,29 @@ pub fn activate(item: QueryResponse, query: &str, action: &str) {
         return;
     }
 
+    let cfg = get_config();
+
+    let mut arguments = query;
+
+    for prefix in &cfg.providers.prefixes {
+        if item.item.provider == prefix.provider && arguments.starts_with(&prefix.prefix) {
+            arguments = arguments
+                .strip_prefix(&prefix.prefix)
+                .expect("couldn't trim prefix");
+            break;
+        }
+    }
+
+    if let Some(stripped) = arguments.strip_prefix(&cfg.exact_search_prefix) {
+        arguments = stripped;
+    }
+
     let mut req = ActivateRequest::new();
     req.qid = item.qid;
     req.provider = item.item.provider.clone();
     req.identifier = item.item.identifier.clone();
     req.action = action.to_string();
-    req.arguments = query.to_string();
+    req.arguments = arguments.to_string();
 
     let payload = req.write_to_bytes().unwrap();
 

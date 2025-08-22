@@ -179,6 +179,15 @@ fn main() -> glib::ExitCode {
     );
 
     app.add_main_option(
+        "close",
+        b'q'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::None,
+        "closes walker when open",
+        None,
+    );
+
+    app.add_main_option(
         "keepopen",
         b'k'.into(),
         OptionFlags::NONE,
@@ -210,6 +219,8 @@ fn main() -> glib::ExitCode {
                     s.set_provider(val.str().unwrap());
                 }
             }
+
+            s.set_param_close(options.contains("close"));
 
             if options.contains("theme") {
                 if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
@@ -355,7 +366,9 @@ fn main() -> glib::ExitCode {
         with_state(|s| {
             let cfg = get_config();
 
-            if cfg.close_when_open && s.is_visible() && !s.is_dmenu_keep_open() {
+            if (cfg.close_when_open && s.is_visible() && !s.is_dmenu_keep_open())
+                || s.is_param_close()
+            {
                 quit(app, false);
             } else if !s.is_dmenu_keep_open() || !s.is_visible() {
                 let provider = s.get_provider();

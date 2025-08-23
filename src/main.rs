@@ -208,7 +208,7 @@ fn main() -> glib::ExitCode {
         let options = cmd.options_dict();
 
         if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-7\n");
+            cmd.print_literal("1.0.0-beta-8\n");
             return 0;
         }
 
@@ -335,7 +335,7 @@ fn main() -> glib::ExitCode {
                                     "CNCLD" => {
                                         cmd_clone.set_exit_status(130);
                                     }
-                                    msg => cmd_clone.print_literal(msg),
+                                    msg => cmd_clone.print_literal(&format!("{}\n", msg)),
                                 };
 
                                 GLOBAL_DMENU_SENDER.with(|s| {
@@ -464,16 +464,6 @@ fn init_ui(app: &Application) {
     }
 
     with_state(|s| {
-        if !s.is_dmenu() {
-            println!("Waiting for elephant to start...");
-        }
-
-        wait_for_file("/tmp/elephant.sock");
-
-        if !s.is_dmenu() {
-            println!("Elephant started!");
-        }
-
         config::load().unwrap();
 
         let theme = if get_config().theme.is_empty() {

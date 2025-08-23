@@ -359,7 +359,7 @@ pub fn activate(item: QueryResponse, query: &str, action: &str) {
             if s.is_service() {
                 send_message(item.item.text.clone()).unwrap();
             } else {
-                print!("{}", item.item.text.clone());
+                println!("{}", item.item.text.clone());
             }
         });
         return;

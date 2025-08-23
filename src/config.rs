@@ -86,16 +86,19 @@ pub struct Providers {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Websearch {
+    pub click: String,
     pub search: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Menus {
+    pub click: String,
     pub activate: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Calc {
+    pub click: String,
     pub copy: String,
     pub save: String,
     pub delete: String,
@@ -103,32 +106,38 @@ pub struct Calc {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Providerlist {
+    pub click: String,
     pub activate: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DesktopApplications {
+    pub click: String,
     pub start: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Runner {
+    pub click: String,
     pub start: String,
     pub start_terminal: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Dmenu {
+    pub click: String,
     pub select: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Symbols {
+    pub click: String,
     pub copy: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Files {
+    pub click: String,
     pub open: String,
     pub open_dir: String,
     pub copy_path: String,
@@ -143,6 +152,7 @@ pub struct Prefix {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Clipboard {
+    pub click: String,
     pub time_format: String,
     pub copy: String,
     pub delete: String,

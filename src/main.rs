@@ -208,7 +208,7 @@ fn main() -> glib::ExitCode {
         let options = cmd.options_dict();
 
         if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-6\n");
+            cmd.print_literal("1.0.0-beta-7\n");
             return 0;
         }
 

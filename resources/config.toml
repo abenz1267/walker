@@ -58,39 +58,49 @@ prefix = ":"
 provider = "clipboard"
 
 [providers.calc]
+click = "copy"
 copy = "enter"
 save = "ctrl s"
 delete = "ctrl d"
 
 [providers.websearch]
+click = "search"
 search = "enter"
 
 [providers.providerlist]
+click = "activate"
 activate = "enter"
 
 [providers.clipboard]
 time_format = "%d.%m. - %H:%M" # format for the clipboard item date
+click = "copy"
 copy = "enter"
 delete = "ctrl d"
 
 [providers.desktopapplications]
+click = "start"
 start = "enter"
 
 [providers.files]
+click = "open"
 open = "enter"
 open_dir = "ctrl enter"
 copy_path = "ctrl shift C"
 copy_file = "ctrl c"
 
 [providers.runner]
+click = "start"
 start = "enter"
 start_terminal = "shift enter"
 
 [providers.dmenu]
+click = "select"
 select = "enter"
 
 [providers.symbols]
+click = "copy"
 copy = "enter"
 
 [providers.menus]
+click = "activate"
 activate = "enter"

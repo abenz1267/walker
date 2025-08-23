@@ -16,7 +16,9 @@ use gtk4::prelude::{EditableExt, EntryExt, GtkWindowExt};
 
 use config::get_config;
 use state::{init_app_state, with_state};
+use which::which;
 
+use std::env;
 use std::sync::{Mutex, mpsc};
 use std::time::Duration;
 use std::{path::Path, thread};
@@ -208,7 +210,7 @@ fn main() -> glib::ExitCode {
         let options = cmd.options_dict();
 
         if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-8\n");
+            cmd.print_literal("1.0.0-beta-9\n");
             return 0;
         }
 
@@ -457,13 +459,11 @@ fn main() -> glib::ExitCode {
 }
 
 fn init_ui(app: &Application) {
-    if app.flags().contains(ApplicationFlags::IS_SERVICE) {
-        with_state(|s| {
-            s.set_is_service(true);
-        });
-    }
-
     with_state(|s| {
+        if app.flags().contains(ApplicationFlags::IS_SERVICE) {
+            s.set_is_service(true);
+        }
+
         config::load().unwrap();
 
         let theme = if get_config().theme.is_empty() {
@@ -477,8 +477,21 @@ fn init_ui(app: &Application) {
         preview::load_previewers();
         setup_binds().unwrap();
 
-        init_socket().unwrap();
-        start_listening();
+        let args: Vec<String> = env::args().collect();
+
+        let mut dmenu = false;
+
+        if args.contains(&"--dmenu".to_string()) || args.contains(&"-d".to_string()) {
+            dmenu = true;
+        }
+
+        if which("elephant").is_ok() && !dmenu {
+            println!("waiting for elephant to start...");
+            wait_for_file("/tmp/elephant.sock");
+            println!("connecting to elephant...");
+            init_socket().unwrap();
+            start_listening();
+        }
 
         setup_css_provider();
         setup_themes();

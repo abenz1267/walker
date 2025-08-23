@@ -398,13 +398,19 @@ fn main() -> glib::ExitCode {
                     }
 
                     if s.get_parameter_height() != 0 {
-                        w.scroll.set_min_content_height(s.get_parameter_height());
+                        s.set_initial_height(w.scroll.max_content_height());
                         w.scroll.set_max_content_height(s.get_parameter_height());
+                        w.scroll.set_min_content_height(s.get_parameter_height());
+                    } else {
+                        s.set_initial_height(0);
                     }
 
                     if s.get_parameter_width() != 0 {
-                        w.scroll.set_min_content_width(s.get_parameter_width());
+                        s.set_initial_width(w.scroll.max_content_width());
                         w.scroll.set_max_content_width(s.get_parameter_width());
+                        w.scroll.set_min_content_width(s.get_parameter_width());
+                    } else {
+                        s.set_initial_width(0);
                     }
 
                     if s.is_no_search() {
@@ -479,11 +485,6 @@ fn init_ui(app: &Application) {
         setup_window(app);
 
         // start_theme_watcher(s.get_theme());
-
-        with_window(|w| {
-            s.set_initial_width(w.scroll.max_content_width());
-            s.set_initial_height(w.scroll.max_content_height());
-        });
     });
 }
 

@@ -411,11 +411,19 @@ pub fn quit(app: &Application, cancelled: bool) {
                 w.search_container.set_visible(true);
                 w.input.set_text("");
                 w.input.emit_by_name::<()>("changed", &[]);
+
                 with_state(|s| {
-                    w.scroll.set_max_content_height(s.get_initial_height());
-                    w.scroll.set_min_content_height(s.get_initial_height());
-                    w.scroll.set_max_content_width(s.get_initial_width());
-                    w.scroll.set_min_content_width(s.get_initial_width());
+                    if s.get_initial_height() != 0 {
+                        w.scroll.set_min_content_height(s.get_initial_height());
+                        w.scroll.set_max_content_height(s.get_initial_height());
+                    }
+
+                    if s.get_initial_width() != 0 {
+                        w.scroll.set_min_content_width(s.get_initial_width());
+                        w.scroll.set_max_content_width(s.get_initial_width());
+                    }
+
+                    s.set_theme("default");
                 });
             });
         });

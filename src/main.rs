@@ -118,7 +118,7 @@ fn main() -> glib::ExitCode {
 
     app.add_main_option(
         "provider",
-        b'p'.into(),
+        b'm'.into(),
         OptionFlags::NONE,
         glib::OptionArg::String,
         "exclusive provider to query",
@@ -127,7 +127,7 @@ fn main() -> glib::ExitCode {
 
     app.add_main_option(
         "placeholder",
-        b'i'.into(),
+        b'p'.into(),
         OptionFlags::NONE,
         glib::OptionArg::String,
         "input placeholder",
@@ -210,7 +210,7 @@ fn main() -> glib::ExitCode {
         let options = cmd.options_dict();
 
         if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-9\n");
+            cmd.print_literal("1.0.0-beta-10\n");
             return 0;
         }
 

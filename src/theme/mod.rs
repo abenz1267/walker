@@ -9,7 +9,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Command;
 use std::sync::{OnceLock, mpsc};
-use std::{fs, thread};
+use std::{env, fs, thread};
 
 thread_local! {
     pub static THEMES: OnceLock<HashMap<String, Theme>> = OnceLock::new();
@@ -146,7 +146,9 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
             }
             "style.css" => {
                 if let Some(s) = read_file(file) {
-                    theme.css = s;
+                    if let Ok(home) = env::var("HOME") {
+                        theme.css = s.replace("~", &home);
+                    }
                 }
             }
             "layout.xml" => {

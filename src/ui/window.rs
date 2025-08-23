@@ -441,7 +441,7 @@ pub fn quit(app: &Application, cancelled: bool) {
                         w.scroll.set_max_content_width(s.get_initial_width());
                     }
 
-                    s.set_theme("default");
+                    s.set_theme(&get_config().theme);
                 });
             });
         });

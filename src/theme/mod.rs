@@ -72,7 +72,9 @@ pub fn setup_themes() {
 
     let mut paths = vec![path.to_string_lossy().to_string()];
     if let Some(a) = &get_config().additional_theme_location {
-        paths.push(a.to_string());
+        if let Ok(home) = env::var("HOME") {
+            paths.push(a.replace("~", &home).to_string());
+        }
     }
 
     let output = Command::new("elephant")

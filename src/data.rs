@@ -18,12 +18,12 @@ use std::thread;
 static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 
-pub fn input_changed(text: String) {
+pub fn input_changed(text: &str) {
     with_state(|s| {
         if s.is_dmenu() {
             sort_items_fuzzy(&text);
         } else {
-            query(&text);
+            query(text);
         }
     });
 }
@@ -154,8 +154,11 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
 
                 glib::idle_add_once(|| {
                     with_window(|w| {
-                        w.input.set_text("");
-                        w.input.emit_by_name::<()>("changed", &[]);
+                        if let Some(input) = &w.input {
+                            input.set_text("");
+                            input.emit_by_name::<()>("changed", &[]);
+                        }
+
                         w.window.present();
                     });
 

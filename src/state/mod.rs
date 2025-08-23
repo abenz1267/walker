@@ -215,12 +215,12 @@ pub struct WindowData {
     pub window: Window,
     pub selection: SingleSelection,
     pub list: GridView,
-    pub input: Entry,
+    pub input: Option<Entry>,
     pub items: ListStore,
     pub placeholder: Option<Label>,
     pub keybinds: Option<Label>,
     pub scroll: ScrolledWindow,
-    pub search_container: gtk4::Box,
+    pub search_container: Option<gtk4::Box>,
 }
 
 pub fn init_app_state() {

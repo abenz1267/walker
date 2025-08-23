@@ -29,7 +29,7 @@ use gtk4::{
     gio::prelude::{ApplicationExt, ListModelExt},
     prelude::GtkApplicationExt,
 };
-use std::{collections::HashMap, process, sync::OnceLock};
+use std::{clone, collections::HashMap, process, sync::OnceLock};
 
 thread_local! {
     pub static WINDOWS: OnceLock<HashMap<String, WindowData>> = OnceLock::new();
@@ -63,7 +63,7 @@ pub fn setup_window(app: &Application) {
             let window: Window = builder
                 .object("Window")
                 .expect("Couldn't get 'Window' from UI file");
-            let input: Entry = builder.object("Input").unwrap();
+            let input: Option<Entry> = builder.object("Input");
             let scroll: ScrolledWindow = builder
                 .object("Scroll")
                 .expect("can't get scroll from layout");
@@ -72,9 +72,7 @@ pub fn setup_window(app: &Application) {
             let placeholder: Option<Label> = builder.object("Placeholder");
             let keybinds: Option<Label> = builder.object("Keybinds");
             let selection = SingleSelection::new(Some(items.clone()));
-            let search_container: Box = builder
-                .object("SearchContainer")
-                .expect("search container not found");
+            let search_container: Option<Box> = builder.object("SearchContainer");
 
             let ui = WindowData {
                 search_container,
@@ -94,7 +92,11 @@ pub fn setup_window(app: &Application) {
             };
 
             setup_window_behavior(&ui);
-            setup_input_handling(&ui);
+
+            if let Some(input) = &ui.input {
+                setup_input_handling(input);
+            }
+
             setup_keyboard_handling(&ui);
             setup_list_behavior(&ui);
             setup_mouse_handling(&ui);
@@ -163,14 +165,14 @@ fn setup_window_behavior(ui: &WindowData) {
     });
 }
 
-fn setup_input_handling(ui: &WindowData) {
-    ui.input.connect_changed(move |input| {
+fn setup_input_handling(input: &Entry) {
+    input.connect_changed(move |input| {
         disable_mouse();
 
         let text = input.text().to_string();
 
         if !text.contains(&get_config().global_argument_delimiter) {
-            input_changed(text);
+            input_changed(&text);
         }
     });
 }
@@ -226,7 +228,13 @@ fn setup_keyboard_handling(ui: &WindowData) {
             }
 
             if let Some(action) = get_provider_bind(&provider, k, m) {
-                activate(response, &w.input.text().to_string(), &action.action);
+                let query = if let Some(input) = &w.input {
+                    input.text().to_string()
+                } else {
+                    String::new()
+                };
+
+                activate(response, &query, &action.action);
 
                 let mut after = if item_clone.identifier.starts_with("keepopen:") {
                     AFTER_CLEAR_RELOAD
@@ -261,14 +269,16 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     }
                     AFTER_CLEAR_RELOAD => {
                         with_window(|w| {
-                            if w.input.text().is_empty() {
-                                w.input.emit_by_name::<()>("changed", &[]);
-                            } else {
-                                w.input.set_text("");
+                            if let Some(input) = &w.input {
+                                if input.text().is_empty() {
+                                    input.emit_by_name::<()>("changed", &[]);
+                                } else {
+                                    input.set_text("");
+                                }
                             }
                         });
                     }
-                    AFTER_RELOAD => crate::data::input_changed(w.input.text().to_string()),
+                    AFTER_RELOAD => crate::data::input_changed(&query),
                     _ => {}
                 }
 
@@ -329,7 +339,10 @@ fn setup_list_behavior(ui: &WindowData) {
 fn setup_mouse_handling(ui: &WindowData) {
     if get_config().disable_mouse {
         ui.list.set_can_target(false);
-        ui.input.set_can_target(false);
+
+        if let Some(input) = &ui.input {
+            input.set_can_target(false);
+        }
     } else {
         ui.list.set_single_click_activate(true);
 
@@ -396,21 +409,26 @@ pub fn quit(app: &Application, cancelled: bool) {
             }
 
             with_window(|w| {
-                s.set_last_query(&w.input.text());
-
-                if !s.get_initial_placeholder().is_empty() {
-                    w.input
-                        .set_placeholder_text(Some(&s.get_initial_placeholder()));
-                    s.set_initial_placeholder("");
+                if let Some(input) = &w.input {
+                    s.set_last_query(&input.text());
+                    if !s.get_initial_placeholder().is_empty() {
+                        input.set_placeholder_text(Some(&s.get_initial_placeholder()));
+                        s.set_initial_placeholder("");
+                    }
                 }
             });
         });
 
         gtk4::glib::idle_add_once(|| {
             with_window(|w| {
-                w.search_container.set_visible(true);
-                w.input.set_text("");
-                w.input.emit_by_name::<()>("changed", &[]);
+                if let Some(search_container) = &w.search_container {
+                    search_container.set_visible(true);
+                }
+
+                if let Some(input) = &w.input {
+                    input.set_text("");
+                    input.emit_by_name::<()>("changed", &[]);
+                }
 
                 with_state(|s| {
                     if s.get_initial_height() != 0 {
@@ -491,8 +509,10 @@ fn resume_last_query() {
     with_window(|w| {
         with_state(|s| {
             if !s.get_last_query().is_empty() {
-                w.input.set_text(&s.get_last_query());
-                w.input.set_position(-1);
+                if let Some(input) = &w.input {
+                    input.set_text(&s.get_last_query());
+                    input.set_position(-1);
+                }
             }
         });
     });
@@ -500,16 +520,17 @@ fn resume_last_query() {
 
 pub fn toggle_exact() {
     with_window(|w| {
-        let i = &w.input;
-        let cfg = get_config();
-        if i.text().starts_with(&cfg.exact_search_prefix) {
-            if let Some(t) = i.text().strip_prefix(&cfg.exact_search_prefix) {
-                i.set_text(t);
+        if let Some(i) = &w.input {
+            let cfg = get_config();
+            if i.text().starts_with(&cfg.exact_search_prefix) {
+                if let Some(t) = i.text().strip_prefix(&cfg.exact_search_prefix) {
+                    i.set_text(t);
+                    i.set_position(-1);
+                }
+            } else {
+                i.set_text(&format!("{}{}", cfg.exact_search_prefix, i.text()));
                 i.set_position(-1);
             }
-        } else {
-            i.set_text(&format!("{}{}", cfg.exact_search_prefix, i.text()));
-            i.set_position(-1);
         }
     });
 }

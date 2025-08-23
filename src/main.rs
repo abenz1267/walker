@@ -280,7 +280,9 @@ fn main() -> glib::ExitCode {
                     let mut i = 0;
 
                     with_window(|w| {
-                        w.input.set_text("");
+                        if let Some(input) = &w.input {
+                            input.set_text("");
+                        }
 
                         let items = &w.items;
                         items.remove_all();
@@ -382,7 +384,10 @@ fn main() -> glib::ExitCode {
                 with_window(|w| {
                     if let Some(placeholders) = &cfg.placeholders {
                         if let Some(placeholder) = placeholders.get(&p) {
-                            w.input.set_placeholder_text(Some(&placeholder.input));
+                            if let Some(input) = &w.input {
+                                input.set_placeholder_text(Some(&placeholder.input));
+                            }
+
                             w.placeholder
                                 .as_ref()
                                 .map(|p| p.set_text(&placeholder.list));
@@ -390,11 +395,13 @@ fn main() -> glib::ExitCode {
                     }
 
                     if !s.get_placeholder().is_empty() {
-                        if let Some(p) = w.input.placeholder_text() {
-                            s.set_initial_placeholder(&p);
-                        }
+                        if let Some(input) = &w.input {
+                            if let Some(p) = input.placeholder_text() {
+                                s.set_initial_placeholder(&p);
+                            }
 
-                        w.input.set_placeholder_text(Some(&s.get_placeholder()));
+                            input.set_placeholder_text(Some(&s.get_placeholder()));
+                        }
                     }
 
                     if s.get_parameter_height() != 0 {
@@ -414,13 +421,17 @@ fn main() -> glib::ExitCode {
                     }
 
                     if s.is_no_search() {
-                        w.search_container.set_visible(false);
+                        if let Some(search_container) = &w.search_container {
+                            search_container.set_visible(false);
+                        }
                     }
 
                     setup_css(s.get_theme());
 
-                    w.input.emit_by_name::<()>("changed", &[]);
-                    w.input.grab_focus();
+                    if let Some(input) = &w.input {
+                        input.emit_by_name::<()>("changed", &[]);
+                        input.grab_focus();
+                    }
 
                     w.window.present();
                 });

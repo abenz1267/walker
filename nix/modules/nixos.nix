@@ -71,12 +71,21 @@ in {
         default = null;
         description = "The custom theme used by walker. Setting this option overrides `config.theme`.";
       };
+
+      elephant = mkOption {
+        inherit (tomlFormat) type;
+        default = {};
+        description = "Configuration for elephant";
+      };
     };
   };
 
   config = mkIf cfg.enable (mkMerge [
     {
-      services.elephant.enable = true;
+      services.elephant = mkMerge [
+        { enable = true; }
+        cfg.elephant
+      ];
 
       environment = {
         systemPackages = [cfg.package];

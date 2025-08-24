@@ -71,15 +71,21 @@ in {
         default = null;
         description = "The custom theme used by walker. Setting this option overrides `config.theme`.";
       };
+
+      elephant = mkOption {
+        inherit (tomlFormat) type;
+        default = {};
+        description = "Configuration for elephant";
+      };
     };
   };
 
   config = mkIf cfg.enable (mkMerge [
     {
-      programs.elephant = {
-        enable = true;
-        autoStart = true;
-      };
+      programs.elephant = mkMerge [
+        { enable = true; }
+        cfg.elephant
+      ];
 
       home.packages = [cfg.package];
 

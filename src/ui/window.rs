@@ -29,7 +29,8 @@ use gtk4::{
     gio::prelude::{ApplicationExt, ListModelExt},
     prelude::GtkApplicationExt,
 };
-use std::{clone, collections::HashMap, process, sync::OnceLock};
+use std::{collections::HashMap, process, sync::OnceLock};
+use std::{thread, time};
 
 thread_local! {
     pub static WINDOWS: OnceLock<HashMap<String, WindowData>> = OnceLock::new();

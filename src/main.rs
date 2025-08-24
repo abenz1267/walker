@@ -19,6 +19,7 @@ use state::{init_app_state, with_state};
 use which::which;
 
 use std::env;
+use std::process;
 use std::sync::{Mutex, mpsc};
 use std::time::Duration;
 use std::{path::Path, thread};
@@ -444,21 +445,34 @@ fn main() -> glib::ExitCode {
     });
 
     app.connect_startup(move |app| {
-        *hold_guard.borrow_mut() = Some(app.hold());
+        let args: Vec<String> = env::args().collect();
+        let mut dmenu = false;
+        let mut version = false;
 
-        // if !app.flags().contains(ApplicationFlags::IS_SERVICE) {
-        //     println!("make sure 'walker --gapplication-service' is running!");
-        //     process::exit(1);
-        // }
+        if args.contains(&"--dmenu".to_string()) || args.contains(&"-d".to_string()) {
+            dmenu = true;
+        }
 
-        init_app_state();
-        init_ui(app);
+        if args.contains(&"--version".to_string()) || args.contains(&"-v".to_string()) {
+            version = true;
+        }
+
+        if !app.flags().contains(ApplicationFlags::IS_SERVICE) && !dmenu && !version {
+            println!("make sure 'walker --gapplication-service' is running!");
+            process::exit(1);
+        }
+
+        if !version {
+            *hold_guard.borrow_mut() = Some(app.hold());
+            init_app_state();
+            init_ui(app, dmenu);
+        }
     });
 
     app.run()
 }
 
-fn init_ui(app: &Application) {
+fn init_ui(app: &Application, dmenu: bool) {
     with_state(|s| {
         if app.flags().contains(ApplicationFlags::IS_SERVICE) {
             s.set_is_service(true);
@@ -477,20 +491,16 @@ fn init_ui(app: &Application) {
         preview::load_previewers();
         setup_binds().unwrap();
 
-        let args: Vec<String> = env::args().collect();
-
-        let mut dmenu = false;
-
-        if args.contains(&"--dmenu".to_string()) || args.contains(&"-d".to_string()) {
-            dmenu = true;
-        }
-
-        if which("elephant").is_ok() && !dmenu {
-            println!("waiting for elephant to start...");
-            wait_for_file("/tmp/elephant.sock");
-            println!("connecting to elephant...");
-            init_socket().unwrap();
-            start_listening();
+        if !dmenu {
+            if which("elephant").is_ok() {
+                println!("waiting for elephant to start...");
+                wait_for_file("/tmp/elephant.sock");
+                println!("connecting to elephant...");
+                init_socket().unwrap();
+                start_listening();
+            } else {
+                println!("Please install elephant.");
+            }
         }
 
         setup_css_provider();

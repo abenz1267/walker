@@ -502,6 +502,7 @@ fn init_ui(app: &Application, dmenu: bool) {
                 start_listening();
             } else {
                 println!("Please install elephant.");
+                process::exit(1);
             }
         }
 

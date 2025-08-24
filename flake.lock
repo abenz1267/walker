@@ -6,15 +6,15 @@
         "systems": "systems"
       },
       "locked": {
-        "lastModified": 1755628307,
-        "narHash": "sha256-lYp2nstnPevI92tpAz2TrXP6HBji8J4oiMAi1MjlKdg=",
-        "owner": "kagurazakei",
+        "lastModified": 1756046050,
+        "narHash": "sha256-Sjx7xQi3kLiPpq8Vbc0H+KKQjQBnbkyjlknr6dYCvMg=",
+        "owner": "not-matthias",
         "repo": "elephant",
-        "rev": "5dc978219366c514e65b98d0c98ede76f5da66b9",
+        "rev": "f0e156c616c0bf8c8dd8e4a2fb3b703c879aa235",
         "type": "github"
       },
       "original": {
-        "owner": "kagurazakei",
+        "owner": "not-matthias",
         "repo": "elephant",
         "type": "github"
       }

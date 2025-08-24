@@ -58,6 +58,14 @@ To open it, simply call:
 walker
 ```
 
+## Theming
+
+You can customize Walker's appearance by creating a custom theme. Checkout `resources/themes/default` for the default theme. Themes inherit the default theme by default, so if you just want to change the CSS, you can just create `themes/yours/style.css`.
+
+You can customize rendering of list items for each provider individually, f.e. "item_files.xml" will define the layout for items sourced from the `files` provider.
+
+Please refer to [the GTK4 docs](https://docs.gtk.org/gtk4/) to checkout how to write `*.xml` files for GTK4.
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.

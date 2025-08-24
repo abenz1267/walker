@@ -4,12 +4,11 @@ use gtk4::gdk::Display;
 use gtk4::prelude::GtkWindowExt;
 use gtk4::{CssProvider, Window};
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
-use notify::{Config, Event, RecommendedWatcher, RecursiveMode, Watcher};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::process::Command;
-use std::sync::{OnceLock, mpsc};
-use std::{env, fs, thread};
+use std::sync::OnceLock;
+use std::{env, fs};
 
 thread_local! {
     pub static THEMES: OnceLock<HashMap<String, Theme>> = OnceLock::new();
@@ -64,7 +63,7 @@ impl Theme {
     }
 }
 
-pub fn setup_themes() {
+pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
     let mut themes: HashMap<String, Theme> = HashMap::new();
     let mut path = dirs::config_dir().unwrap();
     path.push("walker");
@@ -77,22 +76,26 @@ pub fn setup_themes() {
         }
     }
 
-    let output = Command::new("elephant")
-        .arg("listproviders")
-        .output()
-        .expect("couldn't run 'elephant'. Make sure it is installed.");
+    let mut providers = vec!["dmenu".to_string()];
 
-    let stdout = String::from_utf8(output.stdout).unwrap();
+    if elephant {
+        let output = Command::new("elephant")
+            .arg("listproviders")
+            .output()
+            .expect("couldn't run 'elephant'. Make sure it is installed.");
 
-    let mut providers: Vec<String> = stdout
-        .lines()
-        .filter_map(|line| {
-            line.split_once(';')
-                .map(|(_, value)| format!("item_{}.xml", value.to_string()))
-        })
-        .collect();
+        let stdout = String::from_utf8(output.stdout).unwrap();
 
-    providers.push("dmenu".to_string());
+        let elephant_providers: Vec<String> = stdout
+            .lines()
+            .filter_map(|line| {
+                line.split_once(';')
+                    .map(|(_, value)| format!("item_{}.xml", value.to_string()))
+            })
+            .collect();
+
+        providers = [providers, elephant_providers].concat();
+    }
 
     let files = vec![
         "item.xml".to_string(),
@@ -103,19 +106,31 @@ pub fn setup_themes() {
 
     let combined = [files, providers].concat();
 
-    for path in paths {
-        if let Ok(entries) = fs::read_dir(path) {
-            for entry in entries {
-                let entry = entry.unwrap();
-                let path = entry.path();
+    if theme != "default" {
+        for mut path in paths {
+            if !is_service {
+                path.push_str(&theme);
 
-                if path.is_dir() {
-                    if let Some(name) = path.file_name() {
-                        let theme = name.to_string_lossy();
-                        themes.insert(
-                            theme.to_string(),
-                            setup_theme_from_path(path.clone(), &combined),
-                        );
+                themes.insert(
+                    theme.clone(),
+                    setup_theme_from_path(path.clone().into(), &combined),
+                );
+            } else {
+                if let Ok(entries) = fs::read_dir(path) {
+                    for entry in entries {
+                        let entry = entry.unwrap();
+                        let path = entry.path();
+
+                        if path.is_dir() {
+                            if let Some(name) = path.file_name() {
+                                let path_theme = name.to_string_lossy();
+
+                                themes.insert(
+                                    path_theme.to_string(),
+                                    setup_theme_from_path(path.clone(), &combined),
+                                );
+                            }
+                        }
                     }
                 }
             }
@@ -197,49 +212,6 @@ pub fn setup_css_provider() {
     gtk4::style_context_add_provider_for_display(&display, &p, gtk4::STYLE_PROVIDER_PRIORITY_USER);
 
     set_css_provider(p);
-}
-
-pub fn start_theme_watcher(theme_name: String) {
-    let mut path = dirs::config_dir()
-        .ok_or("Could not find config directory")
-        .unwrap();
-
-    path.push("walker");
-    path.push("themes");
-    path.push(&theme_name);
-    path.push("style.css");
-
-    thread::spawn(move || {
-        let (tx, rx) = mpsc::channel();
-
-        let mut watcher = RecommendedWatcher::new(
-            move |result: Result<Event, notify::Error>| {
-                if let Err(_) = tx.send(result) {
-                    return;
-                }
-            },
-            Config::default(),
-        )
-        .expect("Failed to create watcher");
-
-        if let Err(_) = watcher.watch(&path, RecursiveMode::NonRecursive) {
-            return;
-        }
-
-        let theme_name_for_callback = theme_name.clone();
-
-        for result in rx {
-            match result {
-                Ok(_event) => {
-                    let theme_name_clone = theme_name_for_callback.clone();
-                    gtk4::glib::idle_add_once(move || {
-                        setup_css(theme_name_clone);
-                    });
-                }
-                Err(error) => println!("Watch error: {:?}", error),
-            }
-        }
-    });
 }
 
 pub fn setup_layer_shell(win: &Window) {

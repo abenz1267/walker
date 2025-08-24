@@ -211,7 +211,7 @@ fn main() -> glib::ExitCode {
         let options = cmd.options_dict();
 
         if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-10\n");
+            cmd.print_literal("1.0.0-beta-11\n");
             return 0;
         }
 
@@ -491,8 +491,10 @@ fn init_ui(app: &Application, dmenu: bool) {
         preview::load_previewers();
         setup_binds().unwrap();
 
+        let elephant = which("elephant").is_ok();
+
         if !dmenu {
-            if which("elephant").is_ok() {
+            if elephant {
                 println!("waiting for elephant to start...");
                 wait_for_file("/tmp/elephant.sock");
                 println!("connecting to elephant...");
@@ -504,7 +506,11 @@ fn init_ui(app: &Application, dmenu: bool) {
         }
 
         setup_css_provider();
-        setup_themes();
+        setup_themes(
+            elephant && !dmenu && s.is_service(),
+            s.get_theme(),
+            s.is_service(),
+        );
         setup_item_transformers();
         setup_window(app);
 

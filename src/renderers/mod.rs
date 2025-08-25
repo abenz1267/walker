@@ -3,9 +3,10 @@ use crate::theme::Theme;
 use crate::ui::window::{quit, with_window};
 use crate::{config::get_config, protos::generated_proto::query::query_response::Item};
 use chrono::DateTime;
-use gtk4::gdk::ContentProvider;
+use gtk4::gdk::{self, ContentProvider};
+use gtk4::gdk_pixbuf::Pixbuf;
 use gtk4::gio::File;
-use gtk4::gio::prelude::FileExt;
+use gtk4::gio::prelude::{FileExt, FileExtManual};
 use gtk4::prelude::{ListItemExt, WidgetExt};
 use gtk4::{Box, Builder, DragSource, Image, Label, ListItem, Picture, gio, glib};
 use std::collections::HashMap;
@@ -85,13 +86,27 @@ fn default_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
         if !item.icon.is_empty() {
             if Path::new(&item.icon).is_absolute() {
-                image.set_from_file(Some(&item.icon));
+                let icon = item.icon.clone();
+
+                glib::spawn_future_local(async move {
+                    let file = gio::File::for_path(&icon);
+                    let (bytes, _) = file.load_contents_future().await.unwrap();
+                    let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+                    image.set_paintable(Some(&texture));
+                });
             } else {
                 image.set_icon_name(Some(&item.icon));
             }
         }
     } else if let Some(image) = b.object::<Picture>("ItemImage") {
-        image.set_filename(Some(&item.icon));
+        let icon = item.icon.clone();
+
+        glib::spawn_future_local(async move {
+            let file = gio::File::for_path(&icon);
+            let (bytes, _) = file.load_contents_future().await.unwrap();
+            let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+            image.set_paintable(Some(&texture));
+        });
     }
 }
 
@@ -139,10 +154,15 @@ fn symbols_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
 
 fn clipboard_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Picture>("ItemImage") {
-        image.set_filename(Option::<&str>::None);
-
         if !item.icon.is_empty() {
-            image.set_filename(Some(&item.icon));
+            let icon = item.icon.clone();
+
+            glib::spawn_future_local(async move {
+                let file = gio::File::for_path(&icon);
+                let (bytes, _) = file.load_contents_future().await.unwrap();
+                let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+                image.set_paintable(Some(&texture));
+            });
 
             if let Some(text) = b.object::<Label>("ItemText") {
                 text.set_visible(false);

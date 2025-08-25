@@ -1,100 +1,172 @@
-scrollbar {
-  opacity: 0;
+/* --- Default Theme für Walker (GTK4 Version) --- */
+
+/* =================================================================== */
+/* 1. COLOR & THEME VARIABLES (CUSTOMIZE HERE)                         */
+/* =================================================================== */
+:root {
+    --window-bg-color: rgba(30, 30, 45, 0.98); /* A dark blue/purple with slight transparency */
+    --window-bg-lighter-color: rgba(50, 50, 65, 0.98); /* A lighter version for accents */
+    --theme-fg-color: rgb(220, 220, 230); /* A light foreground (text color) */
 }
 
-.box-wrapper {
-  box-shadow:
-    0 19px 38px rgba(0, 0, 0, 0.3),
-    0 15px 12px rgba(0, 0, 0, 0.22);
-  /*  NEEDS TO BE TRANSPARENT CUZ OF HYPRLAND BUG */
-  background: alpha(@window_bg_color, 0.99);
+
+/* =================================================================== */
+/* 2. GLOBAL STYLES & RESETS                                           */
+/* =================================================================== */
+
+/* Apply styles to all widgets */
+* {
+    all: unset;
+    box-sizing: border-box;
+    border: none;
+    outline: none;
+    box-shadow: none;
+    color: var(--theme-fg-color);
 }
 
-.preview-box {
+/* The main application window */
+.window, #Window {
+    background-color: var(--window-bg-color);
+    border-radius: 12px;
 }
 
-.box {
+
+/* =================================================================== */
+/* 3. MAIN LAYOUT (from layout.xml)                                    */
+/* =================================================================== */
+
+/* Outermost container for centering and margins */
+.box-wrapper, #BoxWrapper {
+    background-color: transparent;
+    border: 1px solid var(--window-bg-lighter-color);
 }
 
-.search-container {
-  background: @window_bg_color;
+/* Inner main container */
+.box, #Box {
+    padding: 8px;
+    background-color: var(--window-bg-color);
 }
 
-.input placeholder {
-  opacity: 0.5;
+/* Container for the search bar */
+.search-container, #SearchContainer {
+    padding: 8px;
+    background-color: var(--window-bg-lighter-color);
+    margin-bottom: 8px;
+    /* (Styling for the search bar area) */
 }
 
-.input {
-  font-size: 20px;
-  border-radius: 0;
-  padding: 10px;
-  box-shadow: none;
-  outline: none;
-  padding-left: 10px;
+/* The text entry field */
+.input, #Input {
+    font-size: 20px;
+    padding: 10px;
+    background-color: transparent;
 }
 
-.input:focus,
-.input:active {
-  box-shadow: none;
-  outline: none;
+/* Container for the results list and preview */
+.content-container, #ContentContainer {
+    /* (Styling for the main content area) */
 }
 
-.content-container {
+/* "No Results" text label */
+.placeholder, #Placeholder {
+    opacity: 0.5;
 }
 
-.placeholder {
+/* Scrollable area for the list */
+.scroll, #Scroll {
+    /* (Styling for the scrolled window) */
 }
 
-.scroll {
+/* The GridView that holds the list items */
+.list, #List {
+    /* (Styling for the list itself) */
 }
 
-.list {
-  background: @window_bg_color;
+/* The box for showing a preview */
+.preview, #Preview {
+    /* (Styling for the preview pane) */
 }
 
-child,
-child > * {
-  padding: 0;
-  margin: 0;
+/* Label for keybind hints at the bottom */
+.keybind-hints, #Keybinds {
+    padding: 10px;
+    font-size: 14px;
+    opacity: 0.5;
+    background-color: var(--window-bg-lighter-color);
 }
 
-.item-box {
-  padding: 10px;
+
+/* =================================================================== */
+/* 4. LIST ITEMS (from item_*.xml files)                               */
+/* =================================================================== */
+
+/* General container for each list item */
+.item-box, #ItemBox {
+    padding: 10px;
+    border-radius: 6px;
+    transition: background-color 0.1s ease-in-out;
 }
 
-.item-text-box {
-  all: unset;
+/* Style for when an item is hovered by the mouse */
+.item-box:hover {
+    background-color: var(--window-bg-lighter-color);
 }
 
-.item-text {
+/* Style for when an item is selected */
+.item-box::selected {
+    background-color: var(--window-bg-lighter-color);
 }
 
-.item-subtext {
-  font-size: 12px;
-  opacity: 0.8;
+/* Image/Icon/Picture of an item */
+.item-image, #ItemImage {
+    /* (Styling for the icon in a list item) */
 }
 
-.item-image {
+/* Container for the text area of an item */
+.item-text-box, #ItemTextBox {
+    /* (Styling for the box containing text labels) */
 }
 
-.keybind-hints {
-  padding: 10px;
-  font-size: 14px;
-  color: @theme_fg_color;
-  opacity: 0.5;
-  background: lighter(@window_bg_color);
+/* Main text of an item */
+.item-text, #ItemText {
+    /* (Styling for the primary text) */
 }
 
-.preview {
+/* Subtext of an item */
+.item-subtext, #ItemSubtext {
+    font-size: 12px;
+    opacity: 0.8;
 }
 
+
+/* =================================================================== */
+/* 5. PREVIEW (from preview.xml)                                       */
+/* =================================================================== */
+
+.preview-box, #PreviewBox {
+    /* (Styling for the main preview container) */
+}
+
+.preview-stack, #PreviewStack {
+    /* (Styling for the stack widget within the preview) */
+}
+
+
+/* =================================================================== */
+/* 6. SPECIFIC MODIFIERS & SCROLLBAR                                   */
+/* =================================================================== */
+
+/* Modifier class for calculator results */
 .calc .item-text {
-  font-size: 24px;
+    font-size: 24px;
 }
 
-.calc .item-subtext {
-}
-
+/* Modifier class for symbol results */
 .symbols .item-image {
-  font-size: 18px;
+    font-size: 18px;
+}
+
+/* Hides the scrollbar until hovered (handled by the system) */
+scrollbar {
+    opacity: 0;
 }

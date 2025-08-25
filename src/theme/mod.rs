@@ -106,30 +106,29 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
 
     let combined = [files, providers].concat();
 
-    if theme != "default" {
-        for mut path in paths {
-            if !is_service {
-                path.push_str(&theme);
+    // Try to load the requested theme from user paths for any theme name, including "default".
+    for mut path in paths {
+        if !is_service {
+            path.push_str(&theme);
 
-                themes.insert(
-                    theme.clone(),
-                    setup_theme_from_path(path.clone().into(), &combined),
-                );
-            } else {
-                if let Ok(entries) = fs::read_dir(path) {
-                    for entry in entries {
-                        let entry = entry.unwrap();
-                        let path = entry.path();
+            themes.insert(
+                theme.clone(),
+                setup_theme_from_path(path.clone().into(), &combined),
+            );
+        } else {
+            if let Ok(entries) = fs::read_dir(path) {
+                for entry in entries {
+                    let entry = entry.unwrap();
+                    let path = entry.path();
 
-                        if path.is_dir() {
-                            if let Some(name) = path.file_name() {
-                                let path_theme = name.to_string_lossy();
+                    if path.is_dir() {
+                        if let Some(name) = path.file_name() {
+                            let path_theme = name.to_string_lossy();
 
-                                themes.insert(
-                                    path_theme.to_string(),
-                                    setup_theme_from_path(path.clone(), &combined),
-                                );
-                            }
+                            themes.insert(
+                                path_theme.to_string(),
+                                setup_theme_from_path(path.clone(), &combined),
+                            );
                         }
                     }
                 }
@@ -137,7 +136,10 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
         }
     }
 
-    themes.insert("default".to_string(), Theme::default());
+    // Only add the embedded default if there's no user-provided "default" already.
+    themes
+        .entry("default".to_string())
+        .or_insert(Theme::default());
 
     THEMES.with(|s| {
         s.set(themes).expect("failed initializing themes");

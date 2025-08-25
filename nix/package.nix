@@ -13,6 +13,7 @@
   pango,
   wrapGAppsHook,
   poppler
+  make-wrapper
 }:
 rustPlatform.buildRustPackage {
   pname = "walker";
@@ -47,6 +48,7 @@ rustPlatform.buildRustPackage {
     cairo
     pango
     poppler
+    make-wrapper
   ];
 
   meta = {

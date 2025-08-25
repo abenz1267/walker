@@ -211,7 +211,7 @@ fn main() -> glib::ExitCode {
         let options = cmd.options_dict();
 
         if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-11\n");
+            cmd.print_literal("1.0.0-beta-12\n");
             return 0;
         }
 
@@ -466,7 +466,7 @@ fn main() -> glib::ExitCode {
 
         if !app.flags().contains(ApplicationFlags::IS_SERVICE) && !dmenu && !version {
             println!("make sure 'walker --gapplication-service' is running!");
-            process::exit(1);
+            // process::exit(1);
         }
 
         if !version {

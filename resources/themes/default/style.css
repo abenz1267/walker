@@ -1,3 +1,15 @@
+* {
+  all: unset;
+}
+
+.normal-icons {
+  -gtk-icon-size: 16px;
+}
+
+.large-icons {
+  -gtk-icon-size: 32px;
+}
+
 scrollbar {
   opacity: 0;
 }
@@ -6,8 +18,10 @@ scrollbar {
   box-shadow:
     0 19px 38px rgba(0, 0, 0, 0.3),
     0 15px 12px rgba(0, 0, 0, 0.22);
-  /*  NEEDS TO BE TRANSPARENT CUZ OF HYPRLAND BUG */
-  background: alpha(@window_bg_color, 0.99);
+  background: @window_bg_color;
+  padding: 20px;
+  border-radius: 20px;
+  border: 1px solid darker(@accent_bg_color);
 }
 
 .preview-box {
@@ -17,7 +31,7 @@ scrollbar {
 }
 
 .search-container {
-  background: @window_bg_color;
+  border-radius: 10px;
 }
 
 .input placeholder {
@@ -25,18 +39,14 @@ scrollbar {
 }
 
 .input {
-  font-size: 20px;
-  border-radius: 0;
+  caret-color: @theme_fg_color;
+  background: lighter(@window_bg_color);
   padding: 10px;
-  box-shadow: none;
-  outline: none;
-  padding-left: 10px;
+  color: @theme_fg_color;
 }
 
 .input:focus,
 .input:active {
-  box-shadow: none;
-  outline: none;
 }
 
 .content-container {
@@ -49,21 +59,23 @@ scrollbar {
 }
 
 .list {
-  background: @window_bg_color;
+  color: @theme_fg_color;
 }
 
-child,
-child > * {
-  padding: 0;
-  margin: 0;
+child {
 }
 
 .item-box {
+  border-radius: 10px;
   padding: 10px;
 }
 
+child:hover .item-box,
+child:selected .item-box {
+  background: alpha(@accent_bg_color, 0.25);
+}
+
 .item-text-box {
-  all: unset;
 }
 
 .item-text {
@@ -71,21 +83,22 @@ child > * {
 
 .item-subtext {
   font-size: 12px;
-  opacity: 0.8;
+  opacity: 0.5;
 }
 
 .item-image {
+  margin-right: 10px;
 }
 
 .keybind-hints {
-  padding: 10px;
-  font-size: 14px;
-  color: @theme_fg_color;
   opacity: 0.5;
-  background: lighter(@window_bg_color);
+  color: @theme_fg_color;
 }
 
 .preview {
+  border: 1px solid alpha(@accent_bg_color, 0.25);
+  padding: 10px;
+  border-radius: 10px;
 }
 
 .calc .item-text {
@@ -96,5 +109,9 @@ child > * {
 }
 
 .symbols .item-image {
-  font-size: 18px;
+  font-size: 24px;
+}
+
+.preview .large-icons {
+  -gtk-icon-size: 64px;
 }

@@ -445,6 +445,7 @@ impl FilePreview {
 
         let icon = Image::from_icon_name("text-x-generic");
         icon.set_icon_size(gtk4::IconSize::Large);
+        icon.add_css_class("preview-generic-icon");
 
         // Try to get file-specific icon, but fallback gracefully to avoid memory issues
         let file = gio::File::for_path(file_path);

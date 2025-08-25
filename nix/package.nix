@@ -12,7 +12,7 @@
   cairo,
   pango,
   wrapGAppsHook,
-  poppler
+  poppler,
   makeWrapper
 }:
 rustPlatform.buildRustPackage {

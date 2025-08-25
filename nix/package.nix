@@ -12,7 +12,7 @@
   cairo,
   pango,
   wrapGAppsHook,
-  poppler-glib
+  poppler
 }:
 rustPlatform.buildRustPackage {
   pname = "walker";
@@ -46,7 +46,7 @@ rustPlatform.buildRustPackage {
     graphene
     cairo
     pango
-    poppler-glib
+    poppler
   ];
 
   meta = {

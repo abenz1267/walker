@@ -12,6 +12,7 @@
   cairo,
   pango,
   wrapGAppsHook,
+  proppler-glib
 }:
 rustPlatform.buildRustPackage {
   pname = "walker";

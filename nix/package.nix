@@ -45,6 +45,7 @@ rustPlatform.buildRustPackage {
     graphene
     cairo
     pango
+    poppler-glib
   ];
 
   meta = {

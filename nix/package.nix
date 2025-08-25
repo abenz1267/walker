@@ -16,7 +16,7 @@
 }:
 rustPlatform.buildRustPackage {
   pname = "walker";
-  version = "1.0.0-beta11";
+  version = "1.0.0-beta12";
 
   src = lib.fileset.toSource {
     root = ../.;

@@ -30,7 +30,6 @@ use gtk4::{
     prelude::GtkApplicationExt,
 };
 use std::{collections::HashMap, process, sync::OnceLock};
-use std::{thread, time};
 
 thread_local! {
     pub static WINDOWS: OnceLock<HashMap<String, WindowData>> = OnceLock::new();

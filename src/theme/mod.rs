@@ -106,7 +106,7 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
 
     let combined = [files, providers].concat();
 
-    if theme != "default" {
+    if theme != "default" || is_service {
         for mut path in paths {
             if !is_service {
                 path.push_str(&theme);

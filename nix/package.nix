@@ -29,7 +29,7 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoHash = "sha256-WqvT+4Yf16cqd0A7y6lW7oW2Mx2GoGRWoejrWXXwrVc=";
+  cargoHash = "";
 
   nativeBuildInputs = [
     gobject-introspection

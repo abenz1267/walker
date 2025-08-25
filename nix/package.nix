@@ -1,0 +1,58 @@
+{
+  rustPlatform,
+  lib,
+  pkg-config,
+  protobuf,
+  glib,
+  gobject-introspection,
+  gtk4,
+  gtk4-layer-shell,
+  gdk-pixbuf,
+  graphene,
+  cairo,
+  pango,
+  wrapGAppsHook,
+}:
+rustPlatform.buildRustPackage {
+  pname = "walker";
+  version = "1.0.0-beta";
+
+  src = lib.fileset.toSource {
+    root = ../.;
+    fileset = lib.fileset.unions [
+      ../Cargo.toml
+      ../Cargo.lock
+      ../src
+      ../build.rs
+      ../resources
+    ];
+  };
+
+  cargoHash = "sha256-bQx+86iYkc+MTDNZMF9Kkj2DUzvIzmiVedPwXkomnmM=";
+
+  nativeBuildInputs = [
+    gobject-introspection
+    pkg-config
+    protobuf
+    wrapGAppsHook
+  ];
+
+  buildInputs = [
+    glib
+    gtk4
+    gtk4-layer-shell
+    gdk-pixbuf
+    graphene
+    cairo
+    pango
+  ];
+
+  meta = {
+    description = "Wayland-native application runner";
+    homepage = "https://github.com/abenz1267/walker";
+    license = lib.licenses.mit;
+    maintainers = with lib.maintainers; [diniamo NotAShelf];
+    platforms = lib.platforms.linux;
+    mainProgram = "walker";
+  };
+}

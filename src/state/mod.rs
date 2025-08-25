@@ -4,6 +4,7 @@ use gtk4::{
     Window,
 };
 use std::cell::{Cell, RefCell};
+use std::collections::HashSet;
 use std::sync::OnceLock;
 
 thread_local! {
@@ -36,6 +37,7 @@ pub struct AppState {
     last_query: RefCell<String>,
     placeholder: RefCell<String>,
     initial_placeholder: RefCell<String>,
+    available_themes: RefCell<HashSet<String>>,
     provider: RefCell<String>,
     theme: RefCell<String>,
     is_service: Cell<bool>,
@@ -49,6 +51,7 @@ impl AppState {
     pub fn new() -> Self {
         Self {
             provider: RefCell::new(String::new()),
+            available_themes: RefCell::new(HashSet::new()),
             theme: RefCell::new("".to_string()),
             placeholder: RefCell::new("".to_string()),
             initial_placeholder: RefCell::new("".to_string()),
@@ -202,6 +205,14 @@ impl AppState {
 
     pub fn set_dmenu_current(&self, val: i64) {
         return self.dmenu_current.set(val);
+    }
+
+    pub fn add_theme(&self, val: String) {
+        self.available_themes.borrow_mut().insert(val);
+    }
+
+    pub fn has_theme(&self, val: String) -> bool {
+        return self.available_themes.borrow().contains(&val);
     }
 }
 

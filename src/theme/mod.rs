@@ -1,5 +1,5 @@
 use crate::config::get_config;
-use crate::state::{set_css_provider, with_css_provider};
+use crate::state::{set_css_provider, with_css_provider, with_state};
 use gtk4::gdk::Display;
 use gtk4::prelude::GtkWindowExt;
 use gtk4::{CssProvider, Window};
@@ -106,38 +106,43 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
 
     let combined = [files, providers].concat();
 
-    if theme != "default" || is_service {
-        for mut path in paths {
-            if !is_service {
-                path.push_str(&theme);
+    with_state(|s| {
+        if theme != "default" || is_service {
+            for mut path in paths {
+                if !is_service {
+                    path.push_str(&theme);
 
-                themes.insert(
-                    theme.clone(),
-                    setup_theme_from_path(path.clone().into(), &combined),
-                );
-            } else {
-                if let Ok(entries) = fs::read_dir(path) {
-                    for entry in entries {
-                        let entry = entry.unwrap();
-                        let path = entry.path();
+                    themes.insert(
+                        theme.clone(),
+                        setup_theme_from_path(path.clone().into(), &combined),
+                    );
+                } else {
+                    if let Ok(entries) = fs::read_dir(path) {
+                        for entry in entries {
+                            let entry = entry.unwrap();
+                            let path = entry.path();
 
-                        if path.is_dir() {
-                            if let Some(name) = path.file_name() {
-                                let path_theme = name.to_string_lossy();
+                            if path.is_dir() {
+                                if let Some(name) = path.file_name() {
+                                    let path_theme = name.to_string_lossy();
 
-                                themes.insert(
-                                    path_theme.to_string(),
-                                    setup_theme_from_path(path.clone(), &combined),
-                                );
+                                    themes.insert(
+                                        path_theme.to_string(),
+                                        setup_theme_from_path(path.clone(), &combined),
+                                    );
+
+                                    s.add_theme(path_theme.to_string());
+                                }
                             }
                         }
                     }
                 }
             }
         }
-    }
 
-    themes.insert("default".to_string(), Theme::default());
+        themes.insert("default".to_string(), Theme::default());
+        s.add_theme("default".to_string());
+    });
 
     THEMES.with(|s| {
         s.set(themes).expect("failed initializing themes");

@@ -226,7 +226,14 @@ fn main() -> glib::ExitCode {
 
             if options.contains("theme") {
                 if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
-                    s.set_theme(val.str().unwrap());
+                    let theme = val.str().unwrap();
+
+                    if s.has_theme(theme.to_string()) {
+                        s.set_theme(theme);
+                    } else {
+                        cmd.print_literal("theme not found. using default theme.\n");
+                        s.set_theme("default");
+                    }
                 }
             }
 

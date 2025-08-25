@@ -3,9 +3,10 @@ use crate::theme::Theme;
 use crate::ui::window::{quit, with_window};
 use crate::{config::get_config, protos::generated_proto::query::query_response::Item};
 use chrono::DateTime;
-use gtk4::gdk::ContentProvider;
+use gtk4::gdk::{self, ContentProvider};
+use gtk4::gdk_pixbuf::Pixbuf;
 use gtk4::gio::File;
-use gtk4::gio::prelude::FileExt;
+use gtk4::gio::prelude::{FileExt, FileExtManual};
 use gtk4::prelude::{ListItemExt, WidgetExt};
 use gtk4::{Box, Builder, DragSource, Image, Label, ListItem, Picture, gio, glib};
 use std::collections::HashMap;
@@ -15,7 +16,7 @@ use std::{env, path::Path};
 thread_local! {
     pub static TEXT_TRANSFORMERS: OnceLock<HashMap<String, fn(&str, &Label)>> = OnceLock::new();
     pub static SUBTEXT_TRANSFORMERS: OnceLock<HashMap<String, fn(&str, &Label)>> = OnceLock::new();
-    pub static IMAGE_TRANSFORMERS: OnceLock<HashMap<String, fn(&str, &Builder, &ListItem, &Item)>> = OnceLock::new();
+    pub static IMAGE_TRANSFORMERS: OnceLock<HashMap<String, fn(&Builder, &ListItem, &Item)>> = OnceLock::new();
 }
 
 pub fn with_text_transformers<F, R>(f: F) -> R
@@ -30,7 +31,7 @@ where
 
 pub fn with_image_transformers<F, R>(f: F) -> R
 where
-    F: FnOnce(&HashMap<String, fn(&str, &Builder, &ListItem, &Item)>) -> R,
+    F: FnOnce(&HashMap<String, fn(&Builder, &ListItem, &Item)>) -> R,
 {
     IMAGE_TRANSFORMERS.with(|t| {
         let data = t.get().expect("Image transformers not initialized");
@@ -69,7 +70,7 @@ pub fn setup_item_transformers() {
             .expect("Text transformers already initialized");
     });
 
-    let mut image: HashMap<String, fn(&str, &Builder, &ListItem, &Item)> = HashMap::new();
+    let mut image: HashMap<String, fn(&Builder, &ListItem, &Item)> = HashMap::new();
     image.insert("default".to_string(), default_image_transformer);
     image.insert("clipboard".to_string(), clipboard_image_transformer);
     image.insert("symbols".to_string(), symbols_image_transformer);
@@ -81,28 +82,42 @@ pub fn setup_item_transformers() {
     });
 }
 
-fn default_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
+fn default_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
-        if !img.is_empty() {
-            if Path::new(&img).is_absolute() {
-                image.set_from_file(Some(&img));
+        if !item.icon.is_empty() {
+            if Path::new(&item.icon).is_absolute() {
+                let icon = item.icon.clone();
+
+                glib::spawn_future_local(async move {
+                    let file = gio::File::for_path(&icon);
+                    let (bytes, _) = file.load_contents_future().await.unwrap();
+                    let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+                    image.set_paintable(Some(&texture));
+                });
             } else {
-                image.set_icon_name(Some(&img));
+                image.set_icon_name(Some(&item.icon));
             }
         }
     } else if let Some(image) = b.object::<Picture>("ItemImage") {
-        image.set_filename(Some(&img));
+        let icon = item.icon.clone();
+
+        glib::spawn_future_local(async move {
+            let file = gio::File::for_path(&icon);
+            let (bytes, _) = file.load_contents_future().await.unwrap();
+            let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+            image.set_paintable(Some(&texture));
+        });
     }
 }
 
-fn calc_image_transformer(img: &str, b: &Builder, li: &ListItem, _: &Item) {
+fn calc_image_transformer(b: &Builder, li: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
         if li.position() == 0 {
-            if !img.is_empty() {
-                if Path::new(&img).is_absolute() {
-                    image.set_from_file(Some(&img));
+            if !item.icon.is_empty() {
+                if Path::new(&item.icon).is_absolute() {
+                    image.set_from_file(Some(&item.icon));
                 } else {
-                    image.set_icon_name(Some(&img));
+                    image.set_icon_name(Some(&item.icon));
                 }
             }
         } else {
@@ -111,7 +126,7 @@ fn calc_image_transformer(img: &str, b: &Builder, li: &ListItem, _: &Item) {
     }
 }
 
-fn files_image_transformer(_: &str, b: &Builder, _: &ListItem, item: &Item) {
+fn files_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
         let file = gio::File::for_path(&item.text);
 
@@ -129,20 +144,25 @@ fn files_image_transformer(_: &str, b: &Builder, _: &ListItem, item: &Item) {
     }
 }
 
-fn symbols_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
+fn symbols_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Label>("ItemImage") {
-        if !img.is_empty() {
-            image.set_label(&img);
+        if !item.icon.is_empty() {
+            image.set_label(&item.icon);
         }
     }
 }
 
-fn clipboard_image_transformer(img: &str, b: &Builder, _: &ListItem, _: &Item) {
+fn clipboard_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Picture>("ItemImage") {
-        image.set_filename(Option::<&str>::None);
+        if !item.icon.is_empty() {
+            let icon = item.icon.clone();
 
-        if !img.is_empty() {
-            image.set_filename(Some(&img));
+            glib::spawn_future_local(async move {
+                let file = gio::File::for_path(&icon);
+                let (bytes, _) = file.load_contents_future().await.unwrap();
+                let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+                image.set_paintable(Some(&texture));
+            });
 
             if let Some(text) = b.object::<Label>("ItemText") {
                 text.set_visible(false);
@@ -241,9 +261,9 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
 
     with_image_transformers(|t| {
         if let Some(t) = t.get(&item.provider) {
-            t(&item.icon, &b, &list_item, &item);
+            t(&b, &list_item, &item);
         } else {
-            t.get("default").unwrap()(&item.icon, &b, &list_item, &item);
+            t.get("default").unwrap()(&b, &list_item, &item);
         }
     });
 }

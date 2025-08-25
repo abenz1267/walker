@@ -15,7 +15,7 @@
 }:
 rustPlatform.buildRustPackage {
   pname = "walker";
-  version = "1.0.0-beta";
+  version = "1.0.0-beta11";
 
   src = lib.fileset.toSource {
     root = ../.;
@@ -28,7 +28,7 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoHash = "sha256-bQx+86iYkc+MTDNZMF9Kkj2DUzvIzmiVedPwXkomnmM=";
+  cargoHash = "sha256-WqvT+4Yf16cqd0A7y6lW7oW2Mx2GoGRWoejrWXXwrVc=";
 
   nativeBuildInputs = [
     gobject-introspection

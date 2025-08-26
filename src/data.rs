@@ -148,11 +148,11 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
                 let mut resp = SubscribeResponse::new();
                 resp.merge_from_bytes(&payload)?;
 
-                with_state(|s| {
-                    s.set_provider(&resp.value);
-                });
+                glib::idle_add_once(move || {
+                    with_state(|s| {
+                        s.set_provider(&resp.value);
+                    });
 
-                glib::idle_add_once(|| {
                     with_window(|w| {
                         if let Some(input) = &w.input {
                             input.set_text("");

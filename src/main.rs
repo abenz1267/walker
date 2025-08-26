@@ -466,7 +466,6 @@ fn main() -> glib::ExitCode {
 
         if !app.flags().contains(ApplicationFlags::IS_SERVICE) && !dmenu && !version {
             println!("make sure 'walker --gapplication-service' is running!");
-            // process::exit(1);
         }
 
         if !version {

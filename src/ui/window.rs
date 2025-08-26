@@ -122,6 +122,8 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
 
     ui.selection.set_autoselect(true);
     ui.selection.connect_items_changed(move |s, _, _, _| {
+        crate::handle_preview();
+
         with_window(|w| {
             if s.n_items() == 0 {
                 if let Some(p) = &w.placeholder {

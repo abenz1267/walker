@@ -29,7 +29,7 @@ rustPlatform.buildRustPackage {
     ];
   };
 
-  cargoLock.lockFile = "${finalAttrs.src}/Cargo.lock";
+  cargoLock.lockFile = "${src}/Cargo.lock";
 
   nativeBuildInputs = [
     gobject-introspection

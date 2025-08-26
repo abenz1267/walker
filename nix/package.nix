@@ -14,7 +14,7 @@
   wrapGAppsHook,
   poppler
 }:
-rustPlatform.buildRustPackage {
+rustPlatform.buildRustPackage rec {
   pname = "walker";
   version = (builtins.fromTOML (builtins.readFile ../Cargo.toml)).package.version;
 

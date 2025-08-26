@@ -16,7 +16,7 @@
 }:
 rustPlatform.buildRustPackage {
   pname = "walker";
-  version = "1.0.0-beta12";
+  version = (builtins.fromTOML (builtins.readFile ../Cargo.toml)).package.version;
 
   src = lib.fileset.toSource {
     root = ../.;

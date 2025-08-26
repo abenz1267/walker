@@ -42,6 +42,7 @@ pub struct AppState {
     theme: RefCell<String>,
     is_service: Cell<bool>,
     no_search: Cell<bool>,
+    input_only: Cell<bool>,
     is_dmenu: Cell<bool>,
     is_param_close: Cell<bool>,
     pub(crate) is_visible: Cell<bool>,
@@ -59,6 +60,7 @@ impl AppState {
             is_service: Cell::new(false),
             is_param_close: Cell::new(false),
             is_visible: Cell::new(false),
+            input_only: Cell::new(false),
             no_search: Cell::new(false),
             is_dmenu: Cell::new(false),
             dmenu_keep_open: Cell::new(false),
@@ -121,6 +123,14 @@ impl AppState {
 
     pub fn set_is_visible(&self, val: bool) {
         self.is_visible.set(val);
+    }
+
+    pub fn is_input_only(&self) -> bool {
+        self.input_only.get()
+    }
+
+    pub fn set_input_only(&self, val: bool) {
+        self.input_only.set(val);
     }
 
     pub fn is_param_close(&self) -> bool {
@@ -232,6 +242,7 @@ pub struct WindowData {
     pub keybinds: Option<Label>,
     pub scroll: ScrolledWindow,
     pub search_container: Option<gtk4::Box>,
+    pub content_container: gtk4::Box,
 }
 
 pub fn init_app_state() {

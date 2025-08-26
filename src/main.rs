@@ -221,7 +221,7 @@ fn main() -> glib::ExitCode {
         let options = cmd.options_dict();
 
         if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-13\n");
+            cmd.print_literal("1.0.0-beta-14\n");
             return 0;
         }
 
@@ -315,17 +315,18 @@ fn main() -> glib::ExitCode {
                             ) {
                                 let stream_clone = Rc::clone(&stream);
 
-                                stream.read_line_async(
+                                stream.read_line_utf8_async(
                                     Priority::DEFAULT,
                                     Cancellable::NONE,
                                     move |line_slice| match line_slice {
                                         Ok(line_slice) => {
-                                            if line_slice.is_empty() {
-                                                return;
-                                            }
+                                            if let Some(line) = line_slice {
+                                                if line.is_empty() {
+                                                    return;
+                                                }
 
-                                            if let Ok(line_str) = std::str::from_utf8(&line_slice) {
-                                                let trimmed = line_str.trim();
+                                                let trimmed = line.trim();
+
                                                 if !trimmed.is_empty() {
                                                     let mut item = query_response::Item::new();
                                                     item.text = trimmed.to_string();
@@ -340,13 +341,12 @@ fn main() -> glib::ExitCode {
                                                         response,
                                                     ));
                                                 }
+                                                read_line_callback(
+                                                    Rc::clone(&stream_clone),
+                                                    i + 1,
+                                                    items.clone(),
+                                                );
                                             }
-
-                                            read_line_callback(
-                                                Rc::clone(&stream_clone),
-                                                i + 1,
-                                                items.clone(),
-                                            );
                                         }
                                         Err(e) => {
                                             eprintln!("Error reading: {}", e);

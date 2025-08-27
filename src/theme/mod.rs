@@ -58,6 +58,11 @@ impl Theme {
                     include_str!("../../resources/themes/default/item_providerlist.xml")
                         .to_string(),
                 ),
+                (
+                    "archlinuxpkgs".to_string(),
+                    include_str!("../../resources/themes/default/item_archlinuxpkgs.xml")
+                        .to_string(),
+                ),
             ]),
         }
     }

@@ -42,6 +42,9 @@ pub const ACTION_WEBSEARCH_SEARCH: &str = "search";
 
 pub const ACTION_DMENU_SELECT: &str = "select";
 
+pub const ACTION_ARCHLINUXPKGS_INSTALL: &str = "install";
+pub const ACTION_ARCHLINUXPKGS_REMOVE: &str = "remove";
+
 #[derive(Debug, Clone)]
 pub struct Action {
     pub action: String,
@@ -228,6 +231,20 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
         ACTION_DMENU_SELECT,
         AFTER_CLOSE,
         "dmenu",
+    )?;
+
+    parse_bind(
+        &config.providers.archlinuxpkgs.install,
+        ACTION_ARCHLINUXPKGS_INSTALL,
+        AFTER_CLOSE,
+        "archlinuxpkgs",
+    )?;
+
+    parse_bind(
+        &config.providers.archlinuxpkgs.remove,
+        ACTION_ARCHLINUXPKGS_REMOVE,
+        AFTER_CLOSE,
+        "archlinuxpkgs",
     )?;
 
     Ok(())

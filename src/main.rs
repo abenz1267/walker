@@ -313,7 +313,7 @@ fn main() -> glib::ExitCode {
                                 i: i32,
                                 items: gio::ListStore,
                             ) {
-                                let stream_clone = Rc::clone(&stream);
+                                let stream_clone = stream.clone();
 
                                 stream.read_line_utf8_async(
                                     Priority::DEFAULT,
@@ -342,7 +342,7 @@ fn main() -> glib::ExitCode {
                                                     ));
                                                 }
                                                 read_line_callback(
-                                                    Rc::clone(&stream_clone),
+                                                    stream_clone,
                                                     i + 1,
                                                     items.clone(),
                                                 );
@@ -356,7 +356,7 @@ fn main() -> glib::ExitCode {
                                 );
                             }
 
-                            read_line_callback(Rc::clone(&data_stream_rc), 0, items.clone());
+                            read_line_callback(data_stream_rc.clone(), 0, items.clone());
                         }
                     });
 

@@ -6,7 +6,6 @@ use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::state::with_state;
 use crate::ui::window::{set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
-use gtk4::glib::ControlFlow;
 use gtk4::{glib, prelude::*};
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher};
@@ -144,7 +143,6 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
         let mut header = [0u8; 5];
         match reader.read_exact(&mut header) {
             Ok(_) => {}
-            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => continue,
             Err(e) => return Err(e.into()),
         }
 
@@ -197,7 +195,6 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
         let mut header = [0u8; 5];
         match reader.read_exact(&mut header) {
             Ok(_) => {}
-            Err(e) if e.kind() == std::io::ErrorKind::UnexpectedEof => continue,
             Err(e) => return Err(e.into()),
         }
 
@@ -372,7 +369,7 @@ fn handle_disconnect() {
     Command::new("notify-send")
         .arg("Walker")
         .arg("reconnecting to elephant...")
-        .output()
+        .spawn()
         .expect("failed to execute process");
 
     loop {

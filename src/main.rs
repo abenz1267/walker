@@ -35,7 +35,7 @@ use gtk4::{
     prelude::WidgetExt,
 };
 
-use crate::data::{init_socket, start_listening};
+use crate::data::init_socket;
 use crate::keybinds::setup_binds;
 use crate::protos::generated_proto::query::{QueryResponse, query_response};
 use crate::renderers::setup_item_transformers;
@@ -221,7 +221,7 @@ fn main() -> glib::ExitCode {
         let options = cmd.options_dict();
 
         if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-14\n");
+            cmd.print_literal("1.0.0-beta-15\n");
             return 0;
         }
 
@@ -482,7 +482,7 @@ fn main() -> glib::ExitCode {
                         input.grab_focus();
                     }
 
-                    w.window.present();
+                    w.window.set_visible(true);
                 });
 
                 s.set_is_visible(true);
@@ -540,11 +540,7 @@ fn init_ui(app: &Application, dmenu: bool) {
 
         if !dmenu {
             if elephant {
-                println!("waiting for elephant to start...");
-                wait_for_file("/tmp/elephant.sock");
-                println!("connecting to elephant...");
                 init_socket().unwrap();
-                start_listening();
             } else {
                 println!("Please install elephant.");
                 process::exit(1);

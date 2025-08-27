@@ -6,14 +6,18 @@ use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::state::with_state;
 use crate::ui::window::{set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
+use gtk4::glib::ControlFlow;
 use gtk4::{glib, prelude::*};
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher};
 use protobuf::Message;
 use std::io::{BufReader, Read, Write};
 use std::os::unix::net::UnixStream;
+use std::path::Path;
+use std::process::Command;
 use std::sync::Mutex;
 use std::thread;
+use std::time::Duration;
 
 static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
@@ -94,6 +98,10 @@ fn sort_items_fuzzy(query: &str) {
 }
 
 pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
+    println!("waiting for elephant to start...");
+    wait_for_file("/tmp/elephant.sock");
+    println!("connecting to elephant...");
+
     let socket_path = std::env::temp_dir().join("elephant.sock");
 
     let conn = UnixStream::connect(&socket_path)?;
@@ -104,10 +112,12 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
 
     subscribe_menu().unwrap();
 
+    start_listening();
+
     Ok(())
 }
 
-pub fn start_listening() {
+fn start_listening() {
     thread::spawn(|| {
         if let Err(e) = listen_loop() {
             eprintln!("Listen loop error: {}", e);
@@ -347,9 +357,37 @@ fn query(text: &str) {
 
         let mut conn_guard = CONN.lock().unwrap();
         if let Some(conn) = conn_guard.as_mut() {
-            conn.write_all(&buffer).unwrap();
+            match conn.write_all(&buffer) {
+                Err(_) => {
+                    drop(conn_guard);
+                    handle_disconnect();
+                }
+                _ => (),
+            }
         }
     });
+}
+
+fn handle_disconnect() {
+    Command::new("notify-send")
+        .arg("Walker")
+        .arg("reconnecting to elephant...")
+        .output()
+        .expect("failed to execute process");
+
+    loop {
+        println!("re-connect...");
+
+        match init_socket() {
+            Ok(_) => {
+                println!("reconnected");
+                break;
+            }
+            Err(err) => {
+                println!("{}", err);
+            }
+        }
+    }
 }
 
 pub fn activate(item: QueryResponse, query: &str, action: &str) {
@@ -411,7 +449,13 @@ pub fn activate(item: QueryResponse, query: &str, action: &str) {
     {
         let mut conn_guard = CONN.lock().unwrap();
         if let Some(conn) = conn_guard.as_mut() {
-            conn.write_all(&buffer).unwrap();
+            match conn.write_all(&buffer) {
+                Err(_) => {
+                    drop(conn_guard);
+                    handle_disconnect();
+                }
+                _ => (),
+            }
         }
     }
 }
@@ -441,4 +485,10 @@ fn subscribe_menu() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+fn wait_for_file(path: &str) {
+    while !Path::new(path).exists() {
+        thread::sleep(Duration::from_millis(10));
+    }
 }

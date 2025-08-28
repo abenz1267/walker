@@ -12,7 +12,6 @@ use crate::{
     state::{WindowData, with_state},
     theme::{setup_layer_shell, with_themes},
 };
-use gtk4::prelude::WidgetExt;
 use gtk4::prelude::{EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
 use gtk4::prelude::{EntryExt, GtkWindowExt};
 use gtk4::{
@@ -24,6 +23,7 @@ use gtk4::{
     GridView,
     glib::object::{CastNone, ObjectExt},
 };
+use gtk4::{gdk, prelude::WidgetExt};
 use gtk4::{gio::ListStore, glib::object::Cast};
 use gtk4::{
     gio::prelude::{ApplicationExt, ListModelExt},
@@ -73,8 +73,12 @@ pub fn setup_window(app: &Application) {
             let keybinds: Option<Label> = builder.object("Keybinds");
             let selection = SingleSelection::new(Some(items.clone()));
             let search_container: Option<Box> = builder.object("SearchContainer");
+            let content_container: gtk4::Box = builder
+                .object("ContentContainer")
+                .expect("ContentContainer not found");
 
             let ui = WindowData {
+                content_container,
                 search_container,
                 builder: builder.clone(),
                 preview_builder: std::cell::RefCell::new(None),
@@ -216,21 +220,52 @@ fn setup_keyboard_handling(ui: &WindowData) {
     let app = ui.app.clone();
 
     controller.connect_key_pressed(move |_, k, _, m| {
-        if let Some(action) = get_bind(k, m) {
-            match action.action.as_str() {
-                ACTION_CLOSE => quit(&app, true),
-                ACTION_SELECT_NEXT => select_next(),
-                ACTION_SELECT_PREVIOUS => select_previous(),
-                ACTION_TOGGLE_EXACT => toggle_exact(),
-                ACTION_RESUME_LAST_QUERY => resume_last_query(),
-                _ => {}
+        let handled = with_window(|w| {
+            let mut is_dmenu = false;
+            let mut is_service = false;
+
+            with_state(|s| {
+                is_dmenu = s.is_dmenu();
+                is_service = s.is_service();
+            });
+
+            let selection = &w.selection;
+
+            if is_dmenu && k == gdk::Key::Return && selection.selected_item().is_none() {
+                let mut text = if let Some(input) = &w.input {
+                    input.text().to_string()
+                } else {
+                    "".to_string()
+                };
+
+                if text == "" {
+                    text = "CNCLD".to_string()
+                }
+
+                if is_service {
+                    send_message(text).unwrap();
+                } else {
+                    println!("{}", text);
+                }
+
+                quit(&app, false);
+
+                return true.into();
             }
 
-            return true.into();
-        }
+            if let Some(action) = get_bind(k, m) {
+                match action.action.as_str() {
+                    ACTION_CLOSE => quit(&app, true),
+                    ACTION_SELECT_NEXT => select_next(),
+                    ACTION_SELECT_PREVIOUS => select_previous(),
+                    ACTION_TOGGLE_EXACT => toggle_exact(),
+                    ACTION_RESUME_LAST_QUERY => resume_last_query(),
+                    _ => {}
+                }
 
-        let handled = with_window(|w| {
-            let selection = &w.selection;
+                return true.into();
+            }
+
             let items = &w.selection;
             if items.n_items() == 0 {
                 return false;
@@ -434,6 +469,7 @@ pub fn quit(app: &Application, cancelled: bool) {
             s.is_visible.set(false);
             s.set_dmenu_current(0);
             s.set_is_dmenu(false);
+            s.set_input_only(false);
 
             if s.is_dmenu_exit_after() {
                 s.set_dmenu_exit_after(false);
@@ -460,6 +496,12 @@ pub fn quit(app: &Application, cancelled: bool) {
                 if let Some(input) = &w.input {
                     input.set_text("");
                     input.emit_by_name::<()>("changed", &[]);
+                }
+
+                w.content_container.set_visible(true);
+
+                if let Some(keybinds) = &w.keybinds {
+                    keybinds.set_visible(true);
                 }
 
                 with_state(|s| {

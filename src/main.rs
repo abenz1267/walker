@@ -7,11 +7,11 @@ mod renderers;
 mod state;
 mod theme;
 mod ui;
-use gtk4::gio;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual};
-use gtk4::glib::ControlFlow;
+use gtk4::gio::{self, Cancellable};
 use gtk4::glib::object::ObjectExt;
 use gtk4::glib::subclass::types::ObjectSubclassIsExt;
+use gtk4::glib::{ControlFlow, Priority};
 use gtk4::prelude::{EditableExt, EntryExt, GtkWindowExt};
 
 use config::get_config;
@@ -20,6 +20,7 @@ use which::which;
 
 use std::env;
 use std::process;
+use std::rc::Rc;
 use std::sync::{Mutex, mpsc};
 use std::time::Duration;
 use std::{path::Path, thread};
@@ -34,7 +35,7 @@ use gtk4::{
     prelude::WidgetExt,
 };
 
-use crate::data::{init_socket, start_listening};
+use crate::data::init_socket;
 use crate::keybinds::setup_binds;
 use crate::protos::generated_proto::query::{QueryResponse, query_response};
 use crate::renderers::setup_item_transformers;
@@ -114,6 +115,15 @@ fn main() -> glib::ExitCode {
         OptionFlags::NONE,
         glib::OptionArg::None,
         "hide search input",
+        None,
+    );
+
+    app.add_main_option(
+        "inputonly",
+        b'I'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::None,
+        "only show input. dmenu only.",
         None,
     );
 
@@ -211,7 +221,7 @@ fn main() -> glib::ExitCode {
         let options = cmd.options_dict();
 
         if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-12\n");
+            cmd.print_literal("1.0.0-beta-15\n");
             return 0;
         }
 
@@ -259,6 +269,8 @@ fn main() -> glib::ExitCode {
                     }
                 }
 
+                s.set_input_only(options.contains("inputonly"));
+
                 if options.contains("keepopen")
                     && app.flags().contains(ApplicationFlags::IS_SERVICE)
                 {
@@ -283,12 +295,6 @@ fn main() -> glib::ExitCode {
                 });
 
                 if !exists {
-                    let stdin = cmd.stdin();
-
-                    let data_stream = gio::DataInputStream::new(&stdin.unwrap());
-
-                    let mut i = 0;
-
                     with_window(|w| {
                         if let Some(input) = &w.input {
                             input.set_text("");
@@ -297,34 +303,60 @@ fn main() -> glib::ExitCode {
                         let items = &w.items;
                         items.remove_all();
 
-                        loop {
-                            match data_stream.read_line(gio::Cancellable::NONE) {
-                                Ok(line_slice) => {
-                                    if line_slice.is_empty() {
-                                        break;
-                                    }
+                        if !s.is_input_only() {
+                            let stdin = cmd.stdin();
+                            let data_stream = gio::DataInputStream::new(&stdin.unwrap());
+                            let data_stream_rc = Rc::new(data_stream);
 
-                                    if let Ok(line_str) = std::str::from_utf8(&line_slice) {
-                                        let trimmed = line_str.trim();
-                                        if !trimmed.is_empty() {
-                                            let mut item = query_response::Item::new();
-                                            item.text = trimmed.to_string();
-                                            item.provider = "dmenu".to_string();
-                                            item.score = 1000000 - i;
+                            fn read_line_callback(
+                                stream: Rc<gio::DataInputStream>,
+                                i: i32,
+                                items: gio::ListStore,
+                            ) {
+                                let stream_clone = stream.clone();
 
-                                            let mut response = QueryResponse::new();
-                                            response.item = protobuf::MessageField::some(item);
+                                stream.read_line_utf8_async(
+                                    Priority::DEFAULT,
+                                    Cancellable::NONE,
+                                    move |line_slice| match line_slice {
+                                        Ok(line_slice) => {
+                                            if let Some(line) = line_slice {
+                                                if line.is_empty() {
+                                                    return;
+                                                }
 
-                                            items.append(&QueryResponseObject::new(response));
-                                            i += 1;
+                                                let trimmed = line.trim();
+
+                                                if !trimmed.is_empty() {
+                                                    let mut item = query_response::Item::new();
+                                                    item.text = trimmed.to_string();
+                                                    item.provider = "dmenu".to_string();
+                                                    item.score = 1000000 - i;
+
+                                                    let mut response = QueryResponse::new();
+                                                    response.item =
+                                                        protobuf::MessageField::some(item);
+
+                                                    items.append(&QueryResponseObject::new(
+                                                        response,
+                                                    ));
+                                                }
+                                                read_line_callback(
+                                                    stream_clone,
+                                                    i + 1,
+                                                    items.clone(),
+                                                );
+                                            }
                                         }
-                                    }
-                                }
-                                Err(e) => {
-                                    eprintln!("Error reading: {}", e);
-                                    break;
-                                }
+                                        Err(e) => {
+                                            eprintln!("Error reading: {}", e);
+                                            return;
+                                        }
+                                    },
+                                );
                             }
+
+                            read_line_callback(data_stream_rc.clone(), 0, items.clone());
                         }
                     });
 
@@ -392,6 +424,13 @@ fn main() -> glib::ExitCode {
                 drop(provider);
 
                 with_window(|w| {
+                    if s.is_input_only() {
+                        w.content_container.set_visible(false);
+                        if let Some(keybinds) = &w.keybinds {
+                            keybinds.set_visible(false);
+                        }
+                    }
+
                     if let Some(placeholders) = &cfg.placeholders {
                         if let Some(placeholder) = placeholders.get(&p) {
                             if let Some(input) = &w.input {
@@ -443,7 +482,7 @@ fn main() -> glib::ExitCode {
                         input.grab_focus();
                     }
 
-                    w.window.present();
+                    w.window.set_visible(true);
                 });
 
                 s.set_is_visible(true);
@@ -466,7 +505,6 @@ fn main() -> glib::ExitCode {
 
         if !app.flags().contains(ApplicationFlags::IS_SERVICE) && !dmenu && !version {
             println!("make sure 'walker --gapplication-service' is running!");
-            // process::exit(1);
         }
 
         if !version {
@@ -502,11 +540,7 @@ fn init_ui(app: &Application, dmenu: bool) {
 
         if !dmenu {
             if elephant {
-                println!("waiting for elephant to start...");
-                wait_for_file("/tmp/elephant.sock");
-                println!("connecting to elephant...");
                 init_socket().unwrap();
-                start_listening();
             } else {
                 println!("Please install elephant.");
                 process::exit(1);

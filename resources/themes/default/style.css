@@ -1,3 +1,7 @@
+@define-color window_bg_color #1f1f28;
+@define-color accent_bg_color #54546d;
+@define-color theme_fg_color #f2ecbc;
+
 * {
   all: unset;
 }
@@ -99,6 +103,7 @@ child:selected .item-box {
   border: 1px solid alpha(@accent_bg_color, 0.25);
   padding: 10px;
   border-radius: 10px;
+  color: @theme_fg_color;
 }
 
 .calc .item-text {

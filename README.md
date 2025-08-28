@@ -16,6 +16,7 @@ Walker offers multiple provider types for different use cases:
 - **Provider List**: Switch between providers with `;` prefix
 - **Menu Integration**: Create custom menus with elephant and let walker display them
 - **Dmenu**: Your good old dmenu ... with seamless menus!
+- **Arch Linux Packages**: Search through available packages (official and aur), install or delete a target! List all exlusively installed packages.
 
 ## Installation
 

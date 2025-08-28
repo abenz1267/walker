@@ -79,6 +79,7 @@ pub struct Providers {
     pub files: Files,
     pub runner: Runner,
     pub symbols: Symbols,
+    pub archlinuxpkgs: ArchLinuxPkgs,
     pub menus: Menus,
     pub websearch: Websearch,
     pub dmenu: Dmenu,
@@ -133,6 +134,13 @@ pub struct Dmenu {
 pub struct Symbols {
     pub click: String,
     pub copy: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ArchLinuxPkgs {
+    pub click: String,
+    pub install: String,
+    pub remove: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

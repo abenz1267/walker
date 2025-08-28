@@ -57,6 +57,11 @@ provider = "websearch"
 prefix = ":"
 provider = "clipboard"
 
+[providers.archlinuxpkgs]
+click = "install"
+install = "enter"
+remove = "ctrl d"
+
 [providers.calc]
 click = "copy"
 copy = "enter"

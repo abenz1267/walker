@@ -679,6 +679,7 @@ pub fn set_keybind_hint() {
         if let Some(k) = &w.keybinds {
             if let Some(item) = get_selected_item() {
                 match item.provider.as_str() {
+                    "archlinuxpkgs" => set_keybinds_archlinuxpkgs(k),
                     "desktopapplications" => set_keybinds_desktopapplications(k),
                     "files" => set_keybinds_files(k),
                     "symbols" => set_keybinds_symbols(k),
@@ -698,6 +699,15 @@ pub fn set_keybind_hint() {
 
 fn clear_keybind_hint(k: &Label) {
     k.set_text("");
+}
+
+fn set_keybinds_archlinuxpkgs(k: &Label) {
+    let text = format!(
+        "install: {} - remove: {}",
+        get_config().providers.archlinuxpkgs.install,
+        get_config().providers.archlinuxpkgs.remove,
+    );
+    k.set_text(&text);
 }
 
 fn set_keybinds_desktopapplications(k: &Label) {

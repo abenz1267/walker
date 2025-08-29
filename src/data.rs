@@ -97,11 +97,11 @@ fn sort_items_fuzzy(query: &str) {
 }
 
 pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
-    println!("waiting for elephant to start...");
-    wait_for_file("/tmp/elephant.sock");
-    println!("connecting to elephant...");
-
     let socket_path = std::env::temp_dir().join("elephant.sock");
+
+    println!("waiting for elephant to start...");
+    wait_for_file(&socket_path.to_string_lossy().to_string());
+    println!("connecting to elephant...");
 
     let conn = UnixStream::connect(&socket_path)?;
     *CONN.lock().unwrap() = Some(conn);

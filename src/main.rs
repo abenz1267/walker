@@ -39,7 +39,9 @@ use crate::data::init_socket;
 use crate::keybinds::setup_binds;
 use crate::protos::generated_proto::query::{QueryResponse, query_response};
 use crate::renderers::setup_item_transformers;
-use crate::theme::{setup_css, setup_css_provider, setup_themes};
+use crate::theme::{
+    setup_css, setup_css_provider, setup_installed_elephant_providers, setup_themes,
+};
 use crate::ui::window::{handle_preview, quit, setup_window, with_window};
 
 // GObject wrapper for QueryResponse
@@ -221,7 +223,7 @@ fn main() -> glib::ExitCode {
         let options = cmd.options_dict();
 
         if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-16\n");
+            cmd.print_literal("1.0.0-beta-17\n");
             return 0;
         }
 
@@ -548,6 +550,11 @@ fn init_ui(app: &Application, dmenu: bool) {
         }
 
         setup_css_provider();
+
+        if elephant {
+            setup_installed_elephant_providers();
+        }
+
         setup_themes(
             elephant && !dmenu && s.is_service(),
             s.get_theme(),

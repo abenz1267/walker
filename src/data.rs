@@ -4,6 +4,7 @@ use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::state::with_state;
+use crate::theme::with_installed_providers;
 use crate::ui::window::{set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
 use gtk4::{glib, prelude::*};
@@ -303,18 +304,20 @@ fn query(text: &str) {
         let cfg = get_config();
         let mut provider = s.get_provider();
 
-        if s.get_provider().is_empty() {
-            for prefix in &cfg.providers.prefixes {
-                if text.starts_with(&prefix.prefix) {
-                    provider = prefix.provider.clone();
-                    query_text = text
-                        .strip_prefix(&prefix.prefix)
-                        .unwrap_or(text)
-                        .to_string();
-                    break;
+        with_installed_providers(|p| {
+            if s.get_provider().is_empty() {
+                for prefix in &cfg.providers.prefixes {
+                    if text.starts_with(&prefix.prefix) && p.contains(&prefix.provider) {
+                        provider = prefix.provider.clone();
+                        query_text = text
+                            .strip_prefix(&prefix.prefix)
+                            .unwrap_or(text)
+                            .to_string();
+                        break;
+                    }
                 }
             }
-        }
+        });
 
         let delimiter = &cfg.global_argument_delimiter;
 

@@ -309,9 +309,14 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     action.after.as_str()
                 };
 
+                let is_dmenu_next = item_clone.identifier.contains("dmenu:");
                 with_state(|s| {
-                    if s.is_dmenu_keep_open() && !s.is_dmenu_exit_after() {
+                    if (s.is_dmenu_keep_open() && !s.is_dmenu_exit_after()) || is_dmenu_next {
                         after = AFTER_NOTHING;
+                    }
+
+                    if is_dmenu_next {
+                        s.set_is_dmenu(true);
                     }
                 });
 

@@ -1870,7 +1870,7 @@ dependencies = [
 
 [[package]]
 name = "walker"
-version = "1.0.0-beta-17"
+version = "1.0.0-beta-18"
 dependencies = [
  "cairo-rs 0.21.1",
  "chrono",

@@ -67,6 +67,8 @@ You can customize rendering of list items for each provider individually, f.e. "
 
 Please refer to [the GTK4 docs](https://docs.gtk.org/gtk4/) to checkout how to write `*.xml` files for GTK4.
 
+**THE DEFAULT THEME CANNOT BE CHANGED**.
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.

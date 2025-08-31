@@ -182,6 +182,7 @@ pub struct Clipboard {
     pub time_format: String,
     pub copy: String,
     pub delete: String,
+    pub edit: String,
 }
 
 pub fn load() -> Result<(), Box<dyn std::error::Error>> {

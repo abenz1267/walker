@@ -85,6 +85,7 @@ time_format = "%d.%m. - %H:%M" # format for the clipboard item date
 click = "copy"
 copy = "enter"
 delete = "ctrl d"
+edit = "ctrl o"
 
 [providers.desktopapplications]
 click = "start"

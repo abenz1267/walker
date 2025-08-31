@@ -22,6 +22,7 @@ pub const ACTION_CALC_SAVE: &str = "save";
 
 pub const ACTION_CLIPBOARD_COPY: &str = "copy";
 pub const ACTION_CLIPBOARD_DELETE: &str = "remove";
+pub const ACTION_CLIPBOARD_EDIT: &str = "edit";
 
 pub const ACTION_DESKTOP_APPLICATIONS_START: &str = "";
 
@@ -139,6 +140,13 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
         &config.providers.clipboard.delete,
         ACTION_CLIPBOARD_DELETE,
         AFTER_RELOAD,
+        "clipboard",
+    )?;
+
+    parse_bind(
+        &config.providers.clipboard.edit,
+        ACTION_CLIPBOARD_EDIT,
+        AFTER_CLOSE,
         "clipboard",
     )?;
 

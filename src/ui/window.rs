@@ -743,8 +743,8 @@ fn set_keybinds_desktopapplications(k: &Label) {
 fn set_keybinds_clipboard(k: &Label) {
     let cfg = get_config();
     let text = format!(
-        "copy: {} - delete: {}",
-        cfg.providers.clipboard.copy, cfg.providers.clipboard.delete
+        "copy: {} - delete: {} - edit: {}",
+        cfg.providers.clipboard.copy, cfg.providers.clipboard.delete, cfg.providers.clipboard.edit
     );
     k.set_text(&text);
 }

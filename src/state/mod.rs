@@ -45,6 +45,7 @@ pub struct AppState {
     input_only: Cell<bool>,
     is_dmenu: Cell<bool>,
     is_param_close: Cell<bool>,
+    current_prefix: RefCell<String>,
     pub(crate) is_visible: Cell<bool>,
 }
 
@@ -54,6 +55,7 @@ impl AppState {
             provider: RefCell::new(String::new()),
             available_themes: RefCell::new(HashSet::new()),
             theme: RefCell::new("".to_string()),
+            current_prefix: RefCell::new("".to_string()),
             placeholder: RefCell::new("".to_string()),
             initial_placeholder: RefCell::new("".to_string()),
             last_query: RefCell::new(String::new()),
@@ -79,6 +81,14 @@ impl AppState {
 
     pub fn set_theme(&self, val: &str) {
         *self.theme.borrow_mut() = val.to_string();
+    }
+
+    pub fn get_current_prefix(&self) -> String {
+        self.current_prefix.borrow().clone()
+    }
+
+    pub fn set_current_prefix(&self, val: &str) {
+        *self.current_prefix.borrow_mut() = val.to_string();
     }
 
     pub fn get_provider(&self) -> String {

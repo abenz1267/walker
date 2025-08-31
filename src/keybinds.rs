@@ -14,6 +14,7 @@ pub const AFTER_CLOSE: &str = "%CLOSE%";
 pub const AFTER_NOTHING: &str = "%NOTHING%";
 pub const AFTER_RELOAD: &str = "%RELOAD%";
 pub const AFTER_CLEAR_RELOAD: &str = "%CLEAR_RELOAD%";
+pub const AFTER_CLEAR_RELOAD_KEEP_PREFIX: &str = "%CLEAR_RELOAD_KEEP_PREFIX%";
 
 pub const ACTION_CALC_COPY: &str = "copy";
 pub const ACTION_CALC_DELETE: &str = "delete";
@@ -265,35 +266,35 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
     parse_bind(
         &config.providers.todo.delete,
         ACTION_TODO_DELETE,
-        AFTER_CLEAR_RELOAD,
+        AFTER_CLEAR_RELOAD_KEEP_PREFIX,
         "todo",
     )?;
 
     parse_bind(
         &config.providers.todo.save,
         ACTION_TODO_SAVE,
-        AFTER_CLEAR_RELOAD,
+        AFTER_CLEAR_RELOAD_KEEP_PREFIX,
         "todo",
     )?;
 
     parse_bind(
         &config.providers.todo.mark_active,
         ACTION_TODO_MARK_ACTIVE,
-        AFTER_CLEAR_RELOAD,
+        AFTER_CLEAR_RELOAD_KEEP_PREFIX,
         "todo",
     )?;
 
     parse_bind(
         &config.providers.todo.mark_done,
         ACTION_TODO_MARK_DONE,
-        AFTER_CLEAR_RELOAD,
+        AFTER_CLEAR_RELOAD_KEEP_PREFIX,
         "todo",
     )?;
 
     parse_bind(
         &config.providers.todo.clear,
         ACTION_TODO_CLEAR,
-        AFTER_CLEAR_RELOAD,
+        AFTER_CLEAR_RELOAD_KEEP_PREFIX,
         "todo",
     )?;
 

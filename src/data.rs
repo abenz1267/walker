@@ -17,7 +17,7 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
 use std::time::Duration;
-use std::{env, os, thread};
+use std::{env, thread};
 
 static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
@@ -335,6 +335,7 @@ fn query(text: &str) {
                             .strip_prefix(&prefix.prefix)
                             .unwrap_or(text)
                             .to_string();
+                        s.set_current_prefix(&prefix.prefix);
                         break;
                     }
                 }

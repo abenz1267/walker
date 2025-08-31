@@ -4,8 +4,8 @@ use crate::{
     data::{activate, input_changed},
     keybinds::{
         ACTION_CLOSE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS,
-        ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD, AFTER_CLOSE, AFTER_NOTHING, AFTER_RELOAD,
-        get_bind, get_modifiers, get_provider_bind,
+        ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD, AFTER_CLEAR_RELOAD_KEEP_PREFIX, AFTER_CLOSE,
+        AFTER_NOTHING, AFTER_RELOAD, get_bind, get_modifiers, get_provider_bind,
     },
     renderers::create_item,
     send_message,
@@ -350,6 +350,20 @@ fn setup_keyboard_handling(ui: &WindowData) {
                             }
                         });
                     }
+                    AFTER_CLEAR_RELOAD_KEEP_PREFIX => {
+                        with_window(|w| {
+                            if let Some(input) = &w.input {
+                                if input.text().is_empty() {
+                                    input.emit_by_name::<()>("changed", &[]);
+                                } else {
+                                    with_state(|s| {
+                                        input.set_text(&s.get_current_prefix());
+                                        input.set_position(-1);
+                                    })
+                                }
+                            }
+                        });
+                    }
                     AFTER_RELOAD => crate::data::input_changed(&query),
                     _ => {}
                 }
@@ -466,6 +480,7 @@ pub fn quit(app: &Application, cancelled: bool) {
         crate::preview::clear_all_caches();
 
         with_state(|s| {
+            s.set_current_prefix("");
             s.set_provider("");
             s.set_parameter_height(0);
             s.set_parameter_width(0);

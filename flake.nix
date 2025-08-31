@@ -6,7 +6,7 @@
   inputs = {
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     systems.url = "github:nix-systems/default-linux";
-    elephant.url = "github:umbrageodotus/elephant";
+    elephant.url = "github:abenz1267/elephant";
   };
 
   outputs = {

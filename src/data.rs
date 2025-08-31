@@ -13,11 +13,11 @@ use nucleo_matcher::{Config, Matcher};
 use protobuf::Message;
 use std::io::{BufReader, Read, Write};
 use std::os::unix::net::UnixStream;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::Mutex;
-use std::thread;
 use std::time::Duration;
+use std::{env, os, thread};
 
 static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
@@ -98,20 +98,42 @@ fn sort_items_fuzzy(query: &str) {
 }
 
 pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
-    let socket_path = std::env::temp_dir().join("elephant.sock");
+    let mut socket_path = if let Ok(value) = env::var("XDG_RUNTIME_DIR") {
+        PathBuf::from(value)
+    } else {
+        std::env::temp_dir()
+    };
+
+    socket_path.push("elephant");
+    socket_path.push("elephant.sock");
 
     println!("waiting for elephant to start...");
     wait_for_file(&socket_path.to_string_lossy().to_string());
     println!("connecting to elephant...");
 
-    let conn = UnixStream::connect(&socket_path)?;
+    let conn = loop {
+        match UnixStream::connect(&socket_path) {
+            Ok(conn) => break conn,
+            Err(e) => {
+                println!("Failed to connect: {}. Retrying in 1 second...", e);
+                thread::sleep(Duration::from_secs(1));
+            }
+        }
+    };
     *CONN.lock().unwrap() = Some(conn);
 
-    let menuconn = UnixStream::connect(&socket_path)?;
+    let menuconn = loop {
+        match UnixStream::connect(&socket_path) {
+            Ok(conn) => break conn,
+            Err(e) => {
+                println!("Failed to connect to menu: {}. Retrying in 1 second...", e);
+                thread::sleep(Duration::from_secs(1));
+            }
+        }
+    };
     *MENUCONN.lock().unwrap() = Some(menuconn);
 
     subscribe_menu().unwrap();
-
     start_listening();
 
     Ok(())

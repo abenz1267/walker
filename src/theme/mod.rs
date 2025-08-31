@@ -47,6 +47,14 @@ impl Theme {
                     include_str!("../../resources/themes/default/item_symbols.xml").to_string(),
                 ),
                 (
+                    "unicode".to_string(),
+                    include_str!("../../resources/themes/default/item_unicode.xml").to_string(),
+                ),
+                (
+                    "todo".to_string(),
+                    include_str!("../../resources/themes/default/item_todo.xml").to_string(),
+                ),
+                (
                     "calc".to_string(),
                     include_str!("../../resources/themes/default/item_calc.xml").to_string(),
                 ),

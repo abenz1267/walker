@@ -80,6 +80,7 @@ pub struct Providers {
     pub todo: Todo,
     pub runner: Runner,
     pub symbols: Symbols,
+    pub unicode: Unicode,
     pub archlinuxpkgs: ArchLinuxPkgs,
     pub menus: Menus,
     pub websearch: Websearch,
@@ -133,6 +134,12 @@ pub struct Dmenu {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Symbols {
+    pub click: String,
+    pub copy: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Unicode {
     pub click: String,
     pub copy: String,
 }

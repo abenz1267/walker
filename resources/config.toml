@@ -114,6 +114,10 @@ select = "enter"
 click = "copy"
 copy = "enter"
 
+[providers.unicode]
+click = "copy"
+copy = "enter"
+
 [providers.menus]
 click = "activate"
 activate = "enter"

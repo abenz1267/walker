@@ -4,7 +4,6 @@ use crate::ui::window::{quit, with_window};
 use crate::{config::get_config, protos::generated_proto::query::query_response::Item};
 use chrono::DateTime;
 use gtk4::gdk::{self, ContentProvider};
-use gtk4::gdk_pixbuf::Pixbuf;
 use gtk4::gio::File;
 use gtk4::gio::prelude::{FileExt, FileExtManual};
 use gtk4::prelude::{ListItemExt, WidgetExt};
@@ -74,6 +73,7 @@ pub fn setup_item_transformers() {
     image.insert("default".to_string(), default_image_transformer);
     image.insert("clipboard".to_string(), clipboard_image_transformer);
     image.insert("symbols".to_string(), symbols_image_transformer);
+    image.insert("unicode".to_string(), unicode_image_transformer);
     image.insert("calc".to_string(), calc_image_transformer);
     image.insert("todo".to_string(), todo_image_transformer);
     image.insert("files".to_string(), files_image_transformer);
@@ -111,7 +111,7 @@ fn default_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     }
 }
 
-fn calc_image_transformer(b: &Builder, li: &ListItem, item: &Item) {
+fn calc_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
         if item.state.contains(&"current".to_string()) {
             if !item.icon.is_empty() {
@@ -165,6 +165,18 @@ fn symbols_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Label>("ItemImage") {
         if !item.icon.is_empty() {
             image.set_label(&item.icon);
+        }
+    }
+}
+
+fn unicode_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
+    if let Some(image) = b.object::<Label>("ItemImage") {
+        if !item.icon.is_empty() {
+            if let Ok(code_point) = u32::from_str_radix(&item.icon, 16) {
+                if let Some(unicode_char) = char::from_u32(code_point) {
+                    image.set_label(&format!("{}", unicode_char));
+                }
+            }
         }
     }
 }

@@ -34,6 +34,8 @@ pub const ACTION_RUNNER_START_TERMINAL: &str = "runterminal";
 
 pub const ACTION_SYMBOLS_COPY: &str = "copy";
 
+pub const ACTION_UNICODE_COPY: &str = "copy";
+
 pub const ACTION_PROVIDERLIST_ACTIVATE: &str = "activate";
 
 pub const ACTION_MENUS_ACTIVATE: &str = "activate";
@@ -209,6 +211,13 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
         ACTION_SYMBOLS_COPY,
         AFTER_CLOSE,
         "symbols",
+    )?;
+
+    parse_bind(
+        &config.providers.unicode.copy,
+        ACTION_UNICODE_COPY,
+        AFTER_CLOSE,
+        "unicode",
     )?;
 
     parse_bind(

@@ -223,7 +223,7 @@ fn main() -> glib::ExitCode {
         let options = cmd.options_dict();
 
         if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-18\n");
+            cmd.print_literal("1.0.0-beta-19\n");
             return 0;
         }
 

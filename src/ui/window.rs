@@ -688,6 +688,7 @@ pub fn set_keybind_hint() {
                     "desktopapplications" => set_keybinds_desktopapplications(k),
                     "files" => set_keybinds_files(k),
                     "symbols" => set_keybinds_symbols(k),
+                    "unicode" => set_keybinds_unicode(k),
                     "calc" => set_keybinds_calc(k),
                     "runner" => set_keybinds_runner(k),
                     "providerlist" => set_keybinds_providerlist(k),
@@ -764,6 +765,12 @@ fn set_keybinds_calc(k: &Label) {
 fn set_keybinds_symbols(k: &Label) {
     let cfg = get_config();
     let text = format!("copy: {}", cfg.providers.symbols.copy,);
+    k.set_text(&text);
+}
+
+fn set_keybinds_unicode(k: &Label) {
+    let cfg = get_config();
+    let text = format!("copy: {}", cfg.providers.unicode.copy,);
     k.set_text(&text);
 }
 

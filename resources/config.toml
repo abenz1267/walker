@@ -93,6 +93,14 @@ open_dir = "ctrl enter"
 copy_path = "ctrl shift C"
 copy_file = "ctrl c"
 
+[providers.todo]
+click = "save"
+save = "enter"
+delete = "ctrl d"
+mark_active = "ctrl a"
+mark_done = "ctrl f"
+clear = "ctrl shift X"
+
 [providers.runner]
 click = "start"
 start = "enter"

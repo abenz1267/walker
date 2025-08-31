@@ -75,6 +75,7 @@ pub fn setup_item_transformers() {
     image.insert("clipboard".to_string(), clipboard_image_transformer);
     image.insert("symbols".to_string(), symbols_image_transformer);
     image.insert("calc".to_string(), calc_image_transformer);
+    image.insert("todo".to_string(), todo_image_transformer);
     image.insert("files".to_string(), files_image_transformer);
 
     IMAGE_TRANSFORMERS.with(|t| {
@@ -112,7 +113,23 @@ fn default_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
 
 fn calc_image_transformer(b: &Builder, li: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Image>("ItemImage") {
-        if li.position() == 0 {
+        if item.state.contains(&"current".to_string()) {
+            if !item.icon.is_empty() {
+                if Path::new(&item.icon).is_absolute() {
+                    image.set_from_file(Some(&item.icon));
+                } else {
+                    image.set_icon_name(Some(&item.icon));
+                }
+            }
+        } else {
+            image.set_visible(false);
+        }
+    }
+}
+
+fn todo_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
+    if let Some(image) = b.object::<Image>("ItemImage") {
+        if item.state.contains(&"creating".to_string()) {
             if !item.icon.is_empty() {
                 if Path::new(&item.icon).is_absolute() {
                     image.set_from_file(Some(&item.icon));
@@ -226,6 +243,8 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
 
     let itembox: Box = b.object("ItemBox").expect("failed to get ItemBox");
     itembox.add_css_class(&item.provider.replace("menus:", "menus-"));
+
+    item.state.iter().for_each(|i| itembox.add_css_class(i));
 
     with_state(|s| {
         if s.get_dmenu_current() != 0 && s.get_dmenu_current() as u32 == list_item.position() + 1 {

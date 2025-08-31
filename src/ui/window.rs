@@ -692,6 +692,7 @@ pub fn set_keybind_hint() {
                     "runner" => set_keybinds_runner(k),
                     "providerlist" => set_keybinds_providerlist(k),
                     "clipboard" => set_keybinds_clipboard(k),
+                    "todo" => set_keybinds_todo(k, item.state),
                     provider if provider.starts_with("menus:") => set_keybinds_menus(k),
                     _ => clear_keybind_hint(k),
                 }
@@ -729,6 +730,19 @@ fn set_keybinds_clipboard(k: &Label) {
         "copy: {} - delete: {}",
         cfg.providers.clipboard.copy, cfg.providers.clipboard.delete
     );
+    k.set_text(&text);
+}
+
+fn set_keybinds_todo(k: &Label, state: Vec<String>) {
+    let cfg = get_config();
+    let text = format!(
+        "mark active: {} - mark done: {} - delete: {} - clear: {}",
+        cfg.providers.todo.mark_active,
+        cfg.providers.todo.mark_done,
+        cfg.providers.todo.delete,
+        cfg.providers.todo.clear
+    );
+
     k.set_text(&text);
 }
 

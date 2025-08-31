@@ -77,6 +77,7 @@ pub struct Providers {
     pub clipboard: Clipboard,
     pub desktopapplications: DesktopApplications,
     pub files: Files,
+    pub todo: Todo,
     pub runner: Runner,
     pub symbols: Symbols,
     pub archlinuxpkgs: ArchLinuxPkgs,
@@ -150,6 +151,16 @@ pub struct Files {
     pub open_dir: String,
     pub copy_path: String,
     pub copy_file: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Todo {
+    pub click: String,
+    pub save: String,
+    pub delete: String,
+    pub mark_active: String,
+    pub mark_done: String,
+    pub clear: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

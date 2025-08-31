@@ -45,6 +45,12 @@ pub const ACTION_DMENU_SELECT: &str = "select";
 pub const ACTION_ARCHLINUXPKGS_INSTALL: &str = "install";
 pub const ACTION_ARCHLINUXPKGS_REMOVE: &str = "remove";
 
+pub const ACTION_TODO_SAVE: &str = "save";
+pub const ACTION_TODO_DELETE: &str = "delete";
+pub const ACTION_TODO_MARK_ACTIVE: &str = "active";
+pub const ACTION_TODO_MARK_DONE: &str = "done";
+pub const ACTION_TODO_CLEAR: &str = "clear";
+
 #[derive(Debug, Clone)]
 pub struct Action {
     pub action: String,
@@ -245,6 +251,41 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
         ACTION_ARCHLINUXPKGS_REMOVE,
         AFTER_CLOSE,
         "archlinuxpkgs",
+    )?;
+
+    parse_bind(
+        &config.providers.todo.delete,
+        ACTION_TODO_DELETE,
+        AFTER_CLEAR_RELOAD,
+        "todo",
+    )?;
+
+    parse_bind(
+        &config.providers.todo.save,
+        ACTION_TODO_SAVE,
+        AFTER_CLEAR_RELOAD,
+        "todo",
+    )?;
+
+    parse_bind(
+        &config.providers.todo.mark_active,
+        ACTION_TODO_MARK_ACTIVE,
+        AFTER_CLEAR_RELOAD,
+        "todo",
+    )?;
+
+    parse_bind(
+        &config.providers.todo.mark_done,
+        ACTION_TODO_MARK_DONE,
+        AFTER_CLEAR_RELOAD,
+        "todo",
+    )?;
+
+    parse_bind(
+        &config.providers.todo.clear,
+        ACTION_TODO_CLEAR,
+        AFTER_CLEAR_RELOAD,
+        "todo",
     )?;
 
     Ok(())

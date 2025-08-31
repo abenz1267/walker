@@ -1,7 +1,3 @@
-@define-color window_bg_color #1f1f28;
-@define-color accent_bg_color #54546d;
-@define-color theme_fg_color #f2ecbc;
-
 * {
   all: unset;
 }
@@ -115,6 +111,18 @@ child:selected .item-box {
 
 .symbols .item-image {
   font-size: 24px;
+}
+
+.todo.done .item-text-box {
+  opacity: 0.25;
+}
+
+.todo.urgent {
+  font-size: 24px;
+}
+
+.todo.active {
+  font-weight: bold;
 }
 
 .preview .large-icons {

@@ -79,7 +79,6 @@ pub fn setup_item_transformers() {
     IMAGE_TRANSFORMERS.with(|t| t.set(image).expect("Text transformers already initialized"));
 }
 
-<<<<<<< HEAD
 fn default_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     let Some(image) = b.object::<Image>("ItemImage") else {
         if let Some(image) = b.object::<Picture>("ItemImage") {
@@ -87,7 +86,9 @@ fn default_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
 
             glib::spawn_future_local(async move {
                 let file = gio::File::for_path(&icon);
-                let (bytes, _) = file.load_contents_future().await.unwrap();
+                let Ok((bytes, _)) = file.load_contents_future().await else {
+                    return;
+                };
                 let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
                 image.set_paintable(Some(&texture));
             });
@@ -104,7 +105,9 @@ fn default_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
 
         glib::spawn_future_local(async move {
             let file = gio::File::for_path(&icon);
-            let (bytes, _) = file.load_contents_future().await.unwrap();
+            let Ok((bytes, _)) = file.load_contents_future().await else {
+                return;
+            };
             let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
             image.set_paintable(Some(&texture));
         });
@@ -113,40 +116,6 @@ fn default_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
 
     image.set_icon_name(Some(&item.icon));
 }
-||||||| constructed fake ancestor
-=======
-fn default_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
-    if let Some(image) = b.object::<Image>("ItemImage") {
-        if !item.icon.is_empty() {
-            if Path::new(&item.icon).is_absolute() {
-                let icon = item.icon.clone();
-
-                glib::spawn_future_local(async move {
-                    let file = gio::File::for_path(&icon);
-
-                    if let Ok((bytes, _)) = file.load_contents_future().await {
-                        let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
-                        image.set_paintable(Some(&texture));
-                    }
-                });
-            } else {
-                image.set_icon_name(Some(&item.icon));
-            }
-        }
-    } else if let Some(image) = b.object::<Picture>("ItemImage") {
-        let icon = item.icon.clone();
-
-        glib::spawn_future_local(async move {
-            let file = gio::File::for_path(&icon);
-
-            if let Ok((bytes, _)) = file.load_contents_future().await {
-                let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
-                image.set_paintable(Some(&texture));
-            }
-        });
-    }
-}
->>>>>>> fix: panics when trying to load non-existing icon file
 
 fn calc_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     let Some(image) = b.object::<Image>("ItemImage") else {
@@ -254,7 +223,7 @@ fn clipboard_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     glib::spawn_future_local(async move {
         let file = gio::File::for_path(&icon);
         let Ok((bytes, _)) = file.load_contents_future().await else {
-        	return;
+            return;
         };
         let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
         image.set_paintable(Some(&texture));

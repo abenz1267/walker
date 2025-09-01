@@ -12,7 +12,7 @@ use gtk4::gio::{self, Cancellable};
 use gtk4::glib::object::ObjectExt;
 use gtk4::glib::subclass::types::ObjectSubclassIsExt;
 use gtk4::glib::{ControlFlow, Priority};
-use gtk4::prelude::{EditableExt, EntryExt, GtkWindowExt};
+use gtk4::prelude::{EditableExt, EntryExt};
 
 use config::get_config;
 use state::{init_app_state, with_state};
@@ -79,12 +79,6 @@ impl QueryResponseObject {
 
     pub fn response(&self) -> crate::protos::generated_proto::query::QueryResponse {
         self.imp().response.borrow().as_ref().unwrap().clone()
-    }
-}
-
-fn wait_for_file(path: &str) {
-    while !Path::new(path).exists() {
-        thread::sleep(Duration::from_millis(10));
     }
 }
 
@@ -496,6 +490,12 @@ fn main() -> glib::ExitCode {
         let args: Vec<String> = env::args().collect();
         let mut dmenu = false;
         let mut version = false;
+
+        if !app.flags().contains(ApplicationFlags::IS_SERVICE)
+            && (args.contains(&"--close".to_string()) || args.contains(&"-q".to_string()))
+        {
+            process::exit(0);
+        }
 
         if args.contains(&"--dmenu".to_string()) || args.contains(&"-d".to_string()) {
             dmenu = true;

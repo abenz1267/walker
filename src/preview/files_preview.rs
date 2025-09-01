@@ -126,7 +126,7 @@ impl PreviewHandler for FilesPreviewHandler {
         preview_clone.add_controller(drag_source);
 
         preview_clone.append(&file_preview.box_widget);
-        preview_clone.set_visible(get_selected_item().is_some_and(|curent| current == item_clone));
+        preview_clone.set_visible(get_selected_item().is_some_and(|current| current == item_clone));
     }
 }
 

@@ -131,7 +131,7 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
         if theme != "default" || is_service {
             for mut path in paths {
                 if !is_service {
-                    path.push_str(&theme);
+                    path = format!("{}/{}", path, theme);
 
                     themes.insert(
                         theme.clone(),

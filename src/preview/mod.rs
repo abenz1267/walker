@@ -1,5 +1,4 @@
 mod files_preview;
-
 pub use files_preview::FilesPreviewHandler;
 
 use crate::protos::generated_proto::query::query_response::Item;
@@ -38,9 +37,7 @@ where
 }
 
 pub fn handle_preview(provider: &str, item: &Item, preview: &GtkBox, builder: &Builder) {
-    get_previewer(provider, |handler| {
-        handler.handle(item, preview, builder);
-    });
+    get_previewer(provider, |handler| handler.handle(item, preview, builder));
 }
 
 pub fn has_previewer(provider: &str) -> bool {

@@ -36,6 +36,7 @@ impl PreviewHandler for FilesPreviewHandler {
         }
         *cached_preview = None;
     }
+
     fn handle(&self, item: &Item, preview: &GtkBox, builder: &Builder) {
         let preview_clone = preview.clone();
         let builder_clone = builder.clone();
@@ -51,11 +52,11 @@ impl PreviewHandler for FilesPreviewHandler {
             return;
         }
 
-        if let Some(current) = get_selected_item() {
-            if current != item_clone {
-                return;
-            }
-        } else {
+        let Some(current) = get_selected_item() else {
+            return;
+        };
+
+        if current != item_clone {
             return;
         }
 
@@ -70,18 +71,17 @@ impl PreviewHandler for FilesPreviewHandler {
 
         let mut cached_preview = self.cached_preview.borrow_mut();
         if cached_preview.is_none() {
-            match FilePreview::new_with_builder(&builder_clone).or_else(|_| FilePreview::new()) {
-                Ok(preview) => {
-                    *cached_preview = Some(preview);
-                }
-                Err(_e) => {
-                    return;
-                }
-            }
+            let Ok(preview) =
+                FilePreview::new_with_builder(&builder_clone).or_else(|_| FilePreview::new())
+            else {
+                return;
+            };
+
+            *cached_preview = Some(preview);
         }
 
         let file_preview = cached_preview.as_mut().unwrap();
-        if let Err(_e) = file_preview.preview_file(&file_path) {
+        if let Err(_) = file_preview.preview_file(&file_path) {
             return;
         }
 
@@ -92,12 +92,14 @@ impl PreviewHandler for FilesPreviewHandler {
         let existing_controllers: Vec<_> = preview_clone
             .observe_controllers()
             .into_iter()
-            .filter_map(|result| result.ok())
+            .filter_map(Result::ok)
             .collect();
         for controller in existing_controllers {
-            if let Ok(drag_source) = controller.downcast::<DragSource>() {
-                preview_clone.remove_controller(&drag_source);
-            }
+            let Ok(drag_source) = controller.downcast::<DragSource>() else {
+                continue;
+            };
+
+            preview_clone.remove_controller(&drag_source);
         }
 
         let drag_source = DragSource::new();
@@ -107,36 +109,24 @@ impl PreviewHandler for FilesPreviewHandler {
             let file = File::for_path(&path_copy);
             let uri_string = format!("{}\n", file.uri());
             let b = glib::Bytes::from(uri_string.as_bytes());
+
             let cp = ContentProvider::for_bytes("text/uri-list", &b);
             Some(cp)
         });
 
         drag_source.connect_drag_begin(|_, _| {
-            with_window(|w| {
-                w.window.set_visible(false);
-            });
+            with_window(|w| w.window.set_visible(false));
         });
 
         drag_source.connect_drag_end(|_, _, _| {
-            with_window(|w| {
-                quit(&w.app, false);
-            });
+            with_window(|w| quit(&w.app, false));
         });
 
         file_preview.box_widget.set_can_target(false);
         preview_clone.add_controller(drag_source);
 
         preview_clone.append(&file_preview.box_widget);
-
-        if let Some(current) = get_selected_item() {
-            if current == item_clone {
-                preview_clone.set_visible(true);
-            } else {
-                preview_clone.set_visible(false);
-            }
-        } else {
-            preview_clone.set_visible(false);
-        }
+        preview_clone.set_visible(get_selected_item().is_some_and(|curent| current == item_clone));
     }
 }
 
@@ -179,22 +169,18 @@ impl FilePreview {
 
     pub fn preview_file(&mut self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
         self.current_file = file_path.to_string();
-
         self.clear_preview();
 
-        let mime_type = self.detect_mime_type(file_path)?;
+        let mime_type = new_mime_guess::from_path(file_path).first_or_octet_stream();
 
-        let result = if mime_type.starts_with("image/") {
-            self.preview_image(file_path)
-        } else if mime_type == "application/pdf" {
-            self.preview_pdf(file_path)
-        } else if mime_type.starts_with("text/") {
-            self.preview_text(file_path)
-        } else {
-            self.preview_generic(file_path)
+        let preview = match (mime_type.type_(), mime_type.subtype()) {
+            (mime::IMAGE, _) => FilePreview::preview_image,
+            (mime::TEXT, _) => FilePreview::preview_text,
+            (mime::APPLICATION, mime::PDF) => FilePreview::preview_pdf,
+            _ => FilePreview::preview_generic,
         };
 
-        result
+        preview(self, file_path)
     }
 
     fn clear_preview(&self) {
@@ -209,17 +195,18 @@ impl FilePreview {
                 image.set_icon_name(Option::<&str>::None);
             }
 
-            if let Some(container) = child.downcast_ref::<gtk4::Box>() {
-                while let Some(nested_child) = container.first_child() {
-                    if let Some(nested_picture) = nested_child.downcast_ref::<Picture>() {
-                        nested_picture.set_paintable(gtk4::gdk::Paintable::NONE);
-                    }
-                    if let Some(nested_image) = nested_child.downcast_ref::<Image>() {
-                        nested_image.clear();
-                        nested_image.set_icon_name(Option::<&str>::None);
-                    }
-                    container.remove(&nested_child);
+            while let Some(container) = child.downcast_ref::<gtk4::Box>()
+                && let Some(nested_child) = container.first_child()
+            {
+                if let Some(nested_picture) = nested_child.downcast_ref::<Picture>() {
+                    nested_picture.set_paintable(gtk4::gdk::Paintable::NONE);
                 }
+
+                if let Some(nested_image) = nested_child.downcast_ref::<Image>() {
+                    nested_image.clear();
+                    nested_image.set_icon_name(Option::<&str>::None);
+                }
+                container.remove(&nested_child);
             }
 
             if let Some(scrolled) = child.downcast_ref::<ScrolledWindow>() {
@@ -227,10 +214,12 @@ impl FilePreview {
                     if let Some(text_view) = scrolled_child.downcast_ref::<TextView>() {
                         text_view.buffer().set_text("");
                     }
+
                     if let Some(picture) = scrolled_child.downcast_ref::<Picture>() {
                         picture.set_filename(Option::<&str>::None);
                         picture.set_paintable(gtk4::gdk::Paintable::NONE);
                     }
+
                     if let Some(image) = scrolled_child.downcast_ref::<Image>() {
                         image.clear();
                         image.set_icon_name(Option::<&str>::None);
@@ -240,38 +229,6 @@ impl FilePreview {
 
             self.preview_area.remove(&child);
         }
-    }
-
-    fn detect_mime_type(&self, file_path: &str) -> Result<String, Box<dyn std::error::Error>> {
-        let path = Path::new(file_path);
-        if let Some(extension) = path.extension() {
-            if let Some(ext_str) = extension.to_str() {
-                let mime_type = match ext_str {
-                    "pdf" => Some("application/pdf"),
-                    "go" => Some("text/x-go"),
-                    "rs" => Some("text/x-rust"),
-                    "py" => Some("text/x-python"),
-                    "js" => Some("text/javascript"),
-                    "html" => Some("text/html"),
-                    "css" => Some("text/css"),
-                    "json" => Some("text/json"),
-                    "xml" => Some("text/xml"),
-                    "md" => Some("text/markdown"),
-                    "txt" => Some("text/plain"),
-                    _ => None,
-                };
-
-                if let Some(mime) = mime_type {
-                    return Ok(mime.to_string());
-                }
-
-                if let Some(mime_type) = mime_guess::from_ext(ext_str).first() {
-                    return Ok(mime_type.to_string());
-                }
-            }
-        }
-
-        Ok("application/octet-stream".to_string())
     }
 
     fn preview_pdf(&self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {

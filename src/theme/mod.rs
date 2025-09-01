@@ -90,9 +90,7 @@ pub fn setup_installed_elephant_providers() {
         .filter_map(|line| line.split_once(';').map(|(_, value)| value.to_string()))
         .collect();
 
-    INSTALLED_PROVIDERS.with(|s| {
-        s.set(providers).expect("failed initializing providers");
-    });
+    INSTALLED_PROVIDERS.with(|s| s.set(providers).expect("failed initializing providers"));
 }
 
 pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
@@ -128,46 +126,53 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
     };
 
     with_state(|s| {
-        if theme != "default" || is_service {
-            for mut path in paths {
-                if !is_service {
-                    path.push_str(&theme);
-
-                    themes.insert(
-                        theme.clone(),
-                        setup_theme_from_path(path.clone().into(), &combined),
-                    );
-                } else {
-                    if let Ok(entries) = fs::read_dir(path) {
-                        for entry in entries {
-                            let entry = entry.unwrap();
-                            let path = entry.path();
-
-                            if path.is_dir() {
-                                if let Some(name) = path.file_name() {
-                                    let path_theme = name.to_string_lossy();
-
-                                    themes.insert(
-                                        path_theme.to_string(),
-                                        setup_theme_from_path(path.clone(), &combined),
-                                    );
-
-                                    s.add_theme(path_theme.to_string());
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-
         themes.insert("default".to_string(), Theme::default());
         s.add_theme("default".to_string());
+
+        if theme == "default" && !is_service {
+            return;
+        }
+
+        for mut path in paths {
+            if !is_service {
+                path.push_str(&theme);
+
+                themes.insert(
+                    theme.clone(),
+                    setup_theme_from_path(path.clone().into(), &combined),
+                );
+                return;
+            }
+
+            let Ok(entries) = fs::read_dir(path) else {
+                return;
+            };
+
+            for entry in entries {
+                let entry = entry.unwrap();
+                let path = entry.path();
+
+                if !path.is_dir() {
+                    continue;
+                }
+
+                let Some(name) = path.file_name() else {
+                    continue;
+                };
+
+                let path_theme = name.to_string_lossy();
+
+                themes.insert(
+                    path_theme.to_string(),
+                    setup_theme_from_path(path.clone(), &combined),
+                );
+
+                s.add_theme(path_theme.to_string());
+            }
+        }
     });
 
-    THEMES.with(|s| {
-        s.set(themes).expect("failed initializing themes");
-    });
+    THEMES.with(|s| s.set(themes).expect("failed initializing themes"));
 }
 
 fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
@@ -188,10 +193,12 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
                 }
             }
             "style.css" => {
-                if let Some(s) = read_file(file) {
-                    if let Ok(home) = env::var("HOME") {
-                        theme.css = s.replace("~", &home);
-                    }
+                let Some(s) = read_file(file) else {
+                    continue;
+                };
+
+                if let Ok(home) = env::var("HOME") {
+                    theme.css = s.replace("~", &home);
                 }
             }
             "layout.xml" => {
@@ -254,11 +261,11 @@ pub fn setup_layer_shell(win: &Window) {
     win.set_exclusive_zone(-1);
     win.set_layer(Layer::Overlay);
 
-    if cfg.force_keyboard_focus {
-        win.set_keyboard_mode(KeyboardMode::Exclusive);
+    win.set_keyboard_mode(if cfg.force_keyboard_focus {
+        KeyboardMode::Exclusive
     } else {
-        win.set_keyboard_mode(KeyboardMode::OnDemand);
-    }
+        KeyboardMode::OnDemand
+    });
 
     win.set_anchor(Edge::Left, cfg.shell.anchor_left);
     win.set_anchor(Edge::Right, cfg.shell.anchor_right);

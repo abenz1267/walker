@@ -1,7 +1,7 @@
 use crate::config::{self, get_config};
 use gtk4::gdk::{self, Key};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, OnceLock, RwLock};
 
 // Constants
 pub const ACTION_CLOSE: &str = "%CLOSE%";
@@ -62,19 +62,19 @@ pub struct Action {
     pub after: String,
 }
 
-static BINDS: OnceLock<Arc<Mutex<HashMap<Key, HashMap<gdk::ModifierType, Action>>>>> =
+static BINDS: OnceLock<Arc<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>>> =
     OnceLock::new();
 static PROVIDER_BINDS: OnceLock<
-    Arc<Mutex<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>>,
+    Arc<RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>>,
 > = OnceLock::new();
 
-fn get_binds() -> &'static Arc<Mutex<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> {
-    BINDS.get_or_init(|| Arc::new(Mutex::new(HashMap::new())))
+fn get_binds() -> &'static Arc<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> {
+    BINDS.get_or_init(Arc::default)
 }
 
 fn get_provider_binds()
--> &'static Arc<Mutex<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>> {
-    PROVIDER_BINDS.get_or_init(|| Arc::new(Mutex::new(HashMap::new())))
+-> &'static Arc<RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>> {
+    PROVIDER_BINDS.get_or_init(Arc::default)
 }
 
 pub fn get_modifiers() -> HashMap<&'static str, gdk::ModifierType> {
@@ -322,21 +322,21 @@ fn validate_bind(bind: &str) -> bool {
     let modifiers = get_modifiers();
     let special_keys = get_special_keys();
 
-    let mut ok = true;
-
-    for field in fields {
-        if field.len() > 1 {
+    let invalid_bind = fields
+        .iter()
+        .filter(|field| field.len() > 1)
+        .find_map(|field| {
             let exists_mod = modifiers.contains_key(field);
             let exists_special = special_keys.contains_key(field);
+            (!exists_mod && !exists_special).then_some(field)
+        });
 
-            if !exists_mod && !exists_special {
-                eprintln!("Invalid keybind: {} - key: {}", bind, field);
-                ok = false;
-            }
-        }
-    }
+    if let Some(field) = invalid_bind {
+        eprintln!("Invalid keybind: {bind} - key: {field}");
+        return false;
+    };
 
-    ok
+    true
 }
 
 fn parse_bind(
@@ -359,7 +359,7 @@ fn parse_bind(
     let special_keys = get_special_keys();
 
     let mut modifiers_list = Vec::new();
-    let mut key: Option<Key> = None;
+    let mut key = None;
 
     for field in fields {
         if field.len() > 1 {
@@ -384,24 +384,22 @@ fn parse_bind(
         after: after.to_string(),
     };
 
-    if key.is_some() {
-        if provider.is_empty() {
-            let mut binds = get_binds().lock().unwrap();
-            binds
-                .entry(key.unwrap())
-                .or_insert_with(HashMap::new)
-                .insert(modifier, action_struct);
-        } else {
-            let mut provider_binds = get_provider_binds().lock().unwrap();
-            provider_binds
-                .entry(provider.to_string())
-                .or_insert_with(HashMap::new)
-                .entry(key.unwrap())
-                .or_insert_with(HashMap::new)
-                .insert(modifier, action_struct);
-        }
+    let key = key.ok_or_else(|| "incorrect bind".to_string())?;
+
+    if provider.is_empty() {
+        let mut binds = get_binds().write()?;
+        binds
+            .entry(key)
+            .or_insert_with(HashMap::new)
+            .insert(modifier, action_struct);
     } else {
-        return Err("incorrect bind".into());
+        let mut provider_binds = get_provider_binds().write()?;
+        provider_binds
+            .entry(provider.to_string())
+            .or_insert_with(HashMap::new)
+            .entry(key)
+            .or_insert_with(HashMap::new)
+            .insert(modifier, action_struct);
     }
 
     Ok(())
@@ -409,7 +407,7 @@ fn parse_bind(
 
 pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
     get_binds()
-        .lock()
+        .read()
         .unwrap()
         .get(&key)?
         .get(&modifier)
@@ -428,7 +426,7 @@ pub fn get_provider_bind(provider: &str, key: Key, modifier: gdk::ModifierType) 
     }
 
     get_provider_binds()
-        .lock()
+        .read()
         .unwrap()
         .get(provider)?
         .get(&key)?

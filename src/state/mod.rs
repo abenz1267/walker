@@ -13,9 +13,7 @@ thread_local! {
 }
 
 pub fn set_css_provider(provider: CssProvider) {
-    CSS_PROVIDER.with(|p| {
-        *p.borrow_mut() = Some(provider);
-    });
+    CSS_PROVIDER.with(|p| *p.borrow_mut() = Some(provider));
 }
 
 pub fn with_css_provider<F, R>(f: F) -> Option<R>
@@ -257,9 +255,7 @@ pub struct WindowData {
 
 pub fn init_app_state() {
     let state = AppState::new();
-    STATE.with(|s| {
-        s.set(state.clone()).expect("failed initializing app state");
-    });
+    STATE.with(|s| s.set(state.clone()).expect("failed initializing app state"));
 }
 
 pub fn with_state<F, R>(f: F) -> R

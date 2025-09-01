@@ -91,9 +91,11 @@ fn default_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
 
                 glib::spawn_future_local(async move {
                     let file = gio::File::for_path(&icon);
-                    let (bytes, _) = file.load_contents_future().await.unwrap();
-                    let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
-                    image.set_paintable(Some(&texture));
+
+                    if let Ok((bytes, _)) = file.load_contents_future().await {
+                        let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+                        image.set_paintable(Some(&texture));
+                    }
                 });
             } else {
                 image.set_icon_name(Some(&item.icon));
@@ -104,9 +106,11 @@ fn default_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
 
         glib::spawn_future_local(async move {
             let file = gio::File::for_path(&icon);
-            let (bytes, _) = file.load_contents_future().await.unwrap();
-            let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
-            image.set_paintable(Some(&texture));
+
+            if let Ok((bytes, _)) = file.load_contents_future().await {
+                let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+                image.set_paintable(Some(&texture));
+            }
         });
     }
 }
@@ -188,9 +192,11 @@ fn clipboard_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
 
             glib::spawn_future_local(async move {
                 let file = gio::File::for_path(&icon);
-                let (bytes, _) = file.load_contents_future().await.unwrap();
-                let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
-                image.set_paintable(Some(&texture));
+
+                if let Ok((bytes, _)) = file.load_contents_future().await {
+                    let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+                    image.set_paintable(Some(&texture));
+                }
             });
 
             if let Some(text) = b.object::<Label>("ItemText") {

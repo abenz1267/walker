@@ -430,6 +430,7 @@ pub fn activate(item: QueryResponse, query: &str, action: &str) {
     if item.item.provider == "providerlist" {
         with_state(|s| {
             s.set_provider(&item.item.identifier);
+            s.set_current_prefix("");
         });
         return;
     }

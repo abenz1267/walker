@@ -2,6 +2,9 @@
 
 A fast, customizable application launcher built with GTK4 and Rust, designed for Linux desktop environments. Walker provides a clean, modern interface for launching applications, running commands, performing calculations, and more.
 
+[![Discord](https://img.shields.io/discord/1402235361463242964?logo=discord)](https://discord.gg/mGQWBQHASt)
+[![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+
 ## Features
 
 Walker offers multiple provider types for different use cases:
@@ -39,7 +42,6 @@ cargo build --release
 You have two options of installing walker using Nix.
 
 1.  Using the package exposed by this flake
-
     1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
     2. Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`
 

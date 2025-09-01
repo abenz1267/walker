@@ -468,6 +468,12 @@ fn main() -> glib::ExitCode {
         let dmenu = args.contains(&"--dmenu".to_string()) || args.contains(&"-d".to_string());
         let version = args.contains(&"--version".to_string()) || args.contains(&"-v".to_string());
 
+        if !app.flags().contains(ApplicationFlags::IS_SERVICE)
+            && (args.contains(&"--close".to_string()) || args.contains(&"-q".to_string()))
+        {
+            process::exit(0);
+        }
+
         if !app.flags().contains(ApplicationFlags::IS_SERVICE) && !dmenu && !version {
             println!("make sure 'walker --gapplication-service' is running!");
         }

@@ -183,6 +183,7 @@ pub struct Clipboard {
     pub copy: String,
     pub delete: String,
     pub edit: String,
+    pub toggle_images_only: String,
 }
 
 pub fn load() -> Result<(), Box<dyn std::error::Error>> {

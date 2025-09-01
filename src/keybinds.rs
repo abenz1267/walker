@@ -23,6 +23,7 @@ pub const ACTION_CALC_SAVE: &str = "save";
 pub const ACTION_CLIPBOARD_COPY: &str = "copy";
 pub const ACTION_CLIPBOARD_DELETE: &str = "remove";
 pub const ACTION_CLIPBOARD_EDIT: &str = "edit";
+pub const ACTION_CLIPBOARD_TOGGLE_IMAGES_ONLY: &str = "toggle_images";
 
 pub const ACTION_DESKTOP_APPLICATIONS_START: &str = "";
 
@@ -147,6 +148,13 @@ pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
         &config.providers.clipboard.edit,
         ACTION_CLIPBOARD_EDIT,
         AFTER_CLOSE,
+        "clipboard",
+    )?;
+
+    parse_bind(
+        &config.providers.clipboard.toggle_images_only,
+        ACTION_CLIPBOARD_TOGGLE_IMAGES_ONLY,
+        AFTER_CLEAR_RELOAD_KEEP_PREFIX,
         "clipboard",
     )?;
 

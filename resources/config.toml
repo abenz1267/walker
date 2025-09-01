@@ -86,6 +86,7 @@ click = "copy"
 copy = "enter"
 delete = "ctrl d"
 edit = "ctrl o"
+toggle_images_only = "ctrl i"
 
 [providers.desktopapplications]
 click = "start"

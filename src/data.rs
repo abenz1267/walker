@@ -3,7 +3,10 @@ use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
-use crate::state::with_state;
+use crate::state::{
+    get_provider, is_connected, is_dmenu, is_service, set_current_prefix, set_is_connected,
+    set_is_visible, set_provider,
+};
 use crate::theme::with_installed_providers;
 use crate::ui::window::{set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
@@ -22,17 +25,15 @@ static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 
 pub fn input_changed(text: &str) {
-    with_state(|s| {
-        if s.is_dmenu() {
-            sort_items_fuzzy(&text);
-        } else {
-            if !s.is_connected() {
-                return;
-            }
-
-            query(text);
+    if is_dmenu() {
+        sort_items_fuzzy(&text);
+    } else {
+        if !is_connected() {
+            return;
         }
-    });
+
+        query(text);
+    }
 }
 
 fn sort_items_fuzzy(query: &str) {
@@ -144,9 +145,7 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
             w.elephant_hint.set_visible(false);
             w.scroll.set_visible(true);
 
-            with_state(|s| {
-                s.set_is_connected(true);
-            });
+            set_is_connected(true);
 
             if let Some(input) = &w.input {
                 input.emit_by_name::<()>("changed", &[]);
@@ -198,9 +197,7 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
                 resp.merge_from_bytes(&payload)?;
 
                 glib::idle_add_once(move || {
-                    with_state(|s| {
-                        s.set_provider(&resp.value);
-                    });
+                    set_provider(resp.value);
 
                     with_window(|w| {
                         if let Some(input) = &w.input {
@@ -211,9 +208,7 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
                         w.window.present();
                     });
 
-                    with_state(|s| {
-                        s.is_visible.set(true);
-                    });
+                    set_is_visible(true);
                 });
             }
             _ => {
@@ -338,75 +333,73 @@ fn add_new_item(resp: QueryResponse) {
 }
 
 fn query(text: &str) {
-    with_state(|s| {
-        let mut query_text = text.to_string();
-        let mut exact = false;
-        let cfg = get_config();
-        let mut provider = s.get_provider();
+    let mut query_text = text.to_string();
+    let mut exact = false;
+    let cfg = get_config();
+    let mut provider = get_provider();
 
-        with_installed_providers(|p| {
-            if s.get_provider().is_empty() {
-                for prefix in &cfg.providers.prefixes {
-                    if text.starts_with(&prefix.prefix) && p.contains(&prefix.provider) {
-                        provider = prefix.provider.clone();
-                        query_text = text
-                            .strip_prefix(&prefix.prefix)
-                            .unwrap_or(text)
-                            .to_string();
-                        s.set_current_prefix(&prefix.prefix);
-                        break;
-                    }
+    with_installed_providers(|p| {
+        if get_provider().is_empty() {
+            for prefix in &cfg.providers.prefixes {
+                if text.starts_with(&prefix.prefix) && p.contains(&prefix.provider) {
+                    provider = prefix.provider.clone();
+                    query_text = text
+                        .strip_prefix(&prefix.prefix)
+                        .unwrap_or(text)
+                        .to_string();
+                    set_current_prefix(prefix.prefix.clone());
+                    break;
                 }
-            }
-        });
-
-        let delimiter = &cfg.global_argument_delimiter;
-
-        if let Some((before, _)) = query_text.split_once(delimiter) {
-            query_text = before.to_string();
-        }
-
-        if let Some(stripped) = query_text.strip_prefix(&cfg.exact_search_prefix) {
-            exact = true;
-            query_text = stripped.to_string();
-        }
-
-        let mut req = QueryRequest::new();
-        req.query = query_text;
-        // TODO: per provider config
-        req.maxresults = 50;
-        req.exactsearch = exact;
-
-        if !provider.is_empty() {
-            req.providers.push(provider.clone());
-        } else {
-            if text.is_empty() {
-                req.providers = cfg.providers.empty.clone();
-            } else {
-                req.providers = cfg.providers.default.clone();
-            }
-        }
-
-        let payload = req.write_to_bytes().unwrap();
-
-        let mut buffer = Vec::new();
-        buffer.push(0);
-
-        let length = payload.len() as u32;
-        buffer.extend_from_slice(&length.to_be_bytes());
-        buffer.extend_from_slice(&payload);
-
-        let mut conn_guard = CONN.lock().unwrap();
-        if let Some(conn) = conn_guard.as_mut() {
-            match conn.write_all(&buffer) {
-                Err(_) => {
-                    drop(conn_guard);
-                    handle_disconnect();
-                }
-                _ => (),
             }
         }
     });
+
+    let delimiter = &cfg.global_argument_delimiter;
+
+    if let Some((before, _)) = query_text.split_once(delimiter) {
+        query_text = before.to_string();
+    }
+
+    if let Some(stripped) = query_text.strip_prefix(&cfg.exact_search_prefix) {
+        exact = true;
+        query_text = stripped.to_string();
+    }
+
+    let mut req = QueryRequest::new();
+    req.query = query_text;
+    // TODO: per provider config
+    req.maxresults = 50;
+    req.exactsearch = exact;
+
+    if !provider.is_empty() {
+        req.providers.push(provider.clone());
+    } else {
+        if text.is_empty() {
+            req.providers = cfg.providers.empty.clone();
+        } else {
+            req.providers = cfg.providers.default.clone();
+        }
+    }
+
+    let payload = req.write_to_bytes().unwrap();
+
+    let mut buffer = Vec::new();
+    buffer.push(0);
+
+    let length = payload.len() as u32;
+    buffer.extend_from_slice(&length.to_be_bytes());
+    buffer.extend_from_slice(&payload);
+
+    let mut conn_guard = CONN.lock().unwrap();
+    if let Some(conn) = conn_guard.as_mut() {
+        match conn.write_all(&buffer) {
+            Err(_) => {
+                drop(conn_guard);
+                handle_disconnect();
+            }
+            _ => (),
+        }
+    }
 }
 
 fn handle_disconnect() {
@@ -437,22 +430,19 @@ fn handle_disconnect() {
 pub fn activate(item: QueryResponse, query: &str, action: &str) {
     // handle dmenu
     if item.item.provider == "dmenu" {
-        with_state(|s| {
-            if s.is_service() {
-                send_message(item.item.text.clone()).unwrap();
-            } else {
-                println!("{}", item.item.text.clone());
-            }
-        });
+        if is_service() {
+            send_message(item.item.text.clone()).unwrap();
+        } else {
+            println!("{}", item.item.text.clone());
+        }
+
         return;
     }
 
     // handle switcher
     if item.item.provider == "providerlist" {
-        with_state(|s| {
-            s.set_provider(&item.item.identifier);
-            s.set_current_prefix("");
-        });
+        set_provider(item.item.identifier.to_string());
+        set_current_prefix(String::new());
         return;
     }
 

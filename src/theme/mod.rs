@@ -1,5 +1,6 @@
 use crate::config::get_config;
-use crate::state::{set_css_provider, with_css_provider, with_state};
+use crate::state::add_theme;
+use crate::ui::window::{set_css_provider, with_css_provider};
 use gtk4::gdk::Display;
 use gtk4::prelude::GtkWindowExt;
 use gtk4::{CssProvider, Window};
@@ -127,43 +128,41 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
         files
     };
 
-    with_state(|s| {
-        if theme != "default" || is_service {
-            for mut path in paths {
-                if !is_service {
-                    path = format!("{}/{}", path, theme);
+    if theme != "default" || is_service {
+        for mut path in paths {
+            if !is_service {
+                path = format!("{}/{}", path, theme);
 
-                    themes.insert(
-                        theme.clone(),
-                        setup_theme_from_path(path.clone().into(), &combined),
-                    );
-                } else {
-                    if let Ok(entries) = fs::read_dir(path) {
-                        for entry in entries {
-                            let entry = entry.unwrap();
-                            let path = entry.path();
+                themes.insert(
+                    theme.clone(),
+                    setup_theme_from_path(path.clone().into(), &combined),
+                );
+            } else {
+                if let Ok(entries) = fs::read_dir(path) {
+                    for entry in entries {
+                        let entry = entry.unwrap();
+                        let path = entry.path();
 
-                            if path.is_dir() {
-                                if let Some(name) = path.file_name() {
-                                    let path_theme = name.to_string_lossy();
+                        if path.is_dir() {
+                            if let Some(name) = path.file_name() {
+                                let path_theme = name.to_string_lossy();
 
-                                    themes.insert(
-                                        path_theme.to_string(),
-                                        setup_theme_from_path(path.clone(), &combined),
-                                    );
+                                themes.insert(
+                                    path_theme.to_string(),
+                                    setup_theme_from_path(path.clone(), &combined),
+                                );
 
-                                    s.add_theme(path_theme.to_string());
-                                }
+                                add_theme(path_theme.to_string());
                             }
                         }
                     }
                 }
             }
         }
+    }
 
-        themes.insert("default".to_string(), Theme::default());
-        s.add_theme("default".to_string());
-    });
+    themes.insert("default".to_string(), Theme::default());
+    add_theme("default".to_string());
 
     THEMES.with(|s| {
         s.set(themes).expect("failed initializing themes");
@@ -242,7 +241,6 @@ pub fn setup_css_provider() {
 
 pub fn setup_layer_shell(win: &Window) {
     if !gtk4_layer_shell::is_supported() {
-        return;
         let titlebar = gtk4::Box::new(gtk4::Orientation::Vertical, 0);
         win.set_titlebar(Some(&titlebar));
         return;

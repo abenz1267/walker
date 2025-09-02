@@ -189,9 +189,7 @@ pub struct Clipboard {
 pub fn load() -> Result<(), Box<dyn std::error::Error>> {
     LOADED_CONFIG
         .set(Elephant::new()?)
-        .map_err(|_| "Failed to set loaded config")?;
-
-    Ok(())
+        .map_err(|_| "Failed to set loaded config".into())
 }
 
 pub fn get_config() -> &'static Elephant {

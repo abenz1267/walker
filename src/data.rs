@@ -23,13 +23,13 @@ static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 
 pub fn input_changed(text: &str) {
     with_state(|s| {
-        if !s.is_connected() {
-            return;
-        }
-
         if s.is_dmenu() {
             sort_items_fuzzy(&text);
         } else {
+            if !s.is_connected() {
+                return;
+            }
+
             query(text);
         }
     });

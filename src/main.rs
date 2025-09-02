@@ -8,22 +8,20 @@ mod state;
 mod theme;
 mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual};
-use gtk4::gio::{self, Cancellable};
+use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard, Cancellable};
 use gtk4::glib::object::ObjectExt;
-use gtk4::glib::subclass::types::ObjectSubclassIsExt;
 use gtk4::glib::{ControlFlow, Priority};
 use gtk4::prelude::{EditableExt, EntryExt};
 
 use config::get_config;
-use state::{init_app_state, with_state};
+use state::init_app_state;
 use which::which;
 
 use std::env;
 use std::process;
 use std::rc::Rc;
-use std::sync::{Mutex, mpsc};
-use std::time::Duration;
-use std::{path::Path, thread};
+use std::sync::{OnceLock, RwLock, mpsc};
+use std::thread;
 
 use gtk4::{
     Application,
@@ -37,53 +35,26 @@ use gtk4::{
 
 use crate::data::init_socket;
 use crate::keybinds::setup_binds;
+use crate::protos::QueryResponseObject;
 use crate::protos::generated_proto::query::{QueryResponse, query_response};
 use crate::renderers::setup_item_transformers;
+use crate::state::{
+    get_parameter_height, get_parameter_width, get_placeholder, get_provider, get_theme,
+    has_elephant, has_theme, is_connected, is_dmenu, is_dmenu_keep_open, is_input_only,
+    is_no_search, is_param_close, is_service, is_visible, set_dmenu_current, set_dmenu_exit_after,
+    set_dmenu_keep_open, set_has_elephant, set_initial_height, set_initial_placeholder,
+    set_initial_width, set_input_only, set_is_dmenu, set_is_service, set_is_visible, set_no_search,
+    set_param_close, set_parameter_height, set_parameter_width, set_placeholder, set_provider,
+    set_theme,
+};
 use crate::theme::{
     setup_css, setup_css_provider, setup_installed_elephant_providers, setup_themes,
 };
 use crate::ui::window::{handle_preview, quit, setup_window, with_window};
 
-// GObject wrapper for QueryResponse
-mod imp {
-    use crate::protos::generated_proto::query::QueryResponse;
-
-    use super::*;
-    use gtk4::subclass::prelude::*;
-    use std::cell::RefCell;
-
-    #[derive(Debug, Default)]
-    pub struct QueryResponseObject {
-        pub response: RefCell<Option<QueryResponse>>,
-    }
-
-    #[glib::object_subclass]
-    impl ObjectSubclass for QueryResponseObject {
-        const NAME: &'static str = "QueryResponseObject";
-        type Type = super::QueryResponseObject;
-    }
-
-    impl ObjectImpl for QueryResponseObject {}
-}
-
-glib::wrapper! {
-    pub struct QueryResponseObject(ObjectSubclass<imp::QueryResponseObject>);
-}
-
-impl QueryResponseObject {
-    pub fn new(response: crate::protos::generated_proto::query::QueryResponse) -> Self {
-        let obj: Self = glib::Object::builder().build();
-        obj.imp().response.replace(Some(response));
-        obj
-    }
-
-    pub fn response(&self) -> crate::protos::generated_proto::query::QueryResponse {
-        self.imp().response.borrow().as_ref().unwrap().clone()
-    }
-}
-
 thread_local! {
-    static GLOBAL_DMENU_SENDER: Mutex<Option<mpsc::Sender<String>>> = Mutex::new(None);
+    static GLOBAL_DMENU_SENDER: RwLock<Option<mpsc::Sender<String>>> = RwLock::default();
+    static HOLD_GUARD: OnceLock<ApplicationHoldGuard> = OnceLock::new();
 }
 
 fn main() -> glib::ExitCode {
@@ -92,10 +63,68 @@ fn main() -> glib::ExitCode {
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 
-    let hold_guard = std::cell::RefCell::new(None);
-
     app.connect_handle_local_options(|_app, _dict| return -1);
 
+    add_flags(&app);
+
+    app.connect_command_line(handle_command_line);
+    app.connect_activate(activate);
+    app.connect_startup(startup);
+
+    app.run()
+}
+
+fn init_ui(app: &Application, dmenu: bool) {
+    if app.flags().contains(ApplicationFlags::IS_SERVICE) {
+        set_is_service(true);
+    }
+
+    config::load().unwrap();
+
+    let theme = if get_config().theme.is_empty() {
+        "default"
+    } else {
+        &get_config().theme
+    };
+
+    set_theme(theme.to_string());
+
+    preview::load_previewers();
+    setup_binds().unwrap();
+
+    let elephant = which("elephant").is_ok();
+    set_has_elephant(elephant);
+
+    setup_css_provider();
+
+    if elephant {
+        setup_installed_elephant_providers();
+    }
+
+    setup_themes(
+        elephant && !dmenu && is_service(),
+        get_theme(),
+        is_service(),
+    );
+    setup_item_transformers();
+    setup_window(app);
+
+    // start_theme_watcher(s.get_theme());
+}
+
+fn send_message(message: String) -> Result<(), String> {
+    GLOBAL_DMENU_SENDER.with(|sender| {
+        let sender_guard = sender.read().unwrap();
+        if let Some(tx) = sender_guard.as_ref() {
+            tx.send(message)
+                .map_err(|_| "Failed to send message".to_string())
+        } else {
+            Err("No sender available".to_string())
+        }
+    })
+}
+
+fn add_flags(app: &Application) {
     app.add_main_option(
         "version",
         b'v'.into(),
@@ -212,380 +241,307 @@ fn main() -> glib::ExitCode {
         "exit after this dmenu call. only when using service. dmenu only",
         None,
     );
+}
 
-    app.connect_command_line(|app, cmd| {
-        let options = cmd.options_dict();
+fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
+    let options = cmd.options_dict();
 
-        if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-26\n");
-            return 0;
+    if options.contains("version") {
+        cmd.print_literal("1.0.0-beta-26\n");
+        return 0;
+    }
+
+    if options.contains("provider") {
+        if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
+            set_provider(val.str().unwrap().to_string());
+        }
+    }
+
+    set_param_close(options.contains("close"));
+
+    if options.contains("theme") {
+        if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
+            let theme = val.str().unwrap();
+
+            if has_theme(theme.to_string()) {
+                set_theme(theme.to_string());
+            } else {
+                cmd.print_literal("theme not found. using default theme.\n");
+                set_theme("default".to_string());
+            }
+        }
+    }
+
+    if options.contains("height") {
+        if let Some(val) = options.lookup_value("height", Some(VariantTy::INT64)) {
+            set_parameter_height(val.get::<i64>().unwrap() as i32);
+        }
+    }
+
+    if options.contains("width") {
+        if let Some(val) = options.lookup_value("width", Some(VariantTy::INT64)) {
+            set_parameter_width(val.get::<i64>().unwrap() as i32);
+        }
+    }
+
+    set_no_search(options.contains("nosearch"));
+
+    if options.contains("dmenu") {
+        if options.contains("placeholder") {
+            if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING)) {
+                set_placeholder(val.str().unwrap().to_string());
+            }
         }
 
-        with_state(|s| {
-            if options.contains("provider") {
-                if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
-                    s.set_provider(val.str().unwrap());
-                }
+        set_input_only(options.contains("inputonly"));
+
+        if options.contains("keepopen") && app.flags().contains(ApplicationFlags::IS_SERVICE) {
+            set_dmenu_keep_open(true);
+        }
+
+        if options.contains("current") {
+            if let Some(val) = options.lookup_value("current", Some(VariantTy::INT64)) {
+                set_dmenu_current(val.get::<i64>().unwrap());
             }
+        }
 
-            s.set_param_close(options.contains("close"));
+        set_dmenu_exit_after(options.contains("exit"));
 
-            if options.contains("theme") {
-                if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
-                    let theme = val.str().unwrap();
+        let mut exists = false;
 
-                    if s.has_theme(theme.to_string()) {
-                        s.set_theme(theme);
-                    } else {
-                        cmd.print_literal("theme not found. using default theme.\n");
-                        s.set_theme("default");
-                    }
-                }
+        GLOBAL_DMENU_SENDER.with(|sender| {
+            if sender.read().unwrap().is_some() {
+                send_message("CNCLD".to_string()).unwrap();
+                exists = true;
             }
+        });
 
-            if options.contains("height") {
-                if let Some(val) = options.lookup_value("height", Some(VariantTy::INT64)) {
-                    s.set_parameter_height(val.get::<i64>().unwrap() as i32);
-                }
-            }
-
-            if options.contains("width") {
-                if let Some(val) = options.lookup_value("width", Some(VariantTy::INT64)) {
-                    s.set_parameter_width(val.get::<i64>().unwrap() as i32);
-                }
-            }
-
-            s.set_no_search(options.contains("nosearch"));
-
-            if options.contains("dmenu") {
-                if options.contains("placeholder") {
-                    if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING))
-                    {
-                        s.set_placeholder(val.str().unwrap());
-                    }
+        if !exists {
+            with_window(|w| {
+                if let Some(input) = &w.input {
+                    input.set_text("");
                 }
 
-                s.set_input_only(options.contains("inputonly"));
+                let items = &w.items;
+                items.remove_all();
 
-                if options.contains("keepopen")
-                    && app.flags().contains(ApplicationFlags::IS_SERVICE)
-                {
-                    s.set_dmenu_keep_open(true);
-                }
+                if !is_input_only() {
+                    let stdin = cmd.stdin();
+                    let data_stream = gio::DataInputStream::new(&stdin.unwrap());
+                    let data_stream_rc = Rc::new(data_stream);
 
-                if options.contains("current") {
-                    if let Some(val) = options.lookup_value("current", Some(VariantTy::INT64)) {
-                        s.set_dmenu_current(val.get::<i64>().unwrap());
-                    }
-                }
+                    fn read_line_callback(
+                        stream: Rc<gio::DataInputStream>,
+                        i: i32,
+                        items: gio::ListStore,
+                    ) {
+                        let stream_clone = stream.clone();
 
-                s.set_dmenu_exit_after(options.contains("exit"));
-
-                let mut exists = false;
-
-                GLOBAL_DMENU_SENDER.with(|sender| {
-                    if sender.lock().unwrap().is_some() {
-                        send_message("CNCLD".to_string()).unwrap();
-                        exists = true;
-                    }
-                });
-
-                if !exists {
-                    with_window(|w| {
-                        if let Some(input) = &w.input {
-                            input.set_text("");
-                        }
-
-                        let items = &w.items;
-                        items.remove_all();
-
-                        if !s.is_input_only() {
-                            let stdin = cmd.stdin();
-                            let data_stream = gio::DataInputStream::new(&stdin.unwrap());
-                            let data_stream_rc = Rc::new(data_stream);
-
-                            fn read_line_callback(
-                                stream: Rc<gio::DataInputStream>,
-                                i: i32,
-                                items: gio::ListStore,
-                            ) {
-                                let stream_clone = stream.clone();
-
-                                stream.read_line_utf8_async(
-                                    Priority::DEFAULT,
-                                    Cancellable::NONE,
-                                    move |line_slice| match line_slice {
-                                        Ok(line_slice) => {
-                                            if let Some(line) = line_slice {
-                                                if line.is_empty() {
-                                                    return;
-                                                }
-
-                                                let trimmed = line.trim();
-
-                                                if !trimmed.is_empty() {
-                                                    let mut item = query_response::Item::new();
-                                                    item.text = trimmed.to_string();
-                                                    item.provider = "dmenu".to_string();
-                                                    item.score = 1000000 - i;
-
-                                                    let mut response = QueryResponse::new();
-                                                    response.item =
-                                                        protobuf::MessageField::some(item);
-
-                                                    items.append(&QueryResponseObject::new(
-                                                        response,
-                                                    ));
-                                                }
-                                                read_line_callback(
-                                                    stream_clone,
-                                                    i + 1,
-                                                    items.clone(),
-                                                );
-                                            }
-                                        }
-                                        Err(e) => {
-                                            eprintln!("Error reading: {}", e);
+                        stream.read_line_utf8_async(
+                            Priority::DEFAULT,
+                            Cancellable::NONE,
+                            move |line_slice| match line_slice {
+                                Ok(line_slice) => {
+                                    if let Some(line) = line_slice {
+                                        if line.is_empty() {
                                             return;
                                         }
-                                    },
-                                );
-                            }
 
-                            read_line_callback(data_stream_rc.clone(), 0, items.clone());
-                        }
-                    });
+                                        let trimmed = line.trim();
 
-                    s.set_is_dmenu(true);
+                                        if !trimmed.is_empty() {
+                                            let mut item = query_response::Item::new();
+                                            item.text = trimmed.to_string();
+                                            item.provider = "dmenu".to_string();
+                                            item.score = 1000000 - i;
 
-                    if s.is_service() {
-                        let (sender, receiver) = mpsc::channel::<String>();
+                                            let mut response = QueryResponse::new();
+                                            response.item = protobuf::MessageField::some(item);
 
-                        GLOBAL_DMENU_SENDER.with(|s| {
-                            *s.lock().unwrap() = Some(sender);
-                        });
-
-                        let cmd_clone = cmd.clone();
-
-                        glib::idle_add_local(move || match receiver.try_recv() {
-                            Ok(message) => {
-                                match message.as_str() {
-                                    "CNCLD" => {
-                                        cmd_clone.set_exit_status(130);
+                                            items.append(&QueryResponseObject::new(response));
+                                        }
+                                        read_line_callback(stream_clone, i + 1, items.clone());
                                     }
-                                    msg => cmd_clone.print_literal(&format!("{}\n", msg)),
-                                };
+                                }
+                                Err(e) => {
+                                    eprintln!("Error reading: {}", e);
+                                    return;
+                                }
+                            },
+                        );
+                    }
 
-                                GLOBAL_DMENU_SENDER.with(|s| {
-                                    *s.lock().unwrap() = None;
-                                });
+                    read_line_callback(data_stream_rc.clone(), 0, items.clone());
+                }
+            });
 
-                                ControlFlow::Break
-                            }
-                            Err(mpsc::TryRecvError::Empty) => ControlFlow::Continue,
-                            Err(mpsc::TryRecvError::Disconnected) => {
+            set_is_dmenu(true);
+
+            if is_service() {
+                let (sender, receiver) = mpsc::channel::<String>();
+
+                GLOBAL_DMENU_SENDER.with(|s| *s.write().unwrap() = Some(sender));
+
+                let cmd_clone = cmd.clone();
+
+                glib::idle_add_local(move || match receiver.try_recv() {
+                    Ok(message) => {
+                        match message.as_str() {
+                            "CNCLD" => {
                                 cmd_clone.set_exit_status(130);
-                                ControlFlow::Break
                             }
-                        });
+                            msg => cmd_clone.print_literal(&format!("{}\n", msg)),
+                        };
+
+                        GLOBAL_DMENU_SENDER.with(|s| *s.write().unwrap() = None);
+
+                        ControlFlow::Break
                     }
-                }
-            } else {
-                s.set_dmenu_keep_open(false);
-            }
-        });
-
-        app.activate();
-        return 0;
-    });
-
-    app.connect_activate(move |app| {
-        with_state(|s| {
-            let cfg = get_config();
-
-            if (cfg.close_when_open && s.is_visible() && !s.is_dmenu_keep_open())
-                || s.is_param_close()
-            {
-                quit(app, false);
-            } else if !s.is_dmenu_keep_open() || !s.is_visible() {
-                let provider = s.get_provider();
-                let p;
-
-                if provider.is_empty() {
-                    p = "default".to_string();
-                } else {
-                    p = provider.clone();
-                }
-
-                drop(provider);
-
-                with_window(|w| {
-                    if s.is_input_only() {
-                        w.content_container.set_visible(false);
-                        if let Some(keybinds) = &w.keybinds {
-                            keybinds.set_visible(false);
-                        }
-                    }
-
-                    if let Some(placeholders) = &cfg.placeholders {
-                        if let Some(placeholder) = placeholders.get(&p) {
-                            if let Some(input) = &w.input {
-                                input.set_placeholder_text(Some(&placeholder.input));
-                            }
-
-                            w.placeholder
-                                .as_ref()
-                                .map(|p| p.set_text(&placeholder.list));
-                        }
-                    }
-
-                    if !s.get_placeholder().is_empty() {
-                        if let Some(input) = &w.input {
-                            if let Some(p) = input.placeholder_text() {
-                                s.set_initial_placeholder(&p);
-                            }
-
-                            input.set_placeholder_text(Some(&s.get_placeholder()));
-                        }
-                    }
-
-                    if s.get_parameter_height() != 0 {
-                        s.set_initial_height(w.scroll.max_content_height());
-                        w.scroll.set_max_content_height(s.get_parameter_height());
-                        w.scroll.set_min_content_height(s.get_parameter_height());
-                    } else {
-                        s.set_initial_height(0);
-                    }
-
-                    if s.get_parameter_width() != 0 {
-                        s.set_initial_width(w.scroll.max_content_width());
-                        w.scroll.set_max_content_width(s.get_parameter_width());
-                        w.scroll.set_min_content_width(s.get_parameter_width());
-                    } else {
-                        s.set_initial_width(0);
-                    }
-
-                    if s.is_no_search() {
-                        if let Some(search_container) = &w.search_container {
-                            search_container.set_visible(false);
-                        }
-                    }
-
-                    setup_css(s.get_theme());
-
-                    if let Some(input) = &w.input {
-                        input.emit_by_name::<()>("changed", &[]);
-                        input.grab_focus();
-                    }
-
-                    if !s.is_connected() && !s.is_dmenu() {
-                        w.elephant_hint.set_visible(true);
-                        w.scroll.set_visible(false);
-                    } else {
-                        w.elephant_hint.set_visible(false);
-                        w.scroll.set_visible(true);
-                    }
-
-                    w.window.set_visible(true);
-
-                    if !s.is_dmenu() && !s.is_connected() {
-                        if s.has_elephant() {
-                            thread::spawn(|| {
-                                init_socket().unwrap();
-                            });
-                        } else {
-                            println!("Please install elephant.");
-                            process::exit(1);
-                        }
+                    Err(mpsc::TryRecvError::Empty) => ControlFlow::Continue,
+                    Err(mpsc::TryRecvError::Disconnected) => {
+                        cmd_clone.set_exit_status(130);
+                        ControlFlow::Break
                     }
                 });
+            }
+        }
+    } else {
+        set_dmenu_keep_open(false);
+    }
 
-                s.set_is_visible(true);
+    app.activate();
+    return 0;
+}
+
+fn activate(app: &Application) {
+    let cfg = get_config();
+
+    if (cfg.close_when_open && is_visible() && !is_dmenu_keep_open()) || is_param_close() {
+        quit(app, false);
+    } else if !is_dmenu_keep_open() || !is_visible() {
+        let provider = get_provider();
+        let p;
+
+        if provider.is_empty() {
+            p = "default".to_string();
+        } else {
+            p = provider.clone();
+        }
+
+        drop(provider);
+
+        with_window(|w| {
+            if is_input_only() {
+                w.content_container.set_visible(false);
+                if let Some(keybinds) = &w.keybinds {
+                    keybinds.set_visible(false);
+                }
+            }
+
+            if let Some(placeholders) = &cfg.placeholders {
+                if let Some(placeholder) = placeholders.get(&p.to_string()) {
+                    if let Some(input) = &w.input {
+                        input.set_placeholder_text(Some(&placeholder.input));
+                    }
+
+                    w.placeholder
+                        .as_ref()
+                        .map(|p| p.set_text(&placeholder.list));
+                }
+            }
+
+            if !get_placeholder().is_empty() {
+                if let Some(input) = &w.input {
+                    if let Some(p) = input.placeholder_text() {
+                        set_initial_placeholder(p.to_string());
+                    }
+
+                    input.set_placeholder_text(Some(&get_placeholder()));
+                }
+            }
+
+            if get_parameter_height() != 0 {
+                set_initial_height(w.scroll.max_content_height());
+                w.scroll.set_max_content_height(get_parameter_height());
+                w.scroll.set_min_content_height(get_parameter_height());
+            } else {
+                set_initial_height(0);
+            }
+
+            if get_parameter_width() != 0 {
+                set_initial_width(w.scroll.max_content_width());
+                w.scroll.set_max_content_width(get_parameter_width());
+                w.scroll.set_min_content_width(get_parameter_width());
+            } else {
+                set_initial_width(0);
+            }
+
+            if is_no_search() {
+                if let Some(search_container) = &w.search_container {
+                    search_container.set_visible(false);
+                }
+            }
+
+            setup_css(get_theme());
+
+            if let Some(input) = &w.input {
+                input.emit_by_name::<()>("changed", &[]);
+                input.grab_focus();
+            }
+
+            if !is_connected() && !is_dmenu() {
+                w.elephant_hint.set_visible(true);
+                w.scroll.set_visible(false);
+            } else {
+                w.elephant_hint.set_visible(false);
+                w.scroll.set_visible(true);
+            }
+
+            w.window.set_visible(true);
+
+            if !is_dmenu() && !is_connected() {
+                if has_elephant() {
+                    thread::spawn(|| {
+                        init_socket().unwrap();
+                    });
+                } else {
+                    println!("Please install elephant.");
+                    process::exit(1);
+                }
             }
         });
-    });
 
-    app.connect_startup(move |app| {
-        let args: Vec<String> = env::args().collect();
-        let mut dmenu = false;
-        let mut version = false;
-
-        if !app.flags().contains(ApplicationFlags::IS_SERVICE)
-            && (args.contains(&"--close".to_string()) || args.contains(&"-q".to_string()))
-        {
-            process::exit(0);
-        }
-
-        if args.contains(&"--dmenu".to_string()) || args.contains(&"-d".to_string()) {
-            dmenu = true;
-        }
-
-        if args.contains(&"--version".to_string()) || args.contains(&"-v".to_string()) {
-            version = true;
-        }
-
-        if !app.flags().contains(ApplicationFlags::IS_SERVICE) && !dmenu && !version {
-            println!("make sure 'walker --gapplication-service' is running!");
-        }
-
-        if !version {
-            *hold_guard.borrow_mut() = Some(app.hold());
-            init_app_state();
-            init_ui(app, dmenu);
-        }
-    });
-
-    app.run()
+        set_is_visible(true);
+    }
 }
 
-fn init_ui(app: &Application, dmenu: bool) {
-    with_state(|s| {
-        if app.flags().contains(ApplicationFlags::IS_SERVICE) {
-            s.set_is_service(true);
-        }
+fn startup(app: &Application) {
+    let args: Vec<String> = env::args().collect();
+    let mut dmenu = false;
+    let mut version = false;
 
-        config::load().unwrap();
+    if !app.flags().contains(ApplicationFlags::IS_SERVICE)
+        && (args.contains(&"--close".to_string()) || args.contains(&"-q".to_string()))
+    {
+        process::exit(0);
+    }
 
-        let theme = if get_config().theme.is_empty() {
-            "default"
-        } else {
-            &get_config().theme
-        };
+    if args.contains(&"--dmenu".to_string()) || args.contains(&"-d".to_string()) {
+        dmenu = true;
+    }
 
-        s.set_theme(&theme);
+    if args.contains(&"--version".to_string()) || args.contains(&"-v".to_string()) {
+        version = true;
+    }
 
-        preview::load_previewers();
-        setup_binds().unwrap();
+    if !app.flags().contains(ApplicationFlags::IS_SERVICE) && !dmenu && !version {
+        println!("make sure 'walker --gapplication-service' is running!");
+    }
 
-        let elephant = which("elephant").is_ok();
-        s.set_has_elephant(elephant);
+    if !version {
+        HOLD_GUARD.with(|h| h.set(app.hold()).expect("couldn't set hold-guard"));
 
-        setup_css_provider();
-
-        if elephant {
-            setup_installed_elephant_providers();
-        }
-
-        setup_themes(
-            elephant && !dmenu && s.is_service(),
-            s.get_theme(),
-            s.is_service(),
-        );
-        setup_item_transformers();
-        setup_window(app);
-
-        // start_theme_watcher(s.get_theme());
-    });
-}
-
-fn send_message(message: String) -> Result<(), String> {
-    GLOBAL_DMENU_SENDER.with(|sender| {
-        let sender_guard = sender.lock().unwrap();
-        if let Some(tx) = sender_guard.as_ref() {
-            tx.send(message)
-                .map_err(|_| "Failed to send message".to_string())
-        } else {
-            Err("No sender available".to_string())
-        }
-    })
+        init_app_state();
+        init_ui(app, dmenu);
+    }
 }

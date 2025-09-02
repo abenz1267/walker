@@ -9,16 +9,26 @@ use crate::{
     },
     renderers::create_item,
     send_message,
-    state::{WindowData, with_state},
+    state::{
+        get_current_prefix, get_initial_height, get_initial_placeholder, get_initial_width,
+        get_last_query, get_theme, is_connected, is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open,
+        is_service, set_current_prefix, set_dmenu_current, set_dmenu_exit_after,
+        set_dmenu_keep_open, set_initial_placeholder, set_input_only, set_is_dmenu, set_is_visible,
+        set_last_query, set_no_search, set_parameter_height, set_parameter_width, set_placeholder,
+        set_provider, set_theme,
+    },
     theme::{setup_layer_shell, with_themes},
 };
-use gtk4::prelude::{EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
 use gtk4::prelude::{EntryExt, GtkWindowExt};
 use gtk4::{
     Application, Builder, Entry, EventControllerKey, EventControllerMotion, Label, ScrolledWindow,
     SignalListItemFactory, SingleSelection, Window,
 };
 use gtk4::{Box, ListScrollFlags};
+use gtk4::{
+    CssProvider,
+    prelude::{EditableExt, EventControllerExt, ListItemExt, SelectionModelExt},
+};
 use gtk4::{
     GridView,
     glib::object::{CastNone, ObjectExt},
@@ -29,25 +39,63 @@ use gtk4::{
     gio::prelude::{ApplicationExt, ListModelExt},
     prelude::GtkApplicationExt,
 };
-use std::{collections::HashMap, process, sync::OnceLock};
+use std::{
+    cell::{Cell, RefCell},
+    collections::HashMap,
+    process,
+    sync::OnceLock,
+};
 
 thread_local! {
     pub static WINDOWS: OnceLock<HashMap<String, WindowData>> = OnceLock::new();
+    pub static CSS_PROVIDER: RefCell<Option<CssProvider>> = RefCell::new(None);
+}
+
+pub fn set_css_provider(provider: CssProvider) {
+    CSS_PROVIDER.with(|p| {
+        *p.borrow_mut() = Some(provider);
+    });
+}
+
+pub fn with_css_provider<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&CssProvider) -> R,
+{
+    CSS_PROVIDER.with(|p| p.borrow().as_ref().map(f))
+}
+
+#[derive(Debug, Clone)]
+pub struct WindowData {
+    pub builder: Builder,
+    pub preview_builder: RefCell<Option<Builder>>,
+    pub mouse_x: Cell<f64>,
+    pub mouse_y: Cell<f64>,
+    pub app: Application,
+    pub window: Window,
+    pub selection: SingleSelection,
+    pub list: GridView,
+    pub input: Option<Entry>,
+    pub items: ListStore,
+    pub placeholder: Option<Label>,
+    pub elephant_hint: Label,
+    pub keybinds: Option<Label>,
+    pub scroll: ScrolledWindow,
+    pub search_container: Option<gtk4::Box>,
+    pub preview_container: Option<gtk4::Box>,
+    pub content_container: gtk4::Box,
 }
 
 pub fn with_window<F, R>(f: F) -> R
 where
     F: FnOnce(&WindowData) -> R,
 {
-    with_state(|s| {
-        WINDOWS.with(|windows| {
-            let windows_map = windows.get().unwrap();
-            let theme = s.get_theme();
+    WINDOWS.with(|windows| {
+        let windows_map = windows.get().unwrap();
+        let theme = get_theme();
 
-            windows_map.get(&theme).map(f).unwrap_or_else(|| {
-                println!("theme not found: {}", theme);
-                process::exit(130);
-            })
+        windows_map.get(&theme).map(f).unwrap_or_else(|| {
+            println!("theme not found: {}", theme);
+            process::exit(130);
         })
     })
 }
@@ -233,17 +281,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
     controller.connect_key_pressed(move |_, k, _, m| {
         let handled = with_window(|w| {
-            let mut is_dmenu = false;
-            let mut is_service = false;
-            let mut is_connected = false;
-
-            with_state(|s| {
-                is_dmenu = s.is_dmenu();
-                is_service = s.is_service();
-                is_connected = s.is_connected()
-            });
-
-            if !is_connected && !is_dmenu {
+            if !is_connected() && !is_dmenu() {
                 if let Some(action) = get_bind(k, m) {
                     match action.action.as_str() {
                         ACTION_CLOSE => quit(&app, true),
@@ -258,18 +296,18 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
             let selection = &w.selection;
 
-            if is_dmenu && k == gdk::Key::Return && selection.selected_item().is_none() {
+            if is_dmenu() && k == gdk::Key::Return && selection.selected_item().is_none() {
                 let mut text = if let Some(input) = &w.input {
                     input.text().to_string()
                 } else {
-                    "".to_string()
+                    String::new()
                 };
 
                 if text == "" {
                     text = "CNCLD".to_string()
                 }
 
-                if is_service {
+                if is_service() {
                     send_message(text).unwrap();
                 } else {
                     println!("{}", text);
@@ -337,15 +375,13 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 };
 
                 let is_dmenu_next = item_clone.identifier.contains("dmenu:");
-                with_state(|s| {
-                    if (s.is_dmenu_keep_open() && !s.is_dmenu_exit_after()) || is_dmenu_next {
-                        after = AFTER_NOTHING;
-                    }
+                if (is_dmenu_keep_open() && !is_dmenu_exit_after()) || is_dmenu_next {
+                    after = AFTER_NOTHING;
+                }
 
-                    if is_dmenu_next {
-                        s.set_is_dmenu(true);
-                    }
-                });
+                if is_dmenu_next {
+                    set_is_dmenu(true);
+                }
 
                 let mut dont_close = false;
 
@@ -383,10 +419,8 @@ fn setup_keyboard_handling(ui: &WindowData) {
                                 if input.text().is_empty() {
                                     input.emit_by_name::<()>("changed", &[]);
                                 } else {
-                                    with_state(|s| {
-                                        input.set_text(&s.get_current_prefix());
-                                        input.set_position(-1);
-                                    })
+                                    input.set_text(&get_current_prefix());
+                                    input.set_position(-1);
                                 }
                             }
                         });
@@ -434,14 +468,12 @@ fn setup_list_behavior(ui: &WindowData) {
 
         let response = response_obj.response();
 
-        with_state(|s| {
-            with_themes(|t| {
-                if let Some(theme) = t.get(&s.get_theme()) {
-                    if let Some(i) = response.item.as_ref() {
-                        create_item(&item, &i, theme);
-                    }
+        with_themes(|t| {
+            if let Some(theme) = t.get(&get_theme()) {
+                if let Some(i) = response.item.as_ref() {
+                    create_item(&item, &i, theme);
                 }
-            });
+            }
         });
     });
 
@@ -482,7 +514,7 @@ fn setup_mouse_handling(ui: &WindowData) {
 
 pub fn quit(app: &Application, cancelled: bool) {
     GLOBAL_DMENU_SENDER.with(|sender| {
-        if sender.lock().unwrap().is_some() {
+        if sender.read().unwrap().is_some() {
             send_message("CNCLD".to_string()).unwrap();
         }
     });
@@ -506,32 +538,30 @@ pub fn quit(app: &Application, cancelled: bool) {
         // Clear all preview caches
         crate::preview::clear_all_caches();
 
-        with_state(|s| {
-            s.set_current_prefix("");
-            s.set_provider("");
-            s.set_parameter_height(0);
-            s.set_parameter_width(0);
-            s.set_no_search(false);
-            s.set_placeholder("");
-            s.is_visible.set(false);
-            s.set_dmenu_current(0);
-            s.set_is_dmenu(false);
-            s.set_input_only(false);
+        set_current_prefix(String::new());
+        set_provider(String::new());
+        set_parameter_height(0);
+        set_parameter_width(0);
+        set_no_search(false);
+        set_placeholder(String::new());
+        set_is_visible(false);
+        set_dmenu_current(0);
+        set_is_dmenu(false);
+        set_input_only(false);
 
-            if s.is_dmenu_exit_after() {
-                s.set_dmenu_exit_after(false);
-                s.set_dmenu_keep_open(false);
-            }
+        if is_dmenu_exit_after() {
+            set_dmenu_exit_after(false);
+            set_dmenu_keep_open(false);
+        }
 
-            with_window(|w| {
-                if let Some(input) = &w.input {
-                    s.set_last_query(&input.text());
-                    if !s.get_initial_placeholder().is_empty() {
-                        input.set_placeholder_text(Some(&s.get_initial_placeholder()));
-                        s.set_initial_placeholder("");
-                    }
+        with_window(|w| {
+            if let Some(input) = &w.input {
+                set_last_query(input.text().to_string());
+                if !get_initial_placeholder().is_empty() {
+                    input.set_placeholder_text(Some(&get_initial_placeholder()));
+                    set_initial_placeholder(String::new());
                 }
-            });
+            }
         });
 
         gtk4::glib::idle_add_once(|| {
@@ -551,19 +581,17 @@ pub fn quit(app: &Application, cancelled: bool) {
                     keybinds.set_visible(true);
                 }
 
-                with_state(|s| {
-                    if s.get_initial_height() != 0 {
-                        w.scroll.set_min_content_height(s.get_initial_height());
-                        w.scroll.set_max_content_height(s.get_initial_height());
-                    }
+                if get_initial_height() != 0 {
+                    w.scroll.set_min_content_height(get_initial_height());
+                    w.scroll.set_max_content_height(get_initial_height());
+                }
 
-                    if s.get_initial_width() != 0 {
-                        w.scroll.set_min_content_width(s.get_initial_width());
-                        w.scroll.set_max_content_width(s.get_initial_width());
-                    }
+                if get_initial_width() != 0 {
+                    w.scroll.set_min_content_width(get_initial_width());
+                    w.scroll.set_max_content_width(get_initial_width());
+                }
 
-                    s.set_theme(&get_config().theme);
-                });
+                set_theme(get_config().theme.clone());
             });
         });
     } else {
@@ -628,14 +656,12 @@ pub fn select_previous() {
 
 fn resume_last_query() {
     with_window(|w| {
-        with_state(|s| {
-            if !s.get_last_query().is_empty() {
-                if let Some(input) = &w.input {
-                    input.set_text(&s.get_last_query());
-                    input.set_position(-1);
-                }
+        if !get_last_query().is_empty() {
+            if let Some(input) = &w.input {
+                input.set_text(&get_last_query());
+                input.set_position(-1);
             }
-        });
+        }
     });
 }
 

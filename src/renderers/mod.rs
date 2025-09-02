@@ -1,4 +1,4 @@
-use crate::state::with_state;
+use crate::state::get_dmenu_current;
 use crate::theme::Theme;
 use crate::ui::window::{quit, with_window};
 use crate::{config::get_config, protos::generated_proto::query::query_response::Item};
@@ -264,11 +264,9 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
 
     item.state.iter().for_each(|i| itembox.add_css_class(i));
 
-    with_state(|s| {
-        if s.get_dmenu_current() != 0 && s.get_dmenu_current() as u32 == list_item.position() + 1 {
-            itembox.add_css_class("current");
-        }
-    });
+    if get_dmenu_current() != 0 && get_dmenu_current() as u32 == list_item.position() + 1 {
+        itembox.add_css_class("current");
+    }
 
     list_item.set_child(Some(&itembox));
 

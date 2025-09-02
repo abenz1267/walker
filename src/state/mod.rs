@@ -27,6 +27,8 @@ where
 
 #[derive(Debug, Clone)]
 pub struct AppState {
+    has_elephant: Cell<bool>,
+    is_connected: Cell<bool>,
     dmenu_keep_open: Cell<bool>,
     dmenu_exit_after: Cell<bool>,
     initial_height: Cell<i32>,
@@ -63,6 +65,8 @@ impl AppState {
             is_param_close: Cell::new(false),
             is_visible: Cell::new(false),
             input_only: Cell::new(false),
+            has_elephant: Cell::new(false),
+            is_connected: Cell::new(false),
             no_search: Cell::new(false),
             is_dmenu: Cell::new(false),
             dmenu_keep_open: Cell::new(false),
@@ -133,6 +137,22 @@ impl AppState {
 
     pub fn set_is_visible(&self, val: bool) {
         self.is_visible.set(val);
+    }
+
+    pub fn has_elephant(&self) -> bool {
+        self.has_elephant.get()
+    }
+
+    pub fn set_has_elephant(&self, val: bool) {
+        self.has_elephant.set(val);
+    }
+
+    pub fn is_connected(&self) -> bool {
+        self.is_connected.get()
+    }
+
+    pub fn set_is_connected(&self, val: bool) {
+        self.is_connected.set(val);
     }
 
     pub fn is_input_only(&self) -> bool {
@@ -249,9 +269,11 @@ pub struct WindowData {
     pub input: Option<Entry>,
     pub items: ListStore,
     pub placeholder: Option<Label>,
+    pub elephant_hint: Label,
     pub keybinds: Option<Label>,
     pub scroll: ScrolledWindow,
     pub search_container: Option<gtk4::Box>,
+    pub preview_container: Option<gtk4::Box>,
     pub content_container: gtk4::Box,
 }
 

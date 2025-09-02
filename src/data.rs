@@ -14,7 +14,6 @@ use protobuf::Message;
 use std::io::{BufReader, Read, Write};
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 use std::sync::Mutex;
 use std::time::Duration;
 use std::{env, thread};
@@ -24,6 +23,10 @@ static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 
 pub fn input_changed(text: &str) {
     with_state(|s| {
+        if !s.is_connected() {
+            return;
+        }
+
         if s.is_dmenu() {
             sort_items_fuzzy(&text);
         } else {
@@ -135,6 +138,21 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
 
     subscribe_menu().unwrap();
     start_listening();
+
+    glib::idle_add_once(|| {
+        with_window(|w| {
+            if let Some(input) = &w.input {
+                input.emit_by_name::<()>("changed", &[]);
+            }
+
+            w.elephant_hint.set_visible(false);
+            w.scroll.set_visible(true);
+
+            with_state(|s| {
+                s.set_is_connected(true);
+            })
+        });
+    });
 
     Ok(())
 }
@@ -392,25 +410,28 @@ fn query(text: &str) {
 }
 
 fn handle_disconnect() {
-    Command::new("notify-send")
-        .arg("Walker")
-        .arg("reconnecting to elephant...")
-        .spawn()
-        .expect("failed to execute process");
+    thread::spawn(|| {
+        glib::idle_add_once(|| {
+            with_window(|w| {
+                w.elephant_hint.set_visible(true);
+                w.scroll.set_visible(false);
+            });
+        });
 
-    loop {
-        println!("re-connect...");
+        loop {
+            println!("re-connect...");
 
-        match init_socket() {
-            Ok(_) => {
-                println!("reconnected");
-                break;
-            }
-            Err(err) => {
-                println!("{}", err);
+            match init_socket() {
+                Ok(_) => {
+                    println!("reconnected");
+                    break;
+                }
+                Err(err) => {
+                    println!("{}", err);
+                }
             }
         }
-    }
+    });
 }
 
 pub fn activate(item: QueryResponse, query: &str, action: &str) {

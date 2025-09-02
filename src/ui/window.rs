@@ -70,14 +70,20 @@ pub fn setup_window(app: &Application) {
             let list: GridView = builder.object("List").expect("can't get list from layout");
             let items = ListStore::new::<QueryResponseObject>();
             let placeholder: Option<Label> = builder.object("Placeholder");
+            let elephant_hint: Label = builder
+                .object("ElephantHint")
+                .expect("can't get ElephantHint");
             let keybinds: Option<Label> = builder.object("Keybinds");
             let selection = SingleSelection::new(Some(items.clone()));
             let search_container: Option<Box> = builder.object("SearchContainer");
+            let preview_container: Option<Box> = builder.object("Preview");
             let content_container: gtk4::Box = builder
                 .object("ContentContainer")
                 .expect("ContentContainer not found");
 
             let ui = WindowData {
+                preview_container,
+                elephant_hint,
                 content_container,
                 search_container,
                 builder: builder.clone(),
@@ -94,6 +100,12 @@ pub fn setup_window(app: &Application) {
                 placeholder,
                 keybinds,
             };
+
+            if let Some(p) = &ui.preview_container {
+                p.set_visible(false);
+            }
+
+            ui.elephant_hint.set_visible(false);
 
             setup_window_behavior(&ui, app);
 
@@ -223,11 +235,26 @@ fn setup_keyboard_handling(ui: &WindowData) {
         let handled = with_window(|w| {
             let mut is_dmenu = false;
             let mut is_service = false;
+            let mut is_connected = false;
 
             with_state(|s| {
                 is_dmenu = s.is_dmenu();
                 is_service = s.is_service();
+                is_connected = s.is_connected()
             });
+
+            if !is_connected {
+                if let Some(action) = get_bind(k, m) {
+                    match action.action.as_str() {
+                        ACTION_CLOSE => quit(&app, true),
+                        _ => {}
+                    }
+
+                    return true.into();
+                }
+
+                return true.into();
+            }
 
             let selection = &w.selection;
 

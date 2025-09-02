@@ -28,7 +28,10 @@ scrollbar {
   border: 1px solid darker(@accent_bg_color);
 }
 
-.preview-box {
+.preview-box,
+.elephant-hint,
+.placeholder {
+  color: @theme_fg_color;
 }
 
 .box {

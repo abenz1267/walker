@@ -217,7 +217,7 @@ fn main() -> glib::ExitCode {
         let options = cmd.options_dict();
 
         if options.contains("version") {
-            cmd.print_literal("1.0.0-beta-22\n");
+            cmd.print_literal("1.0.0-beta-23\n");
             return 0;
         }
 
@@ -478,7 +478,26 @@ fn main() -> glib::ExitCode {
                         input.grab_focus();
                     }
 
+                    if !s.is_connected() && !s.is_dmenu() {
+                        w.elephant_hint.set_visible(true);
+                        w.scroll.set_visible(false);
+                    } else {
+                        w.elephant_hint.set_visible(false);
+                        w.scroll.set_visible(true);
+                    }
+
                     w.window.set_visible(true);
+
+                    if !s.is_dmenu() && !s.is_connected() {
+                        if s.has_elephant() {
+                            thread::spawn(|| {
+                                init_socket().unwrap();
+                            });
+                        } else {
+                            println!("Please install elephant.");
+                            process::exit(1);
+                        }
+                    }
                 });
 
                 s.set_is_visible(true);
@@ -539,15 +558,7 @@ fn init_ui(app: &Application, dmenu: bool) {
         setup_binds().unwrap();
 
         let elephant = which("elephant").is_ok();
-
-        if !dmenu {
-            if elephant {
-                init_socket().unwrap();
-            } else {
-                println!("Please install elephant.");
-                process::exit(1);
-            }
-        }
+        s.set_has_elephant(elephant);
 
         setup_css_provider();
 

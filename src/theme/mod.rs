@@ -242,6 +242,7 @@ pub fn setup_css_provider() {
 
 pub fn setup_layer_shell(win: &Window) {
     if !gtk4_layer_shell::is_supported() {
+        return;
         let titlebar = gtk4::Box::new(gtk4::Orientation::Vertical, 0);
         win.set_titlebar(Some(&titlebar));
         return;

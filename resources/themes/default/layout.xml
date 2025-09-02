@@ -57,6 +57,16 @@
                 <property name="orientation">horizontal</property>
                 <property name="spacing">10</property>
                 <child>
+                  <object class="GtkLabel" id="ElephantHint">
+                    <style>
+                      <class name="elephant-hint"></class>
+                    </style>
+                    <property name="label">Waiting for elephant...</property>
+                    <property name="height-request">400</property>
+                    <property name="width-request">500</property>
+                  </object>
+                </child>
+                <child>
                   <object class="GtkLabel" id="Placeholder">
                     <style>
                       <class name="placeholder"></class>

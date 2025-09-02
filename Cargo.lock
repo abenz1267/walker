@@ -1079,16 +1079,6 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "6877bb514081ee2a7ff5ef9de3281f14a4dd4bceac4c09388074a6b5df8a139a"
 
 [[package]]
-name = "mime_guess"
-version = "2.0.5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f7c44f8e672c00fe5308fa235f821cb4198414e1c77935c1ab6948d3fd78550e"
-dependencies = [
- "mime",
- "unicase",
-]
-
-[[package]]
 name = "mio"
 version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -1098,6 +1088,16 @@ dependencies = [
  "log",
  "wasi 0.11.1+wasi-snapshot-preview1",
  "windows-sys 0.59.0",
+]
+
+[[package]]
+name = "new_mime_guess"
+version = "4.0.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "02a2dfb3559d53e90b709376af1c379462f7fb3085a0177deb73e6ea0d99eff4"
+dependencies = [
+ "mime",
+ "unicase",
 ]
 
 [[package]]
@@ -1870,7 +1870,7 @@ dependencies = [
 
 [[package]]
 name = "walker"
-version = "1.0.0-beta-26"
+version = "1.0.0-beta-27"
 dependencies = [
  "cairo-rs 0.21.1",
  "chrono",
@@ -1879,7 +1879,8 @@ dependencies = [
  "gdk-pixbuf 0.21.1",
  "gtk4",
  "gtk4-layer-shell",
- "mime_guess",
+ "mime",
+ "new_mime_guess",
  "notify",
  "nucleo-matcher",
  "poppler-rs",

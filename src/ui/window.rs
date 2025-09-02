@@ -4,21 +4,30 @@ use crate::{
     data::{activate, input_changed},
     keybinds::{
         ACTION_CLOSE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS,
-        ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD, AFTER_CLEAR_RELOAD_KEEP_PREFIX, AFTER_CLOSE,
-        AFTER_NOTHING, AFTER_RELOAD, get_bind, get_modifiers, get_provider_bind,
+        ACTION_TOGGLE_EXACT, AfterAction, MODIFIERS, get_bind, get_provider_bind,
     },
+    providers::PROVIDERS,
     renderers::create_item,
     send_message,
-    state::{WindowData, with_state},
+    state::{
+        get_current_prefix, get_initial_height, get_initial_placeholder, get_initial_width,
+        get_last_query, get_theme, is_connected, is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open,
+        is_service, set_current_prefix, set_dmenu_current, set_dmenu_exit_after,
+        set_dmenu_keep_open, set_initial_placeholder, set_input_only, set_is_dmenu, set_is_visible,
+        set_last_query, set_no_search, set_parameter_height, set_parameter_width, set_placeholder,
+        set_provider, set_theme,
+    },
     theme::{setup_layer_shell, with_themes},
 };
-use gtk4::prelude::{EditableExt, EventControllerExt, ListItemExt, SelectionModelExt};
-use gtk4::prelude::{EntryExt, GtkWindowExt};
 use gtk4::{
     Application, Builder, Entry, EventControllerKey, EventControllerMotion, Label, ScrolledWindow,
     SignalListItemFactory, SingleSelection, Window,
 };
 use gtk4::{Box, ListScrollFlags};
+use gtk4::{
+    CssProvider,
+    prelude::{EditableExt, EventControllerExt, ListItemExt, SelectionModelExt},
+};
 use gtk4::{
     GridView,
     glib::object::{CastNone, ObjectExt},
@@ -29,25 +38,65 @@ use gtk4::{
     gio::prelude::{ApplicationExt, ListModelExt},
     prelude::GtkApplicationExt,
 };
-use std::{collections::HashMap, process, sync::OnceLock};
+use gtk4::{
+    glib::Object,
+    prelude::{EntryExt, GtkWindowExt},
+};
+use std::{
+    cell::{Cell, RefCell},
+    collections::HashMap,
+    process,
+    sync::OnceLock,
+};
 
 thread_local! {
     pub static WINDOWS: OnceLock<HashMap<String, WindowData>> = OnceLock::new();
+    pub static CSS_PROVIDER: RefCell<Option<CssProvider>> = RefCell::new(None);
+}
+
+pub fn set_css_provider(provider: CssProvider) {
+    CSS_PROVIDER.with(|p| *p.borrow_mut() = Some(provider));
+}
+
+pub fn with_css_provider<F, R>(f: F) -> Option<R>
+where
+    F: FnOnce(&CssProvider) -> R,
+{
+    CSS_PROVIDER.with(|p| p.borrow().as_ref().map(f))
+}
+
+#[derive(Debug, Clone)]
+pub struct WindowData {
+    pub builder: Builder,
+    pub preview_builder: RefCell<Option<Builder>>,
+    pub mouse_x: Cell<f64>,
+    pub mouse_y: Cell<f64>,
+    pub app: Application,
+    pub window: Window,
+    pub selection: SingleSelection,
+    pub list: GridView,
+    pub input: Option<Entry>,
+    pub items: ListStore,
+    pub placeholder: Option<Label>,
+    pub elephant_hint: Label,
+    pub keybinds: Option<Label>,
+    pub scroll: ScrolledWindow,
+    pub search_container: Option<gtk4::Box>,
+    pub preview_container: Option<gtk4::Box>,
+    pub content_container: gtk4::Box,
 }
 
 pub fn with_window<F, R>(f: F) -> R
 where
     F: FnOnce(&WindowData) -> R,
 {
-    with_state(|s| {
-        WINDOWS.with(|windows| {
-            let windows_map = windows.get().unwrap();
-            let theme = s.get_theme();
+    WINDOWS.with(|windows| {
+        let windows_map = windows.get().unwrap();
+        let theme = get_theme();
 
-            windows_map.get(&theme).map(f).unwrap_or_else(|| {
-                println!("theme not found: {}", theme);
-                process::exit(130);
-            })
+        windows_map.get(&theme).map(f).unwrap_or_else(|| {
+            println!("theme not found: {theme}");
+            process::exit(130);
         })
     })
 }
@@ -86,7 +135,7 @@ pub fn setup_window(app: &Application) {
                 elephant_hint,
                 content_container,
                 search_container,
-                builder: builder.clone(),
+                builder,
                 preview_builder: std::cell::RefCell::new(None),
                 scroll,
                 mouse_x: 0.0.into(),
@@ -126,9 +175,7 @@ pub fn setup_window(app: &Application) {
         }
     });
 
-    WINDOWS.with(|s| {
-        s.set(windows).expect("failed initializing windows");
-    });
+    WINDOWS.with(|s| s.set(windows).expect("failed initializing windows"));
 }
 
 fn setup_window_behavior(ui: &WindowData, app: &Application) {
@@ -141,29 +188,19 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
         crate::handle_preview();
 
         with_window(|w| {
+            if let Some(p) = &w.placeholder {
+                p.set_visible(s.n_items() == 0);
+            }
+
+            w.scroll.set_visible(s.n_items() != 0);
+
+            if let Some(k) = &w.keybinds {
+                k.set_text("");
+            }
+
             if s.n_items() == 0 {
-                if let Some(p) = &w.placeholder {
-                    p.set_visible(true);
-                }
-
-                w.scroll.set_visible(false);
-
-                if let Some(k) = &w.keybinds {
-                    clear_keybind_hint(k);
-                }
-
                 // Clear preview caches when no items are visible
                 crate::preview::clear_all_caches();
-            } else {
-                if let Some(p) = &w.placeholder {
-                    p.set_visible(false);
-                }
-
-                w.scroll.set_visible(true);
-
-                if let Some(k) = &w.keybinds {
-                    clear_keybind_hint(k);
-                }
             }
         });
     });
@@ -183,32 +220,24 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
     });
 
     let app_copy = app.clone();
+
     ui.list.connect_activate(move |_, _| {
         with_window(|w| {
-            let query = if let Some(input) = &w.input {
-                input.text().to_string()
-            } else {
-                String::new()
+            let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
+
+            let Some(i) = get_selected_query_response() else {
+                return;
             };
 
-            if let Some(i) = get_selected_query_response() {
-                let action = match i.item.provider.as_str() {
-                    "desktopapplications" => &get_config().providers.desktopapplications.click,
-                    "calc" => &get_config().providers.calc.click,
-                    "clipboard" => &get_config().providers.clipboard.click,
-                    "providerlist" => &get_config().providers.providerlist.click,
-                    "symbols" => &get_config().providers.symbols.click,
-                    "websearch" => &get_config().providers.websearch.click,
-                    "menus" => &get_config().providers.menus.click,
-                    "dmenu" => &get_config().providers.dmenu.click,
-                    "runner" => &get_config().providers.runner.click,
-                    "files" => &get_config().providers.files.click,
-                    _ => "",
-                };
+            let providers = PROVIDERS.get().unwrap();
 
-                activate(i, &query, action);
-                quit(&app_copy, false);
-            };
+            let action = providers
+                .get(i.item.provider.as_str())
+                .map(|p| p.default_action())
+                .unwrap_or_default();
+
+            activate(i, &query, action);
+            quit(&app_copy, false);
         });
     });
 }
@@ -233,51 +262,38 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
     controller.connect_key_pressed(move |_, k, _, m| {
         let handled = with_window(|w| {
-            let mut is_dmenu = false;
-            let mut is_service = false;
-            let mut is_connected = false;
-
-            with_state(|s| {
-                is_dmenu = s.is_dmenu();
-                is_service = s.is_service();
-                is_connected = s.is_connected()
-            });
-
-            if !is_connected && !is_dmenu {
-                if let Some(action) = get_bind(k, m) {
-                    match action.action.as_str() {
-                        ACTION_CLOSE => quit(&app, true),
-                        _ => {}
-                    }
-
-                    return true.into();
+            if !is_connected() && !is_dmenu() {
+                if let Some(action) = get_bind(k, m)
+                    && action.action == ACTION_CLOSE
+                {
+                    quit(&app, true);
                 }
 
-                return true.into();
+                return true;
             }
 
             let selection = &w.selection;
 
-            if is_dmenu && k == gdk::Key::Return && selection.selected_item().is_none() {
-                let mut text = if let Some(input) = &w.input {
-                    input.text().to_string()
-                } else {
-                    "".to_string()
-                };
+            if is_dmenu() && k == gdk::Key::Return && selection.selected_item().is_none() {
+                let mut text = w
+                    .input
+                    .as_ref()
+                    .map(Entry::text)
+                    .unwrap_or_default()
+                    .to_string();
 
-                if text == "" {
-                    text = "CNCLD".to_string()
+                if text.is_empty() {
+                    text = "CNCLD".to_string();
                 }
 
-                if is_service {
+                if is_service() {
                     send_message(text).unwrap();
                 } else {
-                    println!("{}", text);
+                    println!("{text}");
                 }
 
                 quit(&app, false);
-
-                return true.into();
+                return true;
             }
 
             if let Some(action) = get_bind(k, m) {
@@ -287,10 +303,10 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     ACTION_SELECT_PREVIOUS => select_previous(),
                     ACTION_TOGGLE_EXACT => toggle_exact(),
                     ACTION_RESUME_LAST_QUERY => resume_last_query(),
-                    _ => {}
+                    _ => (),
                 }
 
-                return true.into();
+                return true;
             }
 
             let items = &w.selection;
@@ -298,20 +314,16 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 return false;
             }
 
-            let selected_item = match selection.selected_item() {
-                Some(item) => item,
-                None => return false,
+            let Some(response) = selection
+                .selected_item()
+                .and_downcast::<QueryResponseObject>()
+            else {
+                return false;
             };
 
-            let response_obj = match selected_item.downcast::<QueryResponseObject>() {
-                Ok(obj) => obj,
-                Err(_) => return false,
-            };
-
-            let response = response_obj.response();
-            let item = match response.item.as_ref() {
-                Some(item) => item,
-                None => return false,
+            let response = response.response();
+            let Some(item) = response.item.as_ref() else {
+                return false;
             };
             let item_clone = item.clone();
 
@@ -322,51 +334,40 @@ fn setup_keyboard_handling(ui: &WindowData) {
             }
 
             if let Some(action) = get_provider_bind(&provider, k, m) {
-                let query = if let Some(input) = &w.input {
-                    input.text().to_string()
-                } else {
-                    String::new()
-                };
+                let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
 
                 activate(response, &query, &action.action);
 
                 let mut after = if item_clone.identifier.starts_with("keepopen:") {
-                    AFTER_CLEAR_RELOAD
+                    AfterAction::ClearReload
                 } else {
-                    action.after.as_str()
+                    action.after
                 };
 
                 let is_dmenu_next = item_clone.identifier.contains("dmenu:");
-                with_state(|s| {
-                    if (s.is_dmenu_keep_open() && !s.is_dmenu_exit_after()) || is_dmenu_next {
-                        after = AFTER_NOTHING;
-                    }
-
-                    if is_dmenu_next {
-                        s.set_is_dmenu(true);
-                    }
-                });
-
-                let mut dont_close = false;
-
-                if let Some(keep_open) =
-                    get_modifiers().get(get_config().keep_open_modifier.as_str())
-                {
-                    if *keep_open == m {
-                        dont_close = true
-                    }
+                if (is_dmenu_keep_open() && !is_dmenu_exit_after()) || is_dmenu_next {
+                    after = AfterAction::Nothing
                 }
 
+                if is_dmenu_next {
+                    set_is_dmenu(true);
+                }
+
+                let dont_close = MODIFIERS
+                    .get(get_config().keep_open_modifier.as_str())
+                    .is_some_and(|keep_open| *keep_open == m);
+
                 match after {
-                    AFTER_CLOSE => {
+                    AfterAction::Close => {
                         if dont_close {
                             select_next();
                         } else {
                             quit(&app, false);
                         }
+
                         return true;
                     }
-                    AFTER_CLEAR_RELOAD => {
+                    AfterAction::ClearReload => {
                         with_window(|w| {
                             if let Some(input) = &w.input {
                                 if input.text().is_empty() {
@@ -377,21 +378,19 @@ fn setup_keyboard_handling(ui: &WindowData) {
                             }
                         });
                     }
-                    AFTER_CLEAR_RELOAD_KEEP_PREFIX => {
+                    AfterAction::ClearReloadKeepPrefix => {
                         with_window(|w| {
                             if let Some(input) = &w.input {
                                 if input.text().is_empty() {
                                     input.emit_by_name::<()>("changed", &[]);
                                 } else {
-                                    with_state(|s| {
-                                        input.set_text(&s.get_current_prefix());
-                                        input.set_position(-1);
-                                    })
+                                    input.set_text(&get_current_prefix());
+                                    input.set_position(-1);
                                 }
                             }
                         });
                     }
-                    AFTER_RELOAD => crate::data::input_changed(&query),
+                    AfterAction::Reload => crate::data::input_changed(&query),
                     _ => {}
                 }
 
@@ -434,14 +433,12 @@ fn setup_list_behavior(ui: &WindowData) {
 
         let response = response_obj.response();
 
-        with_state(|s| {
-            with_themes(|t| {
-                if let Some(theme) = t.get(&s.get_theme()) {
-                    if let Some(i) = response.item.as_ref() {
-                        create_item(&item, &i, theme);
-                    }
-                }
-            });
+        with_themes(|t| {
+            if let Some(theme) = t.get(&get_theme())
+                && let Some(i) = response.item.as_ref()
+            {
+                create_item(&item, &i, theme);
+            }
         });
     });
 
@@ -456,123 +453,119 @@ fn setup_mouse_handling(ui: &WindowData) {
         if let Some(input) = &ui.input {
             input.set_can_target(false);
         }
-    } else {
-        ui.list.set_single_click_activate(true);
-
-        let motion = EventControllerMotion::new();
-        motion.connect_motion(|_, x, y| {
-            with_window(|w| {
-                if w.mouse_x.get() == 0.0 || w.mouse_y.get() == 0.0 {
-                    w.mouse_x.set(x);
-                    w.mouse_y.set(y);
-                    return;
-                }
-
-                if x != w.mouse_x.get() || y != w.mouse_y.get() {
-                    if !w.list.can_target() {
-                        w.list.set_can_target(true);
-                    }
-                }
-            });
-        });
-
-        ui.window.add_controller(motion);
+        return;
     }
+
+    ui.list.set_single_click_activate(true);
+
+    let motion = EventControllerMotion::new();
+    motion.connect_motion(|_, x, y| {
+        with_window(|w| {
+            if w.mouse_x.get() == 0.0 || w.mouse_y.get() == 0.0 {
+                w.mouse_x.set(x);
+                w.mouse_y.set(y);
+                return;
+            }
+
+            if (x != w.mouse_x.get() || y != w.mouse_y.get()) && !w.list.can_target() {
+                w.list.set_can_target(true);
+            }
+        });
+    });
+
+    ui.window.add_controller(motion);
 }
 
 pub fn quit(app: &Application, cancelled: bool) {
-    GLOBAL_DMENU_SENDER.with(|sender| {
-        if sender.lock().unwrap().is_some() {
-            send_message("CNCLD".to_string()).unwrap();
-        }
-    });
+    if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
+        send_message("CNCLD".to_string()).unwrap();
+    }
 
-    if app
+    if !app
         .flags()
         .contains(gtk4::gio::ApplicationFlags::IS_SERVICE)
     {
-        app.active_window().unwrap().set_visible(false);
-
-        with_window(|w| {
-            if let Some(preview) = w.builder.object::<Box>("Preview") {
-                while let Some(child) = preview.first_child() {
-                    child.unparent();
-                }
-            }
-
-            w.preview_builder.borrow_mut().take();
-        });
-
-        // Clear all preview caches
-        crate::preview::clear_all_caches();
-
-        with_state(|s| {
-            s.set_current_prefix("");
-            s.set_provider("");
-            s.set_parameter_height(0);
-            s.set_parameter_width(0);
-            s.set_no_search(false);
-            s.set_placeholder("");
-            s.is_visible.set(false);
-            s.set_dmenu_current(0);
-            s.set_is_dmenu(false);
-            s.set_input_only(false);
-
-            if s.is_dmenu_exit_after() {
-                s.set_dmenu_exit_after(false);
-                s.set_dmenu_keep_open(false);
-            }
-
-            with_window(|w| {
-                if let Some(input) = &w.input {
-                    s.set_last_query(&input.text());
-                    if !s.get_initial_placeholder().is_empty() {
-                        input.set_placeholder_text(Some(&s.get_initial_placeholder()));
-                        s.set_initial_placeholder("");
-                    }
-                }
-            });
-        });
-
-        gtk4::glib::idle_add_once(|| {
-            with_window(|w| {
-                if let Some(search_container) = &w.search_container {
-                    search_container.set_visible(true);
-                }
-
-                if let Some(input) = &w.input {
-                    input.set_text("");
-                    input.emit_by_name::<()>("changed", &[]);
-                }
-
-                w.content_container.set_visible(true);
-
-                if let Some(keybinds) = &w.keybinds {
-                    keybinds.set_visible(true);
-                }
-
-                with_state(|s| {
-                    if s.get_initial_height() != 0 {
-                        w.scroll.set_min_content_height(s.get_initial_height());
-                        w.scroll.set_max_content_height(s.get_initial_height());
-                    }
-
-                    if s.get_initial_width() != 0 {
-                        w.scroll.set_min_content_width(s.get_initial_width());
-                        w.scroll.set_max_content_width(s.get_initial_width());
-                    }
-
-                    s.set_theme(&get_config().theme);
-                });
-            });
-        });
-    } else {
         if cancelled {
             process::exit(130);
         }
 
         app.quit();
+        return;
     }
+
+    app.active_window().unwrap().set_visible(false);
+
+    with_window(|w| {
+        while let Some(preview) = w.builder.object::<Box>("Preview")
+            && let Some(child) = preview.first_child()
+        {
+            child.unparent();
+        }
+
+        w.preview_builder.borrow_mut().take();
+    });
+
+    // Clear all preview caches
+    crate::preview::clear_all_caches();
+
+    set_current_prefix(String::new());
+    set_provider(String::new());
+    set_parameter_height(0);
+    set_parameter_width(0);
+    set_no_search(false);
+    set_placeholder(String::new());
+    set_is_visible(false);
+    set_dmenu_current(0);
+    set_is_dmenu(false);
+    set_input_only(false);
+
+    if is_dmenu_exit_after() {
+        set_dmenu_exit_after(false);
+        set_dmenu_keep_open(false);
+    }
+
+    with_window(|w| {
+        let Some(input) = &w.input else {
+            return;
+        };
+
+        set_last_query(input.text().to_string());
+        if !get_initial_placeholder().is_empty() {
+            input.set_placeholder_text(Some(&get_initial_placeholder()));
+            set_initial_placeholder(String::new());
+        }
+    });
+
+    gtk4::glib::idle_add_once(|| {
+        with_window(|w| {
+            if let Some(search_container) = &w.search_container {
+                search_container.set_visible(true);
+            }
+
+            if let Some(input) = &w.input {
+                input.set_text("");
+                input.emit_by_name::<()>("changed", &[]);
+            }
+
+            w.content_container.set_visible(true);
+
+            if let Some(keybinds) = &w.keybinds {
+                keybinds.set_visible(true);
+            }
+
+            if get_initial_height() != 0 {
+                w.scroll.set_min_content_height(get_initial_height());
+                w.scroll.set_max_content_height(get_initial_height());
+            }
+
+            if get_initial_width() != 0 {
+                w.scroll.set_min_content_width(get_initial_width());
+                w.scroll.set_max_content_width(get_initial_width());
+            }
+
+            set_theme(get_config().theme.clone());
+        });
+    });
 }
 
 pub fn select_next() {
@@ -580,24 +573,27 @@ pub fn select_next() {
 
     with_window(|w| {
         let selection = &w.selection;
-        if get_config().selection_wrap {
-            let current = selection.selected();
-            let n_items = selection.n_items();
-            if n_items > 0 {
-                let next = if current + 1 >= n_items {
-                    0
-                } else {
-                    current + 1
-                };
-                selection.set_selected(next);
-            }
-        } else {
+        if !get_config().selection_wrap {
             let current = selection.selected();
             let n_items = selection.n_items();
             if current + 1 < n_items {
                 selection.set_selected(current + 1);
             }
+            return;
         }
+
+        let current = selection.selected();
+        let n_items = selection.n_items();
+        if n_items <= 0 {
+            return;
+        }
+
+        let next = if current + 1 >= n_items {
+            0
+        } else {
+            current + 1
+        };
+        selection.set_selected(next);
     });
 }
 
@@ -606,52 +602,55 @@ pub fn select_previous() {
 
     with_window(|w| {
         let selection = &w.selection;
-        if get_config().selection_wrap {
-            let current = selection.selected();
-            let n_items = selection.n_items();
-            if n_items > 0 {
-                let prev = if current == 0 {
-                    n_items - 1
-                } else {
-                    current - 1
-                };
-                selection.set_selected(prev);
-            }
-        } else {
+        if !get_config().selection_wrap {
             let current = selection.selected();
             if current > 0 {
                 selection.set_selected(current - 1);
             }
+            return;
         }
+
+        let current = selection.selected();
+        let n_items = selection.n_items();
+        if n_items <= 0 {
+            return;
+        }
+
+        let prev = if current == 0 {
+            n_items - 1
+        } else {
+            current - 1
+        };
+        selection.set_selected(prev);
     });
 }
 
 fn resume_last_query() {
     with_window(|w| {
-        with_state(|s| {
-            if !s.get_last_query().is_empty() {
-                if let Some(input) = &w.input {
-                    input.set_text(&s.get_last_query());
-                    input.set_position(-1);
-                }
-            }
-        });
+        if !get_last_query().is_empty()
+            && let Some(input) = &w.input
+        {
+            input.set_text(&get_last_query());
+            input.set_position(-1);
+        }
     });
 }
 
 pub fn toggle_exact() {
     with_window(|w| {
-        if let Some(i) = &w.input {
-            let cfg = get_config();
-            if i.text().starts_with(&cfg.exact_search_prefix) {
-                if let Some(t) = i.text().strip_prefix(&cfg.exact_search_prefix) {
-                    i.set_text(t);
-                    i.set_position(-1);
-                }
-            } else {
-                i.set_text(&format!("{}{}", cfg.exact_search_prefix, i.text()));
-                i.set_position(-1);
-            }
+        let Some(i) = &w.input else {
+            return;
+        };
+
+        let cfg = get_config();
+        if i.text().starts_with(&cfg.exact_search_prefix)
+            && let Some(t) = i.text().strip_prefix(&cfg.exact_search_prefix)
+        {
+            i.set_text(t);
+            i.set_position(-1);
+        } else if i.text().strip_prefix(&cfg.exact_search_prefix).is_some() {
+            i.set_text(&format!("{}{}", cfg.exact_search_prefix, i.text()));
+            i.set_position(-1);
         }
     });
 }
@@ -668,8 +667,9 @@ pub fn get_selected_item() -> Option<crate::protos::generated_proto::query::quer
     let result = with_window(|w| {
         w.selection
             .selected_item()
-            .and_then(|item| item.downcast::<QueryResponseObject>().ok())
-            .and_then(|obj| obj.response().item.as_ref().cloned())
+            .map(Object::downcast::<QueryResponseObject>)
+            .and_then(Result::ok)
+            .and_then(|obj| obj.response().item.into_option())
     });
 
     return result;
@@ -680,8 +680,9 @@ pub fn get_selected_query_response() -> Option<crate::protos::generated_proto::q
     let result = with_window(|w| {
         w.selection
             .selected_item()
-            .and_then(|item| item.downcast::<QueryResponseObject>().ok())
-            .and_then(|obj| Some(obj.response()))
+            .map(Object::downcast::<QueryResponseObject>)
+            .and_then(Result::ok)
+            .map(|obj| obj.response())
     });
 
     return result;
@@ -689,159 +690,63 @@ pub fn get_selected_query_response() -> Option<crate::protos::generated_proto::q
 
 pub fn handle_preview() {
     with_window(|w| {
-        if let Some(preview) = w.builder.object::<Box>("Preview") {
-            if let Some(item) = get_selected_item() {
-                let mut provider = item.provider.clone();
+        let Some(preview) = w.builder.object::<Box>("Preview") else {
+            return;
+        };
 
-                if provider.starts_with("menus:") {
-                    provider = "menus".to_string();
-                }
+        let Some(item) = get_selected_item() else {
+            preview.set_visible(false);
+            return;
+        };
 
-                if crate::preview::has_previewer(&provider) {
-                    let builder = {
-                        let mut preview_builder = w.preview_builder.borrow_mut();
-                        if preview_builder.is_none() {
-                            let builder = Builder::new();
-                            let _ = builder.add_from_string(include_str!(
-                                "../../resources/themes/default/preview.xml"
-                            ));
-                            *preview_builder = Some(builder);
-                        }
-                        preview_builder.as_ref().unwrap().clone()
-                    };
+        let mut provider = item.provider.clone();
 
-                    crate::preview::handle_preview(&provider, &item, &preview, &builder);
-                } else {
-                    preview.set_visible(false);
-                }
-            } else {
-                preview.set_visible(false);
-            }
+        if provider.starts_with("menus:") {
+            provider = "menus".to_string();
         }
+
+        if !crate::preview::has_previewer(&provider) {
+            preview.set_visible(false);
+            return;
+        }
+
+        let builder = {
+            let mut preview_builder = w.preview_builder.borrow_mut();
+            if preview_builder.is_none() {
+                let builder = Builder::new();
+                let _ = builder
+                    .add_from_string(include_str!("../../resources/themes/default/preview.xml"));
+                *preview_builder = Some(builder);
+            }
+            preview_builder.as_ref().unwrap().clone()
+        };
+
+        crate::preview::handle_preview(&provider, &item, &preview, &builder);
     });
 }
 
 pub fn set_keybind_hint() {
     with_window(|w| {
-        if let Some(k) = &w.keybinds {
-            if let Some(item) = get_selected_item() {
-                match item.provider.as_str() {
-                    "archlinuxpkgs" => set_keybinds_archlinuxpkgs(k),
-                    "desktopapplications" => set_keybinds_desktopapplications(k),
-                    "files" => set_keybinds_files(k),
-                    "symbols" => set_keybinds_symbols(k),
-                    "unicode" => set_keybinds_unicode(k),
-                    "calc" => set_keybinds_calc(k),
-                    "runner" => set_keybinds_runner(k),
-                    "providerlist" => set_keybinds_providerlist(k),
-                    "clipboard" => set_keybinds_clipboard(k),
-                    "todo" => set_keybinds_todo(k, item.state),
-                    provider if provider.starts_with("menus:") => set_keybinds_menus(k),
-                    _ => clear_keybind_hint(k),
-                }
-            } else {
-                clear_keybind_hint(k);
-            }
+        let Some(k) = &w.keybinds else {
+            return;
+        };
+
+        let Some(item) = get_selected_item() else {
+            k.set_text("");
+            return;
+        };
+
+        let providers = PROVIDERS.get().unwrap();
+        let cfg = get_config();
+
+        if let Some(p) = providers.get(&item.provider) {
+            k.set_text(&p.get_keybind_hint(cfg));
+        } else if item.provider.starts_with("menus:")
+            && let Some(p) = providers.get("menus")
+        {
+            k.set_text(&p.get_keybind_hint(cfg));
+        } else if providers.get("menus").is_some() {
+            k.set_text("");
         }
     });
-}
-
-fn clear_keybind_hint(k: &Label) {
-    k.set_text("");
-}
-
-fn set_keybinds_archlinuxpkgs(k: &Label) {
-    let text = format!(
-        "install: {} - remove: {}",
-        get_config().providers.archlinuxpkgs.install,
-        get_config().providers.archlinuxpkgs.remove,
-    );
-    k.set_text(&text);
-}
-
-fn set_keybinds_desktopapplications(k: &Label) {
-    let text = format!(
-        "start: {}",
-        get_config().providers.desktopapplications.start
-    );
-    k.set_text(&text);
-}
-
-fn set_keybinds_clipboard(k: &Label) {
-    let cfg = get_config();
-    let text = format!(
-        "copy: {} - delete: {} - edit: {} - images only: {}",
-        cfg.providers.clipboard.copy,
-        cfg.providers.clipboard.delete,
-        cfg.providers.clipboard.edit,
-        cfg.providers.clipboard.toggle_images_only
-    );
-    k.set_text(&text);
-}
-
-fn set_keybinds_todo(k: &Label, state: Vec<String>) {
-    let cfg = get_config();
-    let text = format!(
-        "mark active: {} - mark done: {} - delete: {} - clear: {}",
-        cfg.providers.todo.mark_active,
-        cfg.providers.todo.mark_done,
-        cfg.providers.todo.delete,
-        cfg.providers.todo.clear
-    );
-
-    k.set_text(&text);
-}
-
-fn set_keybinds_menus(k: &Label) {
-    let cfg = get_config();
-    let text = format!("activate: {}", cfg.providers.menus.activate);
-    k.set_text(&text);
-}
-
-fn set_keybinds_calc(k: &Label) {
-    let cfg = get_config();
-    let text = format!(
-        "copy: {} - save: {} - delete: {}",
-        cfg.providers.calc.copy, cfg.providers.calc.save, cfg.providers.calc.delete
-    );
-    k.set_text(&text);
-}
-
-fn set_keybinds_symbols(k: &Label) {
-    let cfg = get_config();
-    let text = format!("copy: {}", cfg.providers.symbols.copy,);
-    k.set_text(&text);
-}
-
-fn set_keybinds_unicode(k: &Label) {
-    let cfg = get_config();
-    let text = format!("copy: {}", cfg.providers.unicode.copy,);
-    k.set_text(&text);
-}
-
-fn set_keybinds_providerlist(k: &Label) {
-    let cfg = get_config();
-    let text = format!("select: {}", cfg.providers.providerlist.activate);
-    k.set_text(&text);
-}
-
-fn set_keybinds_runner(k: &Label) {
-    let cfg = get_config();
-    let text = format!(
-        "run: {} - run in terminal: {}",
-        cfg.providers.runner.start, cfg.providers.runner.start_terminal
-    );
-    k.set_text(&text);
-}
-
-fn set_keybinds_files(k: &Label) {
-    let cfg = get_config();
-    let text = format!(
-        "open: {} - open dir: {} - copy: {} - copy path: {}",
-        cfg.providers.files.open,
-        cfg.providers.files.open_dir,
-        cfg.providers.files.copy_file,
-        cfg.providers.files.copy_path
-    );
-    k.set_text(&text);
 }

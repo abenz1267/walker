@@ -1,295 +1,230 @@
-use gtk4::gio::ListStore;
-use gtk4::{
-    Application, Builder, CssProvider, Entry, GridView, Label, ScrolledWindow, SingleSelection,
-    Window,
-};
-use std::cell::{Cell, RefCell};
 use std::collections::HashSet;
-use std::sync::OnceLock;
+use std::sync::{OnceLock, RwLock};
 
-thread_local! {
-    static STATE: OnceLock<AppState> = OnceLock::new();
-    pub static CSS_PROVIDER: RefCell<Option<CssProvider>> = RefCell::new(None);
-}
+static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 
-pub fn set_css_provider(provider: CssProvider) {
-    CSS_PROVIDER.with(|p| {
-        *p.borrow_mut() = Some(provider);
-    });
-}
-
-pub fn with_css_provider<F, R>(f: F) -> Option<R>
-where
-    F: FnOnce(&CssProvider) -> R,
-{
-    CSS_PROVIDER.with(|p| p.borrow().as_ref().map(f))
-}
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct AppState {
-    has_elephant: Cell<bool>,
-    is_connected: Cell<bool>,
-    dmenu_keep_open: Cell<bool>,
-    dmenu_exit_after: Cell<bool>,
-    initial_height: Cell<i32>,
-    initial_width: Cell<i32>,
-    dmenu_current: Cell<i64>,
-    parameter_height: Cell<i32>,
-    parameter_width: Cell<i32>,
-    last_query: RefCell<String>,
-    placeholder: RefCell<String>,
-    initial_placeholder: RefCell<String>,
-    available_themes: RefCell<HashSet<String>>,
-    provider: RefCell<String>,
-    theme: RefCell<String>,
-    is_service: Cell<bool>,
-    no_search: Cell<bool>,
-    input_only: Cell<bool>,
-    is_dmenu: Cell<bool>,
-    is_param_close: Cell<bool>,
-    current_prefix: RefCell<String>,
-    pub(crate) is_visible: Cell<bool>,
-}
-
-impl AppState {
-    pub fn new() -> Self {
-        Self {
-            provider: RefCell::new(String::new()),
-            available_themes: RefCell::new(HashSet::new()),
-            theme: RefCell::new("".to_string()),
-            current_prefix: RefCell::new("".to_string()),
-            placeholder: RefCell::new("".to_string()),
-            initial_placeholder: RefCell::new("".to_string()),
-            last_query: RefCell::new(String::new()),
-            is_service: Cell::new(false),
-            is_param_close: Cell::new(false),
-            is_visible: Cell::new(false),
-            input_only: Cell::new(false),
-            has_elephant: Cell::new(false),
-            is_connected: Cell::new(false),
-            no_search: Cell::new(false),
-            is_dmenu: Cell::new(false),
-            dmenu_keep_open: Cell::new(false),
-            dmenu_exit_after: Cell::new(false),
-            initial_height: Cell::new(0),
-            parameter_height: Cell::new(0),
-            parameter_width: Cell::new(0),
-            initial_width: Cell::new(0),
-            dmenu_current: Cell::new(0),
-        }
-    }
-
-    pub fn get_theme(&self) -> String {
-        self.theme.borrow().clone()
-    }
-
-    pub fn set_theme(&self, val: &str) {
-        *self.theme.borrow_mut() = val.to_string();
-    }
-
-    pub fn get_current_prefix(&self) -> String {
-        self.current_prefix.borrow().clone()
-    }
-
-    pub fn set_current_prefix(&self, val: &str) {
-        *self.current_prefix.borrow_mut() = val.to_string();
-    }
-
-    pub fn get_provider(&self) -> String {
-        self.provider.borrow().clone()
-    }
-
-    pub fn set_provider(&self, val: &str) {
-        *self.provider.borrow_mut() = val.to_string();
-    }
-
-    pub fn get_initial_placeholder(&self) -> String {
-        self.initial_placeholder.borrow().clone()
-    }
-
-    pub fn set_initial_placeholder(&self, val: &str) {
-        *self.initial_placeholder.borrow_mut() = val.to_string();
-    }
-
-    pub fn get_placeholder(&self) -> String {
-        self.placeholder.borrow().clone()
-    }
-
-    pub fn set_placeholder(&self, val: &str) {
-        *self.placeholder.borrow_mut() = val.to_string();
-    }
-
-    pub fn get_last_query(&self) -> String {
-        self.last_query.borrow().clone()
-    }
-
-    pub fn set_last_query(&self, val: &str) {
-        *self.last_query.borrow_mut() = val.to_string();
-    }
-
-    pub fn set_is_service(&self, val: bool) {
-        self.is_service.set(val);
-    }
-
-    pub fn is_visible(&self) -> bool {
-        self.is_visible.get()
-    }
-
-    pub fn set_is_visible(&self, val: bool) {
-        self.is_visible.set(val);
-    }
-
-    pub fn has_elephant(&self) -> bool {
-        self.has_elephant.get()
-    }
-
-    pub fn set_has_elephant(&self, val: bool) {
-        self.has_elephant.set(val);
-    }
-
-    pub fn is_connected(&self) -> bool {
-        self.is_connected.get()
-    }
-
-    pub fn set_is_connected(&self, val: bool) {
-        self.is_connected.set(val);
-    }
-
-    pub fn is_input_only(&self) -> bool {
-        self.input_only.get()
-    }
-
-    pub fn set_input_only(&self, val: bool) {
-        self.input_only.set(val);
-    }
-
-    pub fn is_param_close(&self) -> bool {
-        self.is_param_close.get()
-    }
-
-    pub fn set_param_close(&self, val: bool) {
-        self.is_param_close.set(val);
-    }
-
-    pub fn is_dmenu_keep_open(&self) -> bool {
-        self.dmenu_keep_open.get()
-    }
-
-    pub fn set_dmenu_keep_open(&self, val: bool) {
-        self.dmenu_keep_open.set(val);
-    }
-
-    pub fn is_dmenu_exit_after(&self) -> bool {
-        self.dmenu_exit_after.get()
-    }
-
-    pub fn set_dmenu_exit_after(&self, val: bool) {
-        self.dmenu_exit_after.set(val);
-    }
-
-    pub fn is_dmenu(&self) -> bool {
-        self.is_dmenu.get()
-    }
-
-    pub fn set_is_dmenu(&self, val: bool) {
-        self.is_dmenu.set(val);
-    }
-
-    pub fn is_no_search(&self) -> bool {
-        self.no_search.get()
-    }
-
-    pub fn is_service(&self) -> bool {
-        self.is_service.get()
-    }
-
-    pub fn set_no_search(&self, val: bool) {
-        self.no_search.set(val);
-    }
-
-    pub fn set_initial_height(&self, val: i32) {
-        self.initial_height.set(val);
-    }
-
-    pub fn set_initial_width(&self, val: i32) {
-        self.initial_width.set(val);
-    }
-
-    pub fn get_initial_height(&self) -> i32 {
-        return self.initial_height.get();
-    }
-
-    pub fn get_initial_width(&self) -> i32 {
-        return self.initial_width.get();
-    }
-
-    pub fn set_parameter_height(&self, val: i32) {
-        self.parameter_height.set(val);
-    }
-
-    pub fn set_parameter_width(&self, val: i32) {
-        self.parameter_width.set(val);
-    }
-
-    pub fn get_parameter_height(&self) -> i32 {
-        return self.parameter_height.get();
-    }
-
-    pub fn get_parameter_width(&self) -> i32 {
-        return self.parameter_width.get();
-    }
-
-    pub fn get_dmenu_current(&self) -> i64 {
-        return self.dmenu_current.get();
-    }
-
-    pub fn set_dmenu_current(&self, val: i64) {
-        return self.dmenu_current.set(val);
-    }
-
-    pub fn add_theme(&self, val: String) {
-        self.available_themes.borrow_mut().insert(val);
-    }
-
-    pub fn has_theme(&self, val: String) -> bool {
-        return self.available_themes.borrow().contains(&val);
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct WindowData {
-    pub builder: Builder,
-    pub preview_builder: RefCell<Option<Builder>>,
-    pub mouse_x: Cell<f64>,
-    pub mouse_y: Cell<f64>,
-    pub app: Application,
-    pub window: Window,
-    pub selection: SingleSelection,
-    pub list: GridView,
-    pub input: Option<Entry>,
-    pub items: ListStore,
-    pub placeholder: Option<Label>,
-    pub elephant_hint: Label,
-    pub keybinds: Option<Label>,
-    pub scroll: ScrolledWindow,
-    pub search_container: Option<gtk4::Box>,
-    pub preview_container: Option<gtk4::Box>,
-    pub content_container: gtk4::Box,
+    has_elephant: bool,
+    is_connected: bool,
+    dmenu_keep_open: bool,
+    dmenu_exit_after: bool,
+    initial_height: i32,
+    initial_width: i32,
+    dmenu_current: i64,
+    parameter_height: i32,
+    parameter_width: i32,
+    last_query: String,
+    placeholder: String,
+    initial_placeholder: String,
+    available_themes: HashSet<String>,
+    provider: String,
+    theme: String,
+    is_service: bool,
+    no_search: bool,
+    input_only: bool,
+    is_dmenu: bool,
+    is_param_close: bool,
+    current_prefix: String,
+    is_visible: bool,
 }
 
 pub fn init_app_state() {
-    let state = AppState::new();
-    STATE.with(|s| {
-        s.set(state.clone()).expect("failed initializing app state");
-    });
+    STATE
+        .set(RwLock::new(AppState::default()))
+        .expect("can't init appstate");
 }
 
-pub fn with_state<F, R>(f: F) -> R
-where
-    F: FnOnce(&AppState) -> R,
-{
-    STATE.with(|state| {
-        let data = state.get().expect("AppState not initialized");
-        f(data)
-    })
+pub fn get_theme() -> String {
+    STATE.get().unwrap().read().unwrap().theme.clone()
+}
+
+pub fn set_theme(val: String) {
+    STATE.get().unwrap().write().unwrap().theme = val
+}
+
+pub fn get_current_prefix() -> String {
+    STATE.get().unwrap().read().unwrap().current_prefix.clone()
+}
+
+pub fn set_current_prefix(val: String) {
+    STATE.get().unwrap().write().unwrap().current_prefix = val
+}
+
+pub fn get_provider() -> String {
+    STATE.get().unwrap().read().unwrap().provider.clone()
+}
+
+pub fn set_provider(val: String) {
+    STATE.get().unwrap().write().unwrap().provider = val
+}
+
+pub fn get_initial_placeholder() -> String {
+    STATE
+        .get()
+        .unwrap()
+        .read()
+        .unwrap()
+        .initial_placeholder
+        .clone()
+}
+
+pub fn set_initial_placeholder(val: String) {
+    STATE.get().unwrap().write().unwrap().initial_placeholder = val
+}
+
+pub fn get_placeholder() -> String {
+    STATE.get().unwrap().read().unwrap().placeholder.clone()
+}
+
+pub fn set_placeholder(val: String) {
+    STATE.get().unwrap().write().unwrap().placeholder = val
+}
+
+pub fn get_last_query() -> String {
+    STATE.get().unwrap().read().unwrap().last_query.clone()
+}
+
+pub fn set_last_query(val: String) {
+    STATE.get().unwrap().write().unwrap().last_query = val
+}
+
+pub fn set_is_service(val: bool) {
+    STATE.get().unwrap().write().unwrap().is_service = val
+}
+
+pub fn is_visible() -> bool {
+    STATE.get().unwrap().read().unwrap().is_visible
+}
+
+pub fn set_is_visible(val: bool) {
+    STATE.get().unwrap().write().unwrap().is_visible = val;
+}
+
+pub fn has_elephant() -> bool {
+    STATE.get().unwrap().read().unwrap().has_elephant
+}
+
+pub fn set_has_elephant(val: bool) {
+    STATE.get().unwrap().write().unwrap().has_elephant = val
+}
+
+pub fn is_connected() -> bool {
+    STATE.get().unwrap().read().unwrap().is_connected
+}
+
+pub fn set_is_connected(val: bool) {
+    STATE.get().unwrap().write().unwrap().is_connected = val
+}
+
+pub fn is_input_only() -> bool {
+    STATE.get().unwrap().read().unwrap().input_only
+}
+
+pub fn set_input_only(val: bool) {
+    STATE.get().unwrap().write().unwrap().input_only = val
+}
+
+pub fn is_param_close() -> bool {
+    STATE.get().unwrap().read().unwrap().is_param_close
+}
+
+pub fn set_param_close(val: bool) {
+    STATE.get().unwrap().write().unwrap().is_param_close = val
+}
+
+pub fn is_dmenu_keep_open() -> bool {
+    STATE.get().unwrap().read().unwrap().dmenu_keep_open
+}
+
+pub fn set_dmenu_keep_open(val: bool) {
+    STATE.get().unwrap().write().unwrap().dmenu_keep_open = val
+}
+
+pub fn is_dmenu_exit_after() -> bool {
+    STATE.get().unwrap().read().unwrap().dmenu_exit_after
+}
+
+pub fn set_dmenu_exit_after(val: bool) {
+    STATE.get().unwrap().write().unwrap().dmenu_exit_after = val
+}
+
+pub fn is_dmenu() -> bool {
+    STATE.get().unwrap().read().unwrap().is_dmenu
+}
+
+pub fn set_is_dmenu(val: bool) {
+    STATE.get().unwrap().write().unwrap().is_dmenu = val
+}
+
+pub fn is_no_search() -> bool {
+    STATE.get().unwrap().read().unwrap().no_search
+}
+
+pub fn is_service() -> bool {
+    STATE.get().unwrap().read().unwrap().is_service
+}
+
+pub fn set_no_search(val: bool) {
+    STATE.get().unwrap().write().unwrap().no_search = val
+}
+
+pub fn set_initial_height(val: i32) {
+    STATE.get().unwrap().write().unwrap().initial_height = val
+}
+
+pub fn set_initial_width(val: i32) {
+    STATE.get().unwrap().write().unwrap().initial_width = val
+}
+
+pub fn get_initial_height() -> i32 {
+    STATE.get().unwrap().read().unwrap().initial_height
+}
+
+pub fn get_initial_width() -> i32 {
+    STATE.get().unwrap().read().unwrap().initial_width
+}
+
+pub fn set_parameter_height(val: i32) {
+    STATE.get().unwrap().write().unwrap().parameter_height = val
+}
+
+pub fn set_parameter_width(val: i32) {
+    STATE.get().unwrap().write().unwrap().parameter_width = val
+}
+
+pub fn get_parameter_height() -> i32 {
+    STATE.get().unwrap().read().unwrap().parameter_height
+}
+
+pub fn get_parameter_width() -> i32 {
+    STATE.get().unwrap().read().unwrap().parameter_width
+}
+
+pub fn get_dmenu_current() -> i64 {
+    STATE.get().unwrap().read().unwrap().dmenu_current
+}
+
+pub fn set_dmenu_current(val: i64) {
+    STATE.get().unwrap().write().unwrap().dmenu_current = val
+}
+
+pub fn add_theme(val: String) {
+    STATE
+        .get()
+        .unwrap()
+        .write()
+        .unwrap()
+        .available_themes
+        .insert(val);
+}
+
+pub fn has_theme(val: &str) -> bool {
+    STATE
+        .get()
+        .unwrap()
+        .read()
+        .unwrap()
+        .available_themes
+        .contains(val)
 }

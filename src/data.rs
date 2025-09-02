@@ -141,16 +141,16 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
 
     glib::idle_add_once(|| {
         with_window(|w| {
-            if let Some(input) = &w.input {
-                input.emit_by_name::<()>("changed", &[]);
-            }
-
             w.elephant_hint.set_visible(false);
             w.scroll.set_visible(true);
 
             with_state(|s| {
                 s.set_is_connected(true);
-            })
+            });
+
+            if let Some(input) = &w.input {
+                input.emit_by_name::<()>("changed", &[]);
+            }
         });
     });
 

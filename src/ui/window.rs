@@ -243,7 +243,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 is_connected = s.is_connected()
             });
 
-            if !is_connected {
+            if !is_connected && !is_dmenu {
                 if let Some(action) = get_bind(k, m) {
                     match action.action.as_str() {
                         ACTION_CLOSE => quit(&app, true),

@@ -39,7 +39,6 @@ impl PreviewHandler for FilesPreviewHandler {
 
     fn handle(&self, item: &Item, preview: &GtkBox, builder: &Builder) {
         let preview_clone = preview.clone();
-        let builder_clone = builder.clone();
         let file_path = if item.preview.is_empty() {
             item.text.clone()
         } else {
@@ -70,15 +69,13 @@ impl PreviewHandler for FilesPreviewHandler {
         }
 
         let mut cached_preview = self.cached_preview.borrow_mut();
-        if cached_preview.is_none() {
-            match FilePreview::new_with_builder(&builder_clone).or_else(|_| FilePreview::new()) {
-                Ok(preview) => {
-                    *cached_preview = Some(preview);
-                }
-                Err(_) => {
-                    return;
-                }
-            }
+        if cached_preview.is_none()
+            && let Ok(preview) =
+                FilePreview::new_with_builder(&builder).or_else(|_| FilePreview::new())
+        {
+            *cached_preview = Some(preview);
+        } else if cached_preview.is_none() {
+            return;
         }
 
         let file_preview = cached_preview.as_mut().unwrap();
@@ -93,7 +90,7 @@ impl PreviewHandler for FilesPreviewHandler {
         let existing_controllers: Vec<_> = preview_clone
             .observe_controllers()
             .into_iter()
-            .filter_map(|result| result.ok())
+            .filter_map(Result::ok)
             .collect();
         for controller in existing_controllers {
             if let Ok(drag_source) = controller.downcast::<DragSource>() {

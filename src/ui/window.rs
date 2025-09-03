@@ -220,25 +220,21 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
 
     ui.list.connect_activate(move |_, _| {
         with_window(|w| {
-            let query = if let Some(input) = &w.input {
-                input.text().to_string()
-            } else {
-                String::new()
+            let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
+
+            let Some(i) = get_selected_query_response() else {
+                return;
             };
 
-            if let Some(i) = get_selected_query_response() {
-                let providers = PROVIDERS.get().unwrap();
+            let providers = PROVIDERS.get().unwrap();
 
-                let action = if let Some(p) = providers.get(i.item.provider.as_str()) {
-                    p.default_action()
-                } else {
-                    ""
-                };
+            let action = providers
+                .get(i.item.provider.as_str())
+                .map(|p| p.default_action())
+                .unwrap_or_default();
 
-                activate(i, &query, action);
-
-                quit(&app_copy, false);
-            };
+            activate(i, &query, action);
+            quit(&app_copy, false);
         });
     });
 }
@@ -264,40 +260,37 @@ fn setup_keyboard_handling(ui: &WindowData) {
     controller.connect_key_pressed(move |_, k, _, m| {
         let handled = with_window(|w| {
             if !is_connected() && !is_dmenu() {
-                if let Some(action) = get_bind(k, m) {
-                    match action.action.as_str() {
-                        ACTION_CLOSE => quit(&app, true),
-                        _ => {}
-                    }
-
-                    return true.into();
+                if let Some(action) = get_bind(k, m)
+                    && action.action == ACTION_CLOSE
+                {
+                    quit(&app, true);
                 }
 
-                return true.into();
+                return true;
             }
 
             let selection = &w.selection;
 
             if is_dmenu() && k == gdk::Key::Return && selection.selected_item().is_none() {
-                let mut text = if let Some(input) = &w.input {
-                    input.text().to_string()
-                } else {
-                    String::new()
-                };
+                let mut text = w
+                    .input
+                    .as_ref()
+                    .map(Entry::text)
+                    .unwrap_or_default()
+                    .to_string();
 
-                if text == "" {
-                    text = "CNCLD".to_string()
+                if text.is_empty() {
+                    text = "CNCLD".to_string();
                 }
 
                 if is_service() {
                     send_message(text).unwrap();
                 } else {
-                    println!("{}", text);
+                    println!("{text}");
                 }
 
                 quit(&app, false);
-
-                return true.into();
+                return true;
             }
 
             if let Some(action) = get_bind(k, m) {
@@ -307,10 +300,10 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     ACTION_SELECT_PREVIOUS => select_previous(),
                     ACTION_TOGGLE_EXACT => toggle_exact(),
                     ACTION_RESUME_LAST_QUERY => resume_last_query(),
-                    _ => {}
+                    _ => (),
                 }
 
-                return true.into();
+                return true;
             }
 
             let items = &w.selection;
@@ -318,20 +311,16 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 return false;
             }
 
-            let selected_item = match selection.selected_item() {
-                Some(item) => item,
-                None => return false,
+            let Some(response) = selection
+                .selected_item()
+                .and_downcast::<QueryResponseObject>()
+            else {
+                return false;
             };
 
-            let response_obj = match selected_item.downcast::<QueryResponseObject>() {
-                Ok(obj) => obj,
-                Err(_) => return false,
-            };
-
-            let response = response_obj.response();
-            let item = match response.item.as_ref() {
-                Some(item) => item,
-                None => return false,
+            let response = response.response();
+            let Some(item) = response.item.as_ref() else {
+                return false;
             };
             let item_clone = item.clone();
 
@@ -342,11 +331,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
             }
 
             if let Some(action) = get_provider_bind(&provider, k, m) {
-                let query = if let Some(input) = &w.input {
-                    input.text().to_string()
-                } else {
-                    String::new()
-                };
+                let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
 
                 activate(response, &query, &action.action);
 
@@ -365,13 +350,9 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     set_is_dmenu(true);
                 }
 
-                let mut dont_close = false;
-
-                if let Some(keep_open) = MODIFIERS.get(get_config().keep_open_modifier.as_str()) {
-                    if *keep_open == m {
-                        dont_close = true
-                    }
-                }
+                let dont_close = MODIFIERS
+                    .get(get_config().keep_open_modifier.as_str())
+                    .is_some_and(|keep_open| *keep_open == m);
 
                 match after {
                     AfterAction::Close => {
@@ -380,6 +361,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                         } else {
                             quit(&app, false);
                         }
+
                         return true;
                     }
                     AfterAction::ClearReload => {

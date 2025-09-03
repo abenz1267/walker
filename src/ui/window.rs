@@ -4,7 +4,7 @@ use crate::{
     data::{activate, input_changed},
     keybinds::{
         ACTION_CLOSE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS,
-        ACTION_TOGGLE_EXACT, AfterAction, get_bind, get_modifiers, get_provider_bind,
+        ACTION_TOGGLE_EXACT, AfterAction, MODIFIERS, get_bind, get_provider_bind,
     },
     providers::PROVIDERS,
     renderers::create_item,
@@ -381,9 +381,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
                 let mut dont_close = false;
 
-                if let Some(keep_open) =
-                    get_modifiers().get(get_config().keep_open_modifier.as_str())
-                {
+                if let Some(keep_open) = MODIFIERS.get(get_config().keep_open_modifier.as_str()) {
                     if *keep_open == m {
                         dont_close = true
                     }

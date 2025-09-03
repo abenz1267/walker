@@ -38,7 +38,7 @@ static PROVIDER_BINDS: LazyLock<
     RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>,
 > = LazyLock::new(RwLock::default);
 
-static MODIFIERS: LazyLock<HashMap<&'static str, gdk::ModifierType>> = LazyLock::new(|| {
+pub static MODIFIERS: LazyLock<HashMap<&'static str, gdk::ModifierType>> = LazyLock::new(|| {
     let mut map = HashMap::new();
     map.insert("ctrl", gdk::ModifierType::CONTROL_MASK);
     map.insert("lctrl", gdk::ModifierType::CONTROL_MASK);
@@ -52,7 +52,7 @@ static MODIFIERS: LazyLock<HashMap<&'static str, gdk::ModifierType>> = LazyLock:
     map
 });
 
-static SPECIAL_KEYS: LazyLock<HashMap<&'static str, gdk::Key>> = LazyLock::new(|| {
+pub static SPECIAL_KEYS: LazyLock<HashMap<&'static str, gdk::Key>> = LazyLock::new(|| {
     let mut map = HashMap::new();
     map.insert("backspace", gdk::Key::BackSpace);
     map.insert("tab", gdk::Key::Tab);
@@ -217,10 +217,9 @@ pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
 
 pub fn get_provider_bind(provider: &str, key: Key, modifier: gdk::ModifierType) -> Option<Action> {
     let cfg = get_config();
-    let modifiers = get_modifiers();
     let mut modifier = modifier;
 
-    if let Some(keep_open) = modifiers.get(cfg.keep_open_modifier.as_str()) {
+    if let Some(keep_open) = MODIFIERS.get(cfg.keep_open_modifier.as_str()) {
         if *keep_open == modifier {
             modifier = gdk::ModifierType::empty();
         }

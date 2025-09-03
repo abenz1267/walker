@@ -297,18 +297,15 @@ fn add_new_item(resp: QueryResponse) {
         let items = &w.items;
         let n_items = items.n_items();
 
-        if n_items > 0 {
-            if let Some(last_obj) = items
-                .item(n_items - 1)
+        if let Some(n_items) = n_items.checked_sub(1)
+            && let Some(last_obj) = items
+                .item(n_items)
                 .and_downcast::<crate::QueryResponseObject>()
-            {
-                let last_resp = last_obj.response();
+        {
+            let last_resp = last_obj.response();
 
-                if resp.qid > last_resp.qid
-                    || (resp.qid == last_resp.qid && resp.iid > last_resp.iid)
-                {
-                    items.remove_all();
-                }
+            if resp.qid > last_resp.qid || (resp.qid == last_resp.qid && resp.iid > last_resp.iid) {
+                items.remove_all();
             }
         }
 

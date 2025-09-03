@@ -52,4 +52,8 @@ impl Provider for Calc {
             cfg.providers.calc.copy, cfg.providers.calc.save, cfg.providers.calc.delete
         )
     }
+
+    fn get_item_layout(&self) -> String {
+        include_str!("../../resources/themes/default/item_calc.xml").to_string()
+    }
 }

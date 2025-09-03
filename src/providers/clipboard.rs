@@ -60,4 +60,8 @@ impl Provider for Clipboard {
             cfg.providers.clipboard.toggle_images_only
         )
     }
+
+    fn get_item_layout(&self) -> String {
+        include_str!("../../resources/themes/default/item_clipboard.xml").to_string()
+    }
 }

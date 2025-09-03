@@ -37,4 +37,8 @@ impl Provider for Symbols {
     fn get_keybind_hint(&self, cfg: &Elephant) -> String {
         format!("copy: {}", cfg.providers.symbols.copy,)
     }
+
+    fn get_item_layout(&self) -> String {
+        include_str!("../../resources/themes/default/item_symbols.xml").to_string()
+    }
 }

@@ -37,4 +37,8 @@ impl Provider for Unicode {
     fn get_keybind_hint(&self, cfg: &Elephant) -> String {
         format!("copy: {}", cfg.providers.unicode.copy,)
     }
+
+    fn get_item_layout(&self) -> String {
+        include_str!("../../resources/themes/default/item_unicode.xml").to_string()
+    }
 }

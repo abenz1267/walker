@@ -1,7 +1,5 @@
 use std::{collections::HashMap, fmt::Debug, process::Command, sync::OnceLock};
 
-use gtk4::Label;
-
 use crate::{
     config::Elephant,
     keybinds::Keybind,
@@ -31,6 +29,10 @@ pub trait Provider: Sync + Send + Debug {
     fn get_keybinds(&self) -> &Vec<Keybind>;
     fn default_action(&self) -> &str;
     fn get_keybind_hint(&self, cfg: &Elephant) -> String;
+
+    fn get_item_layout(&self) -> String {
+        include_str!("../../resources/themes/default/item.xml").to_string()
+    }
 }
 
 pub static PROVIDERS: OnceLock<HashMap<String, Box<dyn Provider>>> = OnceLock::new();

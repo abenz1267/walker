@@ -43,34 +43,8 @@ impl Theme {
 
         let providers = PROVIDERS.get().unwrap();
 
-        providers.iter().for_each(|(k, _)| {
-            let content = match k.as_str() {
-                "archlinuxpkgs" => Some(include_str!(
-                    "../../resources/themes/default/item_archlinuxpkgs.xml"
-                )),
-                "providerlist" => Some(include_str!(
-                    "../../resources/themes/default/item_providerlist.xml"
-                )),
-                "files" => Some(include_str!(
-                    "../../resources/themes/default/item_files.xml"
-                )),
-                "todo" => Some(include_str!("../../resources/themes/default/item_todo.xml")),
-                "unicode" => Some(include_str!(
-                    "../../resources/themes/default/item_unicode.xml"
-                )),
-                "symbols" => Some(include_str!(
-                    "../../resources/themes/default/item_symbols.xml"
-                )),
-                "clipboard" => Some(include_str!(
-                    "../../resources/themes/default/item_clipboard.xml"
-                )),
-                "calc" => Some(include_str!("../../resources/themes/default/item_calc.xml")),
-                _ => None,
-            };
-
-            if let Some(xml_content) = content {
-                s.items.insert(k.clone(), xml_content.to_string());
-            }
+        providers.iter().for_each(|(k, v)| {
+            s.items.insert(k.clone(), v.get_item_layout());
         });
 
         return s;

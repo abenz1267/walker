@@ -65,4 +65,8 @@ impl Provider for Todo {
             cfg.providers.todo.clear
         )
     }
+
+    fn get_item_layout(&self) -> String {
+        include_str!("../../resources/themes/default/item_todo.xml").to_string()
+    }
 }

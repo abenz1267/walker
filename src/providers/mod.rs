@@ -1,6 +1,9 @@
 use std::{collections::HashMap, fmt::Debug, process::Command, sync::OnceLock};
 
+use gtk4::Label;
+
 use crate::{
+    config::Elephant,
     keybinds::Keybind,
     providers::{
         archlinuxpkgs::ArchLinuxPkgs, calc::Calc, clipboard::Clipboard,
@@ -27,6 +30,7 @@ pub mod websearch;
 pub trait Provider: Sync + Send + Debug {
     fn get_keybinds(&self) -> &Vec<Keybind>;
     fn default_action(&self) -> &str;
+    fn get_keybind_hint(&self, cfg: &Elephant) -> String;
 }
 
 pub static PROVIDERS: OnceLock<HashMap<String, Box<dyn Provider>>> = OnceLock::new();

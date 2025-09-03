@@ -1,4 +1,8 @@
-use crate::{config::get_config, keybinds::Keybind, providers::Provider};
+use crate::{
+    config::{Elephant, get_config},
+    keybinds::Keybind,
+    providers::Provider,
+};
 
 #[derive(Debug)]
 pub struct Files {
@@ -45,5 +49,15 @@ impl Provider for Files {
 
     fn default_action(&self) -> &str {
         &self.default_action
+    }
+
+    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
+        format!(
+            "open: {} - open dir: {} - copy: {} - copy path: {}",
+            cfg.providers.files.open,
+            cfg.providers.files.open_dir,
+            cfg.providers.files.copy_file,
+            cfg.providers.files.copy_path
+        )
     }
 }

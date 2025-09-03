@@ -197,7 +197,7 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
                 w.scroll.set_visible(false);
 
                 if let Some(k) = &w.keybinds {
-                    clear_keybind_hint(k);
+                    k.set_text("");
                 }
 
                 // Clear preview caches when no items are visible
@@ -210,7 +210,7 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
                 w.scroll.set_visible(true);
 
                 if let Some(k) = &w.keybinds {
-                    clear_keybind_hint(k);
+                    k.set_text("");
                 }
             }
         });
@@ -745,123 +745,21 @@ pub fn set_keybind_hint() {
     with_window(|w| {
         if let Some(k) = &w.keybinds {
             if let Some(item) = get_selected_item() {
-                match item.provider.as_str() {
-                    "archlinuxpkgs" => set_keybinds_archlinuxpkgs(k),
-                    "desktopapplications" => set_keybinds_desktopapplications(k),
-                    "files" => set_keybinds_files(k),
-                    "symbols" => set_keybinds_symbols(k),
-                    "unicode" => set_keybinds_unicode(k),
-                    "calc" => set_keybinds_calc(k),
-                    "runner" => set_keybinds_runner(k),
-                    "providerlist" => set_keybinds_providerlist(k),
-                    "clipboard" => set_keybinds_clipboard(k),
-                    "todo" => set_keybinds_todo(k, item.state),
-                    provider if provider.starts_with("menus:") => set_keybinds_menus(k),
-                    _ => clear_keybind_hint(k),
+                let providers = PROVIDERS.get().unwrap();
+                let cfg = get_config();
+
+                if let Some(p) = providers.get(&item.provider) {
+                    k.set_text(&p.get_keybind_hint(cfg));
+                } else if item.provider.starts_with("menus:") {
+                    if let Some(p) = providers.get("menus") {
+                        k.set_text(&p.get_keybind_hint(cfg));
+                    }
+                } else {
+                    k.set_text("");
                 }
             } else {
-                clear_keybind_hint(k);
+                k.set_text("");
             }
         }
     });
-}
-
-fn clear_keybind_hint(k: &Label) {
-    k.set_text("");
-}
-
-fn set_keybinds_archlinuxpkgs(k: &Label) {
-    let text = format!(
-        "install: {} - remove: {}",
-        get_config().providers.archlinuxpkgs.install,
-        get_config().providers.archlinuxpkgs.remove,
-    );
-    k.set_text(&text);
-}
-
-fn set_keybinds_desktopapplications(k: &Label) {
-    let text = format!(
-        "start: {}",
-        get_config().providers.desktopapplications.start
-    );
-    k.set_text(&text);
-}
-
-fn set_keybinds_clipboard(k: &Label) {
-    let cfg = get_config();
-    let text = format!(
-        "copy: {} - delete: {} - edit: {} - images only: {}",
-        cfg.providers.clipboard.copy,
-        cfg.providers.clipboard.delete,
-        cfg.providers.clipboard.edit,
-        cfg.providers.clipboard.toggle_images_only
-    );
-    k.set_text(&text);
-}
-
-fn set_keybinds_todo(k: &Label, state: Vec<String>) {
-    let cfg = get_config();
-    let text = format!(
-        "mark active: {} - mark done: {} - delete: {} - clear: {}",
-        cfg.providers.todo.mark_active,
-        cfg.providers.todo.mark_done,
-        cfg.providers.todo.delete,
-        cfg.providers.todo.clear
-    );
-
-    k.set_text(&text);
-}
-
-fn set_keybinds_menus(k: &Label) {
-    let cfg = get_config();
-    let text = format!("activate: {}", cfg.providers.menus.activate);
-    k.set_text(&text);
-}
-
-fn set_keybinds_calc(k: &Label) {
-    let cfg = get_config();
-    let text = format!(
-        "copy: {} - save: {} - delete: {}",
-        cfg.providers.calc.copy, cfg.providers.calc.save, cfg.providers.calc.delete
-    );
-    k.set_text(&text);
-}
-
-fn set_keybinds_symbols(k: &Label) {
-    let cfg = get_config();
-    let text = format!("copy: {}", cfg.providers.symbols.copy,);
-    k.set_text(&text);
-}
-
-fn set_keybinds_unicode(k: &Label) {
-    let cfg = get_config();
-    let text = format!("copy: {}", cfg.providers.unicode.copy,);
-    k.set_text(&text);
-}
-
-fn set_keybinds_providerlist(k: &Label) {
-    let cfg = get_config();
-    let text = format!("select: {}", cfg.providers.providerlist.activate);
-    k.set_text(&text);
-}
-
-fn set_keybinds_runner(k: &Label) {
-    let cfg = get_config();
-    let text = format!(
-        "run: {} - run in terminal: {}",
-        cfg.providers.runner.start, cfg.providers.runner.start_terminal
-    );
-    k.set_text(&text);
-}
-
-fn set_keybinds_files(k: &Label) {
-    let cfg = get_config();
-    let text = format!(
-        "open: {} - open dir: {} - copy: {} - copy path: {}",
-        cfg.providers.files.open,
-        cfg.providers.files.open_dir,
-        cfg.providers.files.copy_file,
-        cfg.providers.files.copy_path
-    );
-    k.set_text(&text);
 }

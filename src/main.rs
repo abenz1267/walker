@@ -395,101 +395,102 @@ fn activate(app: &Application) {
 
     if (cfg.close_when_open && is_visible() && !is_dmenu_keep_open()) || is_param_close() {
         quit(app, false);
-    } else if !is_dmenu_keep_open() || !is_visible() {
-        let provider = get_provider();
-        let p;
+        return;
+    }
 
-        if provider.is_empty() {
-            p = "default".to_string();
-        } else {
-            p = provider.clone();
+    if is_dmenu_keep_open() && is_visible() {
+        return;
+    }
+
+    let provider = get_provider();
+    let p;
+
+    if provider.is_empty() {
+        p = "default".to_string();
+    } else {
+        p = provider.clone();
+    }
+
+    drop(provider);
+
+    with_window(|w| {
+        if is_input_only() {
+            w.content_container.set_visible(false);
+            if let Some(keybinds) = &w.keybinds {
+                keybinds.set_visible(false);
+            }
         }
 
-        drop(provider);
-
-        with_window(|w| {
-            if is_input_only() {
-                w.content_container.set_visible(false);
-                if let Some(keybinds) = &w.keybinds {
-                    keybinds.set_visible(false);
-                }
-            }
-
-            if let Some(placeholders) = &cfg.placeholders {
-                if let Some(placeholder) = placeholders.get(&p.to_string()) {
-                    if let Some(input) = &w.input {
-                        input.set_placeholder_text(Some(&placeholder.input));
-                    }
-
-                    w.placeholder
-                        .as_ref()
-                        .map(|p| p.set_text(&placeholder.list));
-                }
-            }
-
-            if !get_placeholder().is_empty() {
+        if let Some(placeholders) = &cfg.placeholders {
+            if let Some(placeholder) = placeholders.get(&p.to_string()) {
                 if let Some(input) = &w.input {
-                    if let Some(p) = input.placeholder_text() {
-                        set_initial_placeholder(p.to_string());
-                    }
-
-                    input.set_placeholder_text(Some(&get_placeholder()));
+                    input.set_placeholder_text(Some(&placeholder.input));
                 }
+
+                w.placeholder
+                    .as_ref()
+                    .map(|p| p.set_text(&placeholder.list));
             }
+        }
 
-            if get_parameter_height() != 0 {
-                set_initial_height(w.scroll.max_content_height());
-                w.scroll.set_max_content_height(get_parameter_height());
-                w.scroll.set_min_content_height(get_parameter_height());
-            } else {
-                set_initial_height(0);
-            }
-
-            if get_parameter_width() != 0 {
-                set_initial_width(w.scroll.max_content_width());
-                w.scroll.set_max_content_width(get_parameter_width());
-                w.scroll.set_min_content_width(get_parameter_width());
-            } else {
-                set_initial_width(0);
-            }
-
-            if is_no_search() {
-                if let Some(search_container) = &w.search_container {
-                    search_container.set_visible(false);
-                }
-            }
-
-            setup_css(get_theme());
-
+        if !get_placeholder().is_empty() {
             if let Some(input) = &w.input {
-                input.emit_by_name::<()>("changed", &[]);
-                input.grab_focus();
-            }
-
-            if !is_connected() && !is_dmenu() {
-                w.elephant_hint.set_visible(true);
-                w.scroll.set_visible(false);
-            } else {
-                w.elephant_hint.set_visible(false);
-                w.scroll.set_visible(true);
-            }
-
-            w.window.set_visible(true);
-
-            if !is_dmenu() && !is_connected() {
-                if has_elephant() {
-                    thread::spawn(|| {
-                        init_socket().unwrap();
-                    });
-                } else {
-                    println!("Please install elephant.");
-                    process::exit(1);
+                if let Some(p) = input.placeholder_text() {
+                    set_initial_placeholder(p.to_string());
                 }
-            }
-        });
 
-        set_is_visible(true);
-    }
+                input.set_placeholder_text(Some(&get_placeholder()));
+            }
+        }
+
+        if get_parameter_height() != 0 {
+            set_initial_height(w.scroll.max_content_height());
+            w.scroll.set_max_content_height(get_parameter_height());
+            w.scroll.set_min_content_height(get_parameter_height());
+        } else {
+            set_initial_height(0);
+        }
+
+        if get_parameter_width() != 0 {
+            set_initial_width(w.scroll.max_content_width());
+            w.scroll.set_max_content_width(get_parameter_width());
+            w.scroll.set_min_content_width(get_parameter_width());
+        } else {
+            set_initial_width(0);
+        }
+
+        if is_no_search() {
+            if let Some(search_container) = &w.search_container {
+                search_container.set_visible(false);
+            }
+        }
+
+        setup_css(get_theme());
+
+        if let Some(input) = &w.input {
+            input.emit_by_name::<()>("changed", &[]);
+            input.grab_focus();
+        }
+
+        if !is_connected() && !is_dmenu() {
+            w.elephant_hint.set_visible(true);
+            w.scroll.set_visible(false);
+        } else {
+            w.elephant_hint.set_visible(false);
+            w.scroll.set_visible(true);
+        }
+
+        w.window.set_visible(true);
+
+        if !is_dmenu() && !is_connected() && has_elephant() {
+            thread::spawn(|| init_socket().unwrap());
+        } else if !has_elephant() {
+            println!("Please install elephant.");
+            process::exit(1);
+        }
+    });
+
+    set_is_visible(true);
 }
 
 fn startup(app: &Application) {

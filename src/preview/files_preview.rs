@@ -224,9 +224,9 @@ impl FilePreview {
     }
 
     fn preview_pdf(&self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let uri = format!("file://{}", file_path);
+        let uri = format!("file://{file_path}");
         let document =
-            Document::from_file(&uri, None).map_err(|e| format!("Failed to load PDF: {}", e))?;
+            Document::from_file(&uri, None).map_err(|e| format!("Failed to load PDF: {e}"))?;
 
         let pdf = GtkBox::new(Orientation::Vertical, 0);
 

@@ -187,7 +187,7 @@ fn unicode_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
         && let Ok(code_point) = u32::from_str_radix(&item.icon, 16)
         && let Some(unicode_char) = char::from_u32(code_point)
     {
-        image.set_label(&format!("{}", unicode_char));
+        image.set_label(&format!("{unicode_char}"));
     }
 }
 

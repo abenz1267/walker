@@ -251,37 +251,29 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
         return 0;
     }
 
-    if options.contains("provider") {
-        if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
-            set_provider(val.str().unwrap().to_string());
-        }
+    if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
+        set_provider(val.str().unwrap().to_string());
     }
 
     set_param_close(options.contains("close"));
 
-    if options.contains("theme") {
-        if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
-            let theme = val.str().unwrap();
+    if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
+        let theme = val.str().unwrap();
 
-            if has_theme(theme.to_string()) {
-                set_theme(theme.to_string());
-            } else {
-                cmd.print_literal("theme not found. using default theme.\n");
-                set_theme("default".to_string());
-            }
+        if has_theme(theme.to_string()) {
+            set_theme(theme.to_string());
+        } else {
+            cmd.print_literal("theme not found. using default theme.\n");
+            set_theme("default".to_string());
         }
     }
 
-    if options.contains("height") {
-        if let Some(val) = options.lookup_value("height", Some(VariantTy::INT64)) {
-            set_parameter_height(val.get::<i64>().unwrap() as i32);
-        }
+    if let Some(val) = options.lookup_value("height", Some(VariantTy::INT64)) {
+        set_parameter_height(val.get::<i64>().unwrap() as i32);
     }
 
-    if options.contains("width") {
-        if let Some(val) = options.lookup_value("width", Some(VariantTy::INT64)) {
-            set_parameter_width(val.get::<i64>().unwrap() as i32);
-        }
+    if let Some(val) = options.lookup_value("width", Some(VariantTy::INT64)) {
+        set_parameter_width(val.get::<i64>().unwrap() as i32);
     }
 
     set_no_search(options.contains("nosearch"));

@@ -402,11 +402,12 @@ fn activate(app: &Application) {
         return;
     }
 
-    let mut provider = get_provider();
-
-    if provider.is_empty() {
-        provider = "default".to_string();
-    }
+    let provider = get_provider();
+    let provider = if provider.is_empty() {
+        "default"
+    } else {
+        provider.as_str()
+    };
 
     with_window(|w| {
         if is_input_only() {
@@ -417,7 +418,7 @@ fn activate(app: &Application) {
         }
 
         if let Some(placeholders) = &cfg.placeholders {
-            if let Some(placeholder) = placeholders.get(&provider) {
+            if let Some(placeholder) = placeholders.get(provider) {
                 if let Some(input) = &w.input {
                     input.set_placeholder_text(Some(&placeholder.input));
                 }

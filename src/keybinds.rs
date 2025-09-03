@@ -129,25 +129,21 @@ pub fn setup_binds() {
 }
 
 fn validate_bind(bind: &str) -> bool {
-    let fields: Vec<&str> = bind.split_whitespace().collect();
+    let fields = bind.split_whitespace();
     let modifiers = get_modifiers();
     let special_keys = get_special_keys();
 
-    let mut ok = true;
+    let Some(field) = fields.filter(|field| field.len() > 1).find_map(|field| {
+        let exists_mod = modifiers.contains_key(field);
+        let exists_special = special_keys.contains_key(field);
 
-    for field in fields {
-        if field.len() > 1 {
-            let exists_mod = modifiers.contains_key(field);
-            let exists_special = special_keys.contains_key(field);
+        (!exists_mod && !exists_special).then_some(field)
+    }) else {
+        return true;
+    };
 
-            if !exists_mod && !exists_special {
-                eprintln!("Invalid keybind: {} - key: {}", bind, field);
-                ok = false;
-            }
-        }
-    }
-
-    ok
+    eprintln!("Invalid keybind: {bind} - key: {field}");
+    false
 }
 
 fn parse_bind(b: &Keybind, provider: &str) -> Result<(), Box<dyn std::error::Error>> {

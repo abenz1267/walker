@@ -366,24 +366,21 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
         *GLOBAL_DMENU_SENDER.write().unwrap() = Some(sender);
 
-        let cmd_clone = cmd.clone();
+        let cmd = cmd.clone();
 
         glib::idle_add_local(move || match receiver.try_recv() {
             Ok(message) => {
                 match message.as_str() {
-                    "CNCLD" => {
-                        cmd_clone.set_exit_status(130);
-                    }
-                    msg => cmd_clone.print_literal(&format!("{}\n", msg)),
+                    "CNCLD" => cmd.set_exit_status(130),
+                    msg => cmd.print_literal(&format!("{msg}\n")),
                 };
 
                 *GLOBAL_DMENU_SENDER.write().unwrap() = None;
-
                 ControlFlow::Break
             }
             Err(mpsc::TryRecvError::Empty) => ControlFlow::Continue,
             Err(mpsc::TryRecvError::Disconnected) => {
-                cmd_clone.set_exit_status(130);
+                cmd.set_exit_status(130);
                 ControlFlow::Break
             }
         });

@@ -2,7 +2,7 @@ use crate::config::get_config;
 use crate::providers::PROVIDERS;
 use gtk4::gdk::{self, Key};
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, OnceLock};
+use std::sync::{Arc, Mutex, OnceLock, RwLock};
 
 pub const ACTION_CLOSE: &str = "%CLOSE%";
 pub const ACTION_SELECT_NEXT: &str = "%NEXT%";
@@ -32,14 +32,14 @@ pub struct Action {
     pub after: AfterAction,
 }
 
-static BINDS: OnceLock<Arc<Mutex<HashMap<Key, HashMap<gdk::ModifierType, Action>>>>> =
+static BINDS: OnceLock<Arc<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>>> =
     OnceLock::new();
 static PROVIDER_BINDS: OnceLock<
     Arc<Mutex<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>>,
 > = OnceLock::new();
 
-fn get_binds() -> &'static Arc<Mutex<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> {
-    BINDS.get_or_init(|| Arc::new(Mutex::new(HashMap::new())))
+fn get_binds() -> &'static Arc<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> {
+    BINDS.get_or_init(|| Arc::new(RwLock::new(HashMap::new())))
 }
 
 fn get_provider_binds()
@@ -200,7 +200,7 @@ fn parse_bind(b: &Keybind, provider: &str) -> Result<(), Box<dyn std::error::Err
 
     if key.is_some() {
         if provider.is_empty() {
-            let mut binds = get_binds().lock().unwrap();
+            let mut binds = get_binds().write().unwrap();
             binds
                 .entry(key.unwrap())
                 .or_insert_with(HashMap::new)
@@ -223,7 +223,7 @@ fn parse_bind(b: &Keybind, provider: &str) -> Result<(), Box<dyn std::error::Err
 
 pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
     get_binds()
-        .lock()
+        .read()
         .unwrap()
         .get(&key)?
         .get(&modifier)

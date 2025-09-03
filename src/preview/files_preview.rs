@@ -40,14 +40,12 @@ impl PreviewHandler for FilesPreviewHandler {
     fn handle(&self, item: &Item, preview: &GtkBox, builder: &Builder) {
         let preview_clone = preview.clone();
         let file_path = if item.preview.is_empty() {
-            item.text.clone()
+            item.text.as_str()
         } else {
-            item.preview.clone()
+            item.preview.as_str()
         };
 
-        let item_clone = item.clone();
-
-        if !Path::new(&file_path).exists() {
+        if !Path::new(file_path).exists() {
             return;
         }
 
@@ -55,7 +53,7 @@ impl PreviewHandler for FilesPreviewHandler {
             return;
         };
 
-        if current != item_clone {
+        if current != *item {
             return;
         }
 
@@ -76,7 +74,7 @@ impl PreviewHandler for FilesPreviewHandler {
         }
 
         let file_preview = cached_preview.as_mut().unwrap();
-        if file_preview.preview_file(&file_path).is_err() {
+        if file_preview.preview_file(file_path).is_err() {
             return;
         }
 
@@ -113,7 +111,7 @@ impl PreviewHandler for FilesPreviewHandler {
         preview_clone.add_controller(drag_source);
         preview_clone.append(&file_preview.box_widget);
 
-        preview_clone.set_visible(get_selected_item().is_some_and(|current| current == item_clone));
+        preview_clone.set_visible(get_selected_item().is_some_and(|current| current == *item));
     }
 }
 

@@ -6,6 +6,7 @@ use crate::{
         ACTION_CLOSE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS,
         ACTION_TOGGLE_EXACT, AfterAction, get_bind, get_modifiers, get_provider_bind,
     },
+    providers::PROVIDERS,
     renderers::create_item,
     send_message,
     state::{
@@ -230,6 +231,7 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
     });
 
     let app_copy = app.clone();
+
     ui.list.connect_activate(move |_, _| {
         with_window(|w| {
             let query = if let Some(input) = &w.input {
@@ -239,21 +241,16 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
             };
 
             if let Some(i) = get_selected_query_response() {
-                let action = match i.item.provider.as_str() {
-                    "desktopapplications" => &get_config().providers.desktopapplications.click,
-                    "calc" => &get_config().providers.calc.click,
-                    "clipboard" => &get_config().providers.clipboard.click,
-                    "providerlist" => &get_config().providers.providerlist.click,
-                    "symbols" => &get_config().providers.symbols.click,
-                    "websearch" => &get_config().providers.websearch.click,
-                    "menus" => &get_config().providers.menus.click,
-                    "dmenu" => &get_config().providers.dmenu.click,
-                    "runner" => &get_config().providers.runner.click,
-                    "files" => &get_config().providers.files.click,
-                    _ => "",
+                let providers = PROVIDERS.get().unwrap();
+
+                let action = if let Some(p) = providers.get(i.item.provider.as_str()) {
+                    p.default_action()
+                } else {
+                    ""
                 };
 
                 activate(i, &query, action);
+
                 quit(&app_copy, false);
             };
         });

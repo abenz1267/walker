@@ -1,42 +1,25 @@
-{self, elephant}: {
+{ self, elephant }:
+{
   config,
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   inherit (lib.modules) mkIf mkDefault mkMerge;
   inherit (lib.options) mkOption mkEnableOption mkPackageOption;
   inherit (lib.trivial) importTOML;
   inherit (lib.meta) getExe;
-  inherit (lib.types) nullOr bool submodule lines;
+  inherit (lib.types)
+    nullOr
+    bool
+    path
+    ;
 
-  tomlFormat = pkgs.formats.toml {};
-
-  theme = {
-    name = "nixos";
-    type = submodule {
-      options = {
-        layout = mkOption {
-          inherit (tomlFormat) type;
-          default = {};
-          description = ''
-            The layout of the theme.
-
-            See <https://github.com/abenz1267/walker/wiki/Theming> for the full list of options.
-          '';
-        };
-
-        style = mkOption {
-          type = lines;
-          default = "";
-          description = "The styling of the theme, written in GTK CSS.";
-        };
-      };
-    };
-  };
-
+  tomlFormat = pkgs.formats.toml { };
   cfg = config.programs.walker;
-in {
+in
+{
   imports = [
     elephant.homeManagerModules.default
   ];
@@ -67,14 +50,16 @@ in {
       };
 
       theme = mkOption {
-        type = nullOr theme.type;
+        type = nullOr path;
         default = null;
-        description = "The custom theme used by walker. Setting this option overrides `config.theme`.";
+        description = ''
+          The custom theme used by walker. Setting this option overrides config.theme.
+        '';
       };
 
       elephant = mkOption {
         inherit (tomlFormat) type;
-        default = {};
+        default = { };
         description = "Configuration for elephant";
       };
     };
@@ -87,13 +72,15 @@ in {
         cfg.elephant
       ];
 
-      home.packages = [cfg.package];
+      home.packages = [ cfg.package ];
 
-      xdg.configFile."walker/config.toml".source = mkIf (cfg.config != {}) (tomlFormat.generate "walker-config.toml" cfg.config);
+      xdg.configFile."walker/config.toml".source = mkIf (cfg.config != { }) (
+        tomlFormat.generate "walker-config.toml" cfg.config
+      );
 
       systemd.user.services.walker = mkIf cfg.runAsService {
         Unit.Description = "Walker - Application Runner";
-        Install.WantedBy = ["graphical-session.target"];
+        Install.WantedBy = [ "graphical-session.target" ];
         Service = {
           ExecStart = "${getExe cfg.package} --gapplication-service";
           Restart = "on-failure";
@@ -102,12 +89,8 @@ in {
     }
 
     (mkIf (cfg.theme != null) {
-      programs.walker.config.theme = mkDefault theme.name;
-
-      xdg.configFile = {
-        "walker/themes/${theme.name}.toml".source = tomlFormat.generate "walker-themes-${theme.name}.toml" cfg.theme.layout;
-        "walker/themes/${theme.name}.css".text = cfg.theme.style;
-      };
+      programs.walker.config.theme = mkDefault (builtins.baseNameOf cfg.theme);
+      xdg.configFile."walker/themes/${builtins.baseNameOf cfg.theme}".source = cfg.theme;
     })
   ]);
 }

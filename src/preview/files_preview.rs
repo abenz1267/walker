@@ -59,16 +59,13 @@ impl PreviewHandler for FilesPreviewHandler {
             return;
         }
 
+        let mut cached_preview = self.cached_preview.borrow_mut();
+        if let Some(existing) = cached_preview.as_ref()
+            && existing.current_file != item.text
         {
-            let mut cached_preview = self.cached_preview.borrow_mut();
-            if let Some(existing) = cached_preview.as_ref()
-                && existing.current_file != item.text
-            {
-                *cached_preview = None;
-            }
+            *cached_preview = None;
         }
 
-        let mut cached_preview = self.cached_preview.borrow_mut();
         if cached_preview.is_none()
             && let Ok(preview) =
                 FilePreview::new_with_builder(&builder).or_else(|_| FilePreview::new())

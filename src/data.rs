@@ -118,7 +118,7 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
         match UnixStream::connect(&socket_path) {
             Ok(conn) => break conn,
             Err(e) => {
-                println!("Failed to connect: {}. Retrying in 1 second...", e);
+                println!("Failed to connect: {e}. Retrying in 1 second...");
                 thread::sleep(Duration::from_secs(1));
             }
         }
@@ -129,7 +129,7 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
         match UnixStream::connect(&socket_path) {
             Ok(conn) => break conn,
             Err(e) => {
-                println!("Failed to connect to menu: {}. Retrying in 1 second...", e);
+                println!("Failed to connect to menu: {e}. Retrying in 1 second...");
                 thread::sleep(Duration::from_secs(1));
             }
         }
@@ -158,13 +158,13 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
 fn start_listening() {
     thread::spawn(|| {
         if let Err(e) = listen_loop() {
-            eprintln!("Listen loop error: {}", e);
+            eprintln!("Listen loop error: {e}");
         }
     });
 
     thread::spawn(|| {
         if let Err(e) = listen_menus_loop() {
-            eprintln!("Listen menu_loop error: {}", e);
+            eprintln!("Listen menu_loop error: {e}");
         }
     });
 }
@@ -383,7 +383,7 @@ fn handle_disconnect() {
 
         println!("re-connecting...");
         while let Err(err) = init_socket() {
-            println!("{}", err);
+            println!("{err}");
         }
         println!("reconnected");
     });

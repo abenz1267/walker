@@ -348,7 +348,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
                             read_line_callback(stream_clone, i + 1, items);
                         }
                         Ok(None) => (),
-                        Err(e) => eprintln!("Error reading: {}", e),
+                        Err(e) => eprintln!("Error reading: {e}"),
                     },
                 );
             }

@@ -95,7 +95,7 @@ where
         let theme = get_theme();
 
         windows_map.get(&theme).map(f).unwrap_or_else(|| {
-            println!("theme not found: {}", theme);
+            println!("theme not found: {theme}");
             process::exit(130);
         })
     })

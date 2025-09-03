@@ -10,10 +10,11 @@ use crate::state::{
 };
 use crate::ui::window::{set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
+use gtk4::glib::Object;
 use gtk4::{glib, prelude::*};
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher};
-use protobuf::Message;
+use protobuf::{Message, MessageField};
 use std::io::{BufReader, Read, Write};
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
@@ -27,11 +28,10 @@ static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 pub fn input_changed(text: &str) {
     if is_dmenu() {
         sort_items_fuzzy(&text);
-    } else {
-        if !is_connected() {
-            return;
-        }
+        return;
+    }
 
+    if is_connected() {
         query(text);
     }
 }
@@ -40,32 +40,28 @@ fn sort_items_fuzzy(query: &str) {
     with_window(|w| {
         let list_store = &w.items;
 
-        let mut items: Vec<QueryResponseObject> = Vec::new();
-        for i in 0..list_store.n_items() {
-            if let Some(item) = list_store.item(i) {
-                if let Ok(obj) = item.downcast::<QueryResponseObject>() {
-                    items.push(obj);
-                }
-            }
-        }
+        let mut items: Vec<QueryResponseObject> = list_store
+            .iter()
+            .flatten()
+            .map(Object::downcast::<QueryResponseObject>)
+            .filter_map(Result::ok)
+            .collect();
+
+        list_store.remove_all();
 
         if query.is_empty() {
             items.sort_by(|a, b| {
-                let score_a = a.response().item.as_ref().map(|i| i.score).unwrap_or(0);
-                let score_b = b.response().item.as_ref().map(|i| i.score).unwrap_or(0);
+                let score_a = a.response().item.as_ref().map(|i| i.score);
+                let score_b = b.response().item.as_ref().map(|i| i.score);
                 score_b.cmp(&score_a)
             });
         } else {
-            let texts: Vec<String> = items
+            let texts = items
                 .iter()
-                .map(|item| {
-                    item.response()
-                        .item
-                        .as_ref()
-                        .map(|i| i.text.clone())
-                        .unwrap_or_default()
-                })
-                .collect();
+                .map(QueryResponseObject::response)
+                .map(|response| response.item)
+                .filter_map(MessageField::into_option)
+                .map(|item| item.text);
 
             let mut matcher = Matcher::new(Config::DEFAULT.match_paths());
             let pattern = Pattern::parse(query, CaseMatching::Ignore, Normalization::Smart);
@@ -78,9 +74,17 @@ fn sort_items_fuzzy(query: &str) {
 
             items.sort_by(|a, b| {
                 let ra = a.response();
-                let text_a = ra.item.as_ref().map(|i| i.text.as_str()).unwrap_or("");
+                let text_a = ra
+                    .item
+                    .as_ref()
+                    .map(|i| i.text.as_str())
+                    .unwrap_or_default();
                 let rb = b.response();
-                let text_b = rb.item.as_ref().map(|i| i.text.as_str()).unwrap_or("");
+                let text_b = rb
+                    .item
+                    .as_ref()
+                    .map(|i| i.text.as_str())
+                    .unwrap_or_default();
 
                 let score_a = score_map.get(text_a);
                 let score_b = score_map.get(text_b);
@@ -94,10 +98,7 @@ fn sort_items_fuzzy(query: &str) {
             });
         }
 
-        list_store.remove_all();
-        for item in items {
-            list_store.append(&item);
-        }
+        list_store.extend_from_slice(&items);
     });
 }
 

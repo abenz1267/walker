@@ -278,7 +278,12 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
     set_no_search(options.contains("nosearch"));
 
-    if options.contains("dmenu") {
+    'dmenu: {
+        if !options.contains("dmenu") {
+            set_dmenu_keep_open(false);
+            break 'dmenu;
+        }
+
         if options.contains("placeholder") {
             if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING)) {
                 set_placeholder(val.str().unwrap().to_string());
@@ -395,8 +400,6 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
                 });
             }
         }
-    } else {
-        set_dmenu_keep_open(false);
     }
 
     app.activate();

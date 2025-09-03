@@ -171,12 +171,9 @@ fn start_listening() {
 
 fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
     let mut conn_guard = MENUCONN.lock().unwrap();
-    let conn = conn_guard.as_mut().ok_or("Connection not initialized")?;
+    let mut conn = conn_guard.as_mut().ok_or("Connection not initialized")?;
 
-    let mut conn_clone = conn.try_clone()?;
-    drop(conn_guard);
-
-    let mut reader = BufReader::new(&mut conn_clone);
+    let mut reader = BufReader::new(&mut conn);
 
     loop {
         let mut header = [0u8; 5];
@@ -214,12 +211,9 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
 
 fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
     let mut conn_guard = CONN.lock().unwrap();
-    let conn = conn_guard.as_mut().ok_or("Connection not initialized")?;
+    let mut conn = conn_guard.as_mut().ok_or("Connection not initialized")?;
 
-    let mut conn_clone = conn.try_clone()?;
-    drop(conn_guard);
-
-    let mut reader = BufReader::new(&mut conn_clone);
+    let mut reader = BufReader::new(&mut conn);
 
     loop {
         let mut header = [0u8; 5];

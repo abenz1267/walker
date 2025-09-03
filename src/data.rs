@@ -318,21 +318,19 @@ fn query(text: &str) {
     let mut exact = false;
     let cfg = get_config();
     let mut provider = get_provider();
+    let providers = PROVIDERS.get().unwrap();
 
-    let p = PROVIDERS.get().unwrap();
-
-    if get_provider().is_empty() {
-        for prefix in &cfg.providers.prefixes {
-            if text.starts_with(&prefix.prefix) && p.contains_key(&prefix.provider) {
-                provider = prefix.provider.clone();
-                query_text = text
-                    .strip_prefix(&prefix.prefix)
-                    .unwrap_or(text)
-                    .to_string();
-                set_current_prefix(prefix.prefix.clone());
-                break;
-            }
-        }
+    if get_provider().is_empty()
+        && let Some(prefix) = cfg.providers.prefixes.iter().find(|prefix| {
+            text.starts_with(&prefix.prefix) && providers.contains_key(&prefix.provider)
+        })
+    {
+        provider = prefix.provider.clone();
+        query_text = text
+            .strip_prefix(&prefix.prefix)
+            .unwrap_or(text)
+            .to_string();
+        set_current_prefix(prefix.prefix.clone());
     }
 
     let delimiter = &cfg.global_argument_delimiter;

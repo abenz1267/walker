@@ -417,22 +417,22 @@ fn activate(app: &Application) {
             }
         }
 
-        if let Some(placeholders) = &cfg.placeholders {
-            if let Some(placeholder) = placeholders.get(provider) {
-                if let Some(input) = &w.input {
-                    input.set_placeholder_text(Some(&placeholder.input));
-                }
-
-                w.placeholder
-                    .as_ref()
-                    .map(|p| p.set_text(&placeholder.list));
+        if let Some(placeholders) = &cfg.placeholders
+            && let Some(placeholder) = placeholders.get(provider)
+        {
+            if let Some(input) = &w.input {
+                input.set_placeholder_text(Some(&placeholder.input));
             }
+
+            w.placeholder
+                .as_ref()
+                .map(|p| p.set_text(&placeholder.list));
         }
 
         if !get_placeholder().is_empty() {
             if let Some(input) = &w.input {
-                if let Some(p) = input.placeholder_text() {
-                    set_initial_placeholder(p.to_string());
+                if let Some(placeholder) = input.placeholder_text() {
+                    set_initial_placeholder(placeholder.to_string());
                 }
 
                 input.set_placeholder_text(Some(&get_placeholder()));
@@ -455,10 +455,10 @@ fn activate(app: &Application) {
             set_initial_width(0);
         }
 
-        if is_no_search() {
-            if let Some(search_container) = &w.search_container {
-                search_container.set_visible(false);
-            }
+        if is_no_search()
+            && let Some(search_container) = &w.search_container
+        {
+            search_container.set_visible(false);
         }
 
         setup_css(get_theme());

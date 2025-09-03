@@ -151,9 +151,9 @@ fn parse_bind(b: &Keybind, provider: &str) -> Result<(), Box<dyn std::error::Err
         return Err("incorrect bind".into());
     }
 
-    let fields: Vec<&str> = b.bind.split_whitespace().collect();
+    let mut fields = b.bind.split_whitespace().peekable();
 
-    if fields.len() == 0 {
+    if fields.peek().is_none() {
         return Err("incorrect bind".into());
     }
 
@@ -186,25 +186,23 @@ fn parse_bind(b: &Keybind, provider: &str) -> Result<(), Box<dyn std::error::Err
         after: b.after.clone(),
     };
 
-    if key.is_some() {
-        if provider.is_empty() {
-            let mut binds = BINDS.write().unwrap();
-            binds
-                .entry(key.unwrap())
-                .or_insert_with(HashMap::new)
-                .insert(modifier, action_struct);
-        } else {
-            let mut provider_binds = PROVIDER_BINDS.write().unwrap();
-            provider_binds
-                .entry(provider.to_string())
-                .or_insert_with(HashMap::new)
-                .entry(key.unwrap())
-                .or_insert_with(HashMap::new)
-                .insert(modifier, action_struct);
-        }
-    } else {
-        return Err("incorrect bind".into());
+    let key = key.ok_or("incorrect bind")?;
+    if provider.is_empty() {
+        let mut binds = BINDS.write().unwrap();
+        binds
+            .entry(key)
+            .or_insert_with(HashMap::new)
+            .insert(modifier, action_struct);
+        return Ok(());
     }
+
+    let mut provider_binds = PROVIDER_BINDS.write().unwrap();
+    provider_binds
+        .entry(provider.to_string())
+        .or_insert_with(HashMap::new)
+        .entry(key)
+        .or_insert_with(HashMap::new)
+        .insert(modifier, action_struct);
 
     Ok(())
 }

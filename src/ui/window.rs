@@ -513,11 +513,9 @@ fn setup_mouse_handling(ui: &WindowData) {
 }
 
 pub fn quit(app: &Application, cancelled: bool) {
-    GLOBAL_DMENU_SENDER.with(|sender| {
-        if sender.read().unwrap().is_some() {
-            send_message("CNCLD".to_string()).unwrap();
-        }
-    });
+    if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
+        send_message("CNCLD".to_string()).unwrap();
+    }
 
     if app
         .flags()

@@ -319,7 +319,6 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
             let stdin = cmd.stdin();
             let data_stream = gio::DataInputStream::new(&stdin.unwrap());
-            let data_stream_rc = Rc::new(data_stream);
 
             fn read_line_callback(stream: Rc<gio::DataInputStream>, i: i32, items: gio::ListStore) {
                 let stream_clone = stream.clone();
@@ -328,37 +327,33 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
                     Priority::DEFAULT,
                     Cancellable::NONE,
                     move |line_slice| match line_slice {
-                        Ok(line_slice) => {
-                            if let Some(line) = line_slice {
-                                if line.is_empty() {
-                                    return;
-                                }
-
-                                let trimmed = line.trim();
-
-                                if !trimmed.is_empty() {
-                                    let mut item = query_response::Item::new();
-                                    item.text = trimmed.to_string();
-                                    item.provider = "dmenu".to_string();
-                                    item.score = 1000000 - i;
-
-                                    let mut response = QueryResponse::new();
-                                    response.item = protobuf::MessageField::some(item);
-
-                                    items.append(&QueryResponseObject::new(response));
-                                }
-                                read_line_callback(stream_clone, i + 1, items.clone());
+                        Ok(Some(line)) => {
+                            if line.is_empty() {
+                                return;
                             }
+
+                            let trimmed = line.trim();
+
+                            if !trimmed.is_empty() {
+                                let mut item = query_response::Item::new();
+                                item.text = trimmed.to_string();
+                                item.provider = "dmenu".to_string();
+                                item.score = 1000000 - i;
+
+                                let mut response = QueryResponse::new();
+                                response.item = protobuf::MessageField::some(item);
+
+                                items.append(&QueryResponseObject::new(response));
+                            }
+                            read_line_callback(stream_clone, i + 1, items);
                         }
-                        Err(e) => {
-                            eprintln!("Error reading: {}", e);
-                            return;
-                        }
+                        Ok(None) => (),
+                        Err(e) => eprintln!("Error reading: {}", e),
                     },
                 );
             }
 
-            read_line_callback(data_stream_rc.clone(), 0, items.clone());
+            read_line_callback(Rc::new(data_stream), 0, items.clone());
         });
 
         set_is_dmenu(true);

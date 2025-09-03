@@ -47,4 +47,8 @@ impl Provider for ArchLinuxPkgs {
             cfg.providers.archlinuxpkgs.install, cfg.providers.archlinuxpkgs.remove,
         )
     }
+
+    fn get_item_layout(&self) -> String {
+        include_str!("../../resources/themes/default/item_archlinuxpkgs.xml").to_string()
+    }
 }

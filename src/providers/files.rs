@@ -60,4 +60,8 @@ impl Provider for Files {
             cfg.providers.files.copy_path
         )
     }
+
+    fn get_item_layout(&self) -> String {
+        include_str!("../../resources/themes/default/item_files.xml").to_string()
+    }
 }

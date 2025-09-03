@@ -50,47 +50,33 @@ pub fn setup_providers() {
     stdout
         .lines()
         .filter_map(|line| line.split_once(';').map(|(_, value)| value.to_string()))
-        .for_each(|p| match p.as_str() {
-            "calc" => {
-                providers.insert("calc".to_string(), Box::new(Calc::new()));
-            }
-            "clipboard" => {
-                providers.insert("clipboard".to_string(), Box::new(Clipboard::new()));
-            }
-            "desktopapplications" => {
-                providers.insert(
+        .for_each(|p| {
+            match p.as_str() {
+                "calc" => providers.insert("calc".to_string(), Box::new(Calc::new())),
+                "clipboard" => {
+                    providers.insert("clipboard".to_string(), Box::new(Clipboard::new()))
+                }
+                "desktopapplications" => providers.insert(
                     "desktopapplications".to_string(),
                     Box::new(DesktopApplications::new()),
-                );
-            }
-            "files" => {
-                providers.insert("files".to_string(), Box::new(Files::new()));
-            }
-            "runner" => {
-                providers.insert("runner".to_string(), Box::new(Runner::new()));
-            }
-            "symbols" => {
-                providers.insert("symbols".to_string(), Box::new(Symbols::new()));
-            }
-            "unicode" => {
-                providers.insert("unicode".to_string(), Box::new(Unicode::new()));
-            }
-            "providerlist" => {
-                providers.insert("providerlist".to_string(), Box::new(Providerlist::new()));
-            }
-            "menus" => {
-                providers.insert("menus".to_string(), Box::new(Menus::new()));
-            }
-            "websearch" => {
-                providers.insert("websearch".to_string(), Box::new(Websearch::new()));
-            }
-            "archlinuxpkgs" => {
-                providers.insert("archlinuxpkgs".to_string(), Box::new(ArchLinuxPkgs::new()));
-            }
-            "todo" => {
-                providers.insert("todo".to_string(), Box::new(Todo::new()));
-            }
-            _ => {}
+                ),
+                "files" => providers.insert("files".to_string(), Box::new(Files::new())),
+                "runner" => providers.insert("runner".to_string(), Box::new(Runner::new())),
+                "symbols" => providers.insert("symbols".to_string(), Box::new(Symbols::new())),
+                "unicode" => providers.insert("unicode".to_string(), Box::new(Unicode::new())),
+                "providerlist" => {
+                    providers.insert("providerlist".to_string(), Box::new(Providerlist::new()))
+                }
+                "menus" => providers.insert("menus".to_string(), Box::new(Menus::new())),
+                "websearch" => {
+                    providers.insert("websearch".to_string(), Box::new(Websearch::new()))
+                }
+                "archlinuxpkgs" => {
+                    providers.insert("archlinuxpkgs".to_string(), Box::new(ArchLinuxPkgs::new()))
+                }
+                "todo" => providers.insert("todo".to_string(), Box::new(Todo::new())),
+                _ => return,
+            };
         });
 
     providers.insert("dmenu".to_string(), Box::new(Dmenu::new()));

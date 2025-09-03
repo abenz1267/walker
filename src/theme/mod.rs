@@ -25,7 +25,7 @@ pub struct Theme {
 
 impl Theme {
     pub fn default() -> Self {
-        Self {
+        let mut s = Self {
             layout: include_str!("../../resources/themes/default/layout.xml").to_string(),
             preview: include_str!("../../resources/themes/default/preview.xml").to_string(),
             css: include_str!("../../resources/themes/default/style.css").to_string(),
@@ -38,42 +38,42 @@ impl Theme {
                     "dmenu".to_string(),
                     include_str!("../../resources/themes/default/item_dmenu.xml").to_string(),
                 ),
-                (
-                    "clipboard".to_string(),
-                    include_str!("../../resources/themes/default/item_clipboard.xml").to_string(),
-                ),
-                (
-                    "symbols".to_string(),
-                    include_str!("../../resources/themes/default/item_symbols.xml").to_string(),
-                ),
-                (
-                    "unicode".to_string(),
-                    include_str!("../../resources/themes/default/item_unicode.xml").to_string(),
-                ),
-                (
-                    "todo".to_string(),
-                    include_str!("../../resources/themes/default/item_todo.xml").to_string(),
-                ),
-                (
-                    "calc".to_string(),
-                    include_str!("../../resources/themes/default/item_calc.xml").to_string(),
-                ),
-                (
-                    "files".to_string(),
-                    include_str!("../../resources/themes/default/item_files.xml").to_string(),
-                ),
-                (
-                    "providerlist".to_string(),
-                    include_str!("../../resources/themes/default/item_providerlist.xml")
-                        .to_string(),
-                ),
-                (
-                    "archlinuxpkgs".to_string(),
-                    include_str!("../../resources/themes/default/item_archlinuxpkgs.xml")
-                        .to_string(),
-                ),
             ]),
-        }
+        };
+
+        let providers = PROVIDERS.get().unwrap();
+
+        providers.iter().for_each(|(k, _)| {
+            let content = match k.as_str() {
+                "archlinuxpkgs" => Some(include_str!(
+                    "../../resources/themes/default/item_archlinuxpkgs.xml"
+                )),
+                "providerlist" => Some(include_str!(
+                    "../../resources/themes/default/item_providerlist.xml"
+                )),
+                "files" => Some(include_str!(
+                    "../../resources/themes/default/item_files.xml"
+                )),
+                "todo" => Some(include_str!("../../resources/themes/default/item_todo.xml")),
+                "unicode" => Some(include_str!(
+                    "../../resources/themes/default/item_unicode.xml"
+                )),
+                "symbols" => Some(include_str!(
+                    "../../resources/themes/default/item_symbols.xml"
+                )),
+                "clipboard" => Some(include_str!(
+                    "../../resources/themes/default/item_clipboard.xml"
+                )),
+                "calc" => Some(include_str!("../../resources/themes/default/item_calc.xml")),
+                _ => None,
+            };
+
+            if let Some(xml_content) = content {
+                s.items.insert(k.clone(), xml_content.to_string());
+            }
+        });
+
+        return s;
     }
 }
 

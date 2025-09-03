@@ -290,16 +290,12 @@ impl FilePreview {
         surface.flush();
 
         let bytes = {
-            let surface_data = surface.data()?;
-
+            let mut surface_data = surface.data()?;
             let mut rgba_data = Vec::with_capacity(surface_data.len());
 
-            // Convert BGRA to RGBA in chunks to minimize temporary allocations
-            for chunk in surface_data.chunks_exact(4) {
-                rgba_data.push(chunk[2]); // R
-                rgba_data.push(chunk[1]); // G
-                rgba_data.push(chunk[0]); // B
-                rgba_data.push(chunk[3]); // A
+            for chunk in surface_data.chunks_exact_mut(4) {
+                chunk.swap(0, 2);
+                rgba_data.extend_from_slice(chunk);
             }
 
             std::mem::drop(surface_data);

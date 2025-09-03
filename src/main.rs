@@ -332,11 +332,11 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
                                 return;
                             }
 
-                            let trimmed = line.trim();
+                            let line = line.trim();
 
-                            if !trimmed.is_empty() {
+                            if !line.is_empty() {
                                 let mut item = query_response::Item::new();
-                                item.text = trimmed.to_string();
+                                item.text = line.to_string();
                                 item.provider = "dmenu".to_string();
                                 item.score = 1000000 - i;
 

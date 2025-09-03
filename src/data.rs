@@ -103,11 +103,9 @@ fn sort_items_fuzzy(query: &str) {
 }
 
 pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
-    let mut socket_path = if let Ok(value) = env::var("XDG_RUNTIME_DIR") {
-        PathBuf::from(value)
-    } else {
-        std::env::temp_dir()
-    };
+    let mut socket_path = env::var("XDG_RUNTIME_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| env::temp_dir());
 
     socket_path.push("elephant");
     socket_path.push("elephant.sock");
@@ -182,14 +180,11 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
 
     loop {
         let mut header = [0u8; 5];
-        match reader.read_exact(&mut header) {
-            Ok(_) => {}
-            Err(e) => return Err(e.into()),
-        }
+        reader.read_exact(&mut header)?;
 
         match header[0] {
             0 => {
-                let length = u32::from_be_bytes([header[1], header[2], header[3], header[4]]);
+                let length = u32::from_be_bytes(header[1..].try_into().unwrap());
 
                 let mut payload = vec![0u8; length as usize];
                 reader.read_exact(&mut payload)?;
@@ -212,9 +207,7 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
                     set_is_visible(true);
                 });
             }
-            _ => {
-                continue;
-            }
+            _ => continue,
         }
     }
 }
@@ -230,27 +223,16 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
 
     loop {
         let mut header = [0u8; 5];
-        match reader.read_exact(&mut header) {
-            Ok(_) => {}
-            Err(e) => return Err(e.into()),
-        }
+        reader.read_exact(&mut header)?;
 
         match header[0] {
-            255 => {
-                glib::idle_add_once(|| {
-                    set_keybind_hint();
-                    handle_preview();
-                });
-                continue;
-            }
-            254 => {
-                glib::idle_add_once(|| {
-                    clear_items();
-                });
-                continue;
-            }
+            255 => glib::idle_add_once(|| {
+                set_keybind_hint();
+                handle_preview();
+            }),
+            254 => glib::idle_add_once(clear_items),
             _ => {
-                let length = u32::from_be_bytes([header[1], header[2], header[3], header[4]]);
+                let length = u32::from_be_bytes(header[1..].try_into().unwrap());
 
                 let mut payload = vec![0u8; length as usize];
                 reader.read_exact(&mut payload)?;
@@ -258,28 +240,23 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                 let mut resp = QueryResponse::new();
                 resp.merge_from_bytes(&payload)?;
 
-                let header_type = header[0];
-
-                glib::idle_add_once(move || {
-                    handle_response(resp, header_type);
-                });
+                glib::idle_add_once(move || handle_response(resp, header[0]))
             }
-        }
+        };
     }
 }
 
 fn handle_response(resp: QueryResponse, header_type: u8) {
-    if header_type == 1 {
-        update_existing_item(resp);
-    } else {
-        add_new_item(resp);
-    }
+    let function = match header_type {
+        1 => update_existing_item,
+        _ => add_new_item,
+    };
+
+    function(resp)
 }
 
 fn clear_items() {
-    with_window(|w| {
-        w.items.remove_all();
-    });
+    with_window(|w| w.items.remove_all());
     crate::preview::clear_all_caches();
 }
 
@@ -288,21 +265,27 @@ fn update_existing_item(resp: QueryResponse) {
         let items = &w.items;
         let n_items = items.n_items();
         for i in 0..n_items {
-            if let Some(obj) = items.item(i).and_downcast::<crate::QueryResponseObject>() {
-                let existing = obj.response();
-                if let (Some(existing_item), Some(resp_item)) =
-                    (existing.item.as_ref(), resp.item.as_ref())
-                {
-                    if existing_item.identifier == resp_item.identifier {
-                        if resp_item.text == "%DELETE%" {
-                            items.remove(i);
-                        } else {
-                            items.splice(i, 1, &[crate::QueryResponseObject::new(resp)]);
-                        }
-                        break;
-                    }
-                }
+            let Some(obj) = items.item(i).and_downcast::<crate::QueryResponseObject>() else {
+                continue;
+            };
+
+            let existing = obj.response();
+            let (Some(existing_item), Some(resp_item)) =
+                (existing.item.as_ref(), resp.item.as_ref())
+            else {
+                continue;
+            };
+
+            if existing_item.identifier != resp_item.identifier {
+                continue;
             }
+
+            if resp_item.text == "%DELETE%" {
+                items.remove(i);
+            } else {
+                items.splice(i, 1, &[crate::QueryResponseObject::new(resp)]);
+            }
+            break;
         }
 
         set_keybind_hint();

@@ -18,12 +18,12 @@ use protobuf::{Message, MessageField};
 use std::io::{BufReader, Read, Write};
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::OnceLock;
 use std::time::Duration;
 use std::{env, thread};
 
-static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
-static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
+static CONN: OnceLock<UnixStream> = OnceLock::new();
+static MENUCONN: OnceLock<UnixStream> = OnceLock::new();
 
 pub fn input_changed(text: &str) {
     if is_dmenu() {
@@ -123,7 +123,7 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     };
-    *CONN.lock().unwrap() = Some(conn);
+    CONN.set(conn).map_err(|_| "Unable to set connection")?;
 
     let menuconn = loop {
         match UnixStream::connect(&socket_path) {
@@ -134,7 +134,9 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     };
-    *MENUCONN.lock().unwrap() = Some(menuconn);
+    MENUCONN
+        .set(menuconn)
+        .map_err(|_| "Unable to set menu connection")?;
 
     subscribe_menu().unwrap();
     start_listening();
@@ -170,14 +172,7 @@ fn start_listening() {
 }
 
 fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
-    let mut conn = {
-        let mut guard = MENUCONN.lock().unwrap();
-        guard
-            .as_mut()
-            .ok_or("Connection not initialized")?
-            .try_clone()?
-    };
-
+    let mut conn = MENUCONN.get().ok_or("Connection not initialized")?;
     let mut reader = BufReader::new(&mut conn);
 
     loop {
@@ -215,14 +210,7 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
-    let mut conn = {
-        let mut guard = CONN.lock().unwrap();
-        guard
-            .as_mut()
-            .ok_or("Connection not initialized")?
-            .try_clone()?
-    };
-
+    let mut conn = CONN.get().ok_or("Connection not initialized")?;
     let mut reader = BufReader::new(&mut conn);
 
     loop {
@@ -367,11 +355,9 @@ fn query(text: &str) {
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
 
-    let mut conn_guard = CONN.lock().unwrap();
-    if let Some(conn) = conn_guard.as_mut()
+    if let Some(mut conn) = CONN.get()
         && conn.write_all(&buffer).is_err()
     {
-        drop(conn_guard);
         handle_disconnect();
     }
 }
@@ -434,11 +420,9 @@ pub fn activate(item: QueryResponse, query: &str, action: &str) {
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
 
-    let mut conn_guard = CONN.lock().unwrap();
-    if let Some(conn) = conn_guard.as_mut()
+    if let Some(mut conn) = CONN.get()
         && conn.write_all(&buffer).is_err()
     {
-        drop(conn_guard);
         handle_disconnect();
     }
 }
@@ -452,9 +436,7 @@ fn subscribe_menu() -> Result<(), Box<dyn std::error::Error>> {
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
 
-    let mut conn_guard = MENUCONN.lock().unwrap();
-    let conn = conn_guard.as_mut().ok_or("Connection not available")?;
-
+    let mut conn = MENUCONN.get().ok_or("Connection not available")?;
     conn.write_all(&buffer)?;
 
     Ok(())

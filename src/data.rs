@@ -381,19 +381,11 @@ fn handle_disconnect() {
             });
         });
 
-        loop {
-            println!("re-connect...");
-
-            match init_socket() {
-                Ok(_) => {
-                    println!("reconnected");
-                    break;
-                }
-                Err(err) => {
-                    println!("{}", err);
-                }
-            }
+        println!("re-connecting...");
+        while let Err(err) = init_socket() {
+            println!("{}", err);
         }
+        println!("reconnected");
     });
 }
 

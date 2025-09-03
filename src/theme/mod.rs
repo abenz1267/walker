@@ -1,4 +1,5 @@
 use crate::config::get_config;
+use crate::providers::PROVIDERS;
 use crate::state::add_theme;
 use crate::ui::window::{set_css_provider, with_css_provider};
 use gtk4::gdk::Display;
@@ -7,13 +8,11 @@ use gtk4::{CssProvider, Window};
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::process::Command;
 use std::sync::OnceLock;
 use std::{env, fs};
 
 thread_local! {
     pub static THEMES: OnceLock<HashMap<String, Theme>> = OnceLock::new();
-    pub static INSTALLED_PROVIDERS: OnceLock<Vec<String>> = OnceLock::new();
 }
 
 #[derive(Debug)]
@@ -78,24 +77,6 @@ impl Theme {
     }
 }
 
-pub fn setup_installed_elephant_providers() {
-    let output = Command::new("elephant")
-        .arg("listproviders")
-        .output()
-        .expect("couldn't run 'elephant'. Make sure it is installed.");
-
-    let stdout = String::from_utf8(output.stdout).unwrap();
-
-    let providers: Vec<String> = stdout
-        .lines()
-        .filter_map(|line| line.split_once(';').map(|(_, value)| value.to_string()))
-        .collect();
-
-    INSTALLED_PROVIDERS.with(|s| {
-        s.set(providers).expect("failed initializing providers");
-    });
-}
-
 pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
     let mut themes: HashMap<String, Theme> = HashMap::new();
     let mut path = dirs::config_dir().unwrap();
@@ -119,10 +100,9 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
 
     let combined = if elephant {
         let mut result = files;
-        with_installed_providers(|p| {
-            let additional: Vec<String> = p.iter().map(|v| format!("item_{}.xml", v)).collect();
-            result.extend(additional);
-        });
+        let p = PROVIDERS.get().unwrap();
+        let additional: Vec<String> = p.iter().map(|v| format!("item_{}.xml", v.0)).collect();
+        result.extend(additional);
         result
     } else {
         files
@@ -271,16 +251,6 @@ where
 {
     THEMES.with(|state| {
         let data = state.get().expect("Themes not initialized");
-        f(data)
-    })
-}
-
-pub fn with_installed_providers<F, R>(f: F) -> R
-where
-    F: FnOnce(&Vec<String>) -> R,
-{
-    INSTALLED_PROVIDERS.with(|p| {
-        let data = p.get().expect("Elephant Providers not initialized");
         f(data)
     })
 }

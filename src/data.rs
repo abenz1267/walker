@@ -3,11 +3,11 @@ use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
+use crate::providers::PROVIDERS;
 use crate::state::{
-    get_provider, is_connected, is_dmenu, is_service, set_current_prefix, set_is_connected,
-    set_is_visible, set_provider,
+    get_provider, is_connected, is_dmenu, set_current_prefix, set_is_connected, set_is_visible,
+    set_provider,
 };
-use crate::theme::with_installed_providers;
 use crate::ui::window::{set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
 use gtk4::{glib, prelude::*};
@@ -338,21 +338,21 @@ fn query(text: &str) {
     let cfg = get_config();
     let mut provider = get_provider();
 
-    with_installed_providers(|p| {
-        if get_provider().is_empty() {
-            for prefix in &cfg.providers.prefixes {
-                if text.starts_with(&prefix.prefix) && p.contains(&prefix.provider) {
-                    provider = prefix.provider.clone();
-                    query_text = text
-                        .strip_prefix(&prefix.prefix)
-                        .unwrap_or(text)
-                        .to_string();
-                    set_current_prefix(prefix.prefix.clone());
-                    break;
-                }
+    let p = PROVIDERS.get().unwrap();
+
+    if get_provider().is_empty() {
+        for prefix in &cfg.providers.prefixes {
+            if text.starts_with(&prefix.prefix) && p.contains_key(&prefix.provider) {
+                provider = prefix.provider.clone();
+                query_text = text
+                    .strip_prefix(&prefix.prefix)
+                    .unwrap_or(text)
+                    .to_string();
+                set_current_prefix(prefix.prefix.clone());
+                break;
             }
         }
-    });
+    }
 
     let delimiter = &cfg.global_argument_delimiter;
 
@@ -430,11 +430,7 @@ fn handle_disconnect() {
 pub fn activate(item: QueryResponse, query: &str, action: &str) {
     // handle dmenu
     if item.item.provider == "dmenu" {
-        if is_service() {
-            send_message(item.item.text.clone()).unwrap();
-        } else {
-            println!("{}", item.item.text.clone());
-        }
+        send_message(item.item.text.clone()).unwrap();
 
         return;
     }

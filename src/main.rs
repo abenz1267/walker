@@ -3,6 +3,7 @@ mod data;
 mod keybinds;
 mod preview;
 mod protos;
+mod providers;
 mod renderers;
 mod state;
 mod theme;
@@ -37,6 +38,7 @@ use crate::data::init_socket;
 use crate::keybinds::setup_binds;
 use crate::protos::QueryResponseObject;
 use crate::protos::generated_proto::query::{QueryResponse, query_response};
+use crate::providers::setup_providers;
 use crate::renderers::setup_item_transformers;
 use crate::state::{
     get_parameter_height, get_parameter_width, get_placeholder, get_provider, get_theme,
@@ -47,9 +49,7 @@ use crate::state::{
     set_param_close, set_parameter_height, set_parameter_width, set_placeholder, set_provider,
     set_theme,
 };
-use crate::theme::{
-    setup_css, setup_css_provider, setup_installed_elephant_providers, setup_themes,
-};
+use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{handle_preview, quit, setup_window, with_window};
 
 static GLOBAL_DMENU_SENDER: RwLock<Option<mpsc::Sender<String>>> = RwLock::new(None);
@@ -91,7 +91,6 @@ fn init_ui(app: &Application, dmenu: bool) {
     set_theme(theme.to_string());
 
     preview::load_previewers();
-    setup_binds().unwrap();
 
     let elephant = which("elephant").is_ok();
     set_has_elephant(elephant);
@@ -99,8 +98,10 @@ fn init_ui(app: &Application, dmenu: bool) {
     setup_css_provider();
 
     if elephant {
-        setup_installed_elephant_providers();
+        setup_providers();
     }
+
+    setup_binds();
 
     setup_themes(
         elephant && !dmenu && is_service(),

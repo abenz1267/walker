@@ -1,0 +1,26 @@
+use crate::{config::get_config, keybinds::Keybind, providers::Provider};
+
+#[derive(Debug)]
+pub struct Providerlist {
+    keybinds: Vec<Keybind>,
+}
+
+impl Providerlist {
+    pub fn new() -> Self {
+        let config = get_config();
+
+        Self {
+            keybinds: vec![Keybind {
+                bind: config.providers.providerlist.activate.clone(),
+                action: "activate".to_string(),
+                after: crate::keybinds::AfterAction::ClearReload,
+            }],
+        }
+    }
+}
+
+impl Provider for Providerlist {
+    fn get_keybinds(&self) -> &Vec<Keybind> {
+        &self.keybinds
+    }
+}

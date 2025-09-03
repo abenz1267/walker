@@ -4,8 +4,7 @@ use crate::{
     data::{activate, input_changed},
     keybinds::{
         ACTION_CLOSE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS,
-        ACTION_TOGGLE_EXACT, AFTER_CLEAR_RELOAD, AFTER_CLEAR_RELOAD_KEEP_PREFIX, AFTER_CLOSE,
-        AFTER_NOTHING, AFTER_RELOAD, get_bind, get_modifiers, get_provider_bind,
+        ACTION_TOGGLE_EXACT, AfterAction, get_bind, get_modifiers, get_provider_bind,
     },
     renderers::create_item,
     send_message,
@@ -369,14 +368,14 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 activate(response, &query, &action.action);
 
                 let mut after = if item_clone.identifier.starts_with("keepopen:") {
-                    AFTER_CLEAR_RELOAD
+                    AfterAction::ClearReload
                 } else {
-                    action.after.as_str()
+                    action.after
                 };
 
                 let is_dmenu_next = item_clone.identifier.contains("dmenu:");
                 if (is_dmenu_keep_open() && !is_dmenu_exit_after()) || is_dmenu_next {
-                    after = AFTER_NOTHING;
+                    after = AfterAction::Nothing
                 }
 
                 if is_dmenu_next {
@@ -394,7 +393,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 }
 
                 match after {
-                    AFTER_CLOSE => {
+                    AfterAction::Close => {
                         if dont_close {
                             select_next();
                         } else {
@@ -402,7 +401,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                         }
                         return true;
                     }
-                    AFTER_CLEAR_RELOAD => {
+                    AfterAction::ClearReload => {
                         with_window(|w| {
                             if let Some(input) = &w.input {
                                 if input.text().is_empty() {
@@ -413,7 +412,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                             }
                         });
                     }
-                    AFTER_CLEAR_RELOAD_KEEP_PREFIX => {
+                    AfterAction::ClearReloadKeepPrefix => {
                         with_window(|w| {
                             if let Some(input) = &w.input {
                                 if input.text().is_empty() {
@@ -425,7 +424,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                             }
                         });
                     }
-                    AFTER_RELOAD => crate::data::input_changed(&query),
+                    AfterAction::Reload => crate::data::input_changed(&query),
                     _ => {}
                 }
 

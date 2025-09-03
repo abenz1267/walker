@@ -402,16 +402,11 @@ fn activate(app: &Application) {
         return;
     }
 
-    let provider = get_provider();
-    let p;
+    let mut provider = get_provider();
 
     if provider.is_empty() {
-        p = "default".to_string();
-    } else {
-        p = provider.clone();
+        provider = "default".to_string();
     }
-
-    drop(provider);
 
     with_window(|w| {
         if is_input_only() {
@@ -422,7 +417,7 @@ fn activate(app: &Application) {
         }
 
         if let Some(placeholders) = &cfg.placeholders {
-            if let Some(placeholder) = placeholders.get(&p.to_string()) {
+            if let Some(placeholder) = placeholders.get(&provider) {
                 if let Some(input) = &w.input {
                     input.set_placeholder_text(Some(&placeholder.input));
                 }
@@ -495,8 +490,8 @@ fn activate(app: &Application) {
 
 fn startup(app: &Application) {
     let args: Vec<String> = env::args().collect();
-    let mut dmenu = false;
-    let mut version = false;
+    let dmenu = args.contains(&"--dmenu".to_string()) || args.contains(&"-d".to_string());
+    let version = args.contains(&"--version".to_string()) || args.contains(&"-v".to_string());
 
     if !app.flags().contains(ApplicationFlags::IS_SERVICE)
         && (args.contains(&"--close".to_string()) || args.contains(&"-q".to_string()))
@@ -504,22 +499,16 @@ fn startup(app: &Application) {
         process::exit(0);
     }
 
-    if args.contains(&"--dmenu".to_string()) || args.contains(&"-d".to_string()) {
-        dmenu = true;
+    if version {
+        return;
     }
 
-    if args.contains(&"--version".to_string()) || args.contains(&"-v".to_string()) {
-        version = true;
-    }
-
-    if !app.flags().contains(ApplicationFlags::IS_SERVICE) && !dmenu && !version {
+    if !app.flags().contains(ApplicationFlags::IS_SERVICE) && !dmenu {
         println!("make sure 'walker --gapplication-service' is running!");
     }
 
-    if !version {
-        HOLD_GUARD.with(|h| h.set(app.hold()).expect("couldn't set hold-guard"));
+    HOLD_GUARD.with(|h| h.set(app.hold()).expect("couldn't set hold-guard"));
 
-        init_app_state();
-        init_ui(app, dmenu);
-    }
+    init_app_state();
+    init_ui(app, dmenu);
 }

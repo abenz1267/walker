@@ -26,6 +26,7 @@ pub mod websearch;
 
 pub trait Provider: Sync + Send + Debug {
     fn get_keybinds(&self) -> &Vec<Keybind>;
+    fn default_action(&self) -> &str;
 }
 
 pub static PROVIDERS: OnceLock<HashMap<String, Box<dyn Provider>>> = OnceLock::new();

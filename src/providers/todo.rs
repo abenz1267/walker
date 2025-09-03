@@ -3,6 +3,7 @@ use crate::{config::get_config, keybinds::Keybind, providers::Provider};
 #[derive(Debug)]
 pub struct Todo {
     keybinds: Vec<Keybind>,
+    default_action: String,
 }
 
 impl Todo {
@@ -10,6 +11,7 @@ impl Todo {
         let config = get_config();
 
         Self {
+            default_action: config.providers.todo.default.clone(),
             keybinds: vec![
                 Keybind {
                     bind: config.providers.todo.save.clone(),
@@ -44,5 +46,9 @@ impl Todo {
 impl Provider for Todo {
     fn get_keybinds(&self) -> &Vec<Keybind> {
         &self.keybinds
+    }
+
+    fn default_action(&self) -> &str {
+        &self.default_action
     }
 }

@@ -3,6 +3,7 @@ use crate::{config::get_config, keybinds::Keybind, providers::Provider};
 #[derive(Debug)]
 pub struct Calc {
     keybinds: Vec<Keybind>,
+    default_action: String,
 }
 
 impl Calc {
@@ -10,6 +11,7 @@ impl Calc {
         let config = get_config();
 
         Self {
+            default_action: config.providers.calc.default.clone(),
             keybinds: vec![
                 Keybind {
                     bind: config.providers.calc.copy.clone(),
@@ -34,5 +36,9 @@ impl Calc {
 impl Provider for Calc {
     fn get_keybinds(&self) -> &Vec<Keybind> {
         &self.keybinds
+    }
+
+    fn default_action(&self) -> &str {
+        &self.default_action
     }
 }

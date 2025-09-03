@@ -3,6 +3,7 @@ use crate::{config::get_config, keybinds::Keybind, providers::Provider};
 #[derive(Debug)]
 pub struct Clipboard {
     keybinds: Vec<Keybind>,
+    default_action: String,
 }
 
 impl Clipboard {
@@ -10,6 +11,7 @@ impl Clipboard {
         let config = get_config();
 
         Self {
+            default_action: config.providers.clipboard.default.clone(),
             keybinds: vec![
                 Keybind {
                     bind: config.providers.clipboard.copy.clone(),
@@ -39,5 +41,9 @@ impl Clipboard {
 impl Provider for Clipboard {
     fn get_keybinds(&self) -> &Vec<Keybind> {
         &self.keybinds
+    }
+
+    fn default_action(&self) -> &str {
+        &self.default_action
     }
 }

@@ -260,7 +260,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
         let theme = val.str().unwrap();
 
-        if has_theme(theme.to_string()) {
+        if has_theme(theme) {
             set_theme(theme.to_string());
         } else {
             cmd.print_literal("theme not found. using default theme.\n");

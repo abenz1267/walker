@@ -1,65 +1,35 @@
-use crate::config::{self, get_config};
+use crate::config::get_config;
+use crate::providers::PROVIDERS;
 use gtk4::gdk::{self, Key};
 use std::collections::HashMap;
 use std::sync::{Arc, Mutex, OnceLock};
 
-// Constants
 pub const ACTION_CLOSE: &str = "%CLOSE%";
 pub const ACTION_SELECT_NEXT: &str = "%NEXT%";
 pub const ACTION_SELECT_PREVIOUS: &str = "%PREVIOUS%";
 pub const ACTION_TOGGLE_EXACT: &str = "%TOGGLE_EXACT%";
 pub const ACTION_RESUME_LAST_QUERY: &str = "%RESUME_LAST_QUERY%";
 
-pub const AFTER_CLOSE: &str = "%CLOSE%";
-pub const AFTER_NOTHING: &str = "%NOTHING%";
-pub const AFTER_RELOAD: &str = "%RELOAD%";
-pub const AFTER_CLEAR_RELOAD: &str = "%CLEAR_RELOAD%";
-pub const AFTER_CLEAR_RELOAD_KEEP_PREFIX: &str = "%CLEAR_RELOAD_KEEP_PREFIX%";
+#[derive(Debug, Clone)]
+pub enum AfterAction {
+    Close,
+    Nothing,
+    Reload,
+    ClearReload,
+    ClearReloadKeepPrefix,
+}
 
-pub const ACTION_CALC_COPY: &str = "copy";
-pub const ACTION_CALC_DELETE: &str = "delete";
-pub const ACTION_CALC_SAVE: &str = "save";
-
-pub const ACTION_CLIPBOARD_COPY: &str = "copy";
-pub const ACTION_CLIPBOARD_DELETE: &str = "remove";
-pub const ACTION_CLIPBOARD_EDIT: &str = "edit";
-pub const ACTION_CLIPBOARD_TOGGLE_IMAGES_ONLY: &str = "toggle_images";
-
-pub const ACTION_DESKTOP_APPLICATIONS_START: &str = "";
-
-pub const ACTION_FILES_COPY: &str = "copyfile";
-pub const ACTION_FILES_COPY_PATH: &str = "copypath";
-pub const ACTION_FILES_OPEN: &str = "open";
-pub const ACTION_FILES_OPEN_DIR: &str = "opendir";
-
-pub const ACTION_RUNNER_START: &str = "run";
-pub const ACTION_RUNNER_START_TERMINAL: &str = "runterminal";
-
-pub const ACTION_SYMBOLS_COPY: &str = "copy";
-
-pub const ACTION_UNICODE_COPY: &str = "copy";
-
-pub const ACTION_PROVIDERLIST_ACTIVATE: &str = "activate";
-
-pub const ACTION_MENUS_ACTIVATE: &str = "activate";
-
-pub const ACTION_WEBSEARCH_SEARCH: &str = "search";
-
-pub const ACTION_DMENU_SELECT: &str = "select";
-
-pub const ACTION_ARCHLINUXPKGS_INSTALL: &str = "install";
-pub const ACTION_ARCHLINUXPKGS_REMOVE: &str = "remove";
-
-pub const ACTION_TODO_SAVE: &str = "save";
-pub const ACTION_TODO_DELETE: &str = "delete";
-pub const ACTION_TODO_MARK_ACTIVE: &str = "active";
-pub const ACTION_TODO_MARK_DONE: &str = "done";
-pub const ACTION_TODO_CLEAR: &str = "clear";
+#[derive(Debug, Clone)]
+pub struct Keybind {
+    pub bind: String,
+    pub action: String,
+    pub after: AfterAction,
+}
 
 #[derive(Debug, Clone)]
 pub struct Action {
     pub action: String,
-    pub after: String,
+    pub after: AfterAction,
 }
 
 static BINDS: OnceLock<Arc<Mutex<HashMap<Key, HashMap<gdk::ModifierType, Action>>>>> =
@@ -106,215 +76,64 @@ fn get_special_keys() -> HashMap<&'static str, Key> {
     map
 }
 
-pub fn setup_binds() -> Result<(), Box<dyn std::error::Error>> {
-    let config = config::get_config();
+pub fn setup_binds() {
+    PROVIDERS.get().unwrap().iter().for_each(|(k, v)| {
+        v.get_keybinds().iter().for_each(|bind| {
+            parse_bind(bind, k).unwrap();
+        });
+    });
 
-    parse_bind(&config.keybinds.close, ACTION_CLOSE, AFTER_CLOSE, "")?;
-    parse_bind(&config.keybinds.next, ACTION_SELECT_NEXT, AFTER_NOTHING, "")?;
+    let config = get_config();
+
     parse_bind(
-        &config.keybinds.previous,
-        ACTION_SELECT_PREVIOUS,
-        AFTER_NOTHING,
+        &Keybind {
+            bind: config.keybinds.close.clone(),
+            action: ACTION_CLOSE.to_string(),
+            after: AfterAction::Close,
+        },
         "",
-    )?;
+    )
+    .unwrap();
+
     parse_bind(
-        &config.keybinds.toggle_exact,
-        ACTION_TOGGLE_EXACT,
-        AFTER_NOTHING,
+        &Keybind {
+            bind: config.keybinds.next.clone(),
+            action: ACTION_SELECT_NEXT.to_string(),
+            after: AfterAction::Nothing,
+        },
         "",
-    )?;
+    )
+    .unwrap();
 
     parse_bind(
-        &config.keybinds.resume_last_query,
-        ACTION_RESUME_LAST_QUERY,
-        AFTER_NOTHING,
+        &Keybind {
+            bind: config.keybinds.previous.clone(),
+            action: ACTION_SELECT_PREVIOUS.to_string(),
+            after: AfterAction::Nothing,
+        },
         "",
-    )?;
+    )
+    .unwrap();
 
     parse_bind(
-        &config.providers.clipboard.copy,
-        ACTION_CLIPBOARD_COPY,
-        AFTER_CLOSE,
-        "clipboard",
-    )?;
-    parse_bind(
-        &config.providers.clipboard.delete,
-        ACTION_CLIPBOARD_DELETE,
-        AFTER_RELOAD,
-        "clipboard",
-    )?;
+        &Keybind {
+            bind: config.keybinds.toggle_exact.clone(),
+            action: ACTION_TOGGLE_EXACT.to_string(),
+            after: AfterAction::Nothing,
+        },
+        "",
+    )
+    .unwrap();
 
     parse_bind(
-        &config.providers.clipboard.edit,
-        ACTION_CLIPBOARD_EDIT,
-        AFTER_CLOSE,
-        "clipboard",
-    )?;
-
-    parse_bind(
-        &config.providers.clipboard.toggle_images_only,
-        ACTION_CLIPBOARD_TOGGLE_IMAGES_ONLY,
-        AFTER_CLEAR_RELOAD_KEEP_PREFIX,
-        "clipboard",
-    )?;
-
-    parse_bind(
-        &config.providers.calc.copy,
-        ACTION_CALC_COPY,
-        AFTER_CLOSE,
-        "calc",
-    )?;
-    parse_bind(
-        &config.providers.calc.save,
-        ACTION_CALC_SAVE,
-        AFTER_RELOAD,
-        "calc",
-    )?;
-    parse_bind(
-        &config.providers.calc.delete,
-        ACTION_CALC_DELETE,
-        AFTER_RELOAD,
-        "calc",
-    )?;
-
-    parse_bind(
-        &config.providers.desktopapplications.start,
-        ACTION_DESKTOP_APPLICATIONS_START,
-        AFTER_CLOSE,
-        "desktopapplications",
-    )?;
-
-    parse_bind(
-        &config.providers.files.copy_file,
-        ACTION_FILES_COPY,
-        AFTER_CLOSE,
-        "files",
-    )?;
-    parse_bind(
-        &config.providers.files.copy_path,
-        ACTION_FILES_COPY_PATH,
-        AFTER_CLOSE,
-        "files",
-    )?;
-    parse_bind(
-        &config.providers.files.open,
-        ACTION_FILES_OPEN,
-        AFTER_CLOSE,
-        "files",
-    )?;
-    parse_bind(
-        &config.providers.files.open_dir,
-        ACTION_FILES_OPEN_DIR,
-        AFTER_CLOSE,
-        "files",
-    )?;
-
-    parse_bind(
-        &config.providers.runner.start,
-        ACTION_RUNNER_START,
-        AFTER_CLOSE,
-        "runner",
-    )?;
-
-    parse_bind(
-        &config.providers.runner.start_terminal,
-        ACTION_RUNNER_START_TERMINAL,
-        AFTER_CLOSE,
-        "runner",
-    )?;
-
-    parse_bind(
-        &config.providers.symbols.copy,
-        ACTION_SYMBOLS_COPY,
-        AFTER_CLOSE,
-        "symbols",
-    )?;
-
-    parse_bind(
-        &config.providers.unicode.copy,
-        ACTION_UNICODE_COPY,
-        AFTER_CLOSE,
-        "unicode",
-    )?;
-
-    parse_bind(
-        &config.providers.providerlist.activate,
-        ACTION_PROVIDERLIST_ACTIVATE,
-        AFTER_CLEAR_RELOAD,
-        "providerlist",
-    )?;
-
-    parse_bind(
-        &config.providers.menus.activate,
-        ACTION_MENUS_ACTIVATE,
-        AFTER_CLOSE,
-        "menus",
-    )?;
-
-    parse_bind(
-        &config.providers.websearch.search,
-        ACTION_WEBSEARCH_SEARCH,
-        AFTER_CLOSE,
-        "websearch",
-    )?;
-
-    parse_bind(
-        &config.providers.dmenu.select,
-        ACTION_DMENU_SELECT,
-        AFTER_CLOSE,
-        "dmenu",
-    )?;
-
-    parse_bind(
-        &config.providers.archlinuxpkgs.install,
-        ACTION_ARCHLINUXPKGS_INSTALL,
-        AFTER_CLOSE,
-        "archlinuxpkgs",
-    )?;
-
-    parse_bind(
-        &config.providers.archlinuxpkgs.remove,
-        ACTION_ARCHLINUXPKGS_REMOVE,
-        AFTER_CLOSE,
-        "archlinuxpkgs",
-    )?;
-
-    parse_bind(
-        &config.providers.todo.delete,
-        ACTION_TODO_DELETE,
-        AFTER_CLEAR_RELOAD_KEEP_PREFIX,
-        "todo",
-    )?;
-
-    parse_bind(
-        &config.providers.todo.save,
-        ACTION_TODO_SAVE,
-        AFTER_CLEAR_RELOAD_KEEP_PREFIX,
-        "todo",
-    )?;
-
-    parse_bind(
-        &config.providers.todo.mark_active,
-        ACTION_TODO_MARK_ACTIVE,
-        AFTER_CLEAR_RELOAD_KEEP_PREFIX,
-        "todo",
-    )?;
-
-    parse_bind(
-        &config.providers.todo.mark_done,
-        ACTION_TODO_MARK_DONE,
-        AFTER_CLEAR_RELOAD_KEEP_PREFIX,
-        "todo",
-    )?;
-
-    parse_bind(
-        &config.providers.todo.clear,
-        ACTION_TODO_CLEAR,
-        AFTER_CLEAR_RELOAD_KEEP_PREFIX,
-        "todo",
-    )?;
-
-    Ok(())
+        &Keybind {
+            bind: config.keybinds.resume_last_query.clone(),
+            action: ACTION_RESUME_LAST_QUERY.to_string(),
+            after: AfterAction::Nothing,
+        },
+        "",
+    )
+    .unwrap();
 }
 
 fn validate_bind(bind: &str) -> bool {
@@ -339,17 +158,12 @@ fn validate_bind(bind: &str) -> bool {
     ok
 }
 
-fn parse_bind(
-    bind: &str,
-    action: &str,
-    after: &str,
-    provider: &str,
-) -> Result<(), Box<dyn std::error::Error>> {
-    if !validate_bind(bind) {
+fn parse_bind(b: &Keybind, provider: &str) -> Result<(), Box<dyn std::error::Error>> {
+    if !validate_bind(&b.bind) {
         return Err("incorrect bind".into());
     }
 
-    let fields: Vec<&str> = bind.split_whitespace().collect();
+    let fields: Vec<&str> = b.bind.split_whitespace().collect();
 
     if fields.len() == 0 {
         return Err("incorrect bind".into());
@@ -380,8 +194,8 @@ fn parse_bind(
         .fold(gdk::ModifierType::empty(), |acc, &m| acc | m);
 
     let action_struct = Action {
-        action: action.to_string(),
-        after: after.to_string(),
+        action: b.action.to_string(),
+        after: b.after.clone(),
     };
 
     if key.is_some() {

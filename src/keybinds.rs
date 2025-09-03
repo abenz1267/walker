@@ -1,8 +1,9 @@
 use crate::config::get_config;
 use crate::providers::PROVIDERS;
 use gtk4::gdk::{self, Key};
+use once_cell::sync::Lazy;
 use std::collections::HashMap;
-use std::sync::{Arc, Mutex, OnceLock, RwLock};
+use std::sync::RwLock;
 
 pub const ACTION_CLOSE: &str = "%CLOSE%";
 pub const ACTION_SELECT_NEXT: &str = "%NEXT%";
@@ -32,20 +33,11 @@ pub struct Action {
     pub after: AfterAction,
 }
 
-static BINDS: OnceLock<Arc<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>>> =
-    OnceLock::new();
-static PROVIDER_BINDS: OnceLock<
-    Arc<Mutex<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>>,
-> = OnceLock::new();
-
-fn get_binds() -> &'static Arc<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> {
-    BINDS.get_or_init(|| Arc::new(RwLock::new(HashMap::new())))
-}
-
-fn get_provider_binds()
--> &'static Arc<Mutex<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>> {
-    PROVIDER_BINDS.get_or_init(|| Arc::new(Mutex::new(HashMap::new())))
-}
+static BINDS: Lazy<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> =
+    Lazy::new(RwLock::default);
+static PROVIDER_BINDS: Lazy<
+    RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>,
+> = Lazy::new(RwLock::default);
 
 pub fn get_modifiers() -> HashMap<&'static str, gdk::ModifierType> {
     let mut map = HashMap::new();
@@ -200,13 +192,13 @@ fn parse_bind(b: &Keybind, provider: &str) -> Result<(), Box<dyn std::error::Err
 
     if key.is_some() {
         if provider.is_empty() {
-            let mut binds = get_binds().write().unwrap();
+            let mut binds = BINDS.write().unwrap();
             binds
                 .entry(key.unwrap())
                 .or_insert_with(HashMap::new)
                 .insert(modifier, action_struct);
         } else {
-            let mut provider_binds = get_provider_binds().lock().unwrap();
+            let mut provider_binds = PROVIDER_BINDS.write().unwrap();
             provider_binds
                 .entry(provider.to_string())
                 .or_insert_with(HashMap::new)
@@ -222,12 +214,7 @@ fn parse_bind(b: &Keybind, provider: &str) -> Result<(), Box<dyn std::error::Err
 }
 
 pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
-    get_binds()
-        .read()
-        .unwrap()
-        .get(&key)?
-        .get(&modifier)
-        .cloned()
+    BINDS.read().ok()?.get(&key)?.get(&modifier).cloned()
 }
 
 pub fn get_provider_bind(provider: &str, key: Key, modifier: gdk::ModifierType) -> Option<Action> {
@@ -241,9 +228,9 @@ pub fn get_provider_bind(provider: &str, key: Key, modifier: gdk::ModifierType) 
         }
     }
 
-    get_provider_binds()
-        .lock()
-        .unwrap()
+    PROVIDER_BINDS
+        .read()
+        .ok()?
         .get(provider)?
         .get(&key)?
         .get(&modifier)

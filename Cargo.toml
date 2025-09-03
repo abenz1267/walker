@@ -18,6 +18,7 @@ cairo-rs = "0.21.1"
 gdk-pixbuf = "0.21.1"
 nucleo-matcher = "0.3.1"
 which = "8.0"
+once_cell = { version = "1.21.3", features = ["portable-atomic"] }
 
 [build-dependencies]
 protobuf-codegen = "3.4"

@@ -19,7 +19,6 @@ use crate::{
     },
     theme::{setup_layer_shell, with_themes},
 };
-use gtk4::prelude::{EntryExt, GtkWindowExt};
 use gtk4::{
     Application, Builder, Entry, EventControllerKey, EventControllerMotion, Label, ScrolledWindow,
     SignalListItemFactory, SingleSelection, Window,
@@ -38,6 +37,10 @@ use gtk4::{gio::ListStore, glib::object::Cast};
 use gtk4::{
     gio::prelude::{ApplicationExt, ListModelExt},
     prelude::GtkApplicationExt,
+};
+use gtk4::{
+    glib::Object,
+    prelude::{EntryExt, GtkWindowExt},
 };
 use std::{
     cell::{Cell, RefCell},
@@ -431,10 +434,10 @@ fn setup_list_behavior(ui: &WindowData) {
         let response = response_obj.response();
 
         with_themes(|t| {
-            if let Some(theme) = t.get(&get_theme()) {
-                if let Some(i) = response.item.as_ref() {
-                    create_item(&item, &i, theme);
-                }
+            if let Some(theme) = t.get(&get_theme())
+                && let Some(i) = response.item.as_ref()
+            {
+                create_item(&item, &i, theme);
             }
         });
     });
@@ -450,28 +453,27 @@ fn setup_mouse_handling(ui: &WindowData) {
         if let Some(input) = &ui.input {
             input.set_can_target(false);
         }
-    } else {
-        ui.list.set_single_click_activate(true);
-
-        let motion = EventControllerMotion::new();
-        motion.connect_motion(|_, x, y| {
-            with_window(|w| {
-                if w.mouse_x.get() == 0.0 || w.mouse_y.get() == 0.0 {
-                    w.mouse_x.set(x);
-                    w.mouse_y.set(y);
-                    return;
-                }
-
-                if x != w.mouse_x.get() || y != w.mouse_y.get() {
-                    if !w.list.can_target() {
-                        w.list.set_can_target(true);
-                    }
-                }
-            });
-        });
-
-        ui.window.add_controller(motion);
+        return;
     }
+
+    ui.list.set_single_click_activate(true);
+
+    let motion = EventControllerMotion::new();
+    motion.connect_motion(|_, x, y| {
+        with_window(|w| {
+            if w.mouse_x.get() == 0.0 || w.mouse_y.get() == 0.0 {
+                w.mouse_x.set(x);
+                w.mouse_y.set(y);
+                return;
+            }
+
+            if (x != w.mouse_x.get() || y != w.mouse_y.get()) && !w.list.can_target() {
+                w.list.set_can_target(true);
+            }
+        });
+    });
+
+    ui.window.add_controller(motion);
 }
 
 pub fn quit(app: &Application, cancelled: bool) {
@@ -479,88 +481,89 @@ pub fn quit(app: &Application, cancelled: bool) {
         send_message("CNCLD".to_string()).unwrap();
     }
 
-    if app
+    if !app
         .flags()
         .contains(gtk4::gio::ApplicationFlags::IS_SERVICE)
     {
-        app.active_window().unwrap().set_visible(false);
-
-        with_window(|w| {
-            if let Some(preview) = w.builder.object::<Box>("Preview") {
-                while let Some(child) = preview.first_child() {
-                    child.unparent();
-                }
-            }
-
-            w.preview_builder.borrow_mut().take();
-        });
-
-        // Clear all preview caches
-        crate::preview::clear_all_caches();
-
-        set_current_prefix(String::new());
-        set_provider(String::new());
-        set_parameter_height(0);
-        set_parameter_width(0);
-        set_no_search(false);
-        set_placeholder(String::new());
-        set_is_visible(false);
-        set_dmenu_current(0);
-        set_is_dmenu(false);
-        set_input_only(false);
-
-        if is_dmenu_exit_after() {
-            set_dmenu_exit_after(false);
-            set_dmenu_keep_open(false);
-        }
-
-        with_window(|w| {
-            if let Some(input) = &w.input {
-                set_last_query(input.text().to_string());
-                if !get_initial_placeholder().is_empty() {
-                    input.set_placeholder_text(Some(&get_initial_placeholder()));
-                    set_initial_placeholder(String::new());
-                }
-            }
-        });
-
-        gtk4::glib::idle_add_once(|| {
-            with_window(|w| {
-                if let Some(search_container) = &w.search_container {
-                    search_container.set_visible(true);
-                }
-
-                if let Some(input) = &w.input {
-                    input.set_text("");
-                    input.emit_by_name::<()>("changed", &[]);
-                }
-
-                w.content_container.set_visible(true);
-
-                if let Some(keybinds) = &w.keybinds {
-                    keybinds.set_visible(true);
-                }
-
-                if get_initial_height() != 0 {
-                    w.scroll.set_min_content_height(get_initial_height());
-                    w.scroll.set_max_content_height(get_initial_height());
-                }
-
-                if get_initial_width() != 0 {
-                    w.scroll.set_min_content_width(get_initial_width());
-                    w.scroll.set_max_content_width(get_initial_width());
-                }
-
-                set_theme(get_config().theme.clone());
-            });
-        });
-    } else {
         if cancelled {
             process::exit(130);
         }
 
         app.quit();
+        return;
     }
+
+    app.active_window().unwrap().set_visible(false);
+
+    with_window(|w| {
+        if let Some(preview) = w.builder.object::<Box>("Preview") {
+            while let Some(child) = preview.first_child() {
+                child.unparent();
+            }
+        }
+
+        w.preview_builder.borrow_mut().take();
+    });
+
+    // Clear all preview caches
+    crate::preview::clear_all_caches();
+
+    set_current_prefix(String::new());
+    set_provider(String::new());
+    set_parameter_height(0);
+    set_parameter_width(0);
+    set_no_search(false);
+    set_placeholder(String::new());
+    set_is_visible(false);
+    set_dmenu_current(0);
+    set_is_dmenu(false);
+    set_input_only(false);
+
+    if is_dmenu_exit_after() {
+        set_dmenu_exit_after(false);
+        set_dmenu_keep_open(false);
+    }
+
+    with_window(|w| {
+        if let Some(input) = &w.input {
+            set_last_query(input.text().to_string());
+            if !get_initial_placeholder().is_empty() {
+                input.set_placeholder_text(Some(&get_initial_placeholder()));
+                set_initial_placeholder(String::new());
+            }
+        }
+    });
+
+    gtk4::glib::idle_add_once(|| {
+        with_window(|w| {
+            if let Some(search_container) = &w.search_container {
+                search_container.set_visible(true);
+            }
+
+            if let Some(input) = &w.input {
+                input.set_text("");
+                input.emit_by_name::<()>("changed", &[]);
+            }
+
+            w.content_container.set_visible(true);
+
+            if let Some(keybinds) = &w.keybinds {
+                keybinds.set_visible(true);
+            }
+
+            if get_initial_height() != 0 {
+                w.scroll.set_min_content_height(get_initial_height());
+                w.scroll.set_max_content_height(get_initial_height());
+            }
+
+            if get_initial_width() != 0 {
+                w.scroll.set_min_content_width(get_initial_width());
+                w.scroll.set_max_content_width(get_initial_width());
+            }
+
+            set_theme(get_config().theme.clone());
+        });
+    });
 }
 
 pub fn select_next() {
@@ -568,23 +571,24 @@ pub fn select_next() {
 
     with_window(|w| {
         let selection = &w.selection;
-        if get_config().selection_wrap {
-            let current = selection.selected();
-            let n_items = selection.n_items();
-            if n_items > 0 {
-                let next = if current + 1 >= n_items {
-                    0
-                } else {
-                    current + 1
-                };
-                selection.set_selected(next);
-            }
-        } else {
+        if !get_config().selection_wrap {
             let current = selection.selected();
             let n_items = selection.n_items();
             if current + 1 < n_items {
                 selection.set_selected(current + 1);
             }
+            return;
+        }
+
+        let current = selection.selected();
+        let n_items = selection.n_items();
+        if n_items > 0 {
+            let next = if current + 1 >= n_items {
+                0
+            } else {
+                current + 1
+            };
+            selection.set_selected(next);
         }
     });
 }
@@ -594,50 +598,53 @@ pub fn select_previous() {
 
     with_window(|w| {
         let selection = &w.selection;
-        if get_config().selection_wrap {
-            let current = selection.selected();
-            let n_items = selection.n_items();
-            if n_items > 0 {
-                let prev = if current == 0 {
-                    n_items - 1
-                } else {
-                    current - 1
-                };
-                selection.set_selected(prev);
-            }
-        } else {
+        if !get_config().selection_wrap {
             let current = selection.selected();
             if current > 0 {
                 selection.set_selected(current - 1);
             }
+            return;
+        }
+
+        let current = selection.selected();
+        let n_items = selection.n_items();
+        if n_items > 0 {
+            let prev = if current == 0 {
+                n_items - 1
+            } else {
+                current - 1
+            };
+            selection.set_selected(prev);
         }
     });
 }
 
 fn resume_last_query() {
     with_window(|w| {
-        if !get_last_query().is_empty() {
-            if let Some(input) = &w.input {
-                input.set_text(&get_last_query());
-                input.set_position(-1);
-            }
+        if !get_last_query().is_empty()
+            && let Some(input) = &w.input
+        {
+            input.set_text(&get_last_query());
+            input.set_position(-1);
         }
     });
 }
 
 pub fn toggle_exact() {
     with_window(|w| {
-        if let Some(i) = &w.input {
-            let cfg = get_config();
-            if i.text().starts_with(&cfg.exact_search_prefix) {
-                if let Some(t) = i.text().strip_prefix(&cfg.exact_search_prefix) {
-                    i.set_text(t);
-                    i.set_position(-1);
-                }
-            } else {
-                i.set_text(&format!("{}{}", cfg.exact_search_prefix, i.text()));
-                i.set_position(-1);
-            }
+        let Some(i) = &w.input else {
+            return;
+        };
+
+        let cfg = get_config();
+        if i.text().starts_with(&cfg.exact_search_prefix)
+            && let Some(t) = i.text().strip_prefix(&cfg.exact_search_prefix)
+        {
+            i.set_text(t);
+            i.set_position(-1);
+        } else if i.text().strip_prefix(&cfg.exact_search_prefix).is_some() {
+            i.set_text(&format!("{}{}", cfg.exact_search_prefix, i.text()));
+            i.set_position(-1);
         }
     });
 }
@@ -654,8 +661,9 @@ pub fn get_selected_item() -> Option<crate::protos::generated_proto::query::quer
     let result = with_window(|w| {
         w.selection
             .selected_item()
-            .and_then(|item| item.downcast::<QueryResponseObject>().ok())
-            .and_then(|obj| obj.response().item.as_ref().cloned())
+            .map(Object::downcast::<QueryResponseObject>)
+            .and_then(Result::ok)
+            .and_then(|obj| obj.response().item.into_option())
     });
 
     return result;
@@ -666,8 +674,9 @@ pub fn get_selected_query_response() -> Option<crate::protos::generated_proto::q
     let result = with_window(|w| {
         w.selection
             .selected_item()
-            .and_then(|item| item.downcast::<QueryResponseObject>().ok())
-            .and_then(|obj| Some(obj.response()))
+            .map(Object::downcast::<QueryResponseObject>)
+            .and_then(Result::ok)
+            .map(|obj| obj.response())
     });
 
     return result;
@@ -675,57 +684,63 @@ pub fn get_selected_query_response() -> Option<crate::protos::generated_proto::q
 
 pub fn handle_preview() {
     with_window(|w| {
-        if let Some(preview) = w.builder.object::<Box>("Preview") {
-            if let Some(item) = get_selected_item() {
-                let mut provider = item.provider.clone();
+        let Some(preview) = w.builder.object::<Box>("Preview") else {
+            return;
+        };
 
-                if provider.starts_with("menus:") {
-                    provider = "menus".to_string();
-                }
+        let Some(item) = get_selected_item() else {
+            preview.set_visible(false);
+            return;
+        };
 
-                if crate::preview::has_previewer(&provider) {
-                    let builder = {
-                        let mut preview_builder = w.preview_builder.borrow_mut();
-                        if preview_builder.is_none() {
-                            let builder = Builder::new();
-                            let _ = builder.add_from_string(include_str!(
-                                "../../resources/themes/default/preview.xml"
-                            ));
-                            *preview_builder = Some(builder);
-                        }
-                        preview_builder.as_ref().unwrap().clone()
-                    };
+        let mut provider = item.provider.clone();
 
-                    crate::preview::handle_preview(&provider, &item, &preview, &builder);
-                } else {
-                    preview.set_visible(false);
-                }
-            } else {
-                preview.set_visible(false);
-            }
+        if provider.starts_with("menus:") {
+            provider = "menus".to_string();
         }
+
+        if !crate::preview::has_previewer(&provider) {
+            preview.set_visible(false);
+            return;
+        }
+
+        let builder = {
+            let mut preview_builder = w.preview_builder.borrow_mut();
+            if preview_builder.is_none() {
+                let builder = Builder::new();
+                let _ = builder
+                    .add_from_string(include_str!("../../resources/themes/default/preview.xml"));
+                *preview_builder = Some(builder);
+            }
+            preview_builder.as_ref().unwrap().clone()
+        };
+
+        crate::preview::handle_preview(&provider, &item, &preview, &builder);
     });
 }
 
 pub fn set_keybind_hint() {
     with_window(|w| {
-        if let Some(k) = &w.keybinds {
-            if let Some(item) = get_selected_item() {
-                let providers = PROVIDERS.get().unwrap();
-                let cfg = get_config();
+        let Some(k) = &w.keybinds else {
+            return;
+        };
 
-                if let Some(p) = providers.get(&item.provider) {
-                    k.set_text(&p.get_keybind_hint(cfg));
-                } else if item.provider.starts_with("menus:") {
-                    if let Some(p) = providers.get("menus") {
-                        k.set_text(&p.get_keybind_hint(cfg));
-                    }
-                } else {
-                    k.set_text("");
-                }
-            } else {
-                k.set_text("");
-            }
+        let Some(item) = get_selected_item() else {
+            k.set_text("");
+            return;
+        };
+
+        let providers = PROVIDERS.get().unwrap();
+        let cfg = get_config();
+
+        if let Some(p) = providers.get(&item.provider) {
+            k.set_text(&p.get_keybind_hint(cfg));
+        } else if item.provider.starts_with("menus:")
+            && let Some(p) = providers.get("menus")
+        {
+            k.set_text(&p.get_keybind_hint(cfg));
+        } else if providers.get("menus").is_some() {
+            k.set_text("");
         }
     });
 }

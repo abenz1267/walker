@@ -404,7 +404,6 @@ pub fn activate(item: QueryResponse, query: &str, action: &str) {
     }
 
     let cfg = get_config();
-
     let mut arguments = query;
 
     if let Some(prefix) = cfg.providers.prefixes.iter().find(|prefix| {
@@ -431,14 +430,12 @@ pub fn activate(item: QueryResponse, query: &str, action: &str) {
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
 
+    let mut conn_guard = CONN.lock().unwrap();
+    if let Some(conn) = conn_guard.as_mut()
+        && conn.write_all(&buffer).is_err()
     {
-        let mut conn_guard = CONN.lock().unwrap();
-        if let Some(conn) = conn_guard.as_mut()
-            && conn.write_all(&buffer).is_err()
-        {
-            drop(conn_guard);
-            handle_disconnect();
-        }
+        drop(conn_guard);
+        handle_disconnect();
     }
 }
 
@@ -451,12 +448,10 @@ fn subscribe_menu() -> Result<(), Box<dyn std::error::Error>> {
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
 
-    {
-        let mut conn_guard = MENUCONN.lock().unwrap();
-        let conn = conn_guard.as_mut().ok_or("Connection not available")?;
+    let mut conn_guard = MENUCONN.lock().unwrap();
+    let conn = conn_guard.as_mut().ok_or("Connection not available")?;
 
-        conn.write_all(&buffer)?;
-    }
+    conn.write_all(&buffer)?;
 
     Ok(())
 }

@@ -38,7 +38,6 @@ impl PreviewHandler for FilesPreviewHandler {
     }
 
     fn handle(&self, item: &Item, preview: &GtkBox, builder: &Builder) {
-        let preview_clone = preview.clone();
         let file_path = if item.preview.is_empty() {
             item.text.as_str()
         } else {
@@ -78,18 +77,18 @@ impl PreviewHandler for FilesPreviewHandler {
             return;
         }
 
-        while let Some(child) = preview_clone.first_child() {
+        while let Some(child) = preview.first_child() {
             child.unparent();
         }
 
-        let existing_controllers: Vec<_> = preview_clone
+        let existing_controllers: Vec<_> = preview
             .observe_controllers()
             .into_iter()
             .filter_map(Result::ok)
             .collect();
         for controller in existing_controllers {
             if let Ok(drag_source) = controller.downcast::<DragSource>() {
-                preview_clone.remove_controller(&drag_source);
+                preview.remove_controller(&drag_source);
             }
         }
 
@@ -108,10 +107,9 @@ impl PreviewHandler for FilesPreviewHandler {
         drag_source.connect_drag_end(|_, _, _| with_window(|w| quit(&w.app, false)));
 
         file_preview.box_widget.set_can_target(false);
-        preview_clone.add_controller(drag_source);
-        preview_clone.append(&file_preview.box_widget);
-
-        preview_clone.set_visible(get_selected_item().is_some_and(|current| current == *item));
+        preview.add_controller(drag_source);
+        preview.append(&file_preview.box_widget);
+        preview.set_visible(get_selected_item().is_some_and(|current| current == *item));
     }
 }
 

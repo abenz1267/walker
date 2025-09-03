@@ -64,7 +64,7 @@ fn main() -> glib::ExitCode {
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 
-    app.connect_handle_local_options(|_app, _dict| return -1);
+    app.connect_handle_local_options(|_, _| return -1);
 
     add_flags(&app);
 

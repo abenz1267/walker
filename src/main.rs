@@ -300,102 +300,98 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
         set_dmenu_exit_after(options.contains("exit"));
 
-        let mut exists = false;
-
         if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
             send_message("CNCLD".to_string()).unwrap();
-            exists = true;
+            break 'dmenu;
         }
 
-        if !exists {
-            with_window(|w| {
-                if let Some(input) = &w.input {
-                    input.set_text("");
-                }
+        with_window(|w| {
+            if let Some(input) = &w.input {
+                input.set_text("");
+            }
 
-                let items = &w.items;
-                items.remove_all();
+            let items = &w.items;
+            items.remove_all();
 
-                if !is_input_only() {
-                    let stdin = cmd.stdin();
-                    let data_stream = gio::DataInputStream::new(&stdin.unwrap());
-                    let data_stream_rc = Rc::new(data_stream);
+            if is_input_only() {
+                return;
+            }
 
-                    fn read_line_callback(
-                        stream: Rc<gio::DataInputStream>,
-                        i: i32,
-                        items: gio::ListStore,
-                    ) {
-                        let stream_clone = stream.clone();
+            let stdin = cmd.stdin();
+            let data_stream = gio::DataInputStream::new(&stdin.unwrap());
+            let data_stream_rc = Rc::new(data_stream);
 
-                        stream.read_line_utf8_async(
-                            Priority::DEFAULT,
-                            Cancellable::NONE,
-                            move |line_slice| match line_slice {
-                                Ok(line_slice) => {
-                                    if let Some(line) = line_slice {
-                                        if line.is_empty() {
-                                            return;
-                                        }
+            fn read_line_callback(stream: Rc<gio::DataInputStream>, i: i32, items: gio::ListStore) {
+                let stream_clone = stream.clone();
 
-                                        let trimmed = line.trim();
-
-                                        if !trimmed.is_empty() {
-                                            let mut item = query_response::Item::new();
-                                            item.text = trimmed.to_string();
-                                            item.provider = "dmenu".to_string();
-                                            item.score = 1000000 - i;
-
-                                            let mut response = QueryResponse::new();
-                                            response.item = protobuf::MessageField::some(item);
-
-                                            items.append(&QueryResponseObject::new(response));
-                                        }
-                                        read_line_callback(stream_clone, i + 1, items.clone());
-                                    }
-                                }
-                                Err(e) => {
-                                    eprintln!("Error reading: {}", e);
+                stream.read_line_utf8_async(
+                    Priority::DEFAULT,
+                    Cancellable::NONE,
+                    move |line_slice| match line_slice {
+                        Ok(line_slice) => {
+                            if let Some(line) = line_slice {
+                                if line.is_empty() {
                                     return;
                                 }
-                            },
-                        );
-                    }
 
-                    read_line_callback(data_stream_rc.clone(), 0, items.clone());
-                }
-            });
+                                let trimmed = line.trim();
 
-            set_is_dmenu(true);
+                                if !trimmed.is_empty() {
+                                    let mut item = query_response::Item::new();
+                                    item.text = trimmed.to_string();
+                                    item.provider = "dmenu".to_string();
+                                    item.score = 1000000 - i;
 
-            if is_service() {
-                let (sender, receiver) = mpsc::channel::<String>();
+                                    let mut response = QueryResponse::new();
+                                    response.item = protobuf::MessageField::some(item);
 
-                *GLOBAL_DMENU_SENDER.write().unwrap() = Some(sender);
-
-                let cmd_clone = cmd.clone();
-
-                glib::idle_add_local(move || match receiver.try_recv() {
-                    Ok(message) => {
-                        match message.as_str() {
-                            "CNCLD" => {
-                                cmd_clone.set_exit_status(130);
+                                    items.append(&QueryResponseObject::new(response));
+                                }
+                                read_line_callback(stream_clone, i + 1, items.clone());
                             }
-                            msg => cmd_clone.print_literal(&format!("{}\n", msg)),
-                        };
-
-                        *GLOBAL_DMENU_SENDER.write().unwrap() = None;
-
-                        ControlFlow::Break
-                    }
-                    Err(mpsc::TryRecvError::Empty) => ControlFlow::Continue,
-                    Err(mpsc::TryRecvError::Disconnected) => {
-                        cmd_clone.set_exit_status(130);
-                        ControlFlow::Break
-                    }
-                });
+                        }
+                        Err(e) => {
+                            eprintln!("Error reading: {}", e);
+                            return;
+                        }
+                    },
+                );
             }
+
+            read_line_callback(data_stream_rc.clone(), 0, items.clone());
+        });
+
+        set_is_dmenu(true);
+
+        if !is_service() {
+            break 'dmenu;
         }
+
+        let (sender, receiver) = mpsc::channel::<String>();
+
+        *GLOBAL_DMENU_SENDER.write().unwrap() = Some(sender);
+
+        let cmd_clone = cmd.clone();
+
+        glib::idle_add_local(move || match receiver.try_recv() {
+            Ok(message) => {
+                match message.as_str() {
+                    "CNCLD" => {
+                        cmd_clone.set_exit_status(130);
+                    }
+                    msg => cmd_clone.print_literal(&format!("{}\n", msg)),
+                };
+
+                *GLOBAL_DMENU_SENDER.write().unwrap() = None;
+
+                ControlFlow::Break
+            }
+            Err(mpsc::TryRecvError::Empty) => ControlFlow::Continue,
+            Err(mpsc::TryRecvError::Disconnected) => {
+                cmd_clone.set_exit_status(130);
+                ControlFlow::Break
+            }
+        });
     }
 
     app.activate();

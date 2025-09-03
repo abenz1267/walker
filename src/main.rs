@@ -52,8 +52,9 @@ use crate::theme::{
 };
 use crate::ui::window::{handle_preview, quit, setup_window, with_window};
 
+static GLOBAL_DMENU_SENDER: RwLock<Option<mpsc::Sender<String>>> = RwLock::new(None);
+
 thread_local! {
-    static GLOBAL_DMENU_SENDER: RwLock<Option<mpsc::Sender<String>>> = RwLock::default();
     static HOLD_GUARD: OnceLock<ApplicationHoldGuard> = OnceLock::new();
 }
 
@@ -113,15 +114,12 @@ fn init_ui(app: &Application, dmenu: bool) {
 }
 
 fn send_message(message: String) -> Result<(), String> {
-    GLOBAL_DMENU_SENDER.with(|sender| {
-        let sender_guard = sender.read().unwrap();
-        if let Some(tx) = sender_guard.as_ref() {
-            tx.send(message)
-                .map_err(|_| "Failed to send message".to_string())
-        } else {
-            Err("No sender available".to_string())
-        }
-    })
+    if let Some(tx) = GLOBAL_DMENU_SENDER.read().unwrap().as_ref() {
+        tx.send(message)
+            .map_err(|_| "Failed to send message".to_string())
+    } else {
+        Err("No sender available".to_string())
+    }
 }
 
 fn add_flags(app: &Application) {
@@ -309,12 +307,10 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
         let mut exists = false;
 
-        GLOBAL_DMENU_SENDER.with(|sender| {
-            if sender.read().unwrap().is_some() {
-                send_message("CNCLD".to_string()).unwrap();
-                exists = true;
-            }
-        });
+        if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
+            send_message("CNCLD".to_string()).unwrap();
+            exists = true;
+        }
 
         if !exists {
             with_window(|w| {
@@ -380,7 +376,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
             if is_service() {
                 let (sender, receiver) = mpsc::channel::<String>();
 
-                GLOBAL_DMENU_SENDER.with(|s| *s.write().unwrap() = Some(sender));
+                *GLOBAL_DMENU_SENDER.write().unwrap() = Some(sender);
 
                 let cmd_clone = cmd.clone();
 
@@ -393,7 +389,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
                             msg => cmd_clone.print_literal(&format!("{}\n", msg)),
                         };
 
-                        GLOBAL_DMENU_SENDER.with(|s| *s.write().unwrap() = None);
+                        *GLOBAL_DMENU_SENDER.write().unwrap() = None;
 
                         ControlFlow::Break
                     }

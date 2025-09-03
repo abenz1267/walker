@@ -52,9 +52,7 @@ thread_local! {
 }
 
 pub fn set_css_provider(provider: CssProvider) {
-    CSS_PROVIDER.with(|p| {
-        *p.borrow_mut() = Some(provider);
-    });
+    CSS_PROVIDER.with(|p| *p.borrow_mut() = Some(provider));
 }
 
 pub fn with_css_provider<F, R>(f: F) -> Option<R>
@@ -174,9 +172,7 @@ pub fn setup_window(app: &Application) {
         }
     });
 
-    WINDOWS.with(|s| {
-        s.set(windows).expect("failed initializing windows");
-    });
+    WINDOWS.with(|s| s.set(windows).expect("failed initializing windows"));
 }
 
 fn setup_window_behavior(ui: &WindowData, app: &Application) {
@@ -189,29 +185,19 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
         crate::handle_preview();
 
         with_window(|w| {
+            if let Some(p) = &w.placeholder {
+                p.set_visible(s.n_items() == 0);
+            }
+
+            w.scroll.set_visible(s.n_items() != 0);
+
+            if let Some(k) = &w.keybinds {
+                k.set_text("");
+            }
+
             if s.n_items() == 0 {
-                if let Some(p) = &w.placeholder {
-                    p.set_visible(true);
-                }
-
-                w.scroll.set_visible(false);
-
-                if let Some(k) = &w.keybinds {
-                    k.set_text("");
-                }
-
                 // Clear preview caches when no items are visible
                 crate::preview::clear_all_caches();
-            } else {
-                if let Some(p) = &w.placeholder {
-                    p.set_visible(false);
-                }
-
-                w.scroll.set_visible(true);
-
-                if let Some(k) = &w.keybinds {
-                    k.set_text("");
-                }
             }
         });
     });

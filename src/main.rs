@@ -82,11 +82,11 @@ fn init_ui(app: &Application, dmenu: bool) {
 
     config::load().unwrap();
 
-    let theme = if get_config().theme.is_empty() {
-        "default"
-    } else {
-        &get_config().theme
-    };
+    let mut theme = get_config().theme.as_str();
+
+    if theme.is_empty() {
+        theme = "default";
+    }
 
     set_theme(theme.to_string());
 
@@ -115,12 +115,13 @@ fn init_ui(app: &Application, dmenu: bool) {
 }
 
 fn send_message(message: String) -> Result<(), String> {
-    if let Some(tx) = GLOBAL_DMENU_SENDER.read().unwrap().as_ref() {
-        tx.send(message)
-            .map_err(|_| "Failed to send message".to_string())
-    } else {
-        Err("No sender available".to_string())
-    }
+    let tx = GLOBAL_DMENU_SENDER.read().unwrap();
+    let tx = tx
+        .as_ref()
+        .ok_or_else(|| "No sender available".to_string())?;
+
+    tx.send(message)
+        .map_err(|_| "Failed to send message".to_string())
 }
 
 fn add_flags(app: &Application) {
@@ -246,7 +247,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     let options = cmd.options_dict();
 
     if options.contains("version") {
-        cmd.print_literal("1.0.0-beta-26\n");
+        cmd.print_literal(&format!("{}\n", env!("CARGO_PKG_VERSION")));
         return 0;
     }
 

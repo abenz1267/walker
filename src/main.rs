@@ -284,10 +284,8 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
             break 'dmenu;
         }
 
-        if options.contains("placeholder") {
-            if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING)) {
-                set_placeholder(val.str().unwrap().to_string());
-            }
+        if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING)) {
+            set_placeholder(val.str().unwrap().to_string());
         }
 
         set_input_only(options.contains("inputonly"));
@@ -296,10 +294,8 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
             set_dmenu_keep_open(true);
         }
 
-        if options.contains("current") {
-            if let Some(val) = options.lookup_value("current", Some(VariantTy::INT64)) {
-                set_dmenu_current(val.get::<i64>().unwrap());
-            }
+        if let Some(val) = options.lookup_value("current", Some(VariantTy::INT64)) {
+            set_dmenu_current(val.get::<i64>().unwrap());
         }
 
         set_dmenu_exit_after(options.contains("exit"));

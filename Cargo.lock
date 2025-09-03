@@ -1148,9 +1148,6 @@ name = "once_cell"
 version = "1.21.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "42f5e15c9953c5e4ccceeb2e7382a716482c34515315f7b03532b8b4e8393d2d"
-dependencies = [
- "portable-atomic",
-]
 
 [[package]]
 name = "option-ext"
@@ -1286,12 +1283,6 @@ dependencies = [
  "libc",
  "system-deps",
 ]
-
-[[package]]
-name = "portable-atomic"
-version = "1.11.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f84267b20a16ea918e43c6a88433c2d54fa145c92a811b5b047ccbe153674483"
 
 [[package]]
 name = "proc-macro-crate"
@@ -1891,7 +1882,6 @@ dependencies = [
  "mime_guess",
  "notify",
  "nucleo-matcher",
- "once_cell",
  "poppler-rs",
  "protobuf",
  "protobuf-codegen",

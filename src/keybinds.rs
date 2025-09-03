@@ -1,9 +1,8 @@
 use crate::config::get_config;
 use crate::providers::PROVIDERS;
 use gtk4::gdk::{self, Key};
-use once_cell::sync::Lazy;
 use std::collections::HashMap;
-use std::sync::RwLock;
+use std::sync::{LazyLock, RwLock};
 
 pub const ACTION_CLOSE: &str = "%CLOSE%";
 pub const ACTION_SELECT_NEXT: &str = "%NEXT%";
@@ -33,13 +32,13 @@ pub struct Action {
     pub after: AfterAction,
 }
 
-static BINDS: Lazy<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> =
-    Lazy::new(RwLock::default);
-static PROVIDER_BINDS: Lazy<
+static BINDS: LazyLock<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> =
+    LazyLock::new(RwLock::default);
+static PROVIDER_BINDS: LazyLock<
     RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>,
-> = Lazy::new(RwLock::default);
+> = LazyLock::new(RwLock::default);
 
-pub fn get_modifiers() -> HashMap<&'static str, gdk::ModifierType> {
+static MODIFIERS: LazyLock<HashMap<&'static str, gdk::ModifierType>> = LazyLock::new(|| {
     let mut map = HashMap::new();
     map.insert("ctrl", gdk::ModifierType::CONTROL_MASK);
     map.insert("lctrl", gdk::ModifierType::CONTROL_MASK);
@@ -51,9 +50,9 @@ pub fn get_modifiers() -> HashMap<&'static str, gdk::ModifierType> {
     map.insert("rshift", gdk::ModifierType::SHIFT_MASK);
     map.insert("shift", gdk::ModifierType::SHIFT_MASK);
     map
-}
+});
 
-fn get_special_keys() -> HashMap<&'static str, Key> {
+static SPECIAL_KEYS: LazyLock<HashMap<&'static str, gdk::Key>> = LazyLock::new(|| {
     let mut map = HashMap::new();
     map.insert("backspace", gdk::Key::BackSpace);
     map.insert("tab", gdk::Key::Tab);
@@ -66,7 +65,7 @@ fn get_special_keys() -> HashMap<&'static str, Key> {
     map.insert("left", gdk::Key::Left);
     map.insert("right", gdk::Key::Right);
     map
-}
+});
 
 pub fn setup_binds() {
     PROVIDERS.get().unwrap().iter().for_each(|(k, v)| {
@@ -130,12 +129,10 @@ pub fn setup_binds() {
 
 fn validate_bind(bind: &str) -> bool {
     let fields = bind.split_whitespace();
-    let modifiers = get_modifiers();
-    let special_keys = get_special_keys();
 
     let Some(field) = fields.filter(|field| field.len() > 1).find_map(|field| {
-        let exists_mod = modifiers.contains_key(field);
-        let exists_special = special_keys.contains_key(field);
+        let exists_mod = MODIFIERS.contains_key(field);
+        let exists_special = SPECIAL_KEYS.contains_key(field);
 
         (!exists_mod && !exists_special).then_some(field)
     }) else {
@@ -157,24 +154,31 @@ fn parse_bind(b: &Keybind, provider: &str) -> Result<(), Box<dyn std::error::Err
         return Err("incorrect bind".into());
     }
 
-    let modifiers_map = get_modifiers();
-    let special_keys = get_special_keys();
-
     let mut modifiers_list = Vec::new();
     let mut key: Option<Key> = None;
 
     for field in fields {
         if field.len() > 1 {
-            if let Some(&modifier) = modifiers_map.get(field) {
+            if let Some(&modifier) = MODIFIERS.get(field) {
                 modifiers_list.push(modifier);
             }
 
-            if let Some(&special_key) = special_keys.get(field) {
+            if let Some(&special_key) = SPECIAL_KEYS.get(field) {
                 key = Some(special_key);
             }
-        } else {
-            key = Some(Key::from_name(field.chars().next().unwrap().to_string()).unwrap());
+            continue;
         }
+
+        key = Some(
+            Key::from_name(
+                field
+                    .chars()
+                    .next()
+                    .ok_or("unable to get the next char")?
+                    .to_string(),
+            )
+            .ok_or("unable to create key from name")?,
+        );
     }
 
     let modifier = modifiers_list

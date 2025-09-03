@@ -219,10 +219,10 @@ pub fn get_provider_bind(provider: &str, key: Key, modifier: gdk::ModifierType) 
     let cfg = get_config();
     let mut modifier = modifier;
 
-    if let Some(keep_open) = MODIFIERS.get(cfg.keep_open_modifier.as_str()) {
-        if *keep_open == modifier {
-            modifier = gdk::ModifierType::empty();
-        }
+    if let Some(keep_open) = MODIFIERS.get(cfg.keep_open_modifier.as_str())
+        && *keep_open == modifier
+    {
+        modifier = gdk::ModifierType::empty();
     }
 
     PROVIDER_BINDS

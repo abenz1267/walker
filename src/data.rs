@@ -352,32 +352,23 @@ fn query(text: &str) {
 
     if !provider.is_empty() {
         req.providers.push(provider.clone());
+    } else if text.is_empty() {
+        req.providers = cfg.providers.empty.clone();
     } else {
-        if text.is_empty() {
-            req.providers = cfg.providers.empty.clone();
-        } else {
-            req.providers = cfg.providers.default.clone();
-        }
+        req.providers = cfg.providers.default.clone();
     }
 
-    let payload = req.write_to_bytes().unwrap();
-
-    let mut buffer = Vec::new();
-    buffer.push(0);
-
-    let length = payload.len() as u32;
+    let mut buffer = vec![0];
+    let length = req.compute_size() as u32;
     buffer.extend_from_slice(&length.to_be_bytes());
-    buffer.extend_from_slice(&payload);
+    req.write_to_vec(&mut buffer).unwrap();
 
     let mut conn_guard = CONN.lock().unwrap();
-    if let Some(conn) = conn_guard.as_mut() {
-        match conn.write_all(&buffer) {
-            Err(_) => {
-                drop(conn_guard);
-                handle_disconnect();
-            }
-            _ => (),
-        }
+    if let Some(conn) = conn_guard.as_mut()
+        && conn.write_all(&buffer).is_err()
+    {
+        drop(conn_guard);
+        handle_disconnect();
     }
 }
 
@@ -407,31 +398,29 @@ fn handle_disconnect() {
 }
 
 pub fn activate(item: QueryResponse, query: &str, action: &str) {
-    // handle dmenu
-    if item.item.provider == "dmenu" {
-        send_message(item.item.text.clone()).unwrap();
-
-        return;
-    }
-
-    // handle switcher
-    if item.item.provider == "providerlist" {
-        set_provider(item.item.identifier.to_string());
-        set_current_prefix(String::new());
-        return;
+    match item.item.provider.as_str() {
+        "dmenu" => {
+            send_message(item.item.text.clone()).unwrap();
+            return;
+        }
+        "providerlist" => {
+            set_provider(item.item.identifier.to_string());
+            set_current_prefix(String::new());
+            return;
+        }
+        _ => (),
     }
 
     let cfg = get_config();
 
     let mut arguments = query;
 
-    for prefix in &cfg.providers.prefixes {
-        if item.item.provider == prefix.provider && arguments.starts_with(&prefix.prefix) {
-            arguments = arguments
-                .strip_prefix(&prefix.prefix)
-                .expect("couldn't trim prefix");
-            break;
-        }
+    if let Some(prefix) = cfg.providers.prefixes.iter().find(|prefix| {
+        item.item.provider == prefix.provider && arguments.starts_with(&prefix.prefix)
+    }) {
+        arguments = arguments
+            .strip_prefix(&prefix.prefix)
+            .expect("couldn't trim prefix");
     }
 
     if let Some(stripped) = arguments.strip_prefix(&cfg.exact_search_prefix) {
@@ -445,27 +434,18 @@ pub fn activate(item: QueryResponse, query: &str, action: &str) {
     req.action = action.to_string();
     req.arguments = arguments.to_string();
 
-    let payload = req.write_to_bytes().unwrap();
-
-    let mut buffer = Vec::new();
-
-    buffer.push(1);
-
-    let length = payload.len() as u32;
+    let mut buffer = vec![1];
+    let length = req.compute_size() as u32;
     buffer.extend_from_slice(&length.to_be_bytes());
-
-    buffer.extend_from_slice(&payload);
+    req.write_to_vec(&mut buffer).unwrap();
 
     {
         let mut conn_guard = CONN.lock().unwrap();
-        if let Some(conn) = conn_guard.as_mut() {
-            match conn.write_all(&buffer) {
-                Err(_) => {
-                    drop(conn_guard);
-                    handle_disconnect();
-                }
-                _ => (),
-            }
+        if let Some(conn) = conn_guard.as_mut()
+            && conn.write_all(&buffer).is_err()
+        {
+            drop(conn_guard);
+            handle_disconnect();
         }
     }
 }
@@ -474,24 +454,16 @@ fn subscribe_menu() -> Result<(), Box<dyn std::error::Error>> {
     let mut req = SubscribeRequest::new();
     req.provider = "menus".to_string();
 
-    let payload = req.write_to_bytes()?;
-
-    let mut buffer = Vec::new();
-
-    buffer.push(2);
-
-    let length = payload.len() as u32;
+    let mut buffer = vec![2];
+    let length = req.compute_size() as u32;
     buffer.extend_from_slice(&length.to_be_bytes());
-
-    buffer.extend_from_slice(&payload);
+    req.write_to_vec(&mut buffer).unwrap();
 
     {
         let mut conn_guard = MENUCONN.lock().unwrap();
-        if let Some(conn) = conn_guard.as_mut() {
-            conn.write_all(&buffer)?;
-        } else {
-            return Err("Connection not available".into());
-        }
+        let conn = conn_guard.as_mut().ok_or("Connection not available")?;
+
+        conn.write_all(&buffer)?;
     }
 
     Ok(())

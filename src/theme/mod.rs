@@ -41,11 +41,9 @@ impl Theme {
             ]),
         };
 
-        let providers = PROVIDERS.get().unwrap();
-
-        providers.iter().for_each(|(k, v)| {
+        for (k, v) in PROVIDERS.get().unwrap() {
             s.items.insert(k.clone(), v.get_item_layout());
-        });
+        }
 
         return s;
     }
@@ -58,10 +56,10 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
     path.push("themes");
 
     let mut paths = vec![path.to_string_lossy().to_string()];
-    if let Some(a) = &get_config().additional_theme_location {
-        if let Ok(home) = env::var("HOME") {
-            paths.push(a.replace("~", &home).to_string());
-        }
+    if let Some(a) = &get_config().additional_theme_location
+        && let Ok(home) = env::var("HOME")
+    {
+        paths.push(a.replace("~", &home).to_string());
     }
 
     let files = vec![
@@ -74,8 +72,11 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
 
     let combined = if elephant {
         let mut result = files;
-        let p = PROVIDERS.get().unwrap();
-        let additional: Vec<String> = p.iter().map(|v| format!("item_{}.xml", v.0)).collect();
+        let additional = PROVIDERS
+            .get()
+            .unwrap()
+            .iter()
+            .map(|v| format!("item_{}.xml", v.0));
         result.extend(additional);
         result
     } else {
@@ -91,26 +92,33 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
                     theme.clone(),
                     setup_theme_from_path(path.clone().into(), &combined),
                 );
-            } else {
-                if let Ok(entries) = fs::read_dir(path) {
-                    for entry in entries {
-                        let entry = entry.unwrap();
-                        let path = entry.path();
+                continue;
+            }
 
-                        if path.is_dir() {
-                            if let Some(name) = path.file_name() {
-                                let path_theme = name.to_string_lossy();
+            let Ok(entries) = fs::read_dir(path) else {
+                continue;
+            };
 
-                                themes.insert(
-                                    path_theme.to_string(),
-                                    setup_theme_from_path(path.clone(), &combined),
-                                );
+            for entry in entries {
+                let entry = entry.unwrap();
+                let path = entry.path();
 
-                                add_theme(path_theme.to_string());
-                            }
-                        }
-                    }
+                if !path.is_dir() {
+                    continue;
                 }
+
+                let Some(name) = path.file_name() else {
+                    continue;
+                };
+
+                let path_theme = name.to_string_lossy();
+
+                themes.insert(
+                    path_theme.to_string(),
+                    setup_theme_from_path(path.clone(), &combined),
+                );
+
+                add_theme(path_theme.to_string());
             }
         }
     }
@@ -118,9 +126,7 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
     themes.insert("default".to_string(), Theme::default());
     add_theme("default".to_string());
 
-    THEMES.with(|s| {
-        s.set(themes).expect("failed initializing themes");
-    });
+    THEMES.with(|s| s.set(themes).expect("failed initializing themes"));
 }
 
 fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
@@ -141,10 +147,10 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
                 }
             }
             "style.css" => {
-                if let Some(s) = read_file(file) {
-                    if let Ok(home) = env::var("HOME") {
-                        theme.css = s.replace("~", &home);
-                    }
+                if let Some(s) = read_file(file)
+                    && let Ok(home) = env::var("HOME")
+                {
+                    theme.css = s.replace("~", &home);
                 }
             }
             "layout.xml" => {
@@ -177,9 +183,7 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
 pub fn setup_css(theme: String) {
     with_themes(|t| {
         if let Some(t) = t.get(&theme) {
-            with_css_provider(|p| {
-                p.load_from_string(&t.css);
-            });
+            with_css_provider(|p| p.load_from_string(&t.css));
         }
     });
 }
@@ -189,7 +193,6 @@ pub fn setup_css_provider() {
     let p = CssProvider::new();
 
     gtk4::style_context_add_provider_for_display(&display, &p, gtk4::STYLE_PROVIDER_PRIORITY_USER);
-
     set_css_provider(p);
 }
 
@@ -206,13 +209,11 @@ pub fn setup_layer_shell(win: &Window) {
     win.set_namespace(Some("walker"));
     win.set_exclusive_zone(-1);
     win.set_layer(Layer::Overlay);
-
-    if cfg.force_keyboard_focus {
-        win.set_keyboard_mode(KeyboardMode::Exclusive);
+    win.set_keyboard_mode(if cfg.force_keyboard_focus {
+        KeyboardMode::Exclusive
     } else {
-        win.set_keyboard_mode(KeyboardMode::OnDemand);
-    }
-
+        KeyboardMode::OnDemand
+    });
     win.set_anchor(Edge::Left, cfg.shell.anchor_left);
     win.set_anchor(Edge::Right, cfg.shell.anchor_right);
     win.set_anchor(Edge::Top, cfg.shell.anchor_top);

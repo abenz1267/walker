@@ -1,4 +1,8 @@
-use crate::{config::get_config, keybinds::Keybind, providers::Provider};
+use crate::{
+    config::{Elephant, get_config},
+    keybinds::Keybind,
+    providers::Provider,
+};
 
 #[derive(Debug)]
 pub struct Clipboard {
@@ -45,5 +49,15 @@ impl Provider for Clipboard {
 
     fn default_action(&self) -> &str {
         &self.default_action
+    }
+
+    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
+        format!(
+            "copy: {} - delete: {} - edit: {} - images only: {}",
+            cfg.providers.clipboard.copy,
+            cfg.providers.clipboard.delete,
+            cfg.providers.clipboard.edit,
+            cfg.providers.clipboard.toggle_images_only
+        )
     }
 }

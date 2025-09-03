@@ -1,4 +1,8 @@
-use crate::{config::get_config, keybinds::Keybind, providers::Provider};
+use crate::{
+    config::{Elephant, get_config},
+    keybinds::Keybind,
+    providers::Provider,
+};
 
 #[derive(Debug)]
 pub struct Providerlist {
@@ -28,5 +32,9 @@ impl Provider for Providerlist {
 
     fn default_action(&self) -> &str {
         &self.default_action
+    }
+
+    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
+        format!("select: {}", cfg.providers.providerlist.activate)
     }
 }

@@ -1,4 +1,8 @@
-use crate::{config::get_config, keybinds::Keybind, providers::Provider};
+use crate::{
+    config::{Elephant, get_config},
+    keybinds::Keybind,
+    providers::Provider,
+};
 
 #[derive(Debug)]
 pub struct Todo {
@@ -50,5 +54,15 @@ impl Provider for Todo {
 
     fn default_action(&self) -> &str {
         &self.default_action
+    }
+
+    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
+        format!(
+            "mark active: {} - mark done: {} - delete: {} - clear: {}",
+            cfg.providers.todo.mark_active,
+            cfg.providers.todo.mark_done,
+            cfg.providers.todo.delete,
+            cfg.providers.todo.clear
+        )
     }
 }

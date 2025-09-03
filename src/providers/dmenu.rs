@@ -29,4 +29,8 @@ impl Provider for Dmenu {
     fn default_action(&self) -> &str {
         &self.default_action
     }
+
+    fn get_keybind_hint(&self, cfg: &crate::config::Elephant) -> String {
+        format!("select: {}", cfg.providers.dmenu.select)
+    }
 }

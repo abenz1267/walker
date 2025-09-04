@@ -89,8 +89,6 @@ fn init_ui(app: &Application, dmenu: bool) {
 
     set_theme(theme.to_string());
 
-    preview::load_previewers();
-
     let elephant = which("elephant").is_ok();
     set_has_elephant(elephant);
 

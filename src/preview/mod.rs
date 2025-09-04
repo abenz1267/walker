@@ -1,12 +1,11 @@
 mod files_preview;
 
-pub use files_preview::FilesPreviewHandler;
-
 use crate::protos::generated_proto::query::query_response::Item;
+pub use files_preview::FilesPreviewHandler;
 use gtk4::{Box as GtkBox, Builder};
-use std::cell::RefCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
+use std::sync::LazyLock;
 
 pub trait PreviewHandler: Debug {
     fn handle(&self, item: &Item, preview: &GtkBox, builder: &Builder);
@@ -14,14 +13,11 @@ pub trait PreviewHandler: Debug {
 }
 
 thread_local! {
-    static PREVIEWERS: RefCell<HashMap<String, Box<dyn PreviewHandler>>> = RefCell::new(HashMap::new());
-}
-
-pub fn load_previewers() {
-    PREVIEWERS.with(|previewers| {
-        let mut previewers = previewers.borrow_mut();
+    static PREVIEWERS: LazyLock<HashMap<String, Box<dyn PreviewHandler>>> = LazyLock::new(|| {
+        let mut previewers: HashMap<String, Box<dyn PreviewHandler>> = HashMap::new();
         previewers.insert("files".to_string(), Box::new(FilesPreviewHandler::new()));
         previewers.insert("menus".to_string(), Box::new(FilesPreviewHandler::new()));
+        previewers
     });
 }
 
@@ -29,7 +25,7 @@ pub fn get_previewer<F, R>(provider: &str, f: F) -> Option<R>
 where
     F: FnOnce(&dyn PreviewHandler) -> R,
 {
-    PREVIEWERS.with(|previewers| previewers.borrow().get(provider).map(Box::as_ref).map(f))
+    PREVIEWERS.with(|previewers| previewers.get(provider).map(Box::as_ref).map(f))
 }
 
 pub fn handle_preview(provider: &str, item: &Item, preview: &GtkBox, builder: &Builder) {
@@ -37,12 +33,12 @@ pub fn handle_preview(provider: &str, item: &Item, preview: &GtkBox, builder: &B
 }
 
 pub fn has_previewer(provider: &str) -> bool {
-    PREVIEWERS.with(|previewers| previewers.borrow().contains_key(provider))
+    PREVIEWERS.with(|previewers| previewers.contains_key(provider))
 }
 
 pub fn clear_all_caches() {
     PREVIEWERS.with(|previewers| {
-        for handler in previewers.borrow().values() {
+        for handler in previewers.values() {
             handler.clear_cache();
         }
     });

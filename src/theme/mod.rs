@@ -21,7 +21,7 @@ pub struct Theme {
     pub layout: Cow<'static, str>,
     pub preview: Cow<'static, str>,
     pub css: Cow<'static, str>,
-    pub items: HashMap<String, String>,
+    pub items: HashMap<String, Cow<'static, str>>,
 }
 
 impl Theme {
@@ -34,7 +34,8 @@ impl Theme {
         };
 
         for (k, v) in PROVIDERS.get().unwrap() {
-            s.items.insert(k.clone(), v.get_item_layout());
+            s.items
+                .insert(k.clone(), Cow::Borrowed(v.get_default_item_layout()));
         }
 
         return s;
@@ -131,7 +132,7 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
     for file in files {
         match (file.as_str(), read_file(file)) {
             ("item.xml", Some(s)) => {
-                theme.items.insert("default".to_string(), s);
+                theme.items.insert("default".to_string(), Cow::Owned(s));
             }
             ("style.css", Some(s)) => {
                 if let Ok(home) = env::var("HOME") {
@@ -150,7 +151,7 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
                     .unwrap()
                     .strip_suffix(".xml")
                     .unwrap();
-                theme.items.insert(key.to_string(), s);
+                theme.items.insert(key.to_string(), Cow::Owned(s));
             }
             _ => (),
         }

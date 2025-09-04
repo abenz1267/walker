@@ -110,14 +110,11 @@ fn init_ui(app: &Application, dmenu: bool) {
     // start_theme_watcher(s.get_theme());
 }
 
-fn send_message(message: String) -> Result<(), String> {
+fn send_message(message: String) -> Result<(), &'static str> {
     let tx = GLOBAL_DMENU_SENDER.read().unwrap();
-    let tx = tx
-        .as_ref()
-        .ok_or_else(|| "No sender available".to_string())?;
+    let tx = tx.as_ref().ok_or("No sender available")?;
 
-    tx.send(message)
-        .map_err(|_| "Failed to send message".to_string())
+    tx.send(message).map_err(|_| "Failed to send message")
 }
 
 fn add_flags(app: &Application) {

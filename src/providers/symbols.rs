@@ -41,8 +41,8 @@ impl Provider for Symbols {
         format!("copy: {}", cfg.providers.symbols.copy)
     }
 
-    fn get_item_layout(&self) -> String {
-        include_str!("../../resources/themes/default/item_symbols.xml").to_string()
+    fn get_default_item_layout(&self) -> &'static str {
+        include_str!("../../resources/themes/default/item_symbols.xml")
     }
 
     fn image_transformer(&self, b: &Builder, _: &ListItem, item: &Item) {

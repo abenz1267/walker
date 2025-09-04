@@ -69,8 +69,8 @@ impl Provider for Files {
         )
     }
 
-    fn get_item_layout(&self) -> String {
-        include_str!("../../resources/themes/default/item_files.xml").to_string()
+    fn get_default_item_layout(&self) -> &'static str {
+        include_str!("../../resources/themes/default/item_files.xml")
     }
 
     fn text_transformer(&self, text: &str, label: &gtk4::Label) {

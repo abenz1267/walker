@@ -34,7 +34,7 @@ impl Provider for Dmenu {
         format!("select: {}", cfg.providers.dmenu.select)
     }
 
-    fn get_item_layout(&self) -> String {
-        include_str!("../../resources/themes/default/item_dmenu.xml").to_string()
+    fn get_default_item_layout(&self) -> &'static str {
+        include_str!("../../resources/themes/default/item_dmenu.xml")
     }
 }

@@ -41,8 +41,8 @@ impl Provider for Unicode {
         format!("copy: {}", cfg.providers.unicode.copy)
     }
 
-    fn get_item_layout(&self) -> String {
-        include_str!("../../resources/themes/default/item_unicode.xml").to_string()
+    fn get_default_item_layout(&self) -> &'static str {
+        include_str!("../../resources/themes/default/item_unicode.xml")
     }
 
     fn image_transformer(&self, b: &Builder, _: &ListItem, item: &Item) {

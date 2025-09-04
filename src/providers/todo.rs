@@ -71,8 +71,8 @@ impl Provider for Todo {
         )
     }
 
-    fn get_item_layout(&self) -> String {
-        include_str!("../../resources/themes/default/item_todo.xml").to_string()
+    fn get_default_item_layout(&self) -> &'static str {
+        include_str!("../../resources/themes/default/item_todo.xml")
     }
 
     fn image_transformer(&self, b: &Builder, _: &ListItem, item: &Item) {

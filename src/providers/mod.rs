@@ -38,8 +38,8 @@ pub trait Provider: Sync + Send + Debug {
     fn default_action(&self) -> &str;
     fn get_keybind_hint(&self, cfg: &Elephant) -> String;
 
-    fn get_item_layout(&self) -> String {
-        include_str!("../../resources/themes/default/item.xml").to_string()
+    fn get_default_item_layout(&self) -> &'static str {
+        include_str!("../../resources/themes/default/item.xml")
     }
 
     fn text_transformer(&self, text: &str, label: &Label) {

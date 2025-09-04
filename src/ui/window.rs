@@ -496,10 +496,10 @@ pub fn quit(app: &Application, cancelled: bool) {
     app.active_window().unwrap().set_visible(false);
 
     with_window(|w| {
-        if let Some(preview) = w.builder.object::<Box>("Preview") {
-            while let Some(child) = preview.first_child() {
-                child.unparent();
-            }
+        while let Some(preview) = w.builder.object::<Box>("Preview")
+            && let Some(child) = preview.first_child()
+        {
+            child.unparent();
         }
 
         w.preview_builder.borrow_mut().take();

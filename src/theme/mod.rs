@@ -6,6 +6,7 @@ use gtk4::gdk::Display;
 use gtk4::prelude::GtkWindowExt;
 use gtk4::{CssProvider, Window};
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
+use std::borrow::Cow;
 use std::cell::OnceCell;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -17,18 +18,18 @@ thread_local! {
 
 #[derive(Debug)]
 pub struct Theme {
-    pub layout: String,
-    pub preview: String,
-    pub css: String,
+    pub layout: Cow<'static, str>,
+    pub preview: Cow<'static, str>,
+    pub css: Cow<'static, str>,
     pub items: HashMap<String, String>,
 }
 
 impl Theme {
     pub fn default() -> Self {
         let mut s = Self {
-            layout: include_str!("../../resources/themes/default/layout.xml").to_string(),
-            preview: include_str!("../../resources/themes/default/preview.xml").to_string(),
-            css: include_str!("../../resources/themes/default/style.css").to_string(),
+            layout: Cow::Borrowed(include_str!("../../resources/themes/default/layout.xml")),
+            preview: Cow::Borrowed(include_str!("../../resources/themes/default/preview.xml")),
+            css: Cow::Borrowed(include_str!("../../resources/themes/default/style.css")),
             items: HashMap::new(),
         };
 
@@ -88,8 +89,7 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
                 continue;
             };
 
-            for entry in entries {
-                let entry = entry.unwrap();
+            for entry in entries.filter_map(Result::ok) {
                 let path = entry.path();
 
                 if !path.is_dir() {
@@ -139,17 +139,17 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
                 if let Some(s) = read_file(file)
                     && let Ok(home) = env::var("HOME")
                 {
-                    theme.css = s.replace("~", &home);
+                    theme.css = Cow::Owned(s.replace("~", &home));
                 }
             }
             "layout.xml" => {
                 if let Some(s) = read_file(file) {
-                    theme.layout = s;
+                    theme.layout = Cow::Owned(s);
                 }
             }
             "preview.xml" => {
                 if let Some(s) = read_file(file) {
-                    theme.preview = s;
+                    theme.preview = Cow::Owned(s);
                 }
             }
             name if name.ends_with(".xml") && name.starts_with("item_") => {

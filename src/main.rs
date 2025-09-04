@@ -23,6 +23,7 @@ use std::process;
 use std::rc::Rc;
 use std::sync::{OnceLock, RwLock, mpsc};
 use std::thread;
+use std::time::Instant;
 
 use gtk4::{
     Application,
@@ -75,6 +76,7 @@ fn main() -> glib::ExitCode {
 }
 
 fn init_ui(app: &Application, dmenu: bool) {
+    let start = Instant::now();
     if app.flags().contains(ApplicationFlags::IS_SERVICE) {
         set_is_service(true);
     }
@@ -91,14 +93,19 @@ fn init_ui(app: &Application, dmenu: bool) {
 
     preview::load_previewers();
 
-    let elephant = which("elephant").is_ok();
-    set_has_elephant(elephant);
+    let mut elephant = false;
 
-    setup_css_provider();
+    if !is_dmenu() || is_service() {
+        elephant = which("elephant").is_ok();
+        set_has_elephant(elephant);
 
-    if elephant {
-        setup_providers();
+        if elephant {
+            setup_providers();
+        }
     }
+
+    println!("Function executed in: {:?}", start.elapsed());
+    setup_css_provider();
 
     setup_binds();
 

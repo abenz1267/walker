@@ -39,7 +39,6 @@ use crate::keybinds::setup_binds;
 use crate::protos::QueryResponseObject;
 use crate::protos::generated_proto::query::{QueryResponse, query_response};
 use crate::providers::setup_providers;
-use crate::renderers::setup_item_transformers;
 use crate::state::{
     get_parameter_height, get_parameter_width, get_placeholder, get_provider, get_theme,
     has_elephant, has_theme, is_connected, is_dmenu, is_dmenu_keep_open, is_input_only,
@@ -103,12 +102,8 @@ fn init_ui(app: &Application, dmenu: bool) {
 
     setup_binds();
 
-    setup_themes(
-        elephant && !dmenu && is_service(),
-        get_theme(),
-        is_service(),
-    );
-    setup_item_transformers();
+    setup_themes(elephant && !dmenu, get_theme(), is_service());
+
     setup_window(app);
 
     // start_theme_watcher(s.get_theme());

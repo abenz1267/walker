@@ -29,16 +29,7 @@ impl Theme {
             layout: include_str!("../../resources/themes/default/layout.xml").to_string(),
             preview: include_str!("../../resources/themes/default/preview.xml").to_string(),
             css: include_str!("../../resources/themes/default/style.css").to_string(),
-            items: HashMap::from([
-                (
-                    "default".to_string(),
-                    include_str!("../../resources/themes/default/item.xml").to_string(),
-                ),
-                (
-                    "dmenu".to_string(),
-                    include_str!("../../resources/themes/default/item_dmenu.xml").to_string(),
-                ),
-            ]),
+            items: HashMap::new(),
         };
 
         for (k, v) in PROVIDERS.get().unwrap() {
@@ -63,11 +54,9 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
     }
 
     let files = vec![
-        "item.xml".to_string(),
         "layout.xml".to_string(),
         "style.css".to_string(),
         "preview.xml".to_string(),
-        "item_dmenu.xml".to_string(),
     ];
 
     let combined = if elephant {

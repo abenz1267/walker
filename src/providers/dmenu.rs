@@ -33,4 +33,8 @@ impl Provider for Dmenu {
     fn get_keybind_hint(&self, cfg: &crate::config::Elephant) -> String {
         format!("select: {}", cfg.providers.dmenu.select)
     }
+
+    fn get_item_layout(&self) -> String {
+        include_str!("../../resources/themes/default/item_dmenu.xml").to_string()
+    }
 }

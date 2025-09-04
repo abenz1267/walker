@@ -1,8 +1,16 @@
-use std::{collections::HashMap, fmt::Debug, process::Command, sync::OnceLock};
+use std::{collections::HashMap, fmt::Debug, path::Path, process::Command, sync::OnceLock};
+
+use gtk4::{
+    Builder, Image, Label, ListItem, Picture, gdk,
+    gio::{self, prelude::FileExtManual},
+    glib,
+    prelude::WidgetExt,
+};
 
 use crate::{
     config::Elephant,
     keybinds::Keybind,
+    protos::generated_proto::query::query_response::Item,
     providers::{
         archlinuxpkgs::ArchLinuxPkgs, calc::Calc, clipboard::Clipboard,
         desktopapplications::DesktopApplications, dmenu::Dmenu, files::Files, menus::Menus,
@@ -32,6 +40,60 @@ pub trait Provider: Sync + Send + Debug {
 
     fn get_item_layout(&self) -> String {
         include_str!("../../resources/themes/default/item.xml").to_string()
+    }
+
+    fn text_transformer(&self, text: &str, label: &Label) {
+        if text.is_empty() {
+            label.set_visible(false);
+            return;
+        }
+
+        label.set_text(&text);
+    }
+
+    fn subtext_transformer(&self, text: &str, label: &Label) {
+        if text.is_empty() {
+            label.set_visible(false);
+            return;
+        }
+
+        label.set_text(&text);
+    }
+
+    fn image_transformer(&self, b: &Builder, _: &ListItem, item: &Item) {
+        if item.icon.is_empty() {
+            return;
+        }
+
+        if let Some(image) = b.object::<Image>("ItemImage") {
+            if Path::new(&item.icon).is_absolute() {
+                let icon = item.icon.clone();
+
+                glib::spawn_future_local(async move {
+                    let Ok((bytes, _)) = gio::File::for_path(&icon).load_contents_future().await
+                    else {
+                        return;
+                    };
+
+                    let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+                    image.set_paintable(Some(&texture));
+                });
+                return;
+            }
+
+            image.set_icon_name(Some(&item.icon));
+        } else if let Some(image) = b.object::<Picture>("ItemImage") {
+            let icon = item.icon.clone();
+
+            glib::spawn_future_local(async move {
+                let Ok((bytes, _)) = gio::File::for_path(&icon).load_contents_future().await else {
+                    return;
+                };
+
+                let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+                image.set_paintable(Some(&texture));
+            });
+        }
     }
 }
 
@@ -67,7 +129,9 @@ pub fn setup_providers() {
                 "providerlist" => {
                     providers.insert("providerlist".to_string(), Box::new(Providerlist::new()))
                 }
-                "menus" => providers.insert("menus".to_string(), Box::new(Menus::new())),
+                provider if provider.starts_with("menus:") => {
+                    providers.insert(provider.to_string(), Box::new(Menus::new()))
+                }
                 "websearch" => {
                     providers.insert("websearch".to_string(), Box::new(Websearch::new()))
                 }

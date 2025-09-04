@@ -76,7 +76,6 @@ fn main() -> glib::ExitCode {
 }
 
 fn init_ui(app: &Application, dmenu: bool) {
-    let start = Instant::now();
     if app.flags().contains(ApplicationFlags::IS_SERVICE) {
         set_is_service(true);
     }
@@ -95,16 +94,13 @@ fn init_ui(app: &Application, dmenu: bool) {
 
     let mut elephant = false;
 
-    if !is_dmenu() || is_service() {
+    if !dmenu || is_service() {
         elephant = which("elephant").is_ok();
         set_has_elephant(elephant);
-
-        if elephant {
-            setup_providers();
-        }
     }
 
-    println!("Function executed in: {:?}", start.elapsed());
+    setup_providers(elephant);
+
     setup_css_provider();
 
     setup_binds();
@@ -482,7 +478,7 @@ fn activate(app: &Application) {
 
         if !is_dmenu() && !is_connected() && has_elephant() {
             thread::spawn(|| init_socket().unwrap());
-        } else if !has_elephant() {
+        } else if !has_elephant() && !is_dmenu() {
             println!("Please install elephant.");
             process::exit(1);
         }

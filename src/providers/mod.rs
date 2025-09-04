@@ -99,49 +99,50 @@ pub trait Provider: Sync + Send + Debug {
 
 pub static PROVIDERS: OnceLock<HashMap<String, Box<dyn Provider>>> = OnceLock::new();
 
-pub fn setup_providers() {
+pub fn setup_providers(elephant: bool) {
     let mut providers: HashMap<String, Box<dyn Provider>> = HashMap::new();
 
-    let output = Command::new("elephant")
-        .arg("listproviders")
-        .output()
-        .expect("couldn't run 'elephant'. Make sure it is installed.");
+    if elephant {
+        let output = Command::new("elephant")
+            .arg("listproviders")
+            .output()
+            .expect("couldn't run 'elephant'. Make sure it is installed.");
 
-    let stdout = String::from_utf8(output.stdout).unwrap();
+        let stdout = String::from_utf8(output.stdout).unwrap();
 
-    stdout
-        .lines()
-        .filter_map(|line| line.split_once(';').map(|(_, value)| value.to_string()))
-        .for_each(|p| {
-            match p.as_str() {
-                "calc" => providers.insert("calc".to_string(), Box::new(Calc::new())),
-                "clipboard" => {
-                    providers.insert("clipboard".to_string(), Box::new(Clipboard::new()))
-                }
-                "desktopapplications" => providers.insert(
-                    "desktopapplications".to_string(),
-                    Box::new(DesktopApplications::new()),
-                ),
-                "files" => providers.insert("files".to_string(), Box::new(Files::new())),
-                "runner" => providers.insert("runner".to_string(), Box::new(Runner::new())),
-                "symbols" => providers.insert("symbols".to_string(), Box::new(Symbols::new())),
-                "unicode" => providers.insert("unicode".to_string(), Box::new(Unicode::new())),
-                "providerlist" => {
-                    providers.insert("providerlist".to_string(), Box::new(Providerlist::new()))
-                }
-                provider if provider.starts_with("menus:") => {
-                    providers.insert(provider.to_string(), Box::new(Menus::new()))
-                }
-                "websearch" => {
-                    providers.insert("websearch".to_string(), Box::new(Websearch::new()))
-                }
-                "archlinuxpkgs" => {
-                    providers.insert("archlinuxpkgs".to_string(), Box::new(ArchLinuxPkgs::new()))
-                }
-                "todo" => providers.insert("todo".to_string(), Box::new(Todo::new())),
-                _ => return,
-            };
-        });
+        stdout
+            .lines()
+            .filter_map(|line| line.split_once(';').map(|(_, value)| value.to_string()))
+            .for_each(|p| {
+                match p.as_str() {
+                    "calc" => providers.insert("calc".to_string(), Box::new(Calc::new())),
+                    "clipboard" => {
+                        providers.insert("clipboard".to_string(), Box::new(Clipboard::new()))
+                    }
+                    "desktopapplications" => providers.insert(
+                        "desktopapplications".to_string(),
+                        Box::new(DesktopApplications::new()),
+                    ),
+                    "files" => providers.insert("files".to_string(), Box::new(Files::new())),
+                    "runner" => providers.insert("runner".to_string(), Box::new(Runner::new())),
+                    "symbols" => providers.insert("symbols".to_string(), Box::new(Symbols::new())),
+                    "unicode" => providers.insert("unicode".to_string(), Box::new(Unicode::new())),
+                    "providerlist" => {
+                        providers.insert("providerlist".to_string(), Box::new(Providerlist::new()))
+                    }
+                    provider if provider.starts_with("menus:") => {
+                        providers.insert(provider.to_string(), Box::new(Menus::new()))
+                    }
+                    "websearch" => {
+                        providers.insert("websearch".to_string(), Box::new(Websearch::new()))
+                    }
+                    "archlinuxpkgs" => providers
+                        .insert("archlinuxpkgs".to_string(), Box::new(ArchLinuxPkgs::new())),
+                    "todo" => providers.insert("todo".to_string(), Box::new(Todo::new())),
+                    _ => return,
+                };
+            });
+    }
 
     providers.insert("dmenu".to_string(), Box::new(Dmenu::new()));
 

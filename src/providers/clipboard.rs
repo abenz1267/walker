@@ -1,8 +1,6 @@
-use std::path::Path;
-
 use chrono::DateTime;
 use gtk4::{
-    Image, Label, Picture, gdk,
+    Label, Picture, gdk,
     gio::{self, prelude::FileExtManual},
     glib,
     prelude::WidgetExt,

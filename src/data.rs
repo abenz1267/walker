@@ -5,8 +5,8 @@ use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
-    get_provider, is_connected, is_dmenu, set_current_prefix, set_is_connected, set_is_visible,
-    set_provider,
+    get_provider, is_connected, is_dmenu, is_service, set_current_prefix, set_is_connected,
+    set_is_visible, set_provider,
 };
 use crate::ui::window::{set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
@@ -382,7 +382,11 @@ fn handle_disconnect() {
 pub fn activate(item: QueryResponse, query: &str, action: &str) {
     match item.item.provider.as_str() {
         "dmenu" => {
-            send_message(item.item.text.clone()).unwrap();
+            if is_service() {
+                send_message(item.item.text.clone()).unwrap();
+            } else {
+                println!("{}", item.item.text.clone());
+            }
             return;
         }
         "providerlist" => {

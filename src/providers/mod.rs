@@ -112,9 +112,9 @@ pub fn setup_providers(elephant: bool) {
 
         stdout
             .lines()
-            .filter_map(|line| line.split_once(';').map(|(_, value)| value.to_string()))
+            .filter_map(|line| line.split_once(';').map(|(_, value)| value))
             .for_each(|p| {
-                match p.as_str() {
+                match p {
                     "calc" => providers.insert("calc".to_string(), Box::new(Calc::new())),
                     "clipboard" => {
                         providers.insert("clipboard".to_string(), Box::new(Clipboard::new()))

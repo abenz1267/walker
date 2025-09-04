@@ -5,8 +5,8 @@ use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
-    get_provider, is_connected, is_dmenu, is_service, set_current_prefix, set_is_connected,
-    set_is_visible, set_provider,
+    get_provider, is_connected, is_connecting, is_dmenu, is_service, set_current_prefix,
+    set_is_connected, set_is_connecting, set_is_visible, set_provider,
 };
 use crate::ui::window::{set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
@@ -20,12 +20,12 @@ use std::collections::HashMap;
 use std::io::{BufReader, Read, Write};
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
-use std::sync::OnceLock;
+use std::sync::Mutex;
 use std::time::Duration;
 use std::{env, thread};
 
-static CONN: OnceLock<UnixStream> = OnceLock::new();
-static MENUCONN: OnceLock<UnixStream> = OnceLock::new();
+static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
+static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 
 pub fn input_changed(text: &str) {
     if is_dmenu() {
@@ -98,6 +98,13 @@ fn sort_items_fuzzy(query: &str) {
 }
 
 pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
+    if is_connecting() {
+        return Ok(());
+    }
+
+    set_is_connecting(true);
+    println!("connecting to elephant...");
+
     let mut socket_path = env::var("XDG_RUNTIME_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| env::temp_dir());
@@ -107,7 +114,6 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
 
     println!("waiting for elephant to start...");
     wait_for_file(&socket_path.to_string_lossy().to_string());
-    println!("connecting to elephant...");
 
     let conn = loop {
         match UnixStream::connect(&socket_path) {
@@ -118,7 +124,7 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     };
-    CONN.set(conn).map_err(|_| "Unable to set connection")?;
+    *CONN.lock().unwrap() = Some(conn);
 
     let menuconn = loop {
         match UnixStream::connect(&socket_path) {
@@ -129,9 +135,8 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     };
-    MENUCONN
-        .set(menuconn)
-        .map_err(|_| "Unable to set menu connection")?;
+
+    *MENUCONN.lock().unwrap() = Some(menuconn);
 
     subscribe_menu().unwrap();
     start_listening();
@@ -148,6 +153,10 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
             }
         });
     });
+
+    set_is_connecting(false);
+
+    println!("connected.");
 
     Ok(())
 }
@@ -167,21 +176,24 @@ fn start_listening() {
 }
 
 fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
-    let mut conn = MENUCONN
-        .get()
-        .map(BufReader::new)
-        .ok_or("Connection not initialized")?;
+    let mut conn_guard = MENUCONN.lock().unwrap();
+    let conn = conn_guard.as_mut().ok_or("Connection not initialized")?;
+
+    let mut conn_clone = conn.try_clone()?;
+    drop(conn_guard);
+
+    let mut reader = BufReader::new(&mut conn_clone);
 
     loop {
         let mut header = [0u8; 5];
-        conn.read_exact(&mut header)?;
+        reader.read_exact(&mut header)?;
 
         match header[0] {
             0 => {
                 let length = u32::from_be_bytes(header[1..].try_into().unwrap());
 
                 let mut payload = vec![0u8; length as usize];
-                conn.read_exact(&mut payload)?;
+                reader.read_exact(&mut payload)?;
 
                 let mut resp = SubscribeResponse::new();
                 resp.merge_from_bytes(&payload)?;
@@ -207,14 +219,17 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
-    let mut conn = CONN
-        .get()
-        .map(BufReader::new)
-        .ok_or("Connection not initialized")?;
+    let mut conn_guard = CONN.lock().unwrap();
+    let conn = conn_guard.as_mut().ok_or("Connection not initialized")?;
+
+    let mut conn_clone = conn.try_clone()?;
+    drop(conn_guard);
+
+    let mut reader = BufReader::new(&mut conn_clone);
 
     loop {
         let mut header = [0u8; 5];
-        conn.read_exact(&mut header)?;
+        reader.read_exact(&mut header)?;
 
         match header[0] {
             255 => glib::idle_add_once(|| {
@@ -226,7 +241,7 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                 let length = u32::from_be_bytes(header[1..].try_into().unwrap());
 
                 let mut payload = vec![0u8; length as usize];
-                conn.read_exact(&mut payload)?;
+                reader.read_exact(&mut payload)?;
 
                 let mut resp = QueryResponse::new();
                 resp.merge_from_bytes(&payload)?;
@@ -354,10 +369,13 @@ fn query(text: &str) {
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
 
-    if let Some(mut conn) = CONN.get()
-        && conn.write_all(&buffer).is_err()
-    {
-        handle_disconnect();
+    if let Some(conn) = CONN.lock().unwrap().as_mut() {
+        match conn.write_all(&buffer) {
+            Err(_) => {
+                handle_disconnect();
+            }
+            _ => (),
+        }
     }
 }
 
@@ -370,11 +388,9 @@ fn handle_disconnect() {
             });
         });
 
-        println!("re-connecting...");
         while let Err(err) = init_socket() {
             println!("{err}");
         }
-        println!("reconnected");
     });
 }
 
@@ -423,10 +439,15 @@ pub fn activate(item: QueryResponse, query: &str, action: &str) {
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
 
-    if let Some(mut conn) = CONN.get()
-        && conn.write_all(&buffer).is_err()
-    {
-        handle_disconnect();
+    let mut conn_guard = CONN.lock().unwrap();
+
+    if let Some(conn) = conn_guard.as_mut() {
+        match conn.write_all(&buffer) {
+            Err(_) => {
+                handle_disconnect();
+            }
+            _ => (),
+        }
     }
 }
 
@@ -439,8 +460,15 @@ fn subscribe_menu() -> Result<(), Box<dyn std::error::Error>> {
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
 
-    let mut conn = MENUCONN.get().ok_or("Connection not available")?;
-    conn.write_all(&buffer)?;
+    {
+        let mut conn_guard = MENUCONN.lock().unwrap();
+
+        if let Some(conn) = conn_guard.as_mut() {
+            conn.write_all(&buffer)?;
+        } else {
+            return Err("Connection not available".into());
+        }
+    }
 
     Ok(())
 }

@@ -7,6 +7,7 @@ static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 pub struct AppState {
     has_elephant: bool,
     is_connected: bool,
+    is_connecting: bool,
     dmenu_keep_open: bool,
     dmenu_exit_after: bool,
     initial_height: i32,
@@ -115,6 +116,14 @@ pub fn is_connected() -> bool {
 
 pub fn set_is_connected(val: bool) {
     STATE.get().unwrap().write().unwrap().is_connected = val
+}
+
+pub fn is_connecting() -> bool {
+    STATE.get().unwrap().read().unwrap().is_connecting
+}
+
+pub fn set_is_connecting(val: bool) {
+    STATE.get().unwrap().write().unwrap().is_connecting = val
 }
 
 pub fn is_input_only() -> bool {

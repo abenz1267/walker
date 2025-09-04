@@ -424,14 +424,14 @@ fn activate(app: &Application) {
                 .map(|p| p.set_text(&placeholder.list));
         }
 
-        if !get_placeholder().is_empty() {
-            if let Some(input) = &w.input {
-                if let Some(placeholder) = input.placeholder_text() {
-                    set_initial_placeholder(placeholder.to_string());
-                }
-
-                input.set_placeholder_text(Some(&get_placeholder()));
+        if !get_placeholder().is_empty()
+            && let Some(input) = &w.input
+        {
+            if let Some(placeholder) = input.placeholder_text() {
+                set_initial_placeholder(placeholder.to_string());
             }
+
+            input.set_placeholder_text(Some(&get_placeholder()));
         }
 
         if get_parameter_height() != 0 {

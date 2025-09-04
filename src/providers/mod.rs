@@ -66,22 +66,20 @@ pub trait Provider: Sync + Send + Debug {
         }
 
         if let Some(image) = b.object::<Image>("ItemImage") {
-            if Path::new(&item.icon).is_absolute() {
-                let icon = item.icon.clone();
-
-                glib::spawn_future_local(async move {
-                    let Ok((bytes, _)) = gio::File::for_path(&icon).load_contents_future().await
-                    else {
-                        return;
-                    };
-
-                    let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
-                    image.set_paintable(Some(&texture));
-                });
+            if !Path::new(&item.icon).is_absolute() {
+                image.set_icon_name(Some(&item.icon));
                 return;
-            }
+            };
 
-            image.set_icon_name(Some(&item.icon));
+            let icon = item.icon.clone();
+            glib::spawn_future_local(async move {
+                let Ok((bytes, _)) = gio::File::for_path(&icon).load_contents_future().await else {
+                    return;
+                };
+
+                let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+                image.set_paintable(Some(&texture));
+            });
         } else if let Some(image) = b.object::<Picture>("ItemImage") {
             let icon = item.icon.clone();
 

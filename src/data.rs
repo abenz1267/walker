@@ -15,6 +15,7 @@ use gtk4::{glib, prelude::*};
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher};
 use protobuf::{Message, MessageField};
+use std::cmp::Ordering;
 use std::io::{BufReader, Read, Write};
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
@@ -90,9 +91,9 @@ fn sort_items_fuzzy(query: &str) {
                 let score_b = score_map.get(text_b);
 
                 match (score_a, score_b) {
-                    (Some(a), Some(b)) => b.cmp(a),              // Higher scores first
-                    (Some(_), None) => std::cmp::Ordering::Less, // Matched items first
-                    (None, Some(_)) => std::cmp::Ordering::Greater,
+                    (Some(a), Some(b)) => b.cmp(a),    // Higher scores first
+                    (Some(_), None) => Ordering::Less, // Matched items first
+                    (None, Some(_)) => Ordering::Greater,
                     (None, None) => text_a.cmp(text_b), // Alphabetical for non-matches
                 }
             });

@@ -8,9 +8,9 @@ mod renderers;
 mod state;
 mod theme;
 mod ui;
+use arc_swap::ArcSwapOption;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard, Cancellable};
-use gtk4::glib::object::ObjectExt;
 use gtk4::glib::{ControlFlow, Priority};
 use gtk4::prelude::{EditableExt, EntryExt};
 
@@ -22,7 +22,7 @@ use std::cell::OnceCell;
 use std::env;
 use std::process;
 use std::rc::Rc;
-use std::sync::{RwLock, mpsc};
+use std::sync::mpsc;
 use std::thread;
 
 use gtk4::{
@@ -52,7 +52,7 @@ use crate::state::{
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{handle_preview, quit, setup_window, with_window};
 
-static GLOBAL_DMENU_SENDER: RwLock<Option<mpsc::Sender<String>>> = RwLock::new(None);
+static GLOBAL_DMENU_SENDER: ArcSwapOption<mpsc::Sender<String>> = ArcSwapOption::const_empty();
 
 thread_local! {
     static HOLD_GUARD: OnceCell<ApplicationHoldGuard> = OnceCell::new();
@@ -111,8 +111,8 @@ fn init_ui(app: &Application, dmenu: bool) {
 }
 
 fn send_message(message: String) -> Result<(), &'static str> {
-    let tx = GLOBAL_DMENU_SENDER.read().unwrap();
-    let tx = tx.as_ref().ok_or("No sender available")?;
+    let guard = GLOBAL_DMENU_SENDER.load();
+    let tx = guard.as_ref().ok_or("No sender available")?;
 
     tx.send(message).map_err(|_| "Failed to send message")
 }
@@ -293,7 +293,8 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
         set_dmenu_exit_after(options.contains("exit"));
 
-        if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
+        let guard = GLOBAL_DMENU_SENDER.load();
+        if guard.is_some() {
             send_message("CNCLD".to_string()).unwrap();
             break 'dmenu;
         }
@@ -349,7 +350,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
         let (sender, receiver) = mpsc::channel::<String>();
 
-        *GLOBAL_DMENU_SENDER.write().unwrap() = Some(sender);
+        GLOBAL_DMENU_SENDER.store(Some(sender));
 
         let cmd = cmd.clone();
 
@@ -360,7 +361,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
                     msg => cmd.print_literal(&format!("{msg}\n")),
                 };
 
-                *GLOBAL_DMENU_SENDER.write().unwrap() = None;
+                GLOBAL_DMENU_SENDER.store(None);
                 ControlFlow::Break
             }
             Err(mpsc::TryRecvError::Empty) => ControlFlow::Continue,

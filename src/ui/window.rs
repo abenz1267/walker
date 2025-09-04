@@ -476,7 +476,7 @@ fn setup_mouse_handling(ui: &WindowData) {
 }
 
 pub fn quit(app: &Application, cancelled: bool) {
-    if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
+    if GLOBAL_DMENU_SENDER.load().is_some() {
         send_message("CNCLD".to_string()).unwrap();
     }
 

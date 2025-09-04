@@ -350,7 +350,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
         let (sender, receiver) = mpsc::channel::<String>();
 
-        GLOBAL_DMENU_SENDER.store(Some(sender));
+        GLOBAL_DMENU_SENDER.store(Some(sender.into()));
 
         let cmd = cmd.clone();
 

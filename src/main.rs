@@ -498,6 +498,6 @@ fn startup(app: &Application) {
 
     HOLD_GUARD.with(|h| h.set(app.hold()).expect("couldn't set hold-guard"));
 
-    init_app_state();
+    let _ = init_app_state();
     init_ui(app, dmenu);
 }

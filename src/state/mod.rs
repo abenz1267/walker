@@ -29,10 +29,10 @@ pub struct AppState {
     is_visible: bool,
 }
 
-pub fn init_app_state() {
+pub fn init_app_state() -> Result<(), &'static str> {
     STATE
         .set(RwLock::new(AppState::default()))
-        .expect("can't init appstate");
+        .map_err(|_| "AppState is already initialized")
 }
 
 pub fn get_theme() -> String {

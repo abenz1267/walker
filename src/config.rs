@@ -1,6 +1,6 @@
 use config::{Config, ConfigError, File, FileFormat};
 use serde::{Deserialize, Serialize};
-use std::{collections::HashMap, sync::OnceLock};
+use std::{borrow::Cow, collections::HashMap, sync::OnceLock};
 
 static LOADED_CONFIG: OnceLock<Elephant> = OnceLock::new();
 const DEFAULT_CONFIG: &str = include_str!("../resources/config.toml");
@@ -48,14 +48,14 @@ impl Elephant {
     }
 }
 
-fn get_user_config_path() -> String {
+fn get_user_config_path() -> Cow<'static, str> {
     dirs::config_dir()
         .map(|mut path| {
             path.push("walker");
             path.push("config.toml");
-            path.to_string_lossy().to_string()
+            Cow::Owned(path.to_string_lossy().to_string())
         })
-        .unwrap_or_else(|| "~/.config/walker/config.toml".to_string())
+        .unwrap_or(Cow::Borrowed("~/.config/walker/config.toml"))
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

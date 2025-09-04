@@ -48,11 +48,11 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
     path.push("walker");
     path.push("themes");
 
-    let mut paths = vec![path.to_string_lossy().to_string()];
+    let mut paths = vec![path.to_string_lossy()];
     if let Some(a) = &get_config().additional_theme_location
         && let Ok(home) = env::var("HOME")
     {
-        paths.push(a.replace("~", &home).to_string());
+        paths.push(Cow::Owned(a.replace("~", &home)));
     }
 
     let files = vec![
@@ -75,18 +75,14 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
     };
 
     if theme != "default" || is_service {
-        for mut path in paths {
+        for path in paths {
             if !is_service {
-                path = format!("{path}/{theme}");
-
-                themes.insert(
-                    theme.clone(),
-                    setup_theme_from_path(path.clone().into(), &combined),
-                );
+                let path = format!("{path}/{theme}");
+                themes.insert(theme.clone(), setup_theme_from_path(path.into(), &combined));
                 continue;
             }
 
-            let Ok(entries) = fs::read_dir(path) else {
+            let Ok(entries) = fs::read_dir(path.as_ref()) else {
                 continue;
             };
 

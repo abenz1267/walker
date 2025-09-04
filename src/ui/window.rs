@@ -135,7 +135,7 @@ pub fn setup_window(app: &Application) {
                 elephant_hint,
                 content_container,
                 search_container,
-                builder: builder.clone(),
+                builder,
                 preview_builder: std::cell::RefCell::new(None),
                 scroll,
                 mouse_x: 0.0.into(),

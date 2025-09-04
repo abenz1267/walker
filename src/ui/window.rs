@@ -327,13 +327,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
             };
             let item_clone = item.clone();
 
-            let mut provider = item.provider.clone();
-
-            if provider.starts_with("menus:") {
-                provider = "menus".to_string();
-            }
-
-            if let Some(action) = get_provider_bind(&provider, k, m) {
+            if let Some(action) = get_provider_bind(&item.provider, k, m) {
                 let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
 
                 activate(response, &query, &action.action);

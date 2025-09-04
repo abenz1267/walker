@@ -35,7 +35,7 @@ impl Calc {
                 Keybind {
                     bind: config.providers.calc.save.clone(),
                     action: "save".to_string(),
-                    after: crate::keybinds::AfterAction::Reload,
+                    after: crate::keybinds::AfterAction::ClearReloadKeepPrefix,
                 },
             ],
         }

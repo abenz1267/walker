@@ -6,13 +6,13 @@ use gtk4::gdk::Display;
 use gtk4::prelude::GtkWindowExt;
 use gtk4::{CssProvider, Window};
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
+use std::cell::OnceCell;
 use std::collections::HashMap;
 use std::path::PathBuf;
-use std::sync::OnceLock;
 use std::{env, fs};
 
 thread_local! {
-    pub static THEMES: OnceLock<HashMap<String, Theme>> = OnceLock::new();
+    pub static THEMES: OnceCell<HashMap<String, Theme>> = OnceCell::new();
 }
 
 #[derive(Debug)]

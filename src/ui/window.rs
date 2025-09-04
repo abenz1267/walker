@@ -43,14 +43,14 @@ use gtk4::{
     prelude::{EntryExt, GtkWindowExt},
 };
 use std::{
+    cell::OnceCell,
     cell::{Cell, RefCell},
     collections::HashMap,
     process,
-    sync::OnceLock,
 };
 
 thread_local! {
-    pub static WINDOWS: OnceLock<HashMap<String, WindowData>> = OnceLock::new();
+    pub static WINDOWS: OnceCell<HashMap<String, WindowData>> = OnceCell::new();
     pub static CSS_PROVIDER: RefCell<Option<CssProvider>> = RefCell::new(None);
 }
 

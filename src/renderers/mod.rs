@@ -60,13 +60,7 @@ pub fn create_drag_source(text: &str) -> DragSource {
         Some(cp)
     });
 
-    drag_source.connect_drag_begin(|_, _| {
-        with_window(|w| w.window.set_visible(false));
-    });
-
-    drag_source.connect_drag_end(|_, _, _| {
-        with_window(|w| quit(&w.app, false));
-    });
-
+    drag_source.connect_drag_begin(|_, _| with_window(|w| w.window.set_visible(false)));
+    drag_source.connect_drag_end(|_, _, _| with_window(|w| quit(&w.app, false)));
     drag_source
 }

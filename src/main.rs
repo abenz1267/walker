@@ -11,7 +11,7 @@ mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard, Cancellable};
 use gtk4::glib::object::ObjectExt;
-use gtk4::glib::{ControlFlow, GString, Priority};
+use gtk4::glib::{ControlFlow, Priority};
 use gtk4::prelude::{EditableExt, EntryExt};
 
 use config::get_config;

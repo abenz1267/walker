@@ -81,12 +81,8 @@ impl PreviewHandler for FilesPreviewHandler {
             child.unparent();
         }
 
-        let existing_controllers: Vec<_> = preview
-            .observe_controllers()
-            .into_iter()
-            .filter_map(Result::ok)
-            .collect();
-        for controller in existing_controllers {
+        let existing_controllers = preview.observe_controllers();
+        for controller in existing_controllers.into_iter().filter_map(Result::ok) {
             if let Ok(drag_source) = controller.downcast::<DragSource>() {
                 preview.remove_controller(&drag_source);
             }

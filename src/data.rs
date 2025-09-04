@@ -10,6 +10,7 @@ use crate::state::{
 };
 use crate::ui::window::{set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
+use arc_swap::ArcSwapOption;
 use gtk4::glib::Object;
 use gtk4::{glib, prelude::*};
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
@@ -20,12 +21,11 @@ use std::collections::HashMap;
 use std::io::{BufReader, Read, Write};
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
 use std::time::Duration;
 use std::{env, thread};
 
-static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
-static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
+static CONN: ArcSwapOption<UnixStream> = ArcSwapOption::const_empty();
+static MENUCONN: ArcSwapOption<UnixStream> = ArcSwapOption::const_empty();
 
 pub fn input_changed(text: &str) {
     if is_dmenu() {
@@ -124,7 +124,7 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
             }
         }
     };
-    *CONN.lock().unwrap() = Some(conn);
+    CONN.store(Some(conn.into()));
 
     let menuconn = loop {
         match UnixStream::connect(&socket_path) {
@@ -136,7 +136,7 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
         }
     };
 
-    *MENUCONN.lock().unwrap() = Some(menuconn);
+    MENUCONN.store(Some(menuconn.into()));
 
     subscribe_menu().unwrap();
     start_listening();
@@ -176,24 +176,22 @@ fn start_listening() {
 }
 
 fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
-    let mut conn_guard = MENUCONN.lock().unwrap();
-    let conn = conn_guard.as_mut().ok_or("Connection not initialized")?;
-
-    let mut conn_clone = conn.try_clone()?;
-    drop(conn_guard);
-
-    let mut reader = BufReader::new(&mut conn_clone);
+    let guard = MENUCONN.load();
+    let mut conn = guard
+        .as_deref()
+        .map(BufReader::new)
+        .ok_or("Connection not initialized")?;
 
     loop {
         let mut header = [0u8; 5];
-        reader.read_exact(&mut header)?;
+        conn.read_exact(&mut header)?;
 
         match header[0] {
             0 => {
                 let length = u32::from_be_bytes(header[1..].try_into().unwrap());
 
                 let mut payload = vec![0u8; length as usize];
-                reader.read_exact(&mut payload)?;
+                conn.read_exact(&mut payload)?;
 
                 let mut resp = SubscribeResponse::new();
                 resp.merge_from_bytes(&payload)?;
@@ -219,17 +217,15 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
-    let mut conn_guard = CONN.lock().unwrap();
-    let conn = conn_guard.as_mut().ok_or("Connection not initialized")?;
-
-    let mut conn_clone = conn.try_clone()?;
-    drop(conn_guard);
-
-    let mut reader = BufReader::new(&mut conn_clone);
+    let guard = CONN.load();
+    let mut conn = guard
+        .as_deref()
+        .map(BufReader::new)
+        .ok_or("Connection not initialized")?;
 
     loop {
         let mut header = [0u8; 5];
-        reader.read_exact(&mut header)?;
+        conn.read_exact(&mut header)?;
 
         match header[0] {
             255 => glib::idle_add_once(|| {
@@ -241,7 +237,7 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                 let length = u32::from_be_bytes(header[1..].try_into().unwrap());
 
                 let mut payload = vec![0u8; length as usize];
-                reader.read_exact(&mut payload)?;
+                conn.read_exact(&mut payload)?;
 
                 let mut resp = QueryResponse::new();
                 resp.merge_from_bytes(&payload)?;
@@ -369,13 +365,13 @@ fn query(text: &str) {
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
 
-    if let Some(conn) = CONN.lock().unwrap().as_mut() {
-        match conn.write_all(&buffer) {
-            Err(_) => {
-                handle_disconnect();
-            }
-            _ => (),
-        }
+    let guard = CONN.load();
+    let Some(mut conn) = guard.as_deref() else {
+        return;
+    };
+
+    if conn.write_all(&buffer).is_err() {
+        handle_disconnect();
     }
 }
 
@@ -439,15 +435,13 @@ pub fn activate(item: QueryResponse, query: &str, action: &str) {
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
 
-    let mut conn_guard = CONN.lock().unwrap();
+    let guard = CONN.load();
+    let Some(mut conn) = guard.as_deref() else {
+        return;
+    };
 
-    if let Some(conn) = conn_guard.as_mut() {
-        match conn.write_all(&buffer) {
-            Err(_) => {
-                handle_disconnect();
-            }
-            _ => (),
-        }
+    if conn.write_all(&buffer).is_err() {
+        handle_disconnect();
     }
 }
 
@@ -460,17 +454,11 @@ fn subscribe_menu() -> Result<(), Box<dyn std::error::Error>> {
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
 
-    {
-        let mut conn_guard = MENUCONN.lock().unwrap();
+    let guard = MENUCONN.load();
+    let mut conn = guard.as_deref().ok_or("Unable to get guard")?;
 
-        if let Some(conn) = conn_guard.as_mut() {
-            conn.write_all(&buffer)?;
-        } else {
-            return Err("Connection not available".into());
-        }
-    }
-
-    Ok(())
+    conn.write_all(&buffer)
+        .map_err(|_| "Connection not available".into())
 }
 
 fn wait_for_file(path: &str) {

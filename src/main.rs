@@ -459,7 +459,6 @@ fn activate(app: &Application) {
         setup_css(get_theme());
 
         if let Some(input) = &w.input {
-            input.emit_by_name::<()>("changed", &[]);
             input.grab_focus();
         }
 

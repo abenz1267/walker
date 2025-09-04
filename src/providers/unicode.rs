@@ -35,7 +35,7 @@ impl Provider for Unicode {
     }
 
     fn get_keybind_hint(&self, cfg: &Elephant) -> String {
-        format!("copy: {}", cfg.providers.unicode.copy,)
+        format!("copy: {}", cfg.providers.unicode.copy)
     }
 
     fn get_item_layout(&self) -> String {

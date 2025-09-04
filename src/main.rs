@@ -64,7 +64,7 @@ fn main() -> glib::ExitCode {
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 
-    app.connect_handle_local_options(|_app, _dict| return -1);
+    app.connect_handle_local_options(|_, _| return -1);
 
     add_flags(&app);
 
@@ -82,11 +82,11 @@ fn init_ui(app: &Application, dmenu: bool) {
 
     config::load().unwrap();
 
-    let theme = if get_config().theme.is_empty() {
-        "default"
-    } else {
-        &get_config().theme
-    };
+    let mut theme = get_config().theme.as_str();
+
+    if theme.is_empty() {
+        theme = "default";
+    }
 
     set_theme(theme.to_string());
 
@@ -115,12 +115,13 @@ fn init_ui(app: &Application, dmenu: bool) {
 }
 
 fn send_message(message: String) -> Result<(), String> {
-    if let Some(tx) = GLOBAL_DMENU_SENDER.read().unwrap().as_ref() {
-        tx.send(message)
-            .map_err(|_| "Failed to send message".to_string())
-    } else {
-        Err("No sender available".to_string())
-    }
+    let tx = GLOBAL_DMENU_SENDER.read().unwrap();
+    let tx = tx
+        .as_ref()
+        .ok_or_else(|| "No sender available".to_string())?;
+
+    tx.send(message)
+        .map_err(|_| "Failed to send message".to_string())
 }
 
 fn add_flags(app: &Application) {
@@ -246,50 +247,45 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     let options = cmd.options_dict();
 
     if options.contains("version") {
-        cmd.print_literal("1.0.0-beta-26\n");
+        cmd.print_literal(&format!("{}\n", env!("CARGO_PKG_VERSION")));
         return 0;
     }
 
-    if options.contains("provider") {
-        if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
-            set_provider(val.str().unwrap().to_string());
-        }
+    if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
+        set_provider(val.str().unwrap().to_string());
     }
 
     set_param_close(options.contains("close"));
 
-    if options.contains("theme") {
-        if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
-            let theme = val.str().unwrap();
+    if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
+        let theme = val.str().unwrap();
 
-            if has_theme(theme.to_string()) {
-                set_theme(theme.to_string());
-            } else {
-                cmd.print_literal("theme not found. using default theme.\n");
-                set_theme("default".to_string());
-            }
+        if has_theme(theme) {
+            set_theme(theme.to_string());
+        } else {
+            cmd.print_literal("theme not found. using default theme.\n");
+            set_theme("default".to_string());
         }
     }
 
-    if options.contains("height") {
-        if let Some(val) = options.lookup_value("height", Some(VariantTy::INT64)) {
-            set_parameter_height(val.get::<i64>().unwrap() as i32);
-        }
+    if let Some(val) = options.lookup_value("height", Some(VariantTy::INT64)) {
+        set_parameter_height(val.get::<i64>().unwrap() as i32);
     }
 
-    if options.contains("width") {
-        if let Some(val) = options.lookup_value("width", Some(VariantTy::INT64)) {
-            set_parameter_width(val.get::<i64>().unwrap() as i32);
-        }
+    if let Some(val) = options.lookup_value("width", Some(VariantTy::INT64)) {
+        set_parameter_width(val.get::<i64>().unwrap() as i32);
     }
 
     set_no_search(options.contains("nosearch"));
 
-    if options.contains("dmenu") {
-        if options.contains("placeholder") {
-            if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING)) {
-                set_placeholder(val.str().unwrap().to_string());
-            }
+    'dmenu: {
+        if !options.contains("dmenu") {
+            set_dmenu_keep_open(false);
+            break 'dmenu;
+        }
+
+        if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING)) {
+            set_placeholder(val.str().unwrap().to_string());
         }
 
         set_input_only(options.contains("inputonly"));
@@ -298,112 +294,96 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
             set_dmenu_keep_open(true);
         }
 
-        if options.contains("current") {
-            if let Some(val) = options.lookup_value("current", Some(VariantTy::INT64)) {
-                set_dmenu_current(val.get::<i64>().unwrap());
-            }
+        if let Some(val) = options.lookup_value("current", Some(VariantTy::INT64)) {
+            set_dmenu_current(val.get::<i64>().unwrap());
         }
 
         set_dmenu_exit_after(options.contains("exit"));
 
-        let mut exists = false;
-
         if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
             send_message("CNCLD".to_string()).unwrap();
-            exists = true;
+            break 'dmenu;
         }
 
-        if !exists {
-            with_window(|w| {
-                if let Some(input) = &w.input {
-                    input.set_text("");
-                }
-
-                let items = &w.items;
-                items.remove_all();
-
-                if !is_input_only() {
-                    let stdin = cmd.stdin();
-                    let data_stream = gio::DataInputStream::new(&stdin.unwrap());
-                    let data_stream_rc = Rc::new(data_stream);
-
-                    fn read_line_callback(
-                        stream: Rc<gio::DataInputStream>,
-                        i: i32,
-                        items: gio::ListStore,
-                    ) {
-                        let stream_clone = stream.clone();
-
-                        stream.read_line_utf8_async(
-                            Priority::DEFAULT,
-                            Cancellable::NONE,
-                            move |line_slice| match line_slice {
-                                Ok(line_slice) => {
-                                    if let Some(line) = line_slice {
-                                        if line.is_empty() {
-                                            return;
-                                        }
-
-                                        let trimmed = line.trim();
-
-                                        if !trimmed.is_empty() {
-                                            let mut item = query_response::Item::new();
-                                            item.text = trimmed.to_string();
-                                            item.provider = "dmenu".to_string();
-                                            item.score = 1000000 - i;
-
-                                            let mut response = QueryResponse::new();
-                                            response.item = protobuf::MessageField::some(item);
-
-                                            items.append(&QueryResponseObject::new(response));
-                                        }
-                                        read_line_callback(stream_clone, i + 1, items.clone());
-                                    }
-                                }
-                                Err(e) => {
-                                    eprintln!("Error reading: {}", e);
-                                    return;
-                                }
-                            },
-                        );
-                    }
-
-                    read_line_callback(data_stream_rc.clone(), 0, items.clone());
-                }
-            });
-
-            set_is_dmenu(true);
-
-            if is_service() {
-                let (sender, receiver) = mpsc::channel::<String>();
-
-                *GLOBAL_DMENU_SENDER.write().unwrap() = Some(sender);
-
-                let cmd_clone = cmd.clone();
-
-                glib::idle_add_local(move || match receiver.try_recv() {
-                    Ok(message) => {
-                        match message.as_str() {
-                            "CNCLD" => {
-                                cmd_clone.set_exit_status(130);
-                            }
-                            msg => cmd_clone.print_literal(&format!("{}\n", msg)),
-                        };
-
-                        *GLOBAL_DMENU_SENDER.write().unwrap() = None;
-
-                        ControlFlow::Break
-                    }
-                    Err(mpsc::TryRecvError::Empty) => ControlFlow::Continue,
-                    Err(mpsc::TryRecvError::Disconnected) => {
-                        cmd_clone.set_exit_status(130);
-                        ControlFlow::Break
-                    }
-                });
+        with_window(|w| {
+            if let Some(input) = &w.input {
+                input.set_text("");
             }
+
+            let items = &w.items;
+            items.remove_all();
+
+            if is_input_only() {
+                return;
+            }
+
+            let stdin = cmd.stdin();
+            let data_stream = gio::DataInputStream::new(&stdin.unwrap());
+
+            fn read_line_callback(stream: Rc<gio::DataInputStream>, i: i32, items: gio::ListStore) {
+                let stream_clone = stream.clone();
+
+                stream.read_line_utf8_async(
+                    Priority::DEFAULT,
+                    Cancellable::NONE,
+                    move |line_slice| match line_slice {
+                        Ok(Some(line)) => {
+                            if line.is_empty() {
+                                return;
+                            }
+
+                            let line = line.trim();
+
+                            if !line.is_empty() {
+                                let mut item = query_response::Item::new();
+                                item.text = line.to_string();
+                                item.provider = "dmenu".to_string();
+                                item.score = 1000000 - i;
+
+                                let mut response = QueryResponse::new();
+                                response.item = protobuf::MessageField::some(item);
+
+                                items.append(&QueryResponseObject::new(response));
+                            }
+                            read_line_callback(stream_clone, i + 1, items);
+                        }
+                        Ok(None) => (),
+                        Err(e) => eprintln!("Error reading: {e}"),
+                    },
+                );
+            }
+
+            read_line_callback(Rc::new(data_stream), 0, items.clone());
+        });
+
+        set_is_dmenu(true);
+
+        if !is_service() {
+            break 'dmenu;
         }
-    } else {
-        set_dmenu_keep_open(false);
+
+        let (sender, receiver) = mpsc::channel::<String>();
+
+        *GLOBAL_DMENU_SENDER.write().unwrap() = Some(sender);
+
+        let cmd = cmd.clone();
+
+        glib::idle_add_local(move || match receiver.try_recv() {
+            Ok(message) => {
+                match message.as_str() {
+                    "CNCLD" => cmd.set_exit_status(130),
+                    msg => cmd.print_literal(&format!("{msg}\n")),
+                };
+
+                *GLOBAL_DMENU_SENDER.write().unwrap() = None;
+                ControlFlow::Break
+            }
+            Err(mpsc::TryRecvError::Empty) => ControlFlow::Continue,
+            Err(mpsc::TryRecvError::Disconnected) => {
+                cmd.set_exit_status(130);
+                ControlFlow::Break
+            }
+        });
     }
 
     app.activate();
@@ -415,107 +395,104 @@ fn activate(app: &Application) {
 
     if (cfg.close_when_open && is_visible() && !is_dmenu_keep_open()) || is_param_close() {
         quit(app, false);
-    } else if !is_dmenu_keep_open() || !is_visible() {
-        let provider = get_provider();
-        let p;
+        return;
+    }
 
-        if provider.is_empty() {
-            p = "default".to_string();
-        } else {
-            p = provider.clone();
+    if is_dmenu_keep_open() && is_visible() {
+        return;
+    }
+
+    let provider = get_provider();
+    let provider = if provider.is_empty() {
+        "default"
+    } else {
+        provider.as_str()
+    };
+
+    with_window(|w| {
+        if is_input_only() {
+            w.content_container.set_visible(false);
+            if let Some(keybinds) = &w.keybinds {
+                keybinds.set_visible(false);
+            }
         }
 
-        drop(provider);
-
-        with_window(|w| {
-            if is_input_only() {
-                w.content_container.set_visible(false);
-                if let Some(keybinds) = &w.keybinds {
-                    keybinds.set_visible(false);
-                }
-            }
-
-            if let Some(placeholders) = &cfg.placeholders {
-                if let Some(placeholder) = placeholders.get(&p.to_string()) {
-                    if let Some(input) = &w.input {
-                        input.set_placeholder_text(Some(&placeholder.input));
-                    }
-
-                    w.placeholder
-                        .as_ref()
-                        .map(|p| p.set_text(&placeholder.list));
-                }
-            }
-
-            if !get_placeholder().is_empty() {
-                if let Some(input) = &w.input {
-                    if let Some(p) = input.placeholder_text() {
-                        set_initial_placeholder(p.to_string());
-                    }
-
-                    input.set_placeholder_text(Some(&get_placeholder()));
-                }
-            }
-
-            if get_parameter_height() != 0 {
-                set_initial_height(w.scroll.max_content_height());
-                w.scroll.set_max_content_height(get_parameter_height());
-                w.scroll.set_min_content_height(get_parameter_height());
-            } else {
-                set_initial_height(0);
-            }
-
-            if get_parameter_width() != 0 {
-                set_initial_width(w.scroll.max_content_width());
-                w.scroll.set_max_content_width(get_parameter_width());
-                w.scroll.set_min_content_width(get_parameter_width());
-            } else {
-                set_initial_width(0);
-            }
-
-            if is_no_search() {
-                if let Some(search_container) = &w.search_container {
-                    search_container.set_visible(false);
-                }
-            }
-
-            setup_css(get_theme());
-
+        if let Some(placeholders) = &cfg.placeholders
+            && let Some(placeholder) = placeholders.get(provider)
+        {
             if let Some(input) = &w.input {
-                input.emit_by_name::<()>("changed", &[]);
-                input.grab_focus();
+                input.set_placeholder_text(Some(&placeholder.input));
             }
 
-            if !is_connected() && !is_dmenu() {
-                w.elephant_hint.set_visible(true);
-                w.scroll.set_visible(false);
-            } else {
-                w.elephant_hint.set_visible(false);
-                w.scroll.set_visible(true);
-            }
+            w.placeholder
+                .as_ref()
+                .map(|p| p.set_text(&placeholder.list));
+        }
 
-            w.window.set_visible(true);
-
-            if !is_dmenu() && !is_connected() {
-                if has_elephant() {
-                    thread::spawn(|| {
-                        init_socket().unwrap();
-                    });
-                } else {
-                    println!("Please install elephant.");
-                    process::exit(1);
+        if !get_placeholder().is_empty() {
+            if let Some(input) = &w.input {
+                if let Some(placeholder) = input.placeholder_text() {
+                    set_initial_placeholder(placeholder.to_string());
                 }
-            }
-        });
 
-        set_is_visible(true);
-    }
+                input.set_placeholder_text(Some(&get_placeholder()));
+            }
+        }
+
+        if get_parameter_height() != 0 {
+            set_initial_height(w.scroll.max_content_height());
+            w.scroll.set_max_content_height(get_parameter_height());
+            w.scroll.set_min_content_height(get_parameter_height());
+        } else {
+            set_initial_height(0);
+        }
+
+        if get_parameter_width() != 0 {
+            set_initial_width(w.scroll.max_content_width());
+            w.scroll.set_max_content_width(get_parameter_width());
+            w.scroll.set_min_content_width(get_parameter_width());
+        } else {
+            set_initial_width(0);
+        }
+
+        if is_no_search()
+            && let Some(search_container) = &w.search_container
+        {
+            search_container.set_visible(false);
+        }
+
+        setup_css(get_theme());
+
+        if let Some(input) = &w.input {
+            input.emit_by_name::<()>("changed", &[]);
+            input.grab_focus();
+        }
+
+        if !is_connected() && !is_dmenu() {
+            w.elephant_hint.set_visible(true);
+            w.scroll.set_visible(false);
+        } else {
+            w.elephant_hint.set_visible(false);
+            w.scroll.set_visible(true);
+        }
+
+        w.window.set_visible(true);
+
+        if !is_dmenu() && !is_connected() && has_elephant() {
+            thread::spawn(|| init_socket().unwrap());
+        } else if !has_elephant() {
+            println!("Please install elephant.");
+            process::exit(1);
+        }
+    });
+
+    set_is_visible(true);
 }
 
 fn startup(app: &Application) {
     let args: Vec<String> = env::args().collect();
-    let mut dmenu = false;
-    let mut version = false;
+    let dmenu = args.contains(&"--dmenu".to_string()) || args.contains(&"-d".to_string());
+    let version = args.contains(&"--version".to_string()) || args.contains(&"-v".to_string());
 
     if !app.flags().contains(ApplicationFlags::IS_SERVICE)
         && (args.contains(&"--close".to_string()) || args.contains(&"-q".to_string()))
@@ -523,22 +500,16 @@ fn startup(app: &Application) {
         process::exit(0);
     }
 
-    if args.contains(&"--dmenu".to_string()) || args.contains(&"-d".to_string()) {
-        dmenu = true;
+    if version {
+        return;
     }
 
-    if args.contains(&"--version".to_string()) || args.contains(&"-v".to_string()) {
-        version = true;
-    }
-
-    if !app.flags().contains(ApplicationFlags::IS_SERVICE) && !dmenu && !version {
+    if !app.flags().contains(ApplicationFlags::IS_SERVICE) && !dmenu {
         println!("make sure 'walker --gapplication-service' is running!");
     }
 
-    if !version {
-        HOLD_GUARD.with(|h| h.set(app.hold()).expect("couldn't set hold-guard"));
+    HOLD_GUARD.with(|h| h.set(app.hold()).expect("couldn't set hold-guard"));
 
-        init_app_state();
-        init_ui(app, dmenu);
-    }
+    init_app_state();
+    init_ui(app, dmenu);
 }

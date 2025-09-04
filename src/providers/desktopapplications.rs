@@ -18,7 +18,7 @@ impl DesktopApplications {
             default_action: config.providers.desktopapplications.default.clone(),
             keybinds: vec![Keybind {
                 bind: config.providers.desktopapplications.start.clone(),
-                action: "".to_string(),
+                action: String::new(),
                 after: crate::keybinds::AfterAction::Close,
             }],
         }

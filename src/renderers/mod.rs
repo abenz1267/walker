@@ -55,9 +55,7 @@ pub fn setup_item_transformers() {
     text.insert("files".to_string(), files_text_transformer);
     text.insert("clipboard".to_string(), clipboard_text_transformer);
 
-    TEXT_TRANSFORMERS.with(|t| {
-        t.set(text).expect("Text transformers already initialized");
-    });
+    TEXT_TRANSFORMERS.with(|t| t.set(text).expect("Text transformers already initialized"));
 
     let mut subtext: HashMap<String, fn(&str, &Label)> = HashMap::new();
 
@@ -78,141 +76,152 @@ pub fn setup_item_transformers() {
     image.insert("todo".to_string(), todo_image_transformer);
     image.insert("files".to_string(), files_image_transformer);
 
-    IMAGE_TRANSFORMERS.with(|t| {
-        t.set(image).expect("Text transformers already initialized");
-    });
+    IMAGE_TRANSFORMERS.with(|t| t.set(image).expect("Text transformers already initialized"));
 }
 
 fn default_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
-    if let Some(image) = b.object::<Image>("ItemImage") {
-        if !item.icon.is_empty() {
-            if Path::new(&item.icon).is_absolute() {
-                let icon = item.icon.clone();
+    if let Some(image) = b.object::<Image>("ItemImage")
+        && !item.icon.is_empty()
+    {
+        if Path::new(&item.icon).is_absolute() {
+            let icon = item.icon.clone();
 
-                glib::spawn_future_local(async move {
-                    let file = gio::File::for_path(&icon);
+            glib::spawn_future_local(async move {
+                let Ok((bytes, _)) = gio::File::for_path(&icon).load_contents_future().await else {
+                    return;
+                };
 
-                    if let Ok((bytes, _)) = file.load_contents_future().await {
-                        let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
-                        image.set_paintable(Some(&texture));
-                    }
-                });
-            } else {
-                image.set_icon_name(Some(&item.icon));
-            }
+                let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+                image.set_paintable(Some(&texture));
+            });
+        } else {
+            image.set_icon_name(Some(&item.icon));
         }
-    } else if let Some(image) = b.object::<Picture>("ItemImage") {
+    } else if item.icon.is_empty()
+        && let Some(image) = b.object::<Picture>("ItemImage")
+    {
         let icon = item.icon.clone();
 
         glib::spawn_future_local(async move {
-            let file = gio::File::for_path(&icon);
+            let Ok((bytes, _)) = gio::File::for_path(&icon).load_contents_future().await else {
+                return;
+            };
 
-            if let Ok((bytes, _)) = file.load_contents_future().await {
-                let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
-                image.set_paintable(Some(&texture));
-            }
+            let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+            image.set_paintable(Some(&texture));
         });
     }
 }
 
 fn calc_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
-    if let Some(image) = b.object::<Image>("ItemImage") {
-        if item.state.contains(&"current".to_string()) {
-            if !item.icon.is_empty() {
-                if Path::new(&item.icon).is_absolute() {
-                    image.set_from_file(Some(&item.icon));
-                } else {
-                    image.set_icon_name(Some(&item.icon));
-                }
-            }
-        } else {
-            image.set_visible(false);
-        }
+    let Some(image) = b.object::<Image>("ItemImage") else {
+        return;
+    };
+
+    if !item.state.contains(&"current".to_string()) {
+        image.set_visible(false);
+        return;
     }
+
+    let function = if !item.icon.is_empty() && Path::new(&item.icon).is_absolute() {
+        Image::set_from_file
+    } else if !item.icon.is_empty() {
+        Image::set_icon_name
+    } else {
+        return;
+    };
+    function(&image, Some(&item.icon))
 }
 
 fn todo_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
-    if let Some(image) = b.object::<Image>("ItemImage") {
-        if item.state.contains(&"creating".to_string()) {
-            if !item.icon.is_empty() {
-                if Path::new(&item.icon).is_absolute() {
-                    image.set_from_file(Some(&item.icon));
-                } else {
-                    image.set_icon_name(Some(&item.icon));
-                }
-            }
-        } else {
-            image.set_visible(false);
-        }
+    let Some(image) = b.object::<Image>("ItemImage") else {
+        return;
+    };
+
+    if !item.state.contains(&"creating".to_string()) {
+        image.set_visible(false);
+        return;
     }
+
+    let function = if !item.icon.is_empty() && Path::new(&item.icon).is_absolute() {
+        Image::set_from_file
+    } else if !item.icon.is_empty() {
+        Image::set_icon_name
+    } else {
+        return;
+    };
+    function(&image, Some(&item.icon))
 }
 
 fn files_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
-    if let Some(image) = b.object::<Image>("ItemImage") {
-        let file = gio::File::for_path(&item.text);
+    let Some(image) = b.object::<Image>("ItemImage") else {
+        return;
+    };
 
-        let info = file.query_info(
-            "standard::icon",
-            gio::FileQueryInfoFlags::NONE,
-            gio::Cancellable::NONE,
-        );
+    let file = gio::File::for_path(&item.text);
 
-        if let Ok(info) = info {
-            if let Some(icon) = info.icon() {
-                image.set_from_gicon(&icon);
-            }
-        }
+    let info = file.query_info(
+        "standard::icon",
+        gio::FileQueryInfoFlags::NONE,
+        gio::Cancellable::NONE,
+    );
+
+    if let Ok(info) = info
+        && let Some(icon) = info.icon()
+    {
+        image.set_from_gicon(&icon);
     }
 }
 
 fn symbols_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
-    if let Some(image) = b.object::<Label>("ItemImage") {
-        if !item.icon.is_empty() {
-            image.set_label(&item.icon);
-        }
+    if let Some(image) = b.object::<Label>("ItemImage")
+        && !item.icon.is_empty()
+    {
+        image.set_label(&item.icon);
     }
 }
 
 fn unicode_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
-    if let Some(image) = b.object::<Label>("ItemImage") {
-        if !item.icon.is_empty() {
-            if let Ok(code_point) = u32::from_str_radix(&item.icon, 16) {
-                if let Some(unicode_char) = char::from_u32(code_point) {
-                    image.set_label(&format!("{}", unicode_char));
-                }
-            }
-        }
+    if let Some(image) = b.object::<Label>("ItemImage")
+        && !item.icon.is_empty()
+        && let Ok(code_point) = u32::from_str_radix(&item.icon, 16)
+        && let Some(unicode_char) = char::from_u32(code_point)
+    {
+        image.set_label(&format!("{unicode_char}"));
     }
 }
 
 fn clipboard_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
-    if let Some(image) = b.object::<Picture>("ItemImage") {
-        if !item.icon.is_empty() {
-            let icon = item.icon.clone();
+    let Some(image) = b.object::<Picture>("ItemImage") else {
+        return;
+    };
 
-            glib::spawn_future_local(async move {
-                let file = gio::File::for_path(&icon);
+    if item.icon.is_empty() {
+        image.set_visible(false);
+        return;
+    }
 
-                if let Ok((bytes, _)) = file.load_contents_future().await {
-                    let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
-                    image.set_paintable(Some(&texture));
-                }
-            });
+    let icon = item.icon.clone();
 
-            if let Some(text) = b.object::<Label>("ItemText") {
-                text.set_visible(false);
-            }
-        } else {
-            image.set_visible(false);
-        }
+    glib::spawn_future_local(async move {
+        let Ok((bytes, _)) = gio::File::for_path(&icon).load_contents_future().await else {
+            return;
+        };
+
+        let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+        image.set_paintable(Some(&texture));
+    });
+
+    if let Some(text) = b.object::<Label>("ItemText") {
+        text.set_visible(false);
     }
 }
 
 fn files_text_transformer(text: &str, label: &Label) {
-    if let Ok(home) = env::var("HOME") {
-        if let Some(stripped) = text.strip_prefix(&home) {
-            label.set_label(stripped);
-        }
+    if let Ok(home) = env::var("HOME")
+        && let Some(stripped) = text.strip_prefix(&home)
+    {
+        label.set_label(stripped);
     }
 }
 
@@ -223,31 +232,31 @@ fn clipboard_text_transformer(text: &str, label: &Label) {
 fn default_text_transformer(text: &str, label: &Label) {
     if text.is_empty() {
         label.set_visible(false);
-    } else {
-        label.set_text(&text);
+        return;
     }
+
+    label.set_text(&text);
 }
 
 fn default_subtext_transformer(text: &str, label: &Label) {
     if text.is_empty() {
         label.set_visible(false);
-    } else {
-        label.set_text(&text);
+        return;
     }
+
+    label.set_text(&text);
 }
 
 fn clipboard_subtext_transformer(text: &str, label: &Label) {
-    match DateTime::parse_from_rfc2822(&text) {
-        Ok(dt) => {
-            let formatted = dt
-                .format(&get_config().providers.clipboard.time_format)
-                .to_string();
-            label.set_label(&formatted);
-        }
-        Err(_) => {
-            label.set_label(&text);
-        }
-    }
+    let Ok(dt) = DateTime::parse_from_rfc2822(&text) else {
+        label.set_label(&text);
+        return;
+    };
+
+    let formatted = dt
+        .format(&get_config().providers.clipboard.time_format)
+        .to_string();
+    label.set_label(&formatted);
 }
 
 pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
@@ -316,20 +325,14 @@ pub fn create_drag_source(text: &str) -> DragSource {
         let b = glib::Bytes::from(uri_string.as_bytes());
 
         let cp = ContentProvider::for_bytes("text/uri-list", &b);
-
         Some(cp)
     });
 
     drag_source.connect_drag_begin(|_, _| {
-        with_window(|w| {
-            w.window.set_visible(false);
-        });
+        with_window(|w| w.window.set_visible(false));
     });
-
     drag_source.connect_drag_end(|_, _, _| {
-        with_window(|w| {
-            quit(&w.app, false);
-        });
+        with_window(|w| quit(&w.app, false));
     });
 
     drag_source

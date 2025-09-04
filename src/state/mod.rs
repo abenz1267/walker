@@ -3,7 +3,7 @@ use std::sync::{OnceLock, RwLock};
 
 static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Default)]
 pub struct AppState {
     has_elephant: bool,
     is_connected: bool,
@@ -29,38 +29,9 @@ pub struct AppState {
     is_visible: bool,
 }
 
-impl AppState {
-    pub fn new() -> Self {
-        Self {
-            provider: String::new(),
-            available_themes: HashSet::new(),
-            theme: String::new(),
-            current_prefix: String::new(),
-            placeholder: String::new(),
-            initial_placeholder: String::new(),
-            last_query: String::new(),
-            is_service: false,
-            is_param_close: false,
-            is_visible: false,
-            input_only: false,
-            has_elephant: false,
-            is_connected: false,
-            no_search: false,
-            is_dmenu: false,
-            dmenu_keep_open: false,
-            dmenu_exit_after: false,
-            initial_height: 0,
-            parameter_height: 0,
-            parameter_width: 0,
-            initial_width: 0,
-            dmenu_current: 0,
-        }
-    }
-}
-
 pub fn init_app_state() {
     STATE
-        .set(RwLock::new(AppState::new()))
+        .set(RwLock::new(AppState::default()))
         .expect("can't init appstate");
 }
 
@@ -248,12 +219,12 @@ pub fn add_theme(val: String) {
         .insert(val);
 }
 
-pub fn has_theme(val: String) -> bool {
+pub fn has_theme(val: &str) -> bool {
     STATE
         .get()
         .unwrap()
         .read()
         .unwrap()
         .available_themes
-        .contains(&val)
+        .contains(val)
 }

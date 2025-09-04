@@ -29,18 +29,11 @@ pub fn get_previewer<F, R>(provider: &str, f: F) -> Option<R>
 where
     F: FnOnce(&dyn PreviewHandler) -> R,
 {
-    PREVIEWERS.with(|previewers| {
-        previewers
-            .borrow()
-            .get(provider)
-            .map(|handler| f(handler.as_ref()))
-    })
+    PREVIEWERS.with(|previewers| previewers.borrow().get(provider).map(Box::as_ref).map(f))
 }
 
 pub fn handle_preview(provider: &str, item: &Item, preview: &GtkBox, builder: &Builder) {
-    get_previewer(provider, |handler| {
-        handler.handle(item, preview, builder);
-    });
+    get_previewer(provider, |handler| handler.handle(item, preview, builder));
 }
 
 pub fn has_previewer(provider: &str) -> bool {
@@ -49,8 +42,7 @@ pub fn has_previewer(provider: &str) -> bool {
 
 pub fn clear_all_caches() {
     PREVIEWERS.with(|previewers| {
-        let previewers = previewers.borrow();
-        for handler in previewers.values() {
+        for handler in previewers.borrow().values() {
             handler.clear_cache();
         }
     });

@@ -280,16 +280,13 @@ impl FilePreview {
         surface.flush();
 
         let bytes = {
-            let mut surface_data = surface.data()?;
-            let mut rgba_data = Vec::with_capacity(surface_data.len());
+            let mut rgba_data = surface.data()?.to_vec();
 
-            for chunk in surface_data.chunks_exact_mut(4) {
+            for chunk in rgba_data.chunks_exact_mut(4) {
                 chunk.swap(0, 2);
-                rgba_data.extend_from_slice(chunk);
             }
 
-            std::mem::drop(surface_data);
-            Bytes::from(&rgba_data)
+            Bytes::from_owned(rgba_data)
         };
 
         std::mem::drop(surface);

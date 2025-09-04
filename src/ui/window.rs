@@ -525,12 +525,14 @@ pub fn quit(app: &Application, cancelled: bool) {
     }
 
     with_window(|w| {
-        if let Some(input) = &w.input {
-            set_last_query(input.text().to_string());
-            if !get_initial_placeholder().is_empty() {
-                input.set_placeholder_text(Some(&get_initial_placeholder()));
-                set_initial_placeholder(String::new());
-            }
+        let Some(input) = &w.input else {
+            return;
+        };
+
+        set_last_query(input.text().to_string());
+        if !get_initial_placeholder().is_empty() {
+            input.set_placeholder_text(Some(&get_initial_placeholder()));
+            set_initial_placeholder(String::new());
         }
     });
 
@@ -582,14 +584,16 @@ pub fn select_next() {
 
         let current = selection.selected();
         let n_items = selection.n_items();
-        if n_items > 0 {
-            let next = if current + 1 >= n_items {
-                0
-            } else {
-                current + 1
-            };
-            selection.set_selected(next);
+        if n_items <= 0 {
+            return;
         }
+
+        let next = if current + 1 >= n_items {
+            0
+        } else {
+            current + 1
+        };
+        selection.set_selected(next);
     });
 }
 
@@ -608,14 +612,16 @@ pub fn select_previous() {
 
         let current = selection.selected();
         let n_items = selection.n_items();
-        if n_items > 0 {
-            let prev = if current == 0 {
-                n_items - 1
-            } else {
-                current - 1
-            };
-            selection.set_selected(prev);
+        if n_items <= 0 {
+            return;
         }
+
+        let prev = if current == 0 {
+            n_items - 1
+        } else {
+            current - 1
+        };
+        selection.set_selected(prev);
     });
 }
 

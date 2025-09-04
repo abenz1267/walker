@@ -167,19 +167,21 @@ fn start_listening() {
 }
 
 fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
-    let mut conn = MENUCONN.get().ok_or("Connection not initialized")?;
-    let mut reader = BufReader::new(&mut conn);
+    let mut conn = MENUCONN
+        .get()
+        .map(BufReader::new)
+        .ok_or("Connection not initialized")?;
 
     loop {
         let mut header = [0u8; 5];
-        reader.read_exact(&mut header)?;
+        conn.read_exact(&mut header)?;
 
         match header[0] {
             0 => {
                 let length = u32::from_be_bytes(header[1..].try_into().unwrap());
 
                 let mut payload = vec![0u8; length as usize];
-                reader.read_exact(&mut payload)?;
+                conn.read_exact(&mut payload)?;
 
                 let mut resp = SubscribeResponse::new();
                 resp.merge_from_bytes(&payload)?;
@@ -205,12 +207,14 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
-    let mut conn = CONN.get().ok_or("Connection not initialized")?;
-    let mut reader = BufReader::new(&mut conn);
+    let mut conn = CONN
+        .get()
+        .map(BufReader::new)
+        .ok_or("Connection not initialized")?;
 
     loop {
         let mut header = [0u8; 5];
-        reader.read_exact(&mut header)?;
+        conn.read_exact(&mut header)?;
 
         match header[0] {
             255 => glib::idle_add_once(|| {
@@ -222,7 +226,7 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                 let length = u32::from_be_bytes(header[1..].try_into().unwrap());
 
                 let mut payload = vec![0u8; length as usize];
-                reader.read_exact(&mut payload)?;
+                conn.read_exact(&mut payload)?;
 
                 let mut resp = QueryResponse::new();
                 resp.merge_from_bytes(&payload)?;

@@ -7,7 +7,7 @@ use gtk4::{
 
 use crate::{
     config::{Elephant, get_config},
-    keybinds::Keybind,
+    keybinds::{Action, Keybind},
     protos::generated_proto::query::query_response::Item,
     providers::Provider,
 };
@@ -27,23 +27,31 @@ impl Files {
             keybinds: vec![
                 Keybind {
                     bind: config.providers.files.copy_file.clone(),
-                    action: "copyfile".to_string(),
-                    after: crate::keybinds::AfterAction::Close,
+                    action: Action {
+                        action: "copyfile",
+                        after: crate::keybinds::AfterAction::Close,
+                    },
                 },
                 Keybind {
                     bind: config.providers.files.copy_path.clone(),
-                    action: "copypath".to_string(),
-                    after: crate::keybinds::AfterAction::Close,
+                    action: Action {
+                        action: "copypath",
+                        after: crate::keybinds::AfterAction::Close,
+                    },
                 },
                 Keybind {
                     bind: config.providers.files.open.clone(),
-                    action: "open".to_string(),
-                    after: crate::keybinds::AfterAction::Close,
+                    action: Action {
+                        action: "open",
+                        after: crate::keybinds::AfterAction::Close,
+                    },
                 },
                 Keybind {
                     bind: config.providers.files.open_dir.clone(),
-                    action: "opendir".to_string(),
-                    after: crate::keybinds::AfterAction::Close,
+                    action: Action {
+                        action: "opendir",
+                        after: crate::keybinds::AfterAction::Close,
+                    },
                 },
             ],
         }

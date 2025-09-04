@@ -297,7 +297,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
             }
 
             if let Some(action) = get_bind(k, m) {
-                match action.action.as_str() {
+                match action.action {
                     ACTION_CLOSE => quit(&app, true),
                     ACTION_SELECT_NEXT => select_next(),
                     ACTION_SELECT_PREVIOUS => select_previous(),

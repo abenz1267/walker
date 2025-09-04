@@ -8,7 +8,7 @@ use gtk4::{
 
 use crate::{
     config::{Elephant, get_config},
-    keybinds::Keybind,
+    keybinds::{Action, Keybind},
     providers::Provider,
 };
 
@@ -27,23 +27,31 @@ impl Clipboard {
             keybinds: vec![
                 Keybind {
                     bind: config.providers.clipboard.copy.clone(),
-                    action: "copy".to_string(),
-                    after: crate::keybinds::AfterAction::Close,
+                    action: Action {
+                        action: "copy",
+                        after: crate::keybinds::AfterAction::Close,
+                    },
                 },
                 Keybind {
                     bind: config.providers.clipboard.delete.clone(),
-                    action: "remove".to_string(),
-                    after: crate::keybinds::AfterAction::Reload,
+                    action: Action {
+                        action: "remove",
+                        after: crate::keybinds::AfterAction::Reload,
+                    },
                 },
                 Keybind {
                     bind: config.providers.clipboard.edit.clone(),
-                    action: "edit".to_string(),
-                    after: crate::keybinds::AfterAction::Close,
+                    action: Action {
+                        action: "edit",
+                        after: crate::keybinds::AfterAction::Close,
+                    },
                 },
                 Keybind {
                     bind: config.providers.clipboard.toggle_images_only.clone(),
-                    action: "toggle_images".to_string(),
-                    after: crate::keybinds::AfterAction::ClearReloadKeepPrefix,
+                    action: Action {
+                        action: "toggle_images",
+                        after: crate::keybinds::AfterAction::ClearReloadKeepPrefix,
+                    },
                 },
             ],
         }

@@ -1,4 +1,8 @@
-use crate::{config::get_config, keybinds::Keybind, providers::Provider};
+use crate::{
+    config::get_config,
+    keybinds::{Action, Keybind},
+    providers::Provider,
+};
 
 #[derive(Debug)]
 pub struct Dmenu {
@@ -14,8 +18,10 @@ impl Dmenu {
             default_action: config.providers.dmenu.default.clone(),
             keybinds: vec![Keybind {
                 bind: config.providers.dmenu.select.clone(),
-                action: "select".to_string(),
-                after: crate::keybinds::AfterAction::Close,
+                action: Action {
+                    action: "select",
+                    after: crate::keybinds::AfterAction::Close,
+                },
             }],
         }
     }

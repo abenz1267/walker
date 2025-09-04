@@ -1,6 +1,6 @@
 use crate::{
     config::{Elephant, get_config},
-    keybinds::Keybind,
+    keybinds::{Action, Keybind},
     providers::Provider,
 };
 
@@ -18,8 +18,10 @@ impl DesktopApplications {
             default_action: config.providers.desktopapplications.default.clone(),
             keybinds: vec![Keybind {
                 bind: config.providers.desktopapplications.start.clone(),
-                action: String::new(),
-                after: crate::keybinds::AfterAction::Close,
+                action: Action {
+                    action: "",
+                    after: crate::keybinds::AfterAction::Close,
+                },
             }],
         }
     }

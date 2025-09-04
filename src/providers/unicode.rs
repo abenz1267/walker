@@ -2,7 +2,7 @@ use gtk4::{Builder, Label, ListItem};
 
 use crate::{
     config::{Elephant, get_config},
-    keybinds::Keybind,
+    keybinds::{Action, Keybind},
     protos::generated_proto::query::query_response::Item,
     providers::Provider,
 };
@@ -21,8 +21,10 @@ impl Unicode {
             default_action: config.providers.unicode.default.clone(),
             keybinds: vec![Keybind {
                 bind: config.providers.unicode.copy.clone(),
-                action: "copy".to_string(),
-                after: crate::keybinds::AfterAction::Close,
+                action: Action {
+                    action: "copy",
+                    after: crate::keybinds::AfterAction::Close,
+                },
             }],
         }
     }

@@ -4,7 +4,7 @@ use gtk4::{Builder, Image, ListItem, prelude::WidgetExt};
 
 use crate::{
     config::{Elephant, get_config},
-    keybinds::Keybind,
+    keybinds::{Action, Keybind},
     protos::generated_proto::query::query_response::Item,
     providers::Provider,
 };
@@ -24,18 +24,24 @@ impl Calc {
             keybinds: vec![
                 Keybind {
                     bind: config.providers.calc.copy.clone(),
-                    action: "copy".to_string(),
-                    after: crate::keybinds::AfterAction::Close,
+                    action: Action {
+                        action: "copy",
+                        after: crate::keybinds::AfterAction::Close,
+                    },
                 },
                 Keybind {
                     bind: config.providers.calc.delete.clone(),
-                    action: "delete".to_string(),
-                    after: crate::keybinds::AfterAction::Reload,
+                    action: Action {
+                        action: "delete",
+                        after: crate::keybinds::AfterAction::Reload,
+                    },
                 },
                 Keybind {
                     bind: config.providers.calc.save.clone(),
-                    action: "save".to_string(),
-                    after: crate::keybinds::AfterAction::Reload,
+                    action: Action {
+                        action: "save",
+                        after: crate::keybinds::AfterAction::Reload,
+                    },
                 },
             ],
         }

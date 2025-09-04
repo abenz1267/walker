@@ -274,7 +274,6 @@ impl FilePreview {
             page.render(&ctx);
 
             ctx.target().flush();
-            std::mem::drop(ctx);
         }
 
         surface.flush();

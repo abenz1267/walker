@@ -3,9 +3,9 @@ mod files_preview;
 use crate::protos::generated_proto::query::query_response::Item;
 pub use files_preview::FilesPreviewHandler;
 use gtk4::{Box as GtkBox, Builder};
+use std::cell::LazyCell;
 use std::collections::HashMap;
 use std::fmt::Debug;
-use std::sync::LazyLock;
 
 pub trait PreviewHandler: Debug {
     fn handle(&self, item: &Item, preview: &GtkBox, builder: &Builder);
@@ -13,7 +13,7 @@ pub trait PreviewHandler: Debug {
 }
 
 thread_local! {
-    static PREVIEWERS: LazyLock<HashMap<String, Box<dyn PreviewHandler>>> = LazyLock::new(|| {
+    static PREVIEWERS: LazyCell<HashMap<String, Box<dyn PreviewHandler>>> = LazyCell::new(|| {
         let mut previewers: HashMap<String, Box<dyn PreviewHandler>> = HashMap::new();
         previewers.insert("files".to_string(), Box::new(FilesPreviewHandler::new()));
         previewers.insert("menus".to_string(), Box::new(FilesPreviewHandler::new()));

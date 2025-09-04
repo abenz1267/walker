@@ -84,10 +84,7 @@ fn sort_items_fuzzy(query: &str) {
                     .map(|i| i.text.as_str())
                     .unwrap_or_default();
 
-                let score_a = score_map.get(text_a);
-                let score_b = score_map.get(text_b);
-
-                match (score_a, score_b) {
+                match (score_map.get(text_a), score_map.get(text_b)) {
                     (Some(a), Some(b)) => b.cmp(a),    // Higher scores first
                     (Some(_), None) => Ordering::Less, // Matched items first
                     (None, Some(_)) => Ordering::Greater,

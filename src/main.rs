@@ -11,7 +11,7 @@ mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard, Cancellable};
 use gtk4::glib::object::ObjectExt;
-use gtk4::glib::{ExitCode, Priority};
+use gtk4::glib::{ControlFlow, Priority};
 use gtk4::prelude::{EditableExt, EntryExt};
 
 use config::get_config;
@@ -19,7 +19,6 @@ use state::init_app_state;
 use which::which;
 
 use std::env;
-use std::ops;
 use std::process;
 use std::rc::Rc;
 use std::sync::{OnceLock, RwLock, mpsc};
@@ -64,7 +63,7 @@ fn main() -> glib::ExitCode {
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 
-    app.connect_handle_local_options(|_, _| ops::ControlFlow::Break(ExitCode::FAILURE));
+    app.connect_handle_local_options(|_, _| return -1);
 
     add_flags(&app);
 
@@ -239,12 +238,12 @@ fn add_flags(app: &Application) {
     );
 }
 
-fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> ExitCode {
+fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     let options = cmd.options_dict();
 
     if options.contains("version") {
         cmd.print_literal(&format!("{}\n", env!("CARGO_PKG_VERSION")));
-        return ExitCode::SUCCESS;
+        return 0;
     }
 
     if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
@@ -372,18 +371,18 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> ExitC
                 };
 
                 *GLOBAL_DMENU_SENDER.write().unwrap() = None;
-                glib::ControlFlow::Break
+                ControlFlow::Break
             }
-            Err(mpsc::TryRecvError::Empty) => glib::ControlFlow::Continue,
+            Err(mpsc::TryRecvError::Empty) => ControlFlow::Continue,
             Err(mpsc::TryRecvError::Disconnected) => {
                 cmd.set_exit_status(130);
-                glib::ControlFlow::Break
+                ControlFlow::Break
             }
         });
     }
 
     app.activate();
-    return ExitCode::SUCCESS;
+    return 0;
 }
 
 fn activate(app: &Application) {

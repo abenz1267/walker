@@ -1,16 +1,26 @@
-{self, elephant}: {
+{
+  self,
+  elephant,
+}:
+{
   config,
   lib,
   pkgs,
   ...
-}: let
+}:
+let
   inherit (lib.modules) mkIf mkDefault mkMerge;
   inherit (lib.options) mkOption mkEnableOption mkPackageOption;
   inherit (lib.trivial) importTOML;
   inherit (lib.meta) getExe;
-  inherit (lib.types) nullOr bool lines submodule;
+  inherit (lib.types)
+    nullOr
+    bool
+    lines
+    submodule
+    ;
 
-  tomlFormat = pkgs.formats.toml {};
+  tomlFormat = pkgs.formats.toml { };
 
   theme = {
     name = "nixos";
@@ -18,7 +28,7 @@
       options = {
         layout = mkOption {
           inherit (tomlFormat) type;
-          default = {};
+          default = { };
           description = ''
             The layout of the theme.
 
@@ -36,7 +46,8 @@
   };
 
   cfg = config.programs.walker;
-in {
+in
+{
   imports = [
     elephant.nixosModules.default
   ];
@@ -74,7 +85,7 @@ in {
 
       elephant = mkOption {
         inherit (tomlFormat) type;
-        default = {};
+        default = { };
         description = "Configuration for elephant";
       };
     };
@@ -88,13 +99,15 @@ in {
       ];
 
       environment = {
-        systemPackages = [cfg.package];
-        etc."xdg/walker/config.toml".source = mkIf (cfg.config != {}) (tomlFormat.generate "walker-config.toml" cfg.config);
+        systemPackages = [ cfg.package ];
+        etc."xdg/walker/config.toml".source = mkIf (cfg.config != { }) (
+          tomlFormat.generate "walker-config.toml" cfg.config
+        );
       };
 
       systemd.services.walker = mkIf cfg.runAsService {
         description = "Walker - Application Runner";
-        wantedBy = ["graphical-session.target"];
+        wantedBy = [ "graphical-session.target" ];
         serviceConfig = {
           ExecStart = "${getExe cfg.package} --gapplication-service";
           Restart = "on-failure";
@@ -106,7 +119,8 @@ in {
       programs.walker.config.theme = mkDefault theme.name;
 
       environment.etc = {
-        "xdg/walker/themes/${theme.name}.toml".source = tomlFormat.generate "walker-themes-${theme.name}.toml" cfg.theme.layout;
+        "xdg/walker/themes/${theme.name}.toml".source =
+          tomlFormat.generate "walker-themes-${theme.name}.toml" cfg.theme.layout;
         "xdg/walker/themes/${theme.name}.css".text = cfg.theme.style;
       };
     })

@@ -12,7 +12,7 @@
   cairo,
   pango,
   wrapGAppsHook,
-  poppler
+  poppler,
 }:
 rustPlatform.buildRustPackage rec {
   pname = "walker";
@@ -53,7 +53,10 @@ rustPlatform.buildRustPackage rec {
     description = "Wayland-native application runner";
     homepage = "https://github.com/abenz1267/walker";
     license = lib.licenses.mit;
-    maintainers = with lib.maintainers; [diniamo NotAShelf];
+    maintainers = with lib.maintainers; [
+      diniamo
+      NotAShelf
+    ];
     platforms = lib.platforms.linux;
     mainProgram = "walker";
   };

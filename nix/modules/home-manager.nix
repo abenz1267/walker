@@ -1,4 +1,7 @@
-{ self, elephant }:
+{
+  self,
+  elephant,
+}:
 {
   config,
   lib,

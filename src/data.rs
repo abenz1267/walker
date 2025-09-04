@@ -16,6 +16,7 @@ use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher};
 use protobuf::{Message, MessageField};
 use std::cmp::Ordering;
+use std::collections::HashMap;
 use std::io::{BufReader, Read, Write};
 use std::os::unix::net::UnixStream;
 use std::path::{Path, PathBuf};
@@ -67,11 +68,7 @@ fn sort_items_fuzzy(query: &str) {
             let mut matcher = Matcher::new(Config::DEFAULT.match_paths());
             let pattern = Pattern::parse(query, CaseMatching::Ignore, Normalization::Smart);
             let matches: Vec<(String, u32)> = pattern.match_list(texts, &mut matcher);
-
-            let score_map: std::collections::HashMap<&str, u32> = matches
-                .iter()
-                .map(|(text, score)| (text.as_str(), *score))
-                .collect();
+            let score_map: HashMap<String, u32> = HashMap::from_iter(matches);
 
             items.sort_by(|a, b| {
                 let ra = a.response();

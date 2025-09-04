@@ -40,7 +40,7 @@ impl Calc {
                     bind: config.providers.calc.save.clone(),
                     action: Action {
                         action: "save",
-                        after: crate::keybinds::AfterAction::Reload,
+                        after: crate::keybinds::AfterAction::ClearReloadKeepPrefix,
                     },
                 },
             ],

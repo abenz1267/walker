@@ -20,7 +20,7 @@ impl Menus {
                 bind: config.providers.menus.activate.clone(),
                 action: Action {
                     action: "activate",
-                    after: crate::keybinds::AfterAction::ClearReload,
+                    after: crate::keybinds::AfterAction::Close,
                 },
             }],
         }

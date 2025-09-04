@@ -13,11 +13,11 @@ use std::path::Path;
 pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
     let b = Builder::new();
 
-    if let Some(s) = theme.items.get(&item.provider) {
-        let _ = b.add_from_string(s);
+    let _ = b.add_from_string(if let Some(s) = theme.items.get(&item.provider) {
+        s
     } else {
-        let _ = b.add_from_string(theme.items.get("default").unwrap());
-    }
+        theme.items.get("default").unwrap()
+    });
 
     let itembox: Box = b.object("ItemBox").expect("failed to get ItemBox");
     itembox.add_css_class(&item.provider.replace("menus:", "menus-"));

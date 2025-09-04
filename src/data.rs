@@ -380,12 +380,12 @@ fn handle_disconnect() {
 
 pub fn activate(item: QueryResponse, query: &str, action: &str) {
     match item.item.provider.as_str() {
+        "dmenu" if is_service() => {
+            send_message(item.item.text.clone()).unwrap();
+            return;
+        }
         "dmenu" => {
-            if is_service() {
-                send_message(item.item.text.clone()).unwrap();
-            } else {
-                println!("{}", item.item.text.clone());
-            }
+            println!("{}", item.item.text.clone());
             return;
         }
         "providerlist" => {

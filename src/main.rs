@@ -11,7 +11,7 @@ mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard, Cancellable};
 use gtk4::glib::object::ObjectExt;
-use gtk4::glib::{ControlFlow, Priority};
+use gtk4::glib::{ControlFlow, GString, Priority};
 use gtk4::prelude::{EditableExt, EntryExt};
 
 use config::get_config;
@@ -323,28 +323,20 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
                     Priority::DEFAULT,
                     Cancellable::NONE,
                     move |line_slice| match line_slice {
-                        Ok(Some(line)) => {
-                            if line.is_empty() {
-                                return;
-                            }
+                        Ok(Some(line)) if !line.trim().is_empty() => {
+                            let mut item = query_response::Item::new();
+                            item.text = line.trim().to_string();
+                            item.provider = "dmenu".to_string();
+                            item.score = 1000000 - i;
 
-                            let line = line.trim();
+                            let mut response = QueryResponse::new();
+                            response.item = protobuf::MessageField::some(item);
 
-                            if !line.is_empty() {
-                                let mut item = query_response::Item::new();
-                                item.text = line.to_string();
-                                item.provider = "dmenu".to_string();
-                                item.score = 1000000 - i;
-
-                                let mut response = QueryResponse::new();
-                                response.item = protobuf::MessageField::some(item);
-
-                                items.append(&QueryResponseObject::new(response));
-                            }
+                            items.append(&QueryResponseObject::new(response));
                             read_line_callback(stream_clone, i + 1, items);
                         }
-                        Ok(None) => (),
                         Err(e) => eprintln!("Error reading: {e}"),
+                        _ => (),
                     },
                 );
             }

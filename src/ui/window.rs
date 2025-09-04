@@ -358,13 +358,12 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     .is_some_and(|keep_open| *keep_open == m);
 
                 match after {
+                    AfterAction::Close if dont_close => {
+                        select_next();
+                        return true;
+                    }
                     AfterAction::Close => {
-                        if dont_close {
-                            select_next();
-                        } else {
-                            quit(&app, false);
-                        }
-
+                        quit(&app, false);
                         return true;
                     }
                     AfterAction::ClearReload => {
@@ -391,7 +390,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                         });
                     }
                     AfterAction::Reload => crate::data::input_changed(&query),
-                    _ => {}
+                    _ => (),
                 }
 
                 return true;

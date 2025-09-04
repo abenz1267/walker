@@ -129,38 +129,28 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
     };
 
     for file in files {
-        match file.as_str() {
-            "item.xml" => {
-                if let Some(s) = read_file(file) {
-                    theme.items.insert("default".to_string(), s);
-                }
+        match (file.as_str(), read_file(file)) {
+            ("item.xml", Some(s)) => {
+                theme.items.insert("default".to_string(), s);
             }
-            "style.css" => {
-                if let Some(s) = read_file(file)
-                    && let Ok(home) = env::var("HOME")
-                {
+            ("style.css", Some(s)) => {
+                if let Ok(home) = env::var("HOME") {
                     theme.css = Cow::Owned(s.replace("~", &home));
                 }
             }
-            "layout.xml" => {
-                if let Some(s) = read_file(file) {
-                    theme.layout = Cow::Owned(s);
-                }
+            ("layout.xml", Some(s)) => {
+                theme.layout = Cow::Owned(s);
             }
-            "preview.xml" => {
-                if let Some(s) = read_file(file) {
-                    theme.preview = Cow::Owned(s);
-                }
+            ("preview.xml", Some(s)) => {
+                theme.preview = Cow::Owned(s);
             }
-            name if name.ends_with(".xml") && name.starts_with("item_") => {
-                if let Some(s) = read_file(file) {
-                    let key = name
-                        .strip_prefix("item_")
-                        .unwrap()
-                        .strip_suffix(".xml")
-                        .unwrap();
-                    theme.items.insert(key.to_string(), s);
-                }
+            (name, Some(s)) if name.ends_with(".xml") && name.starts_with("item_") => {
+                let key = name
+                    .strip_prefix("item_")
+                    .unwrap()
+                    .strip_suffix(".xml")
+                    .unwrap();
+                theme.items.insert(key.to_string(), s);
             }
             _ => (),
         }

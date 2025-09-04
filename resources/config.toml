@@ -62,45 +62,45 @@ prefix = ":"
 provider = "clipboard"
 
 [providers.archlinuxpkgs]
-click = "install"
+default = "install"
 install = "enter"
 remove = "ctrl d"
 
 [providers.calc]
-click = "copy"
+default = "copy"
 copy = "enter"
 save = "ctrl s"
 delete = "ctrl d"
 
 [providers.websearch]
-click = "search"
+default = "search"
 search = "enter"
 
 [providers.providerlist]
-click = "activate"
+default = "activate"
 activate = "enter"
 
 [providers.clipboard]
 time_format = "%d.%m. - %H:%M" # format for the clipboard item date
-click = "copy"
+default = "copy"
 copy = "enter"
 delete = "ctrl d"
 edit = "ctrl o"
 toggle_images_only = "ctrl i"
 
 [providers.desktopapplications]
-click = "start"
+default = "start"
 start = "enter"
 
 [providers.files]
-click = "open"
+default = "open"
 open = "enter"
 open_dir = "ctrl enter"
 copy_path = "ctrl shift C"
 copy_file = "ctrl c"
 
 [providers.todo]
-click = "save"
+default = "save"
 save = "enter"
 delete = "ctrl d"
 mark_active = "ctrl a"
@@ -108,22 +108,22 @@ mark_done = "ctrl f"
 clear = "ctrl shift X"
 
 [providers.runner]
-click = "start"
+default = "start"
 start = "enter"
 start_terminal = "shift enter"
 
 [providers.dmenu]
-click = "select"
+default = "select"
 select = "enter"
 
 [providers.symbols]
-click = "copy"
+default = "copy"
 copy = "enter"
 
 [providers.unicode]
-click = "copy"
+default = "copy"
 copy = "enter"
 
 [providers.menus]
-click = "activate"
+default = "activate"
 activate = "enter"

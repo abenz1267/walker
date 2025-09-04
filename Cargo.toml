@@ -17,7 +17,7 @@ cairo-rs = "0.21.1"
 gdk-pixbuf = "0.21.1"
 nucleo-matcher = "0.3.1"
 which = "8.0"
-new_mime_guess = "4.0.4"
+new_mime_guess = { version = "4.0.4", features = ["phf"] }
 mime = "0.3.17"
 
 [build-dependencies]

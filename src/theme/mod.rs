@@ -35,7 +35,7 @@ impl Theme {
 
         for (k, v) in PROVIDERS.get().unwrap() {
             s.items
-                .insert(k.clone(), Cow::Borrowed(v.get_default_item_layout()));
+                .insert(k.clone(), Cow::Borrowed(v.get_item_layout()));
         }
 
         return s;

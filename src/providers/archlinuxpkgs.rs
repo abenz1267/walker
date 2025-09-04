@@ -52,7 +52,7 @@ impl Provider for ArchLinuxPkgs {
         )
     }
 
-    fn get_default_item_layout(&self) -> &'static str {
+    fn get_item_layout(&self) -> &'static str {
         include_str!("../../resources/themes/default/item_archlinuxpkgs.xml")
     }
 }

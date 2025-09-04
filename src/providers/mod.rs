@@ -99,6 +99,7 @@ pub static PROVIDERS: OnceLock<HashMap<String, Box<dyn Provider>>> = OnceLock::n
 
 pub fn setup_providers(elephant: bool) {
     let mut providers: HashMap<String, Box<dyn Provider>> = HashMap::new();
+    providers.insert("dmenu".to_string(), Box::new(Dmenu::new()));
 
     if elephant {
         let output = Command::new("elephant")
@@ -141,8 +142,6 @@ pub fn setup_providers(elephant: bool) {
                 };
             });
     }
-
-    providers.insert("dmenu".to_string(), Box::new(Dmenu::new()));
 
     PROVIDERS
         .set(providers)

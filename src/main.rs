@@ -23,7 +23,6 @@ use std::process;
 use std::rc::Rc;
 use std::sync::{OnceLock, RwLock, mpsc};
 use std::thread;
-use std::time::Instant;
 
 use gtk4::{
     Application,

@@ -23,6 +23,7 @@ use std::process;
 use std::rc::Rc;
 use std::sync::{RwLock, mpsc};
 use std::thread;
+use std::time::Instant;
 
 use gtk4::{
     Application,
@@ -467,7 +468,6 @@ fn activate(app: &Application) {
             w.scroll.set_visible(false);
         } else {
             w.elephant_hint.set_visible(false);
-            w.scroll.set_visible(true);
         }
 
         w.window.set_visible(true);

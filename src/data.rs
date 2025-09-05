@@ -394,44 +394,74 @@ fn handle_disconnect() {
     });
 }
 
-pub fn activate(item: QueryResponse, query: &str, action: &str) {
-    match item.item.provider.as_str() {
-        "dmenu" => {
-            if is_service() {
-                send_message(item.item.text.clone()).unwrap();
-            } else {
-                println!("{}", item.item.text.clone());
+pub fn clipboard_disable_images_only() {
+    let mut req = ActivateRequest::new();
+    req.action = "disable_images_only".to_string();
+    req.provider = "clipboard".to_string();
+
+    let mut buffer = vec![1];
+    let length = req.compute_size() as u32;
+    buffer.extend_from_slice(&length.to_be_bytes());
+    req.write_to_vec(&mut buffer).unwrap();
+
+    let mut conn_guard = CONN.lock().unwrap();
+
+    if let Some(conn) = conn_guard.as_mut() {
+        match conn.write_all(&buffer) {
+            Err(_) => {
+                handle_disconnect();
             }
-            return;
+            _ => (),
         }
-        "providerlist" => {
-            set_provider(item.item.identifier.to_string());
-            set_current_prefix(String::new());
-            return;
-        }
-        _ => (),
     }
+}
 
+pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str, action: &str) {
     let cfg = get_config();
+
     let mut arguments = query;
-
-    if let Some(prefix) = cfg.providers.prefixes.iter().find(|prefix| {
-        item.item.provider == prefix.provider && arguments.starts_with(&prefix.prefix)
-    }) {
-        arguments = arguments
-            .strip_prefix(&prefix.prefix)
-            .expect("couldn't trim prefix");
-    }
-
     if let Some(stripped) = arguments.strip_prefix(&cfg.exact_search_prefix) {
         arguments = stripped;
     }
 
     let mut req = ActivateRequest::new();
-    req.qid = item.qid;
-    req.provider = item.item.provider.clone();
-    req.identifier = item.item.identifier.clone();
     req.action = action.to_string();
+    req.provider = provider.to_string();
+
+    if let Some(item) = item_option {
+        match provider {
+            "dmenu" => {
+                if is_service() {
+                    send_message(item.item.text.clone()).unwrap();
+                } else {
+                    println!("{}", item.item.text.clone());
+                }
+                return;
+            }
+            "providerlist" => {
+                set_provider(item.item.identifier.to_string());
+                set_current_prefix(String::new());
+                return;
+            }
+            _ => {
+                req.qid = item.qid;
+                req.provider = item.item.provider.clone();
+                req.identifier = item.item.identifier.clone();
+            }
+        }
+    }
+
+    if let Some(prefix) = cfg
+        .providers
+        .prefixes
+        .iter()
+        .find(|prefix| provider == prefix.provider && arguments.starts_with(&prefix.prefix))
+    {
+        arguments = arguments
+            .strip_prefix(&prefix.prefix)
+            .expect("couldn't trim prefix");
+    }
+
     req.arguments = arguments.to_string();
 
     let mut buffer = vec![1];

@@ -1,21 +1,23 @@
 use crate::{
     GLOBAL_DMENU_SENDER, QueryResponseObject,
     config::get_config,
-    data::{activate, input_changed},
+    data::{activate, clipboard_disable_images_only, input_changed},
     keybinds::{
         ACTION_CLOSE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS,
-        ACTION_TOGGLE_EXACT, AfterAction, MODIFIERS, get_bind, get_provider_bind,
+        ACTION_TOGGLE_EXACT, Action, AfterAction, MODIFIERS, get_bind, get_provider_bind,
+        get_provider_global_bind,
     },
+    protos::generated_proto::query::QueryResponse,
     providers::PROVIDERS,
     renderers::create_item,
     send_message,
     state::{
         get_current_prefix, get_initial_height, get_initial_placeholder, get_initial_width,
-        get_last_query, get_theme, is_connected, is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open,
-        is_service, set_current_prefix, set_dmenu_current, set_dmenu_exit_after,
-        set_dmenu_keep_open, set_initial_placeholder, set_input_only, set_is_dmenu, set_is_visible,
-        set_last_query, set_no_search, set_parameter_height, set_parameter_width, set_placeholder,
-        set_provider, set_theme,
+        get_last_query, get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after,
+        is_dmenu_keep_open, is_service, set_current_prefix, set_dmenu_current,
+        set_dmenu_exit_after, set_dmenu_keep_open, set_initial_placeholder, set_input_only,
+        set_is_dmenu, set_is_visible, set_last_query, set_no_search, set_parameter_height,
+        set_parameter_width, set_placeholder, set_provider, set_theme,
     },
     theme::{setup_layer_shell, with_themes},
 };
@@ -230,13 +232,14 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
             };
 
             let providers = PROVIDERS.get().unwrap();
+            let provider = i.item.provider.clone();
 
             let action = providers
-                .get(i.item.provider.as_str())
+                .get(&provider)
                 .map(|p| p.default_action())
                 .unwrap_or_default();
 
-            activate(i, &query, action);
+            activate(Some(i), &provider, &query, action);
             quit(&app_copy, false);
         });
     });
@@ -309,49 +312,94 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 return true;
             }
 
-            let items = &w.selection;
-            if items.n_items() == 0 {
-                return false;
+            let mut keybind_action: Option<Action> = None;
+            let mut provider = get_provider();
+
+            if provider.is_empty() {
+                if let Some(prefix) = get_config().providers.prefixes.iter().find(|prefix| {
+                    if let Some(input) = &w.input {
+                        return input.text().starts_with(&prefix.prefix)
+                            && PROVIDERS.get().unwrap().contains_key(&prefix.provider);
+                    }
+
+                    return false;
+                }) {
+                    provider = prefix.provider.clone();
+                }
             }
 
-            let Some(response) = selection
-                .selected_item()
-                .and_downcast::<QueryResponseObject>()
-            else {
-                return false;
-            };
+            let mut after: Option<AfterAction> = None;
 
-            let response = response.response();
-            let Some(item) = response.item.as_ref() else {
-                return false;
-            };
-            let item_clone = item.clone();
+            if !provider.is_empty() {
+                if let Some(action) = get_provider_global_bind(&provider, k, m) {
+                    keybind_action = Some(action.clone());
+                    after = Some(action.after);
+                }
+            }
 
-            if let Some(action) = get_provider_bind(&item.provider, k, m) {
-                let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
+            let mut response: Option<QueryResponse> = None;
 
-                activate(response, &query, &action.action);
+            if keybind_action.is_none() {
+                let items = &w.selection;
+                if items.n_items() == 0 {
+                    return false;
+                }
 
-                let mut after = if item_clone.identifier.starts_with("keepopen:") {
-                    AfterAction::ClearReload
-                } else {
-                    action.after
+                let Some(r) = selection
+                    .selected_item()
+                    .and_downcast::<QueryResponseObject>()
+                else {
+                    return false;
                 };
 
+                let r = r.response();
+                response = Some(r.clone());
+                let Some(item) = r.item.as_ref() else {
+                    return false;
+                };
+
+                let item_clone = item.clone();
+                provider = item.provider.clone();
+
+                if let Some(action) = get_provider_bind(&item.provider, k, m) {
+                    after = if item_clone.identifier.starts_with("keepopen:") {
+                        Some(AfterAction::ClearReload)
+                    } else {
+                        Some(action.after.clone())
+                    };
+
+                    keybind_action = Some(action);
+                }
+
                 let is_dmenu_next = item_clone.identifier.contains("dmenu:");
+
                 if (is_dmenu_keep_open() && !is_dmenu_exit_after()) || is_dmenu_next {
-                    after = AfterAction::Nothing
+                    after = Some(AfterAction::Nothing)
                 }
 
                 if is_dmenu_next {
                     set_is_dmenu(true);
                 }
+            }
 
-                let dont_close = MODIFIERS
-                    .get(get_config().keep_open_modifier.as_str())
-                    .is_some_and(|keep_open| *keep_open == m);
+            if keybind_action.is_none() {
+                return false;
+            }
 
-                match after {
+            let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
+
+            if let Some(a) = keybind_action {
+                activate(response, provider.as_str(), &query, &a.action);
+            } else {
+                return false;
+            }
+
+            let dont_close = MODIFIERS
+                .get(get_config().keep_open_modifier.as_str())
+                .is_some_and(|keep_open| *keep_open == m);
+
+            if let Some(a) = after {
+                match a {
                     AfterAction::Close => {
                         if dont_close {
                             select_next();
@@ -362,36 +410,30 @@ fn setup_keyboard_handling(ui: &WindowData) {
                         return true;
                     }
                     AfterAction::ClearReload => {
-                        with_window(|w| {
-                            if let Some(input) = &w.input {
-                                if input.text().is_empty() {
-                                    input.emit_by_name::<()>("changed", &[]);
-                                } else {
-                                    input.set_text("");
-                                }
+                        if let Some(input) = &w.input {
+                            if input.text().is_empty() {
+                                input.emit_by_name::<()>("changed", &[]);
+                            } else {
+                                input.set_text("");
                             }
-                        });
+                        }
                     }
                     AfterAction::ClearReloadKeepPrefix => {
-                        with_window(|w| {
-                            if let Some(input) = &w.input {
-                                if input.text().is_empty() {
-                                    input.emit_by_name::<()>("changed", &[]);
-                                } else {
-                                    input.set_text(&get_current_prefix());
-                                    input.set_position(-1);
-                                }
+                        if let Some(input) = &w.input {
+                            if input.text().is_empty() {
+                                input.emit_by_name::<()>("changed", &[]);
+                            } else {
+                                input.set_text(&get_current_prefix());
+                                input.set_position(-1);
                             }
-                        });
+                        }
                     }
                     AfterAction::Reload => crate::data::input_changed(&query),
                     _ => {}
                 }
-
-                return true;
             }
 
-            return false;
+            return true;
         });
 
         if handled {
@@ -471,6 +513,8 @@ fn setup_mouse_handling(ui: &WindowData) {
 }
 
 pub fn quit(app: &Application, cancelled: bool) {
+    clipboard_disable_images_only();
+
     if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
         send_message("CNCLD".to_string()).unwrap();
     }

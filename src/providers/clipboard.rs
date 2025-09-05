@@ -14,7 +14,8 @@ use crate::{
 
 #[derive(Debug)]
 pub struct Clipboard {
-    keybinds: Vec<Keybind>,
+    item_keybinds: Vec<Keybind>,
+    global_keybinds: Vec<Keybind>,
     default_action: String,
 }
 
@@ -24,7 +25,12 @@ impl Clipboard {
 
         Self {
             default_action: config.providers.clipboard.default.clone(),
-            keybinds: vec![
+            global_keybinds: vec![Keybind {
+                bind: config.providers.clipboard.toggle_images_only.clone(),
+                action: "toggle_images".to_string(),
+                after: crate::keybinds::AfterAction::ClearReloadKeepPrefix,
+            }],
+            item_keybinds: vec![
                 Keybind {
                     bind: config.providers.clipboard.copy.clone(),
                     action: "copy".to_string(),
@@ -40,11 +46,6 @@ impl Clipboard {
                     action: "edit".to_string(),
                     after: crate::keybinds::AfterAction::Close,
                 },
-                Keybind {
-                    bind: config.providers.clipboard.toggle_images_only.clone(),
-                    action: "toggle_images".to_string(),
-                    after: crate::keybinds::AfterAction::ClearReloadKeepPrefix,
-                },
             ],
         }
     }
@@ -52,7 +53,11 @@ impl Clipboard {
 
 impl Provider for Clipboard {
     fn get_keybinds(&self) -> &Vec<Keybind> {
-        &self.keybinds
+        &self.item_keybinds
+    }
+
+    fn get_global_keybinds(&self) -> Option<&Vec<Keybind>> {
+        Some(&self.global_keybinds)
     }
 
     fn default_action(&self) -> &str {

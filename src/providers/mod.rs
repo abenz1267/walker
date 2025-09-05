@@ -35,6 +35,11 @@ pub mod websearch;
 
 pub trait Provider: Sync + Send + Debug {
     fn get_keybinds(&self) -> &Vec<Keybind>;
+
+    fn get_global_keybinds(&self) -> Option<&Vec<Keybind>> {
+        return None;
+    }
+
     fn default_action(&self) -> &str;
     fn get_keybind_hint(&self, cfg: &Elephant) -> String;
 

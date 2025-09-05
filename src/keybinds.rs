@@ -37,6 +37,9 @@ static BINDS: LazyLock<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>>
 static PROVIDER_BINDS: LazyLock<
     RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>,
 > = LazyLock::new(RwLock::default);
+static PROVIDER_GLOBAL_BINDS: LazyLock<
+    RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>,
+> = LazyLock::new(RwLock::default);
 
 pub static MODIFIERS: LazyLock<HashMap<&'static str, gdk::ModifierType>> = LazyLock::new(|| {
     let mut map = HashMap::new();
@@ -70,8 +73,14 @@ pub static SPECIAL_KEYS: LazyLock<HashMap<&'static str, gdk::Key>> = LazyLock::n
 pub fn setup_binds() {
     PROVIDERS.get().unwrap().iter().for_each(|(k, v)| {
         v.get_keybinds().iter().for_each(|bind| {
-            parse_bind(bind, k).unwrap();
+            parse_bind(bind, k, false).unwrap();
         });
+
+        if let Some(binds) = v.get_global_keybinds() {
+            binds.iter().for_each(|bind| {
+                parse_bind(bind, k, true).unwrap();
+            });
+        }
     });
 
     let config = get_config();
@@ -83,6 +92,7 @@ pub fn setup_binds() {
             after: AfterAction::Close,
         },
         "",
+        false,
     )
     .unwrap();
 
@@ -93,6 +103,7 @@ pub fn setup_binds() {
             after: AfterAction::Nothing,
         },
         "",
+        false,
     )
     .unwrap();
 
@@ -103,6 +114,7 @@ pub fn setup_binds() {
             after: AfterAction::Nothing,
         },
         "",
+        false,
     )
     .unwrap();
 
@@ -113,6 +125,7 @@ pub fn setup_binds() {
             after: AfterAction::Nothing,
         },
         "",
+        false,
     )
     .unwrap();
 
@@ -123,6 +136,7 @@ pub fn setup_binds() {
             after: AfterAction::Nothing,
         },
         "",
+        false,
     )
     .unwrap();
 }
@@ -143,7 +157,7 @@ fn validate_bind(bind: &str) -> bool {
     false
 }
 
-fn parse_bind(b: &Keybind, provider: &str) -> Result<(), Box<dyn std::error::Error>> {
+fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn std::error::Error>> {
     if !validate_bind(&b.bind) {
         return Err("incorrect bind".into());
     }
@@ -200,13 +214,23 @@ fn parse_bind(b: &Keybind, provider: &str) -> Result<(), Box<dyn std::error::Err
         return Ok(());
     }
 
-    let mut provider_binds = PROVIDER_BINDS.write().unwrap();
-    provider_binds
-        .entry(provider.to_string())
-        .or_insert_with(HashMap::new)
-        .entry(key)
-        .or_insert_with(HashMap::new)
-        .insert(modifier, action_struct);
+    if !global {
+        let mut provider_binds = PROVIDER_BINDS.write().unwrap();
+        provider_binds
+            .entry(provider.to_string())
+            .or_insert_with(HashMap::new)
+            .entry(key)
+            .or_insert_with(HashMap::new)
+            .insert(modifier, action_struct);
+    } else {
+        let mut provider_binds = PROVIDER_GLOBAL_BINDS.write().unwrap();
+        provider_binds
+            .entry(provider.to_string())
+            .or_insert_with(HashMap::new)
+            .entry(key)
+            .or_insert_with(HashMap::new)
+            .insert(modifier, action_struct);
+    }
 
     Ok(())
 }
@@ -226,6 +250,29 @@ pub fn get_provider_bind(provider: &str, key: Key, modifier: gdk::ModifierType) 
     }
 
     PROVIDER_BINDS
+        .read()
+        .ok()?
+        .get(provider)?
+        .get(&key)?
+        .get(&modifier)
+        .cloned()
+}
+
+pub fn get_provider_global_bind(
+    provider: &str,
+    key: Key,
+    modifier: gdk::ModifierType,
+) -> Option<Action> {
+    let cfg = get_config();
+    let mut modifier = modifier;
+
+    if let Some(keep_open) = MODIFIERS.get(cfg.keep_open_modifier.as_str())
+        && *keep_open == modifier
+    {
+        modifier = gdk::ModifierType::empty();
+    }
+
+    PROVIDER_GLOBAL_BINDS
         .read()
         .ok()?
         .get(provider)?

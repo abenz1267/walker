@@ -19,6 +19,7 @@ use state::init_app_state;
 use which::which;
 
 use std::cell::OnceCell;
+use std::os::fd::AsRawFd;
 use std::os::unix::net::UnixListener;
 use std::path::PathBuf;
 use std::process;
@@ -509,44 +510,38 @@ fn startup(app: &Application) {
     init_app_state();
     init_ui(app, dmenu);
 
-    let (sender, receiver) = mpsc::channel::<bool>();
-
-    thread::spawn(|| {
-        listen_activation_socket(sender);
-    });
-
-    let app_clone = app.clone();
-
-    glib::idle_add_local(move || match receiver.try_recv() {
-        Ok(_) => {
-            activate(&app_clone);
-            ControlFlow::Continue
-        }
-        Err(mpsc::TryRecvError::Empty) => ControlFlow::Continue,
-        Err(mpsc::TryRecvError::Disconnected) => ControlFlow::Break,
-    });
+    listen_activation_socket(app.clone());
 }
 
-fn listen_activation_socket(sender: Sender<bool>) {
+fn listen_activation_socket(app_clone: Application) {
     let mut socket_path = env::var("XDG_RUNTIME_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| env::temp_dir());
 
     socket_path.push("walker");
     socket_path.push("walker.sock");
-    fs::remove_file(socket_path.clone()).unwrap();
 
-    let listener = UnixListener::bind(socket_path).unwrap();
+    let _ = fs::remove_file(&socket_path);
 
-    loop {
-        match listener.accept() {
-            Ok((stream, _addr)) => {
-                drop(stream);
-                sender.send(true).unwrap();
-            }
-            Err(err) => {
-                panic!("Error accepting connection: {}", err);
+    let listener = UnixListener::bind(&socket_path).unwrap();
+    listener.set_nonblocking(true).unwrap();
+
+    let fd = listener.as_raw_fd();
+
+    glib::unix_fd_add_local(fd, glib::IOCondition::IN, move |_fd, condition| {
+        if condition.contains(glib::IOCondition::IN) {
+            match listener.accept() {
+                Ok((stream, _)) => {
+                    drop(stream);
+                    activate(&app_clone);
+                }
+                Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {}
+                Err(e) => {
+                    eprintln!("Error accepting connection: {}", e);
+                    return glib::ControlFlow::Break;
+                }
             }
         }
-    }
+        glib::ControlFlow::Continue
+    });
 }

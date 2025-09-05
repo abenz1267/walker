@@ -10,7 +10,6 @@ mod theme;
 mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard, Cancellable};
-use gtk4::glib::object::ObjectExt;
 use gtk4::glib::{ControlFlow, Priority};
 use gtk4::prelude::{EditableExt, EntryExt};
 
@@ -22,7 +21,7 @@ use std::cell::OnceCell;
 use std::env;
 use std::process;
 use std::rc::Rc;
-use std::sync::{OnceLock, RwLock, mpsc};
+use std::sync::{RwLock, mpsc};
 use std::thread;
 
 use gtk4::{

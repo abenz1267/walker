@@ -17,11 +17,15 @@ anchor_right = true
 "default" = { input = "Search", list = "No Results" } # placeholders for input and empty list, key is the providers name, so f.e. "desktopapplications" or "menus:other"
 
 [keybinds]
-close = "esc"
-next = "down"
-previous = "up"
+close = "Escape"
+next = "Down"
+previous = "Up"
 toggle_exact = "ctrl e"
 resume_last_query = "ctrl r"
+activate_first = "super j"
+activate_second = "super k"
+activate_third = "super l"
+activate_fourth = "super semicolon"
 
 [providers]
 default = [
@@ -63,45 +67,45 @@ provider = "clipboard"
 
 [providers.archlinuxpkgs]
 default = "install"
-install = "enter"
+install = "Return"
 remove = "ctrl d"
 
 [providers.calc]
 default = "copy"
-copy = "enter"
+copy = "Return"
 save = "ctrl s"
 delete = "ctrl d"
 
 [providers.websearch]
 default = "search"
-search = "enter"
+search = "Return"
 
 [providers.providerlist]
 default = "activate"
-activate = "enter"
+activate = "Return"
 
 [providers.clipboard]
 time_format = "%d.%m. - %H:%M" # format for the clipboard item date
 default = "copy"
-copy = "enter"
+copy = "Return"
 delete = "ctrl d"
 edit = "ctrl o"
 toggle_images_only = "ctrl i"
 
 [providers.desktopapplications]
 default = "start"
-start = "enter"
+start = "Return"
 
 [providers.files]
 default = "open"
-open = "enter"
-open_dir = "ctrl enter"
+open = "Return"
+open_dir = "ctrl Return"
 copy_path = "ctrl shift C"
 copy_file = "ctrl c"
 
 [providers.todo]
 default = "save"
-save = "enter"
+save = "Return"
 delete = "ctrl d"
 mark_active = "ctrl a"
 mark_done = "ctrl f"
@@ -109,21 +113,21 @@ clear = "ctrl shift X"
 
 [providers.runner]
 default = "start"
-start = "enter"
-start_terminal = "shift enter"
+start = "Return"
+start_terminal = "shift Return"
 
 [providers.dmenu]
 default = "select"
-select = "enter"
+select = "Return"
 
 [providers.symbols]
 default = "copy"
-copy = "enter"
+copy = "Return"
 
 [providers.unicode]
 default = "copy"
-copy = "enter"
+copy = "Return"
 
 [providers.menus]
 default = "activate"
-activate = "enter"
+activate = "Return"

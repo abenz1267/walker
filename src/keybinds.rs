@@ -9,6 +9,10 @@ pub const ACTION_SELECT_NEXT: &'static str = "%NEXT%";
 pub const ACTION_SELECT_PREVIOUS: &'static str = "%PREVIOUS%";
 pub const ACTION_TOGGLE_EXACT: &'static str = "%TOGGLE_EXACT%";
 pub const ACTION_RESUME_LAST_QUERY: &'static str = "%RESUME_LAST_QUERY%";
+pub const ACTION_ACTIVATE_FIRST: &'static str = "%ACTIVATE_FIRST%";
+pub const ACTION_ACTIVATE_SECOND: &'static str = "%ACTIVATE_SECOND%";
+pub const ACTION_ACTIVATE_THIRD: &'static str = "%ACTIVATE_THIRD%";
+pub const ACTION_ACTIVATE_FOURTH: &'static str = "%ACTIVATE_FOURTH%";
 
 #[derive(Debug, Clone)]
 pub enum AfterAction {
@@ -51,27 +55,14 @@ pub static MODIFIERS: LazyLock<HashMap<&'static str, gdk::ModifierType>> = LazyL
     map.insert("lshift", gdk::ModifierType::SHIFT_MASK);
     map.insert("rshift", gdk::ModifierType::SHIFT_MASK);
     map.insert("shift", gdk::ModifierType::SHIFT_MASK);
-    map
-});
-
-pub static SPECIAL_KEYS: LazyLock<HashMap<&'static str, gdk::Key>> = LazyLock::new(|| {
-    let mut map = HashMap::new();
-    map.insert("backspace", gdk::Key::BackSpace);
-    map.insert("tab", gdk::Key::Tab);
-    map.insert("esc", gdk::Key::Escape);
-    map.insert("escape", gdk::Key::Escape);
-    map.insert("kpenter", gdk::Key::KP_Enter);
-    map.insert("enter", gdk::Key::Return);
-    map.insert("down", gdk::Key::Down);
-    map.insert("up", gdk::Key::Up);
-    map.insert("left", gdk::Key::Left);
-    map.insert("right", gdk::Key::Right);
+    map.insert("super", gdk::ModifierType::SUPER_MASK);
     map
 });
 
 pub fn setup_binds() {
     PROVIDERS.get().unwrap().iter().for_each(|(k, v)| {
         v.get_keybinds().iter().for_each(|bind| {
+            println!("{:?}", bind);
             parse_bind(bind, k, false).unwrap();
         });
 
@@ -148,29 +139,61 @@ pub fn setup_binds() {
         false,
     )
     .unwrap();
-}
 
-fn validate_bind(bind: &str) -> bool {
-    let fields = bind.split_whitespace();
+    parse_bind(
+        &Keybind {
+            bind: config.keybinds.activate_first.clone(),
+            action: Action {
+                action: ACTION_ACTIVATE_FIRST,
+                after: AfterAction::Close,
+            },
+        },
+        "",
+        false,
+    )
+    .unwrap();
 
-    let Some(field) = fields.filter(|field| field.len() > 1).find_map(|field| {
-        let exists_mod = MODIFIERS.contains_key(field);
-        let exists_special = SPECIAL_KEYS.contains_key(field);
+    parse_bind(
+        &Keybind {
+            bind: config.keybinds.activate_second.clone(),
+            action: Action {
+                action: ACTION_ACTIVATE_SECOND,
+                after: AfterAction::Close,
+            },
+        },
+        "",
+        false,
+    )
+    .unwrap();
 
-        (!exists_mod && !exists_special).then_some(field)
-    }) else {
-        return true;
-    };
+    parse_bind(
+        &Keybind {
+            bind: config.keybinds.activate_third.clone(),
+            action: Action {
+                action: ACTION_ACTIVATE_THIRD,
+                after: AfterAction::Close,
+            },
+        },
+        "",
+        false,
+    )
+    .unwrap();
 
-    eprintln!("Invalid keybind: {bind} - key: {field}");
-    false
+    parse_bind(
+        &Keybind {
+            bind: config.keybinds.activate_fourth.clone(),
+            action: Action {
+                action: ACTION_ACTIVATE_FOURTH,
+                after: AfterAction::Close,
+            },
+        },
+        "",
+        false,
+    )
+    .unwrap();
 }
 
 fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn std::error::Error>> {
-    if !validate_bind(&b.bind) {
-        return Err("incorrect bind".into());
-    }
-
     let mut fields = b.bind.split_whitespace().peekable();
 
     if fields.peek().is_none() {
@@ -181,27 +204,12 @@ fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn s
     let mut key: Option<Key> = None;
 
     for field in fields {
-        if field.len() > 1 {
-            if let Some(&modifier) = MODIFIERS.get(field) {
-                modifiers_list.push(modifier);
-            }
-
-            if let Some(&special_key) = SPECIAL_KEYS.get(field) {
-                key = Some(special_key);
-            }
+        if let Some(&modifier) = MODIFIERS.get(field) {
+            modifiers_list.push(modifier);
             continue;
         }
 
-        key = Some(
-            Key::from_name(
-                field
-                    .chars()
-                    .next()
-                    .ok_or("unable to get the next char")?
-                    .to_string(),
-            )
-            .ok_or("unable to create key from name")?,
-        );
+        key = Some(Key::from_name(field.to_string()).ok_or("unable to create key from name")?);
     }
 
     let modifier = modifiers_list

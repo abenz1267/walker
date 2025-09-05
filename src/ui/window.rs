@@ -3,9 +3,10 @@ use crate::{
     config::get_config,
     data::{activate, clipboard_disable_images_only, input_changed},
     keybinds::{
-        ACTION_CLOSE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT, ACTION_SELECT_PREVIOUS,
-        ACTION_TOGGLE_EXACT, Action, AfterAction, MODIFIERS, get_bind, get_provider_bind,
-        get_provider_global_bind,
+        ACTION_ACTIVATE_FIRST, ACTION_ACTIVATE_FOURTH, ACTION_ACTIVATE_SECOND,
+        ACTION_ACTIVATE_THIRD, ACTION_CLOSE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT,
+        ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, Action, AfterAction, MODIFIERS, get_bind,
+        get_provider_bind, get_provider_global_bind,
     },
     protos::generated_proto::query::QueryResponse,
     providers::PROVIDERS,
@@ -305,6 +306,10 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     ACTION_SELECT_PREVIOUS => select_previous(),
                     ACTION_TOGGLE_EXACT => toggle_exact(),
                     ACTION_RESUME_LAST_QUERY => resume_last_query(),
+                    ACTION_ACTIVATE_FIRST => quick_activate(0),
+                    ACTION_ACTIVATE_SECOND => quick_activate(1),
+                    ACTION_ACTIVATE_THIRD => quick_activate(2),
+                    ACTION_ACTIVATE_FOURTH => quick_activate(3),
                     _ => (),
                 }
 
@@ -662,6 +667,10 @@ pub fn select_previous() {
         };
         selection.set_selected(prev);
     });
+}
+
+fn quick_activate(i: i8) {
+    println!("{}", i);
 }
 
 fn resume_last_query() {

@@ -10,6 +10,7 @@ mod theme;
 mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard, Cancellable};
+use gtk4::glib::property::PropertySet;
 use gtk4::glib::{ControlFlow, Priority};
 use gtk4::prelude::{EditableExt, EntryExt};
 
@@ -18,12 +19,14 @@ use state::init_app_state;
 use which::which;
 
 use std::cell::OnceCell;
-use std::env;
+use std::os::unix::net::UnixListener;
+use std::path::PathBuf;
 use std::process;
 use std::rc::Rc;
-use std::sync::{RwLock, mpsc};
+use std::sync::mpsc::Sender;
+use std::sync::{OnceLock, RwLock, mpsc};
 use std::thread;
-use std::time::Instant;
+use std::{env, fs};
 
 use gtk4::{
     Application,
@@ -487,10 +490,9 @@ fn startup(app: &Application) {
     let args: Vec<String> = env::args().collect();
     let dmenu = args.contains(&"--dmenu".to_string()) || args.contains(&"-d".to_string());
     let version = args.contains(&"--version".to_string()) || args.contains(&"-v".to_string());
+    let is_service = app.flags().contains(ApplicationFlags::IS_SERVICE);
 
-    if !app.flags().contains(ApplicationFlags::IS_SERVICE)
-        && (args.contains(&"--close".to_string()) || args.contains(&"-q".to_string()))
-    {
+    if !is_service && (args.contains(&"--close".to_string()) || args.contains(&"-q".to_string())) {
         process::exit(0);
     }
 
@@ -506,4 +508,45 @@ fn startup(app: &Application) {
 
     init_app_state();
     init_ui(app, dmenu);
+
+    let (sender, receiver) = mpsc::channel::<bool>();
+
+    thread::spawn(|| {
+        listen_activation_socket(sender);
+    });
+
+    let app_clone = app.clone();
+
+    glib::idle_add_local(move || match receiver.try_recv() {
+        Ok(_) => {
+            activate(&app_clone);
+            ControlFlow::Continue
+        }
+        Err(mpsc::TryRecvError::Empty) => ControlFlow::Continue,
+        Err(mpsc::TryRecvError::Disconnected) => ControlFlow::Break,
+    });
+}
+
+fn listen_activation_socket(sender: Sender<bool>) {
+    let mut socket_path = env::var("XDG_RUNTIME_DIR")
+        .map(PathBuf::from)
+        .unwrap_or_else(|_| env::temp_dir());
+
+    socket_path.push("walker");
+    socket_path.push("walker.sock");
+    fs::remove_file(socket_path.clone()).unwrap();
+
+    let listener = UnixListener::bind(socket_path).unwrap();
+
+    loop {
+        match listener.accept() {
+            Ok((stream, _addr)) => {
+                drop(stream);
+                sender.send(true).unwrap();
+            }
+            Err(err) => {
+                panic!("Error accepting connection: {}", err);
+            }
+        }
+    }
 }

@@ -19,7 +19,7 @@ impl Dmenu {
             keybinds: vec![Keybind {
                 bind: config.providers.dmenu.select.clone(),
                 action: Action {
-                    action: "select",
+                    action: "select".to_string(),
                     after: AfterAction::Close,
                 },
             }],

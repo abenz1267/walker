@@ -25,21 +25,21 @@ impl Calc {
                 Keybind {
                     bind: config.providers.calc.copy.clone(),
                     action: Action {
-                        action: "copy",
+                        action: "copy".to_string(),
                         after: AfterAction::Close,
                     },
                 },
                 Keybind {
                     bind: config.providers.calc.delete.clone(),
                     action: Action {
-                        action: "delete",
+                        action: "delete".to_string(),
                         after: AfterAction::Reload,
                     },
                 },
                 Keybind {
                     bind: config.providers.calc.save.clone(),
                     action: Action {
-                        action: "save",
+                        action: "save".to_string(),
                         after: AfterAction::ClearReloadKeepPrefix,
                     },
                 },

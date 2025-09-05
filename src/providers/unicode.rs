@@ -22,7 +22,7 @@ impl Unicode {
             keybinds: vec![Keybind {
                 bind: config.providers.unicode.copy.clone(),
                 action: Action {
-                    action: "copy",
+                    action: "copy".to_string(),
                     after: AfterAction::Close,
                 },
             }],

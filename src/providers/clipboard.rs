@@ -28,7 +28,7 @@ impl Clipboard {
             global_keybinds: vec![Keybind {
                 bind: config.providers.clipboard.toggle_images_only.clone(),
                 action: Action {
-                    action: "toggle_images",
+                    action: "toggle_images".to_string(),
                     after: AfterAction::ClearReloadKeepPrefix,
                 },
             }],
@@ -36,21 +36,21 @@ impl Clipboard {
                 Keybind {
                     bind: config.providers.clipboard.copy.clone(),
                     action: Action {
-                        action: "copy",
+                        action: "copy".to_string(),
                         after: AfterAction::Close,
                     },
                 },
                 Keybind {
                     bind: config.providers.clipboard.delete.clone(),
                     action: Action {
-                        action: "remove",
+                        action: "remove".to_string(),
                         after: AfterAction::ClearReloadKeepPrefix,
                     },
                 },
                 Keybind {
                     bind: config.providers.clipboard.edit.clone(),
                     action: Action {
-                        action: "edit",
+                        action: "edit".to_string(),
                         after: AfterAction::Close,
                     },
                 },

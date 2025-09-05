@@ -22,7 +22,7 @@ impl Symbols {
             keybinds: vec![Keybind {
                 bind: config.providers.symbols.copy.clone(),
                 action: Action {
-                    action: "copy",
+                    action: "copy".to_string(),
                     after: AfterAction::Close,
                 },
             }],

@@ -20,14 +20,14 @@ impl ArchLinuxPkgs {
                 Keybind {
                     bind: config.providers.archlinuxpkgs.install.clone(),
                     action: Action {
-                        action: "install",
+                        action: "install".to_string(),
                         after: AfterAction::Close,
                     },
                 },
                 Keybind {
                     bind: config.providers.archlinuxpkgs.remove.clone(),
                     action: Action {
-                        action: "remove",
+                        action: "remove".to_string(),
                         after: AfterAction::Close,
                     },
                 },

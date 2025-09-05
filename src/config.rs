@@ -65,10 +65,7 @@ pub struct Keybinds {
     pub previous: String,
     pub toggle_exact: String,
     pub resume_last_query: String,
-    pub activate_first: String,
-    pub activate_second: String,
-    pub activate_third: String,
-    pub activate_fourth: String,
+    pub quick_activate: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

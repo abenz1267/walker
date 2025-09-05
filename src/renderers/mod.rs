@@ -1,3 +1,4 @@
+use crate::config::get_config;
 use crate::protos::generated_proto::query::query_response::Item;
 use crate::providers::PROVIDERS;
 use crate::state::get_dmenu_current;
@@ -46,6 +47,18 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
     }
 
     p.image_transformer(&b, &list_item, &item);
+
+    if let Some(text) = b.object::<Label>("QuickActivation") {
+        if let Some(qa) = &get_config().keybinds.quick_activate {
+            let i = list_item.position();
+
+            if let Some(val) = qa.get(i as usize) {
+                text.set_label(val);
+            } else {
+                text.set_visible(false);
+            }
+        }
+    }
 }
 
 pub fn create_drag_source(text: &str) -> DragSource {

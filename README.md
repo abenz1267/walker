@@ -116,6 +116,12 @@ To open it, simply call:
 walker
 ```
 
+or for an ever faster startup
+
+```bash
+nc -U /run/user/1000/walker/walker.sock
+```
+
 ## Theming
 
 You can customize Walker's appearance by creating a custom theme. Checkout `resources/themes/default` for the default theme. Themes inherit the default theme by default, so if you just want to change the CSS, you can just create `themes/yours/style.css`.

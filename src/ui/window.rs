@@ -513,7 +513,9 @@ fn setup_mouse_handling(ui: &WindowData) {
 }
 
 pub fn quit(app: &Application, cancelled: bool) {
-    clipboard_disable_images_only();
+    if PROVIDERS.get().unwrap().contains_key("clipboard") {
+        clipboard_disable_images_only();
+    }
 
     if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
         send_message("CNCLD".to_string()).unwrap();

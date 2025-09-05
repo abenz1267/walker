@@ -18,6 +18,7 @@ use config::get_config;
 use state::init_app_state;
 use which::which;
 
+use std::cell::OnceCell;
 use std::env;
 use std::process;
 use std::rc::Rc;
@@ -54,7 +55,7 @@ use crate::ui::window::{handle_preview, quit, setup_window, with_window};
 static GLOBAL_DMENU_SENDER: RwLock<Option<mpsc::Sender<String>>> = RwLock::new(None);
 
 thread_local! {
-    static HOLD_GUARD: OnceLock<ApplicationHoldGuard> = OnceLock::new();
+    static HOLD_GUARD: OnceCell<ApplicationHoldGuard> = OnceCell::new();
 }
 
 fn main() -> glib::ExitCode {

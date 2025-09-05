@@ -45,14 +45,13 @@ use gtk4::{
     prelude::{EntryExt, GtkWindowExt},
 };
 use std::{
-    cell::{Cell, RefCell},
+    cell::{Cell, OnceCell, RefCell},
     collections::HashMap,
     process,
-    sync::OnceLock,
 };
 
 thread_local! {
-    pub static WINDOWS: OnceLock<HashMap<String, WindowData>> = OnceLock::new();
+    pub static WINDOWS: OnceCell<HashMap<String, WindowData>> = OnceCell::new();
     pub static CSS_PROVIDER: RefCell<Option<CssProvider>> = RefCell::new(None);
 }
 
@@ -300,7 +299,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
             }
 
             if let Some(action) = get_bind(k, m) {
-                match action.action.as_str() {
+                match action.action {
                     ACTION_CLOSE => quit(&app, true),
                     ACTION_SELECT_NEXT => select_next(),
                     ACTION_SELECT_PREVIOUS => select_previous(),

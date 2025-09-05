@@ -1,6 +1,6 @@
 use crate::{
     config::{Elephant, get_config},
-    keybinds::Keybind,
+    keybinds::{Action, AfterAction, Keybind},
     providers::Provider,
 };
 
@@ -18,8 +18,10 @@ impl Providerlist {
             default_action: config.providers.providerlist.default.clone(),
             keybinds: vec![Keybind {
                 bind: config.providers.providerlist.activate.clone(),
-                action: "activate".to_string(),
-                after: crate::keybinds::AfterAction::ClearReload,
+                action: Action {
+                    action: "activate",
+                    after: AfterAction::ClearReload,
+                },
             }],
         }
     }

@@ -1,6 +1,6 @@
 use crate::{
     config::{Elephant, get_config},
-    keybinds::Keybind,
+    keybinds::{Action, AfterAction, Keybind},
     providers::Provider,
 };
 
@@ -18,8 +18,10 @@ impl Menus {
             default_action: config.providers.menus.default.clone(),
             keybinds: vec![Keybind {
                 bind: config.providers.menus.activate.clone(),
-                action: "activate".to_string(),
-                after: crate::keybinds::AfterAction::Close,
+                action: Action {
+                    action: "activate",
+                    after: AfterAction::Close,
+                },
             }],
         }
     }

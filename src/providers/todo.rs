@@ -4,7 +4,7 @@ use gtk4::{Builder, Image, ListItem, prelude::WidgetExt};
 
 use crate::{
     config::{Elephant, get_config},
-    keybinds::Keybind,
+    keybinds::{Action, AfterAction, Keybind},
     protos::generated_proto::query::query_response::Item,
     providers::Provider,
 };
@@ -24,28 +24,38 @@ impl Todo {
             keybinds: vec![
                 Keybind {
                     bind: config.providers.todo.save.clone(),
-                    action: "save".to_string(),
-                    after: crate::keybinds::AfterAction::ClearReloadKeepPrefix,
+                    action: Action {
+                        action: "save",
+                        after: AfterAction::ClearReloadKeepPrefix,
+                    },
                 },
                 Keybind {
                     bind: config.providers.todo.delete.clone(),
-                    action: "delete".to_string(),
-                    after: crate::keybinds::AfterAction::ClearReloadKeepPrefix,
+                    action: Action {
+                        action: "delete",
+                        after: AfterAction::ClearReloadKeepPrefix,
+                    },
                 },
                 Keybind {
                     bind: config.providers.todo.mark_active.clone(),
-                    action: "active".to_string(),
-                    after: crate::keybinds::AfterAction::ClearReloadKeepPrefix,
+                    action: Action {
+                        action: "active",
+                        after: AfterAction::ClearReloadKeepPrefix,
+                    },
                 },
                 Keybind {
                     bind: config.providers.todo.mark_done.clone(),
-                    action: "done".to_string(),
-                    after: crate::keybinds::AfterAction::ClearReloadKeepPrefix,
+                    action: Action {
+                        action: "done",
+                        after: AfterAction::ClearReloadKeepPrefix,
+                    },
                 },
                 Keybind {
                     bind: config.providers.todo.clear.clone(),
-                    action: "clear".to_string(),
-                    after: crate::keybinds::AfterAction::ClearReloadKeepPrefix,
+                    action: Action {
+                        action: "clear",
+                        after: AfterAction::ClearReloadKeepPrefix,
+                    },
                 },
             ],
         }

@@ -4,11 +4,11 @@ use gtk4::gdk::{self, Key};
 use std::collections::HashMap;
 use std::sync::{LazyLock, RwLock};
 
-pub const ACTION_CLOSE: &str = "%CLOSE%";
-pub const ACTION_SELECT_NEXT: &str = "%NEXT%";
-pub const ACTION_SELECT_PREVIOUS: &str = "%PREVIOUS%";
-pub const ACTION_TOGGLE_EXACT: &str = "%TOGGLE_EXACT%";
-pub const ACTION_RESUME_LAST_QUERY: &str = "%RESUME_LAST_QUERY%";
+pub const ACTION_CLOSE: &'static str = "%CLOSE%";
+pub const ACTION_SELECT_NEXT: &'static str = "%NEXT%";
+pub const ACTION_SELECT_PREVIOUS: &'static str = "%PREVIOUS%";
+pub const ACTION_TOGGLE_EXACT: &'static str = "%TOGGLE_EXACT%";
+pub const ACTION_RESUME_LAST_QUERY: &'static str = "%RESUME_LAST_QUERY%";
 
 #[derive(Debug, Clone)]
 pub enum AfterAction {
@@ -22,13 +22,12 @@ pub enum AfterAction {
 #[derive(Debug, Clone)]
 pub struct Keybind {
     pub bind: String,
-    pub action: String,
-    pub after: AfterAction,
+    pub action: Action,
 }
 
 #[derive(Debug, Clone)]
 pub struct Action {
-    pub action: String,
+    pub action: &'static str,
     pub after: AfterAction,
 }
 
@@ -88,8 +87,10 @@ pub fn setup_binds() {
     parse_bind(
         &Keybind {
             bind: config.keybinds.close.clone(),
-            action: ACTION_CLOSE.to_string(),
-            after: AfterAction::Close,
+            action: Action {
+                action: ACTION_CLOSE,
+                after: AfterAction::Close,
+            },
         },
         "",
         false,
@@ -99,8 +100,10 @@ pub fn setup_binds() {
     parse_bind(
         &Keybind {
             bind: config.keybinds.next.clone(),
-            action: ACTION_SELECT_NEXT.to_string(),
-            after: AfterAction::Nothing,
+            action: Action {
+                action: ACTION_SELECT_NEXT,
+                after: AfterAction::Nothing,
+            },
         },
         "",
         false,
@@ -110,8 +113,10 @@ pub fn setup_binds() {
     parse_bind(
         &Keybind {
             bind: config.keybinds.previous.clone(),
-            action: ACTION_SELECT_PREVIOUS.to_string(),
-            after: AfterAction::Nothing,
+            action: Action {
+                action: ACTION_SELECT_PREVIOUS,
+                after: AfterAction::Nothing,
+            },
         },
         "",
         false,
@@ -121,8 +126,10 @@ pub fn setup_binds() {
     parse_bind(
         &Keybind {
             bind: config.keybinds.toggle_exact.clone(),
-            action: ACTION_TOGGLE_EXACT.to_string(),
-            after: AfterAction::Nothing,
+            action: Action {
+                action: ACTION_TOGGLE_EXACT,
+                after: AfterAction::Nothing,
+            },
         },
         "",
         false,
@@ -132,8 +139,10 @@ pub fn setup_binds() {
     parse_bind(
         &Keybind {
             bind: config.keybinds.resume_last_query.clone(),
-            action: ACTION_RESUME_LAST_QUERY.to_string(),
-            after: AfterAction::Nothing,
+            action: Action {
+                action: ACTION_RESUME_LAST_QUERY,
+                after: AfterAction::Nothing,
+            },
         },
         "",
         false,
@@ -199,18 +208,13 @@ fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn s
         .iter()
         .fold(gdk::ModifierType::empty(), |acc, &m| acc | m);
 
-    let action_struct = Action {
-        action: b.action.to_string(),
-        after: b.after.clone(),
-    };
-
     let key = key.ok_or("incorrect bind")?;
     if provider.is_empty() {
         let mut binds = BINDS.write().unwrap();
         binds
             .entry(key)
             .or_insert_with(HashMap::new)
-            .insert(modifier, action_struct);
+            .insert(modifier, b.action.clone());
         return Ok(());
     }
 
@@ -221,7 +225,7 @@ fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn s
             .or_insert_with(HashMap::new)
             .entry(key)
             .or_insert_with(HashMap::new)
-            .insert(modifier, action_struct);
+            .insert(modifier, b.action.clone());
     } else {
         let mut provider_binds = PROVIDER_GLOBAL_BINDS.write().unwrap();
         provider_binds
@@ -229,7 +233,7 @@ fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn s
             .or_insert_with(HashMap::new)
             .entry(key)
             .or_insert_with(HashMap::new)
-            .insert(modifier, action_struct);
+            .insert(modifier, b.action.clone());
     }
 
     Ok(())

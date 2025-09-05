@@ -1,6 +1,6 @@
 use crate::{
     config::{Elephant, get_config},
-    keybinds::Keybind,
+    keybinds::{Action, AfterAction, Keybind},
     providers::Provider,
 };
 
@@ -19,13 +19,17 @@ impl ArchLinuxPkgs {
             keybinds: vec![
                 Keybind {
                     bind: config.providers.archlinuxpkgs.install.clone(),
-                    action: "install".to_string(),
-                    after: crate::keybinds::AfterAction::Close,
+                    action: Action {
+                        action: "install",
+                        after: AfterAction::Close,
+                    },
                 },
                 Keybind {
                     bind: config.providers.archlinuxpkgs.remove.clone(),
-                    action: "remove".to_string(),
-                    after: crate::keybinds::AfterAction::Close,
+                    action: Action {
+                        action: "remove",
+                        after: AfterAction::Close,
+                    },
                 },
             ],
         }

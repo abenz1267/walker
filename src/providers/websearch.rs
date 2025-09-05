@@ -1,4 +1,8 @@
-use crate::{config::get_config, keybinds::Keybind, providers::Provider};
+use crate::{
+    config::get_config,
+    keybinds::{Action, AfterAction, Keybind},
+    providers::Provider,
+};
 
 #[derive(Debug)]
 pub struct Websearch {
@@ -14,8 +18,10 @@ impl Websearch {
             default_action: config.providers.websearch.default.clone(),
             keybinds: vec![Keybind {
                 bind: config.providers.websearch.search.clone(),
-                action: "search".to_string(),
-                after: crate::keybinds::AfterAction::Close,
+                action: Action {
+                    action: "search",
+                    after: AfterAction::Close,
+                },
             }],
         }
     }

@@ -1,6 +1,6 @@
 use crate::{
     config::{Elephant, get_config},
-    keybinds::Keybind,
+    keybinds::{Action, AfterAction, Keybind},
     providers::Provider,
 };
 
@@ -19,13 +19,17 @@ impl Runner {
             keybinds: vec![
                 Keybind {
                     bind: config.providers.runner.start.clone(),
-                    action: "run".to_string(),
-                    after: crate::keybinds::AfterAction::Close,
+                    action: Action {
+                        action: "run",
+                        after: AfterAction::Close,
+                    },
                 },
                 Keybind {
                     bind: config.providers.runner.start_terminal.clone(),
-                    action: "runterminal".to_string(),
-                    after: crate::keybinds::AfterAction::Close,
+                    action: Action {
+                        action: "runterminal",
+                        after: AfterAction::Close,
+                    },
                 },
             ],
         }

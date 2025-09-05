@@ -79,12 +79,21 @@ in
       );
 
       systemd.user.services.walker = mkIf cfg.runAsService {
-        Unit.Description = "Walker - Application Runner";
-        Install.WantedBy = [ "graphical-session.target" ];
+        Unit = {
+          Description = "Walker - Application Runner";
+          ConditionEnvironment = "WAYLAND_DISPLAY";
+          After = [
+            "graphical-session.target"
+            "elephant.service"
+          ];
+          Requires = [ "elephant.service" ];
+          PartOf = [ "graphical-session.target" ];
+        };
         Service = {
           ExecStart = "${getExe cfg.package} --gapplication-service";
           Restart = "on-failure";
         };
+        Install.WantedBy = [ "graphical-session.target" ];
       };
     }
 

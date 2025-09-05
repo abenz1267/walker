@@ -20,14 +20,14 @@ impl Runner {
                 Keybind {
                     bind: config.providers.runner.start.clone(),
                     action: Action {
-                        action: "run",
+                        action: "run".to_string(),
                         after: AfterAction::Close,
                     },
                 },
                 Keybind {
                     bind: config.providers.runner.start_terminal.clone(),
                     action: Action {
-                        action: "runterminal",
+                        action: "runterminal".to_string(),
                         after: AfterAction::Close,
                     },
                 },

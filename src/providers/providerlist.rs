@@ -19,7 +19,7 @@ impl Providerlist {
             keybinds: vec![Keybind {
                 bind: config.providers.providerlist.activate.clone(),
                 action: Action {
-                    action: "activate",
+                    action: "activate".to_string(),
                     after: AfterAction::ClearReload,
                 },
             }],

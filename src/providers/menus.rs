@@ -19,7 +19,7 @@ impl Menus {
             keybinds: vec![Keybind {
                 bind: config.providers.menus.activate.clone(),
                 action: Action {
-                    action: "activate",
+                    action: "activate".to_string(),
                     after: AfterAction::Close,
                 },
             }],

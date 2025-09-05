@@ -6,7 +6,7 @@
       <class name="item-box"></class>
     </style>
     <property name="orientation">horizontal</property>
-    <property name="spacing">0</property>
+    <property name="spacing">10</property>
     <child>
       <object class="GtkBox" id="ItemTextBox">
         <style>
@@ -14,6 +14,7 @@
         </style>
         <property name="orientation">vertical</property>
         <property name="vexpand">true</property>
+        <property name="hexpand">true</property>
         <property name="vexpand-set">true</property>
         <property name="spacing">0</property>
         <child>
@@ -32,13 +33,24 @@
             <style>
               <class name="item-subtext"></class>
             </style>
-            <property name="wrap">false</property>
+            <property name="wrap">true</property>
             <property name="vexpand_set">true</property>
             <property name="vexpand">true</property>
             <property name="xalign">0</property>
             <property name="yalign">0</property>
           </object>
         </child>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel" id="QuickActivation">
+        <style>
+          <class name="item-quick-activation"></class>
+        </style>
+        <property name="wrap">false</property>
+        <property name="valign">center</property>
+        <property name="xalign">0</property>
+        <property name="yalign">0.5</property>
       </object>
     </child>
   </object>

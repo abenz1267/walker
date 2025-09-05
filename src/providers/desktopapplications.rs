@@ -19,7 +19,7 @@ impl DesktopApplications {
             keybinds: vec![Keybind {
                 bind: config.providers.desktopapplications.start.clone(),
                 action: Action {
-                    action: "",
+                    action: String::new(),
                     after: AfterAction::Close,
                 },
             }],

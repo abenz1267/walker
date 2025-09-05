@@ -28,28 +28,28 @@ impl Files {
                 Keybind {
                     bind: config.providers.files.copy_file.clone(),
                     action: Action {
-                        action: "copy",
+                        action: "copy".to_string(),
                         after: AfterAction::Close,
                     },
                 },
                 Keybind {
                     bind: config.providers.files.copy_path.clone(),
                     action: Action {
-                        action: "copypath",
+                        action: "copypath".to_string(),
                         after: AfterAction::Close,
                     },
                 },
                 Keybind {
                     bind: config.providers.files.open.clone(),
                     action: Action {
-                        action: "open",
+                        action: "open".to_string(),
                         after: AfterAction::Close,
                     },
                 },
                 Keybind {
                     bind: config.providers.files.open_dir.clone(),
                     action: Action {
-                        action: "opendir",
+                        action: "opendir".to_string(),
                         after: AfterAction::Close,
                     },
                 },

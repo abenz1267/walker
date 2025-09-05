@@ -22,10 +22,7 @@ next = "Down"
 previous = "Up"
 toggle_exact = "ctrl e"
 resume_last_query = "ctrl r"
-activate_first = "super j"
-activate_second = "super k"
-activate_third = "super l"
-activate_fourth = "super semicolon"
+quick_activate = ["F1", "F2", "F3", "F4"]
 
 [providers]
 default = [
@@ -109,7 +106,7 @@ save = "Return"
 delete = "ctrl d"
 mark_active = "ctrl a"
 mark_done = "ctrl f"
-clear = "ctrl shift X"
+clear = "ctrl x"
 
 [providers.runner]
 default = "start"

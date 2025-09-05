@@ -77,6 +77,12 @@ child {
   padding: 10px;
 }
 
+.item-quick-activation {
+  background: alpha(@accent_bg_color, 0.25);
+  border-radius: 5px;
+  padding: 10px;
+}
+
 child:hover .item-box,
 child:selected .item-box {
   background: alpha(@accent_bg_color, 0.25);

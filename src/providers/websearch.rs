@@ -19,7 +19,7 @@ impl Websearch {
             keybinds: vec![Keybind {
                 bind: config.providers.websearch.search.clone(),
                 action: Action {
-                    action: "search",
+                    action: "search".to_string(),
                     after: AfterAction::Close,
                 },
             }],

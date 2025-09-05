@@ -3,8 +3,7 @@ use crate::{
     config::get_config,
     data::{activate, clipboard_disable_images_only, input_changed},
     keybinds::{
-        ACTION_ACTIVATE_FIRST, ACTION_ACTIVATE_FOURTH, ACTION_ACTIVATE_SECOND,
-        ACTION_ACTIVATE_THIRD, ACTION_CLOSE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT,
+        ACTION_CLOSE, ACTION_QUICK_ACTIVATE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT,
         ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, Action, AfterAction, MODIFIERS, get_bind,
         get_provider_bind, get_provider_global_bind,
     },
@@ -24,7 +23,7 @@ use crate::{
 };
 use gtk4::{
     Application, Builder, Entry, EventControllerKey, EventControllerMotion, Label, ScrolledWindow,
-    SignalListItemFactory, SingleSelection, Window,
+    SignalListItemFactory, SingleSelection, Window, glib::property::PropertyGet,
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -299,17 +298,23 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 return true;
             }
 
+            let keep_open = MODIFIERS
+                .get(get_config().keep_open_modifier.as_str())
+                .is_some_and(|keep_open| m.contains(*keep_open));
+
             if let Some(action) = get_bind(k, m) {
-                match action.action {
+                match action.action.as_str() {
                     ACTION_CLOSE => quit(&app, true),
                     ACTION_SELECT_NEXT => select_next(),
                     ACTION_SELECT_PREVIOUS => select_previous(),
                     ACTION_TOGGLE_EXACT => toggle_exact(),
                     ACTION_RESUME_LAST_QUERY => resume_last_query(),
-                    ACTION_ACTIVATE_FIRST => quick_activate(0),
-                    ACTION_ACTIVATE_SECOND => quick_activate(1),
-                    ACTION_ACTIVATE_THIRD => quick_activate(2),
-                    ACTION_ACTIVATE_FOURTH => quick_activate(3),
+                    action if action.starts_with(ACTION_QUICK_ACTIVATE) => {
+                        if let Some((_, after)) = action.split_once(":") {
+                            let i: u32 = after.parse().unwrap();
+                            quick_activate(&app, i, keep_open)
+                        }
+                    }
                     _ => (),
                 }
 
@@ -398,14 +403,10 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 return false;
             }
 
-            let dont_close = MODIFIERS
-                .get(get_config().keep_open_modifier.as_str())
-                .is_some_and(|keep_open| *keep_open == m);
-
             if let Some(a) = after {
                 match a {
                     AfterAction::Close => {
-                        if dont_close {
+                        if keep_open {
                             select_next();
                         } else {
                             quit(&app, false);
@@ -669,8 +670,47 @@ pub fn select_previous() {
     });
 }
 
-fn quick_activate(i: i8) {
-    println!("{}", i);
+fn quick_activate(app: &Application, i: u32, keep_open: bool) {
+    with_window(|w| {
+        if let Some(item) = &w.selection.item(i) {
+            let item = item.clone().downcast::<QueryResponseObject>().unwrap();
+            let item = &item;
+
+            let resp = item.response();
+
+            let query = w
+                .input
+                .as_ref()
+                .map_or(String::new(), |i| i.text().to_string());
+
+            activate(
+                Some(resp.clone()),
+                resp.item.provider.as_str(),
+                &query,
+                PROVIDERS
+                    .get()
+                    .unwrap()
+                    .get(&resp.item.provider)
+                    .unwrap()
+                    .default_action(),
+            );
+
+            if resp.item.provider == "providerlist" || resp.item.identifier.contains("menus:") {
+                if let Some(input) = &w.input {
+                    if input.text().is_empty() {
+                        input.emit_by_name::<()>("changed", &[]);
+                    } else {
+                        input.set_text("");
+                    }
+                }
+                return;
+            }
+
+            if !keep_open {
+                quit(app, false);
+            }
+        }
+    });
 }
 
 fn resume_last_query() {

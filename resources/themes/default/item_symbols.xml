@@ -6,12 +6,13 @@
       <class name="item-box"></class>
     </style>
     <property name="orientation">horizontal</property>
-    <property name="spacing">10</property>
+    <property name="spacing">0</property>
     <child>
       <object class="GtkLabel" id="ItemImage">
         <style>
           <class name="item-image"></class>
         </style>
+        <property name="width-chars">3</property>
       </object>
     </child>
     <child>

@@ -519,6 +519,10 @@ fn listen_activation_socket(app_clone: Application) {
         .unwrap_or_else(|_| env::temp_dir());
 
     socket_path.push("walker");
+    if !socket_path.exists() {
+        fs::create_dir(&socket_path).unwrap();
+    }
+
     socket_path.push("walker.sock");
 
     let _ = fs::remove_file(&socket_path);

@@ -17,7 +17,6 @@ pub enum AfterAction {
     Nothing,
     Reload,
     ClearReload,
-    ClearReloadKeepPrefix,
 }
 
 #[derive(Debug, Clone)]

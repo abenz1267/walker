@@ -416,15 +416,6 @@ fn setup_keyboard_handling(ui: &WindowData) {
                             if input.text().is_empty() {
                                 input.emit_by_name::<()>("changed", &[]);
                             } else {
-                                input.set_text("");
-                            }
-                        }
-                    }
-                    AfterAction::ClearReloadKeepPrefix => {
-                        if let Some(input) = &w.input {
-                            if input.text().is_empty() {
-                                input.emit_by_name::<()>("changed", &[]);
-                            } else {
                                 input.set_text(&get_current_prefix());
                                 input.set_position(-1);
                             }

@@ -26,35 +26,35 @@ impl Todo {
                     bind: config.providers.todo.save.clone(),
                     action: Action {
                         action: "save".to_string(),
-                        after: AfterAction::ClearReloadKeepPrefix,
+                        after: AfterAction::ClearReload,
                     },
                 },
                 Keybind {
                     bind: config.providers.todo.delete.clone(),
                     action: Action {
                         action: "delete".to_string(),
-                        after: AfterAction::ClearReloadKeepPrefix,
+                        after: AfterAction::ClearReload,
                     },
                 },
                 Keybind {
                     bind: config.providers.todo.mark_active.clone(),
                     action: Action {
                         action: "active".to_string(),
-                        after: AfterAction::ClearReloadKeepPrefix,
+                        after: AfterAction::ClearReload,
                     },
                 },
                 Keybind {
                     bind: config.providers.todo.mark_done.clone(),
                     action: Action {
                         action: "done".to_string(),
-                        after: AfterAction::ClearReloadKeepPrefix,
+                        after: AfterAction::ClearReload,
                     },
                 },
                 Keybind {
                     bind: config.providers.todo.clear.clone(),
                     action: Action {
                         action: "clear".to_string(),
-                        after: AfterAction::ClearReloadKeepPrefix,
+                        after: AfterAction::ClearReload,
                     },
                 },
             ],

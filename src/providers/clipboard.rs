@@ -29,7 +29,7 @@ impl Clipboard {
                 bind: config.providers.clipboard.toggle_images_only.clone(),
                 action: Action {
                     action: "toggle_images".to_string(),
-                    after: AfterAction::ClearReloadKeepPrefix,
+                    after: AfterAction::ClearReload,
                 },
             }],
             item_keybinds: vec![
@@ -44,7 +44,7 @@ impl Clipboard {
                     bind: config.providers.clipboard.delete.clone(),
                     action: Action {
                         action: "remove".to_string(),
-                        after: AfterAction::ClearReloadKeepPrefix,
+                        after: AfterAction::ClearReload,
                     },
                 },
                 Keybind {

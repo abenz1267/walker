@@ -40,7 +40,7 @@ impl Calc {
                     bind: config.providers.calc.save.clone(),
                     action: Action {
                         action: "save".to_string(),
-                        after: AfterAction::ClearReloadKeepPrefix,
+                        after: AfterAction::ClearReload,
                     },
                 },
             ],

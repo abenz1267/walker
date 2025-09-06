@@ -165,7 +165,16 @@ fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn s
             continue;
         }
 
-        key = Some(Key::from_name(field.to_string()).ok_or("unable to create key from name")?);
+        key = match Key::from_name(field.to_string()) {
+            Some(k) => Some(k),
+            None => {
+                eprintln!(
+                    "Keybind Error: unable to create key from name: '{}' in '{}'.",
+                    field, b.bind
+                );
+                std::process::exit(1);
+            }
+        };
     }
 
     let modifier = modifiers_list

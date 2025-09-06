@@ -19,13 +19,26 @@ impl Symbols {
 
         Self {
             default_action: config.providers.symbols.default.clone(),
-            keybinds: vec![Keybind {
-                bind: config.providers.symbols.copy.clone(),
-                action: Action {
-                    action: "copy".to_string(),
-                    after: AfterAction::Close,
+            keybinds: vec![
+                Keybind {
+                    bind: config.providers.symbols.copy.clone(),
+                    action: Action {
+                        label: "copy",
+                        required_states: None,
+                        action: "copy".to_string(),
+                        after: AfterAction::Close,
+                    },
                 },
-            }],
+                Keybind {
+                    bind: config.providers.desktopapplications.remove_history.clone(),
+                    action: Action {
+                        label: "erase history",
+                        action: "erase_history".to_string(),
+                        after: AfterAction::Reload,
+                        required_states: Some(vec!["history"]),
+                    },
+                },
+            ],
         }
     }
 }
@@ -37,10 +50,6 @@ impl Provider for Symbols {
 
     fn default_action(&self) -> &str {
         &self.default_action
-    }
-
-    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
-        format!("copy: {}", cfg.providers.symbols.copy,)
     }
 
     fn get_item_layout(&self) -> String {

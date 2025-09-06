@@ -247,8 +247,7 @@ fn add_flags(app: &Application) {
     );
 }
 
-#[tokio::main]
-async fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
+fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     let options = cmd.options_dict();
 
     if options.contains("version") {
@@ -315,7 +314,7 @@ async fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) ->
                 input.set_text("");
             }
 
-            let items = &w.items;
+            let items = w.items.clone();
             items.remove_all();
 
             if is_input_only() {
@@ -325,16 +324,14 @@ async fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) ->
             let stdin = cmd.stdin();
             let data_stream = gio::DataInputStream::new(&stdin.unwrap());
 
-            fn read_line_callback(stream: Rc<gio::DataInputStream>, i: i32, items: gio::ListStore) {
-                let stream_clone = stream.clone();
+            async fn read_lines_async(stream: Rc<gio::DataInputStream>, items: gio::ListStore) {
+                let mut i = 0;
 
-                stream.read_line_utf8_async(
-                    Priority::DEFAULT,
-                    Cancellable::NONE,
-                    move |line_slice| match line_slice {
+                loop {
+                    match stream.read_line_utf8_future(Priority::DEFAULT).await {
                         Ok(Some(line)) => {
                             if line.is_empty() {
-                                return;
+                                break;
                             }
 
                             let line = line.trim();
@@ -350,15 +347,21 @@ async fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) ->
 
                                 items.append(&QueryResponseObject::new(response));
                             }
-                            read_line_callback(stream_clone, i + 1, items);
+
+                            i += 1;
                         }
-                        Ok(None) => (),
-                        Err(e) => eprintln!("Error reading: {e}"),
-                    },
-                );
+                        Ok(None) => break,
+                        Err(e) => {
+                            eprintln!("Error reading: {e}");
+                            break;
+                        }
+                    }
+                }
             }
 
-            read_line_callback(Rc::new(data_stream), 0, items.clone());
+            glib::spawn_future_local(async move {
+                read_lines_async(Rc::new(data_stream), items).await;
+            });
         });
 
         set_is_dmenu(true);

@@ -28,29 +28,37 @@ impl Files {
                 Keybind {
                     bind: config.providers.files.copy_file.clone(),
                     action: Action {
+                        label: "copy",
                         action: "copy".to_string(),
                         after: AfterAction::Close,
+                        required_states: None,
                     },
                 },
                 Keybind {
                     bind: config.providers.files.copy_path.clone(),
                     action: Action {
+                        label: "copy path",
                         action: "copypath".to_string(),
                         after: AfterAction::Close,
+                        required_states: None,
                     },
                 },
                 Keybind {
                     bind: config.providers.files.open.clone(),
                     action: Action {
+                        label: "open",
                         action: "open".to_string(),
                         after: AfterAction::Close,
+                        required_states: None,
                     },
                 },
                 Keybind {
                     bind: config.providers.files.open_dir.clone(),
                     action: Action {
+                        label: "open dir",
                         action: "opendir".to_string(),
                         after: AfterAction::Close,
+                        required_states: None,
                     },
                 },
             ],
@@ -65,16 +73,6 @@ impl Provider for Files {
 
     fn default_action(&self) -> &str {
         &self.default_action
-    }
-
-    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
-        format!(
-            "open: {} - open dir: {} - copy: {} - copy path: {}",
-            cfg.providers.files.open,
-            cfg.providers.files.open_dir,
-            cfg.providers.files.copy_file,
-            cfg.providers.files.copy_path
-        )
     }
 
     fn get_item_layout(&self) -> String {

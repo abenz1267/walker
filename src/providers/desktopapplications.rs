@@ -16,13 +16,26 @@ impl DesktopApplications {
 
         Self {
             default_action: config.providers.desktopapplications.default.clone(),
-            keybinds: vec![Keybind {
-                bind: config.providers.desktopapplications.start.clone(),
-                action: Action {
-                    action: String::new(),
-                    after: AfterAction::Close,
+            keybinds: vec![
+                Keybind {
+                    bind: config.providers.desktopapplications.start.clone(),
+                    action: Action {
+                        label: "open",
+                        action: String::new(),
+                        after: AfterAction::Close,
+                        required_states: None,
+                    },
                 },
-            }],
+                Keybind {
+                    bind: config.providers.desktopapplications.remove_history.clone(),
+                    action: Action {
+                        label: "erase history",
+                        action: "erase_history".to_string(),
+                        after: AfterAction::Reload,
+                        required_states: Some(vec!["history"]),
+                    },
+                },
+            ],
         }
     }
 }
@@ -34,9 +47,5 @@ impl Provider for DesktopApplications {
 
     fn default_action(&self) -> &str {
         &self.default_action
-    }
-
-    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
-        format!("start: {}", cfg.providers.desktopapplications.start)
     }
 }

@@ -41,7 +41,19 @@ pub trait Provider: Sync + Send + Debug {
     }
 
     fn default_action(&self) -> &str;
-    fn get_keybind_hint(&self, cfg: &Elephant) -> String;
+    fn get_keybind_hint(&self, state: &Vec<String>) -> String {
+        self.get_keybinds()
+            .iter()
+            .filter(|keybind| match &keybind.action.required_states {
+                Some(required) => required
+                    .iter()
+                    .any(|required_state| state.contains(&required_state.to_string())),
+                None => true,
+            })
+            .map(|keybind| format!("{}: <{}>", keybind.action.label, keybind.bind))
+            .collect::<Vec<_>>()
+            .join(" | ")
+    }
 
     fn get_item_layout(&self) -> String {
         include_str!("../../resources/themes/default/item.xml").to_string()

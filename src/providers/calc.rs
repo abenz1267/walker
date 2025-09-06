@@ -25,6 +25,8 @@ impl Calc {
                 Keybind {
                     bind: config.providers.calc.copy.clone(),
                     action: Action {
+                        label: "copy",
+                        required_states: None,
                         action: "copy".to_string(),
                         after: AfterAction::Close,
                     },
@@ -32,6 +34,8 @@ impl Calc {
                 Keybind {
                     bind: config.providers.calc.delete.clone(),
                     action: Action {
+                        label: "delete",
+                        required_states: Some(vec!["saved"]),
                         action: "delete".to_string(),
                         after: AfterAction::Reload,
                     },
@@ -39,6 +43,8 @@ impl Calc {
                 Keybind {
                     bind: config.providers.calc.save.clone(),
                     action: Action {
+                        label: "save",
+                        required_states: Some(vec!["current"]),
                         action: "save".to_string(),
                         after: AfterAction::ClearReload,
                     },
@@ -55,13 +61,6 @@ impl Provider for Calc {
 
     fn default_action(&self) -> &str {
         &self.default_action
-    }
-
-    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
-        format!(
-            "copy: {} - save: {} - delete: {}",
-            cfg.providers.calc.copy, cfg.providers.calc.save, cfg.providers.calc.delete
-        )
     }
 
     fn get_item_layout(&self) -> String {

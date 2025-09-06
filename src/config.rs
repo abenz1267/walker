@@ -118,6 +118,7 @@ pub struct Providerlist {
 pub struct DesktopApplications {
     pub default: String,
     pub start: String,
+    pub remove_history: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

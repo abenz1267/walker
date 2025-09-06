@@ -16,13 +16,26 @@ impl Menus {
 
         Self {
             default_action: config.providers.menus.default.clone(),
-            keybinds: vec![Keybind {
-                bind: config.providers.menus.activate.clone(),
-                action: Action {
-                    action: "activate".to_string(),
-                    after: AfterAction::Close,
+            keybinds: vec![
+                Keybind {
+                    bind: config.providers.menus.activate.clone(),
+                    action: Action {
+                        label: "select",
+                        required_states: None,
+                        action: "activate".to_string(),
+                        after: AfterAction::Close,
+                    },
                 },
-            }],
+                Keybind {
+                    bind: config.providers.desktopapplications.remove_history.clone(),
+                    action: Action {
+                        label: "erase history",
+                        action: "erase_history".to_string(),
+                        after: AfterAction::Reload,
+                        required_states: Some(vec!["history"]),
+                    },
+                },
+            ],
         }
     }
 }
@@ -34,9 +47,5 @@ impl Provider for Menus {
 
     fn default_action(&self) -> &str {
         &self.default_action
-    }
-
-    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
-        format!("activate: {}", cfg.providers.menus.activate)
     }
 }

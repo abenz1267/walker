@@ -20,6 +20,8 @@ impl ArchLinuxPkgs {
                 Keybind {
                     bind: config.providers.archlinuxpkgs.install.clone(),
                     action: Action {
+                        label: "install",
+                        required_states: Some(vec!["available"]),
                         action: "install".to_string(),
                         after: AfterAction::Close,
                     },
@@ -27,7 +29,9 @@ impl ArchLinuxPkgs {
                 Keybind {
                     bind: config.providers.archlinuxpkgs.remove.clone(),
                     action: Action {
+                        label: "remove",
                         action: "remove".to_string(),
+                        required_states: Some(vec!["installed"]),
                         after: AfterAction::Close,
                     },
                 },
@@ -43,13 +47,6 @@ impl Provider for ArchLinuxPkgs {
 
     fn default_action(&self) -> &str {
         &self.default_action
-    }
-
-    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
-        format!(
-            "install: {} - remove: {}",
-            cfg.providers.archlinuxpkgs.install, cfg.providers.archlinuxpkgs.remove,
-        )
     }
 
     fn get_item_layout(&self) -> String {

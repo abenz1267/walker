@@ -20,6 +20,8 @@ impl Runner {
                 Keybind {
                     bind: config.providers.runner.start.clone(),
                     action: Action {
+                        label: "run",
+                        required_states: None,
                         action: "run".to_string(),
                         after: AfterAction::Close,
                     },
@@ -27,8 +29,19 @@ impl Runner {
                 Keybind {
                     bind: config.providers.runner.start_terminal.clone(),
                     action: Action {
+                        label: "run in terminal",
+                        required_states: None,
                         action: "runterminal".to_string(),
                         after: AfterAction::Close,
+                    },
+                },
+                Keybind {
+                    bind: config.providers.desktopapplications.remove_history.clone(),
+                    action: Action {
+                        label: "erase history",
+                        action: "erase_history".to_string(),
+                        after: AfterAction::Reload,
+                        required_states: Some(vec!["history"]),
                     },
                 },
             ],
@@ -43,12 +56,5 @@ impl Provider for Runner {
 
     fn default_action(&self) -> &str {
         &self.default_action
-    }
-
-    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
-        format!(
-            "run: {} - run in terminal: {}",
-            cfg.providers.runner.start, cfg.providers.runner.start_terminal
-        )
     }
 }

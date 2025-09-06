@@ -28,6 +28,8 @@ impl Clipboard {
             global_keybinds: vec![Keybind {
                 bind: config.providers.clipboard.toggle_images_only.clone(),
                 action: Action {
+                    label: "toggle images",
+                    required_states: None,
                     action: "toggle_images".to_string(),
                     after: AfterAction::ClearReload,
                 },
@@ -36,6 +38,8 @@ impl Clipboard {
                 Keybind {
                     bind: config.providers.clipboard.copy.clone(),
                     action: Action {
+                        label: "copy",
+                        required_states: None,
                         action: "copy".to_string(),
                         after: AfterAction::Close,
                     },
@@ -43,6 +47,8 @@ impl Clipboard {
                 Keybind {
                     bind: config.providers.clipboard.delete.clone(),
                     action: Action {
+                        label: "remove",
+                        required_states: None,
                         action: "remove".to_string(),
                         after: AfterAction::ClearReload,
                     },
@@ -50,6 +56,8 @@ impl Clipboard {
                 Keybind {
                     bind: config.providers.clipboard.edit.clone(),
                     action: Action {
+                        label: "edit",
+                        required_states: None,
                         action: "edit".to_string(),
                         after: AfterAction::Close,
                     },
@@ -70,16 +78,6 @@ impl Provider for Clipboard {
 
     fn default_action(&self) -> &str {
         &self.default_action
-    }
-
-    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
-        format!(
-            "copy: {} - delete: {} - edit: {} - images only: {}",
-            cfg.providers.clipboard.copy,
-            cfg.providers.clipboard.delete,
-            cfg.providers.clipboard.edit,
-            cfg.providers.clipboard.toggle_images_only
-        )
     }
 
     fn get_item_layout(&self) -> String {

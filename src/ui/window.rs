@@ -814,14 +814,13 @@ pub fn set_keybind_hint() {
         };
 
         let providers = PROVIDERS.get().unwrap();
-        let cfg = get_config();
 
         if let Some(p) = providers.get(&item.provider) {
-            k.set_text(&p.get_keybind_hint(cfg));
+            k.set_text(&p.get_keybind_hint(&item.state));
         } else if item.provider.starts_with("menus:")
             && let Some(p) = providers.get("menus")
         {
-            k.set_text(&p.get_keybind_hint(cfg));
+            k.set_text(&p.get_keybind_hint(&item.state));
         } else if providers.get("menus").is_some() {
             k.set_text("");
         }

@@ -29,6 +29,8 @@ pub struct Keybind {
 pub struct Action {
     pub action: String,
     pub after: AfterAction,
+    pub label: &'static str,
+    pub required_states: Option<Vec<&'static str>>,
 }
 
 static BINDS: LazyLock<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> =
@@ -68,6 +70,8 @@ pub fn setup_binds() {
         &Keybind {
             bind: config.keybinds.close.clone(),
             action: Action {
+                label: "close",
+                required_states: None,
                 action: ACTION_CLOSE.to_string(),
                 after: AfterAction::Close,
             },
@@ -81,6 +85,8 @@ pub fn setup_binds() {
         &Keybind {
             bind: config.keybinds.next.clone(),
             action: Action {
+                label: "select next",
+                required_states: None,
                 action: ACTION_SELECT_NEXT.to_string(),
                 after: AfterAction::Nothing,
             },
@@ -94,6 +100,8 @@ pub fn setup_binds() {
         &Keybind {
             bind: config.keybinds.previous.clone(),
             action: Action {
+                label: "select previous",
+                required_states: None,
                 action: ACTION_SELECT_PREVIOUS.to_string(),
                 after: AfterAction::Nothing,
             },
@@ -107,6 +115,8 @@ pub fn setup_binds() {
         &Keybind {
             bind: config.keybinds.toggle_exact.clone(),
             action: Action {
+                label: "toggle exact search",
+                required_states: None,
                 action: ACTION_TOGGLE_EXACT.to_string(),
                 after: AfterAction::Nothing,
             },
@@ -120,6 +130,8 @@ pub fn setup_binds() {
         &Keybind {
             bind: config.keybinds.resume_last_query.clone(),
             action: Action {
+                label: "resume last query",
+                required_states: None,
                 action: ACTION_RESUME_LAST_QUERY.to_string(),
                 after: AfterAction::Nothing,
             },
@@ -137,6 +149,8 @@ pub fn setup_binds() {
                 &Keybind {
                     bind: s.clone(),
                     action: Action {
+                        label: "quick activate",
+                        required_states: None,
                         action: action_str,
                         after: AfterAction::Close,
                     },

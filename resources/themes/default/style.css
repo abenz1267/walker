@@ -105,6 +105,7 @@ child:selected .item-box {
 }
 
 .keybind-hints {
+  font-size: 12px;
   opacity: 0.5;
   color: @theme_fg_color;
 }

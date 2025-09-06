@@ -19,6 +19,8 @@ impl Providerlist {
             keybinds: vec![Keybind {
                 bind: config.providers.providerlist.activate.clone(),
                 action: Action {
+                    label: "select",
+                    required_states: None,
                     action: "activate".to_string(),
                     after: AfterAction::ClearReload,
                 },
@@ -34,10 +36,6 @@ impl Provider for Providerlist {
 
     fn default_action(&self) -> &str {
         &self.default_action
-    }
-
-    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
-        format!("select: {}", cfg.providers.providerlist.activate)
     }
 
     fn get_item_layout(&self) -> String {

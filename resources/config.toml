@@ -76,6 +76,7 @@ delete = "ctrl d"
 [providers.websearch]
 default = "search"
 search = "Return"
+remove_history = "ctrl BackSpace"
 
 [providers.providerlist]
 default = "activate"
@@ -92,6 +93,7 @@ toggle_images_only = "ctrl i"
 [providers.desktopapplications]
 default = "start"
 start = "Return"
+remove_history = "ctrl BackSpace"
 
 [providers.files]
 default = "open"
@@ -112,6 +114,7 @@ clear = "ctrl x"
 default = "start"
 start = "Return"
 start_terminal = "shift Return"
+remove_history = "ctrl BackSpace"
 
 [providers.dmenu]
 default = "select"
@@ -120,11 +123,14 @@ select = "Return"
 [providers.symbols]
 default = "copy"
 copy = "Return"
+remove_history = "ctrl BackSpace"
 
 [providers.unicode]
 default = "copy"
 copy = "Return"
+remove_history = "ctrl BackSpace"
 
 [providers.menus]
 default = "activate"
 activate = "Return"
+remove_history = "ctrl BackSpace"

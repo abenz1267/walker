@@ -25,36 +25,46 @@ impl Todo {
                 Keybind {
                     bind: config.providers.todo.save.clone(),
                     action: Action {
+                        label: "save",
                         action: "save".to_string(),
                         after: AfterAction::ClearReload,
+                        required_states: None,
                     },
                 },
                 Keybind {
                     bind: config.providers.todo.delete.clone(),
                     action: Action {
+                        label: "delete",
                         action: "delete".to_string(),
                         after: AfterAction::ClearReload,
+                        required_states: None,
                     },
                 },
                 Keybind {
                     bind: config.providers.todo.mark_active.clone(),
                     action: Action {
+                        label: "active",
                         action: "active".to_string(),
                         after: AfterAction::ClearReload,
+                        required_states: None,
                     },
                 },
                 Keybind {
                     bind: config.providers.todo.mark_done.clone(),
                     action: Action {
+                        label: "done",
                         action: "done".to_string(),
                         after: AfterAction::ClearReload,
+                        required_states: None,
                     },
                 },
                 Keybind {
                     bind: config.providers.todo.clear.clone(),
                     action: Action {
+                        label: "clear",
                         action: "clear".to_string(),
                         after: AfterAction::ClearReload,
+                        required_states: None,
                     },
                 },
             ],
@@ -69,16 +79,6 @@ impl Provider for Todo {
 
     fn default_action(&self) -> &str {
         &self.default_action
-    }
-
-    fn get_keybind_hint(&self, cfg: &Elephant) -> String {
-        format!(
-            "mark active: {} - mark done: {} - delete: {} - clear: {}",
-            cfg.providers.todo.mark_active,
-            cfg.providers.todo.mark_done,
-            cfg.providers.todo.delete,
-            cfg.providers.todo.clear
-        )
     }
 
     fn get_item_layout(&self) -> String {

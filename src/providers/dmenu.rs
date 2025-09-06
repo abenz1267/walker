@@ -19,6 +19,8 @@ impl Dmenu {
             keybinds: vec![Keybind {
                 bind: config.providers.dmenu.select.clone(),
                 action: Action {
+                    label: "select",
+                    required_states: None,
                     action: "select".to_string(),
                     after: AfterAction::Close,
                 },
@@ -34,10 +36,6 @@ impl Provider for Dmenu {
 
     fn default_action(&self) -> &str {
         &self.default_action
-    }
-
-    fn get_keybind_hint(&self, cfg: &crate::config::Elephant) -> String {
-        format!("select: {}", cfg.providers.dmenu.select)
     }
 
     fn get_item_layout(&self) -> String {

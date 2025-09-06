@@ -122,6 +122,14 @@ or for an ever faster startup
 nc -U /run/user/1000/walker/walker.sock
 ```
 
+## Keybinds
+
+The following modifier keys are valid: `ctrl`, `alt`, `shift`, `super`.
+
+To get a full list of possible key values, look here: [GDK key-values](https://github.com/gtk-rs/gtk4-rs/blob/0.9/gdk4/sys/src/lib.rs#L302).
+
+F.e. `pub const GDK_KEY_semicolon: c_int = 59;` means that `ctrl semicolon` would be a valid keybind.
+
 ## Theming
 
 You can customize Walker's appearance by creating a custom theme. Checkout `resources/themes/default` for the default theme. Themes inherit the default theme by default, so if you just want to change the CSS, you can just create `themes/yours/style.css`.

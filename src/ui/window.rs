@@ -23,7 +23,7 @@ use crate::{
 };
 use gtk4::{
     Application, Builder, Entry, EventControllerKey, EventControllerMotion, Label, ScrolledWindow,
-    SignalListItemFactory, SingleSelection, Window, glib::property::PropertyGet,
+    SignalListItemFactory, SingleSelection, Window,
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -186,8 +186,6 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
 
     ui.selection.set_autoselect(true);
     ui.selection.connect_items_changed(move |s, _, _, _| {
-        crate::handle_preview();
-
         with_window(|w| {
             if let Some(p) = &w.placeholder {
                 p.set_visible(s.n_items() == 0);
@@ -200,7 +198,6 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
             }
 
             if s.n_items() == 0 {
-                // Clear preview caches when no items are visible
                 crate::preview::clear_all_caches();
             }
         });

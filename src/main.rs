@@ -11,7 +11,6 @@ mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard, Cancellable};
 use gtk4::glib::object::ObjectExt;
-use gtk4::glib::property::PropertySet;
 use gtk4::glib::{ControlFlow, Priority};
 use gtk4::prelude::{EditableExt, EntryExt};
 
@@ -25,8 +24,7 @@ use std::os::unix::net::UnixListener;
 use std::path::PathBuf;
 use std::process;
 use std::rc::Rc;
-use std::sync::mpsc::Sender;
-use std::sync::{OnceLock, RwLock, mpsc};
+use std::sync::{RwLock, mpsc};
 use std::thread;
 use std::{env, fs};
 

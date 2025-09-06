@@ -44,13 +44,7 @@ static PROVIDER_GLOBAL_BINDS: LazyLock<
 pub static MODIFIERS: LazyLock<HashMap<&'static str, gdk::ModifierType>> = LazyLock::new(|| {
     let mut map = HashMap::new();
     map.insert("ctrl", gdk::ModifierType::CONTROL_MASK);
-    map.insert("lctrl", gdk::ModifierType::CONTROL_MASK);
-    map.insert("rctrl", gdk::ModifierType::CONTROL_MASK);
     map.insert("alt", gdk::ModifierType::ALT_MASK);
-    map.insert("lalt", gdk::ModifierType::ALT_MASK);
-    map.insert("ralt", gdk::ModifierType::ALT_MASK);
-    map.insert("lshift", gdk::ModifierType::SHIFT_MASK);
-    map.insert("rshift", gdk::ModifierType::SHIFT_MASK);
     map.insert("shift", gdk::ModifierType::SHIFT_MASK);
     map.insert("super", gdk::ModifierType::SUPER_MASK);
     map

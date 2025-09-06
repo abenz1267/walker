@@ -28,6 +28,8 @@ static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 
 pub fn input_changed(text: &str) {
+    set_current_prefix(String::new());
+
     if is_dmenu() {
         sort_items_fuzzy(&text);
         return;

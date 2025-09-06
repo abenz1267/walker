@@ -16,8 +16,8 @@ use crate::{
         get_last_query, get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after,
         is_dmenu_keep_open, is_service, set_current_prefix, set_dmenu_current,
         set_dmenu_exit_after, set_dmenu_keep_open, set_initial_placeholder, set_input_only,
-        set_is_dmenu, set_is_visible, set_last_query, set_no_search, set_parameter_height,
-        set_parameter_width, set_placeholder, set_provider, set_theme,
+        set_is_dmenu, set_is_visible, set_last_query, set_no_search, set_param_close,
+        set_parameter_height, set_parameter_width, set_placeholder, set_provider, set_theme,
     },
     theme::{setup_layer_shell, with_themes},
 };
@@ -551,6 +551,7 @@ pub fn quit(app: &Application, cancelled: bool) {
     set_dmenu_current(0);
     set_is_dmenu(false);
     set_input_only(false);
+    set_param_close(false);
 
     if is_dmenu_exit_after() {
         set_dmenu_exit_after(false);

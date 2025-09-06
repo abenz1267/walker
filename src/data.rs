@@ -164,12 +164,14 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
 fn start_listening() {
     thread::spawn(|| {
         if let Err(e) = listen_loop() {
+            handle_disconnect();
             eprintln!("Listen loop error: {e}");
         }
     });
 
     thread::spawn(|| {
         if let Err(e) = listen_menus_loop() {
+            handle_disconnect();
             eprintln!("Listen menu_loop error: {e}");
         }
     });
@@ -380,6 +382,8 @@ fn query(text: &str) {
 }
 
 fn handle_disconnect() {
+    set_is_connected(false);
+
     thread::spawn(|| {
         glib::idle_add_once(|| {
             with_window(|w| {

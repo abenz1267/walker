@@ -24,9 +24,10 @@ use std::os::unix::net::UnixListener;
 use std::path::PathBuf;
 use std::process;
 use std::rc::Rc;
-use std::sync::{RwLock, mpsc};
+use std::sync::RwLock;
 use std::thread;
 use std::{env, fs};
+use tokio::sync::oneshot::{self, Sender};
 
 use gtk4::{
     Application,
@@ -55,7 +56,7 @@ use crate::state::{
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{handle_preview, quit, setup_window, with_window};
 
-static GLOBAL_DMENU_SENDER: RwLock<Option<mpsc::Sender<String>>> = RwLock::new(None);
+static GLOBAL_DMENU_SENDER: RwLock<Option<Sender<String>>> = RwLock::new(None);
 
 thread_local! {
     static HOLD_GUARD: OnceCell<ApplicationHoldGuard> = OnceCell::new();
@@ -113,14 +114,18 @@ fn init_ui(app: &Application, dmenu: bool) {
     // start_theme_watcher(s.get_theme());
 }
 
-fn send_message(message: String) -> Result<(), String> {
-    let tx = GLOBAL_DMENU_SENDER.read().unwrap();
-    let tx = tx
-        .as_ref()
-        .ok_or_else(|| "No sender available".to_string())?;
+fn send_message(message: String) {
+    let mut sender_guard = GLOBAL_DMENU_SENDER.write().unwrap();
 
-    tx.send(message)
-        .map_err(|_| "Failed to send message".to_string())
+    if let Some(sender) = sender_guard.take() {
+        if let Err(_) = sender.send(message) {
+            println!("the receiver dropped");
+        }
+
+        *sender_guard = None;
+    } else {
+        println!("No sender available");
+    }
 }
 
 fn add_flags(app: &Application) {
@@ -242,7 +247,8 @@ fn add_flags(app: &Application) {
     );
 }
 
-fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
+#[tokio::main]
+async fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     let options = cmd.options_dict();
 
     if options.contains("version") {
@@ -300,7 +306,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
         set_dmenu_exit_after(options.contains("exit"));
 
         if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
-            send_message("CNCLD".to_string()).unwrap();
+            send_message("CNCLD".to_string());
             break 'dmenu;
         }
 
@@ -361,27 +367,27 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
             break 'dmenu;
         }
 
-        let (sender, receiver) = mpsc::channel::<String>();
+        let (sender, receiver) = oneshot::channel();
 
         *GLOBAL_DMENU_SENDER.write().unwrap() = Some(sender);
 
         let cmd = cmd.clone();
 
-        glib::idle_add_local(move || match receiver.try_recv() {
-            Ok(message) => {
-                match message.as_str() {
-                    "CNCLD" => cmd.set_exit_status(130),
+        glib::spawn_future_local(async move {
+            match receiver.await {
+                Ok(message) => match message.as_str() {
+                    "CNCLD" => {
+                        cmd.set_exit_status(130);
+                    }
                     msg => cmd.print_literal(&format!("{msg}\n")),
-                };
+                },
+                Err(_) => {
+                    println!("the sender dropped");
+                    cmd.set_exit_status(130);
+                }
+            }
 
-                *GLOBAL_DMENU_SENDER.write().unwrap() = None;
-                ControlFlow::Break
-            }
-            Err(mpsc::TryRecvError::Empty) => ControlFlow::Continue,
-            Err(mpsc::TryRecvError::Disconnected) => {
-                cmd.set_exit_status(130);
-                ControlFlow::Break
-            }
+            *GLOBAL_DMENU_SENDER.write().unwrap() = None;
         });
     }
 

@@ -438,7 +438,7 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
         match provider {
             "dmenu" => {
                 if is_service() {
-                    send_message(item.item.text.clone()).unwrap();
+                    send_message(item.item.text.clone());
                 } else {
                     println!("{}", item.item.text.clone());
                 }

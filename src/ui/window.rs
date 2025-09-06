@@ -286,7 +286,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 }
 
                 if is_service() {
-                    send_message(text).unwrap();
+                    send_message(text);
                 } else {
                     println!("{text}");
                 }
@@ -511,7 +511,7 @@ pub fn quit(app: &Application, cancelled: bool) {
     }
 
     if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
-        send_message("CNCLD".to_string()).unwrap();
+        send_message("CNCLD".to_string());
     }
 
     if !app

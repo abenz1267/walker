@@ -19,6 +19,7 @@ nucleo-matcher = "0.3.1"
 which = "8.0"
 new_mime_guess = "4.0.4"
 mime = "0.3.17"
+tokio = { version = "1.47.1", features = ["full"] }
 
 [build-dependencies]
 protobuf-codegen = "3.4"

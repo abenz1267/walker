@@ -41,11 +41,11 @@ cargo build --release
 
 You have two options of installing walker using Nix.
 
-1.  Using the package exposed by this flake
+1. Using the package exposed by this flake
     1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
     2. Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`
 
-2.  Using the home-manager module exposed by this flake:
+2. Using the home-manager module exposed by this flake:
     1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
     2. Add `imports = [inputs.walker.homeManagerModules.default];` into your home-manager config
     3. Configure walker using:
@@ -55,15 +55,14 @@ programs.walker = {
   enable = true;
   runAsService = true;
 
-  # All options from the config.json can be used here.
+  # All options from the config.toml can be used here.
   config = {
-    search.placeholder = "Example";
-    ui.fullscreen = true;
-    list = {
-      height = 200;
-    };
-    websearch.prefix = "?";
-    switcher.prefix = "/";
+    placeholders."default".input = "Example";
+    providers.prefixes = [ 
+      {provider = "websearch"; prefix = "+";}
+      {provider = "providerlist"; prefix = "_";}
+    ];
+    keybinds.quick_activate = ["F1" "F2" "F3"];
   };
 
   # If this is not set the default styling is used.

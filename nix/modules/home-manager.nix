@@ -15,6 +15,7 @@ let
     bool
     path
     ;
+  inherit (lib) optional head splitString;
 
   tomlFormat = pkgs.formats.toml { };
   cfg = config.programs.walker;
@@ -88,6 +89,9 @@ in
           ];
           Requires = [ "elephant.service" ];
           PartOf = [ "graphical-session.target" ];
+          X-Restart-Triggers =
+            optional (cfg.config != []) "${config.xdg.configFile."walker/config.toml".source}"
+            ++ optional (cfg.theme != null) "${config.xdg.configFile."walker/themes/${cfg.theme.name}.css".source}";
         };
         Service = {
           ExecStart = "${getExe cfg.package} --gapplication-service";

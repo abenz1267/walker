@@ -119,6 +119,7 @@ pub struct DesktopApplications {
     pub default: String,
     pub start: String,
     pub remove_history: String,
+    pub toggle_pin: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

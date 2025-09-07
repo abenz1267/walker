@@ -27,6 +27,24 @@ impl DesktopApplications {
                     },
                 },
                 Keybind {
+                    bind: config.providers.desktopapplications.toggle_pin.clone(),
+                    action: Action {
+                        label: "un-pin",
+                        action: "toggle_pin".to_string(),
+                        after: AfterAction::Reload,
+                        required_states: Some(vec!["pinned"]),
+                    },
+                },
+                Keybind {
+                    bind: config.providers.desktopapplications.toggle_pin.clone(),
+                    action: Action {
+                        label: "pin",
+                        action: "toggle_pin".to_string(),
+                        after: AfterAction::Reload,
+                        required_states: Some(vec!["unpinned"]),
+                    },
+                },
+                Keybind {
                     bind: config.providers.desktopapplications.remove_history.clone(),
                     action: Action {
                         label: "erase history",

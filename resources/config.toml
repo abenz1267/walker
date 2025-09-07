@@ -94,6 +94,7 @@ toggle_images_only = "ctrl i"
 default = "start"
 start = "Return"
 remove_history = "ctrl BackSpace"
+toggle_pin = "ctrl p"
 
 [providers.files]
 default = "open"

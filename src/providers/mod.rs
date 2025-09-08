@@ -8,7 +8,6 @@ use gtk4::{
 };
 
 use crate::{
-    config::Elephant,
     keybinds::Keybind,
     protos::generated_proto::query::query_response::Item,
     providers::{
@@ -41,9 +40,11 @@ pub trait Provider: Sync + Send + Debug {
     }
 
     fn default_action(&self) -> &str;
+
     fn get_keybind_hint(&self, state: &Vec<String>) -> String {
         self.get_keybinds()
             .iter()
+            .chain(self.get_global_keybinds().unwrap_or(&Vec::new()).iter())
             .filter(|keybind| match &keybind.action.required_states {
                 Some(required) => required
                     .iter()

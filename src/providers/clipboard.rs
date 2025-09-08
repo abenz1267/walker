@@ -7,7 +7,7 @@ use gtk4::{
 };
 
 use crate::{
-    config::{Elephant, get_config},
+    config::get_config,
     keybinds::{Action, AfterAction, Keybind},
     providers::Provider,
 };

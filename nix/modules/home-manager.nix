@@ -24,9 +24,9 @@ in {
   options = {
     programs.walker = {
       enable = mkEnableOption "walker";
-      package = mkPackageOption self.packages.${pkgs.system} "walker" {
+      package = mkPackageOption self.packages.${pkgs.stdenv.system} "walker" {
         default = "default";
-        pkgsText = "walker.packages.\${pkgs.system}";
+        pkgsText = "walker.packages.\${pkgs.stdenv.system}";
       };
 
       runAsService = mkOption {

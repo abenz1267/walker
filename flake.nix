@@ -26,12 +26,12 @@
     devShells = eachSystem (pkgs: {
       default = pkgs.mkShell {
         name = "walker";
-        inputsFrom = [self.packages.${pkgs.system}.walker];
+        inputsFrom = [self.packages.${pkgs.stdenv.system}.walker];
       };
     });
 
     packages = eachSystem (pkgs: {
-      default = self.packages.${pkgs.system}.walker;
+      default = self.packages.${pkgs.stdenv.system}.walker;
       walker = pkgs.callPackage ./nix/package.nix {};
     });
 

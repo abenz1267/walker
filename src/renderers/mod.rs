@@ -1,7 +1,7 @@
 use crate::config::get_config;
 use crate::protos::generated_proto::query::query_response::Item;
 use crate::providers::PROVIDERS;
-use crate::state::get_dmenu_current;
+use crate::state::{get_dmenu_current, is_hide_qa};
 use crate::theme::Theme;
 use crate::ui::window::{quit, with_window};
 use gtk4::gdk::ContentProvider;
@@ -49,6 +49,11 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
     p.image_transformer(&b, &list_item, &item);
 
     if let Some(text) = b.object::<Label>("QuickActivation") {
+        if is_hide_qa() {
+            text.set_visible(false);
+            return;
+        }
+
         if let Some(qa) = &get_config().keybinds.quick_activate {
             let i = list_item.position();
 

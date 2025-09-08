@@ -48,10 +48,10 @@ use crate::state::{
     get_parameter_height, get_parameter_width, get_placeholder, get_provider, get_theme,
     has_elephant, has_theme, is_connected, is_dmenu, is_dmenu_keep_open, is_input_only,
     is_no_search, is_param_close, is_service, is_visible, set_dmenu_current, set_dmenu_exit_after,
-    set_dmenu_keep_open, set_has_elephant, set_initial_height, set_initial_placeholder,
-    set_initial_width, set_input_only, set_is_dmenu, set_is_service, set_is_visible, set_no_search,
-    set_param_close, set_parameter_height, set_parameter_width, set_placeholder, set_provider,
-    set_theme,
+    set_dmenu_keep_open, set_has_elephant, set_hide_qa, set_initial_height,
+    set_initial_placeholder, set_initial_width, set_input_only, set_is_dmenu, set_is_service,
+    set_is_visible, set_no_search, set_param_close, set_parameter_height, set_parameter_width,
+    set_placeholder, set_provider, set_theme,
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{handle_preview, quit, setup_window, with_window};
@@ -229,6 +229,15 @@ fn add_flags(app: &Application) {
     );
 
     app.add_main_option(
+        "hideqa",
+        b'H'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::None,
+        "hides quick activation buttons",
+        None,
+    );
+
+    app.add_main_option(
         "keepopen",
         b'k'.into(),
         OptionFlags::NONE,
@@ -260,6 +269,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     }
 
     set_param_close(options.contains("close"));
+    set_hide_qa(options.contains("hideqa"));
 
     if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
         let theme = val.str().unwrap();

@@ -5,6 +5,7 @@ static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 
 #[derive(Debug, Clone, Default)]
 pub struct AppState {
+    hide_qa: bool,
     has_elephant: bool,
     is_connected: bool,
     is_connecting: bool,
@@ -164,6 +165,14 @@ pub fn is_dmenu() -> bool {
 
 pub fn set_is_dmenu(val: bool) {
     STATE.get().unwrap().write().unwrap().is_dmenu = val
+}
+
+pub fn is_hide_qa() -> bool {
+    STATE.get().unwrap().read().unwrap().hide_qa
+}
+
+pub fn set_hide_qa(val: bool) {
+    STATE.get().unwrap().write().unwrap().hide_qa = val
 }
 
 pub fn is_no_search() -> bool {

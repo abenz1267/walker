@@ -1,4 +1,7 @@
-{self, elephant}: {
+{
+  self,
+  elephant,
+}: {
   config,
   lib,
   pkgs,
@@ -83,7 +86,7 @@ in {
   config = mkIf cfg.enable (mkMerge [
     {
       services.elephant = mkMerge [
-        { enable = true; }
+        {enable = true;}
         cfg.elephant
       ];
 

@@ -1,7 +1,7 @@
 use gtk4::{Builder, Label, ListItem};
 
 use crate::{
-    config::{Elephant, get_config},
+    config::get_config,
     keybinds::{Action, AfterAction, Keybind},
     protos::generated_proto::query::query_response::Item,
     providers::Provider,

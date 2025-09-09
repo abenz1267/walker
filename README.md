@@ -42,13 +42,13 @@ cargo build --release
 You have two options of installing walker using Nix.
 
 1. Using the package exposed by this flake
-    1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
-    2. Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`
+   1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
+   2. Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`
 
 2. Using the home-manager module exposed by this flake:
-    1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
-    2. Add `imports = [inputs.walker.homeManagerModules.default];` into your home-manager config
-    3. Configure walker using:
+   1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
+   2. Add `imports = [inputs.walker.homeManagerModules.default];` into your home-manager config
+   3. Configure walker using:
 
 ```nix
 programs.walker = {
@@ -58,7 +58,7 @@ programs.walker = {
   # All options from the config.toml can be used here.
   config = {
     placeholders."default".input = "Example";
-    providers.prefixes = [ 
+    providers.prefixes = [
       {provider = "websearch"; prefix = "+";}
       {provider = "providerlist"; prefix = "_";}
     ];
@@ -142,7 +142,3 @@ Please refer to [the GTK4 docs](https://docs.gtk.org/gtk4/) to checkout how to w
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.
-
-## Development Status
-
-This is a beta version (1.0.0-beta) undergoing active development. Features and APIs may change before the stable 1.0 release.

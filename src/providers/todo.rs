@@ -3,7 +3,7 @@ use std::path::Path;
 use gtk4::{Builder, Image, ListItem, prelude::WidgetExt};
 
 use crate::{
-    config::{Elephant, get_config},
+    config::get_config,
     keybinds::{Action, AfterAction, Keybind},
     protos::generated_proto::query::query_response::Item,
     providers::Provider,

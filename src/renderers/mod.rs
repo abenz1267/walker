@@ -46,7 +46,7 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
         p.subtext_transformer(&item.subtext, &text);
     }
 
-    p.image_transformer(&b, &list_item, &item);
+    p.image_transformer(&b, list_item, item);
 
     if let Some(text) = b.object::<Label>("QuickActivation") {
         if is_hide_qa() {

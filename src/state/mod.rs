@@ -5,6 +5,7 @@ static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 
 #[derive(Debug, Clone, Default)]
 pub struct AppState {
+    has_query: bool,
     hide_qa: bool,
     has_elephant: bool,
     is_connected: bool,
@@ -173,6 +174,14 @@ pub fn is_hide_qa() -> bool {
 
 pub fn set_hide_qa(val: bool) {
     STATE.get().unwrap().write().unwrap().hide_qa = val
+}
+
+pub fn has_query() -> bool {
+    STATE.get().unwrap().read().unwrap().has_query
+}
+
+pub fn set_has_query(val: bool) {
+    STATE.get().unwrap().write().unwrap().has_query = val
 }
 
 pub fn is_no_search() -> bool {

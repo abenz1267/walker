@@ -13,8 +13,8 @@ use crate::{
     send_message,
     state::{
         get_current_prefix, get_initial_height, get_initial_placeholder, get_initial_width,
-        get_last_query, get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after,
-        is_dmenu_keep_open, is_service, set_current_prefix, set_dmenu_current,
+        get_last_query, get_provider, get_theme, has_query, is_connected, is_dmenu,
+        is_dmenu_exit_after, is_dmenu_keep_open, is_service, set_current_prefix, set_dmenu_current,
         set_dmenu_exit_after, set_dmenu_keep_open, set_hide_qa, set_initial_placeholder,
         set_input_only, set_is_dmenu, set_is_visible, set_last_query, set_no_search,
         set_param_close, set_parameter_height, set_parameter_width, set_placeholder, set_provider,
@@ -23,8 +23,8 @@ use crate::{
     theme::{setup_layer_shell, with_themes},
 };
 use gtk4::{
-    Application, Builder, Entry, EventControllerKey, EventControllerMotion, Label, ScrolledWindow,
-    SignalListItemFactory, SingleSelection, Window,
+    Application, Builder, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
+    FilterListModel, Label, ScrolledWindow, SignalListItemFactory, SingleSelection, Window,
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -52,8 +52,8 @@ use std::{
 };
 
 thread_local! {
-    pub static WINDOWS: OnceCell<HashMap<String, WindowData>> = OnceCell::new();
-    pub static CSS_PROVIDER: RefCell<Option<CssProvider>> = RefCell::new(None);
+    pub static WINDOWS: OnceCell<HashMap<String, WindowData>> = const { OnceCell::new() };
+    pub static CSS_PROVIDER: RefCell<Option<CssProvider>> = const { RefCell::new(None) };
 }
 
 pub fn set_css_provider(provider: CssProvider) {
@@ -119,13 +119,29 @@ pub fn setup_window(app: &Application) {
                 .object("Scroll")
                 .expect("can't get scroll from layout");
             let list: GridView = builder.object("List").expect("can't get list from layout");
-            let items = ListStore::new::<QueryResponseObject>();
             let placeholder: Option<Label> = builder.object("Placeholder");
             let elephant_hint: Label = builder
                 .object("ElephantHint")
                 .expect("can't get ElephantHint");
             let keybinds: Option<Label> = builder.object("Keybinds");
-            let selection = SingleSelection::new(Some(items.clone()));
+
+            let filter = CustomFilter::new({
+                move |entry| {
+                    let item = entry.downcast_ref::<QueryResponseObject>().unwrap();
+
+                    if is_dmenu() && has_query() && item.dmenu_score() < 10 {
+                        return false;
+                    }
+
+                    true
+                }
+            });
+
+            let items = ListStore::new::<QueryResponseObject>();
+            let filter_model = FilterListModel::new(Some(items.clone()), Some(filter.clone()));
+
+            let selection = SingleSelection::new(Some(filter_model.clone()));
+
             let search_container: Option<Box> = builder.object("SearchContainer");
             let preview_container: Option<Box> = builder.object("Preview");
             let content_container: gtk4::Box = builder
@@ -169,7 +185,7 @@ pub fn setup_window(app: &Application) {
             setup_mouse_handling(&ui);
 
             ui.window.set_application(Some(app));
-            ui.window.set_css_classes(&vec![]);
+            ui.window.set_css_classes(&[]);
 
             setup_layer_shell(&ui.window);
 
@@ -322,26 +338,26 @@ fn setup_keyboard_handling(ui: &WindowData) {
             let mut keybind_action: Option<Action> = None;
             let mut provider = get_provider();
 
-            if provider.is_empty() {
-                if let Some(prefix) = get_config().providers.prefixes.iter().find(|prefix| {
+            if provider.is_empty()
+                && let Some(prefix) = get_config().providers.prefixes.iter().find(|prefix| {
                     if let Some(input) = &w.input {
                         return input.text().starts_with(&prefix.prefix)
                             && PROVIDERS.get().unwrap().contains_key(&prefix.provider);
                     }
 
-                    return false;
-                }) {
-                    provider = prefix.provider.clone();
-                }
+                    false
+                })
+            {
+                provider = prefix.provider.clone();
             }
 
             let mut after: Option<AfterAction> = None;
 
-            if !provider.is_empty() {
-                if let Some(action) = get_provider_global_bind(&provider, k, m) {
-                    keybind_action = Some(action.clone());
-                    after = Some(action.after);
-                }
+            if !provider.is_empty()
+                && let Some(action) = get_provider_global_bind(&provider, k, m)
+            {
+                keybind_action = Some(action.clone());
+                after = Some(action.after);
             }
 
             let mut response: Option<QueryResponse> = None;
@@ -427,14 +443,14 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 }
             }
 
-            return true;
+            true
         });
 
         if handled {
             return true.into();
         }
 
-        return false.into();
+        false.into()
     });
 
     ui.window.add_controller(controller);
@@ -467,7 +483,7 @@ fn setup_list_behavior(ui: &WindowData) {
             if let Some(theme) = t.get(&get_theme())
                 && let Some(i) = response.item.as_ref()
             {
-                create_item(&item, &i, theme);
+                create_item(item, i, theme);
             }
         });
     });
@@ -620,7 +636,7 @@ pub fn select_next() {
 
         let current = selection.selected();
         let n_items = selection.n_items();
-        if n_items <= 0 {
+        if n_items == 0 {
             return;
         }
 
@@ -648,7 +664,7 @@ pub fn select_previous() {
 
         let current = selection.selected();
         let n_items = selection.n_items();
-        if n_items <= 0 {
+        if n_items == 0 {
             return;
         }
 
@@ -743,28 +759,24 @@ fn disable_mouse() {
 }
 
 pub fn get_selected_item() -> Option<crate::protos::generated_proto::query::query_response::Item> {
-    let result = with_window(|w| {
+    with_window(|w| {
         w.selection
             .selected_item()
             .map(Object::downcast::<QueryResponseObject>)
             .and_then(Result::ok)
             .and_then(|obj| obj.response().item.into_option())
-    });
-
-    return result;
+    })
 }
 
 pub fn get_selected_query_response() -> Option<crate::protos::generated_proto::query::QueryResponse>
 {
-    let result = with_window(|w| {
+    with_window(|w| {
         w.selection
             .selected_item()
             .map(Object::downcast::<QueryResponseObject>)
             .and_then(Result::ok)
             .map(|obj| obj.response())
-    });
-
-    return result;
+    })
 }
 
 pub fn handle_preview() {

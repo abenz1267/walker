@@ -6,7 +6,7 @@ use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
     get_provider, is_connected, is_connecting, is_dmenu, is_service, set_current_prefix,
-    set_is_connected, set_is_connecting, set_is_visible, set_provider,
+    set_has_query, set_is_connected, set_is_connecting, set_is_visible, set_provider,
 };
 use crate::ui::window::{set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
@@ -31,7 +31,25 @@ pub fn input_changed(text: &str) {
     set_current_prefix(String::new());
 
     if is_dmenu() {
-        sort_items_fuzzy(&text);
+        if text.is_empty() {
+            set_has_query(false);
+
+            with_window(|w| {
+                let list_store = &w.items;
+
+                list_store
+                    .iter()
+                    .flatten()
+                    .map(Object::downcast::<QueryResponseObject>)
+                    .filter_map(Result::ok)
+                    .for_each(|i| i.set_dmenu_score(0));
+            });
+        } else {
+            set_has_query(true);
+        }
+
+        sort_items_fuzzy(text);
+
         return;
     }
 
@@ -87,10 +105,20 @@ fn sort_items_fuzzy(query: &str) {
                     .unwrap_or_default();
 
                 match (score_map.get(text_a), score_map.get(text_b)) {
-                    (Some(a), Some(b)) => b.cmp(a),    // Higher scores first
-                    (Some(_), None) => Ordering::Less, // Matched items first
-                    (None, Some(_)) => Ordering::Greater,
-                    (None, None) => text_a.cmp(text_b), // Alphabetical for non-matches
+                    (Some(aa), Some(bb)) => {
+                        a.set_dmenu_score(*aa);
+                        b.set_dmenu_score(*bb);
+                        bb.cmp(aa)
+                    }
+                    (Some(aa), None) => {
+                        a.set_dmenu_score(*aa);
+                        Ordering::Less
+                    }
+                    (None, Some(bb)) => {
+                        b.set_dmenu_score(*bb);
+                        Ordering::Greater
+                    }
+                    (None, None) => text_a.cmp(text_b),
                 }
             });
         }

@@ -15,6 +15,7 @@ mod imp {
     #[derive(Debug, Default)]
     pub struct QueryResponseObject {
         pub response: RefCell<Option<QueryResponse>>,
+        pub dmenu_score: RefCell<u32>,
     }
 
     #[glib::object_subclass]
@@ -39,5 +40,13 @@ impl QueryResponseObject {
 
     pub fn response(&self) -> crate::protos::generated_proto::query::QueryResponse {
         self.imp().response.borrow().as_ref().unwrap().clone()
+    }
+
+    pub fn dmenu_score(&self) -> u32 {
+        *self.imp().dmenu_score.borrow()
+    }
+
+    pub fn set_dmenu_score(&self, val: u32) {
+        *self.imp().dmenu_score.borrow_mut() = val;
     }
 }

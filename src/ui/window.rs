@@ -13,8 +13,8 @@ use crate::{
     send_message,
     state::{
         get_current_prefix, get_initial_height, get_initial_placeholder, get_initial_width,
-        get_last_query, get_provider, get_theme, has_query, is_connected, is_dmenu,
-        is_dmenu_exit_after, is_dmenu_keep_open, is_service, set_current_prefix, set_dmenu_current,
+        get_last_query, get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after,
+        is_dmenu_keep_open, is_service, query, set_current_prefix, set_dmenu_current,
         set_dmenu_exit_after, set_dmenu_keep_open, set_hide_qa, set_initial_placeholder,
         set_input_only, set_is_dmenu, set_is_visible, set_last_query, set_no_search,
         set_param_close, set_parameter_height, set_parameter_width, set_placeholder, set_provider,
@@ -129,8 +129,14 @@ pub fn setup_window(app: &Application) {
                 move |entry| {
                     let item = entry.downcast_ref::<QueryResponseObject>().unwrap();
 
-                    if is_dmenu() && has_query() && item.dmenu_score() < 20 {
-                        return false;
+                    let q = query();
+
+                    if is_dmenu() && !q.is_empty() {
+                        let f = 18 * q.len();
+
+                        if item.dmenu_score() < f as u32 {
+                            return false;
+                        }
                     }
 
                     true

@@ -6,7 +6,7 @@ use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
     get_provider, is_connected, is_connecting, is_dmenu, is_service, set_current_prefix,
-    set_has_query, set_is_connected, set_is_connecting, set_is_visible, set_provider,
+    set_is_connected, set_is_connecting, set_is_visible, set_provider, set_query,
 };
 use crate::ui::window::{set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
@@ -32,7 +32,7 @@ pub fn input_changed(text: &str) {
 
     if is_dmenu() {
         if text.is_empty() {
-            set_has_query(false);
+            set_query("");
 
             with_window(|w| {
                 let list_store = &w.items;
@@ -45,7 +45,7 @@ pub fn input_changed(text: &str) {
                     .for_each(|i| i.set_dmenu_score(0));
             });
         } else {
-            set_has_query(true);
+            set_query(text);
         }
 
         sort_items_fuzzy(text);

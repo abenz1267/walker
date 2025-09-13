@@ -129,7 +129,7 @@ pub fn setup_window(app: &Application) {
                 move |entry| {
                     let item = entry.downcast_ref::<QueryResponseObject>().unwrap();
 
-                    if is_dmenu() && has_query() && item.dmenu_score() < 10 {
+                    if is_dmenu() && has_query() && item.dmenu_score() < 20 {
                         return false;
                     }
 

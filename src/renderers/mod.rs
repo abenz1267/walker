@@ -24,7 +24,10 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
     let itembox: Box = b.object("ItemBox").expect("failed to get ItemBox");
     itembox.add_css_class(&item.provider.replace("menus:", "menus-"));
 
-    item.state.iter().for_each(|i| itembox.add_css_class(i));
+    item.state
+        .iter()
+        .filter(|i| !i.is_empty())
+        .for_each(|i| itembox.add_css_class(i));
 
     if get_dmenu_current() != 0 && get_dmenu_current() as u32 == list_item.position() + 1 {
         itembox.add_css_class("current");

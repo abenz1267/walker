@@ -366,15 +366,12 @@ impl FilePreview {
         let container = GtkBox::new(Orientation::Vertical, 10);
         container.set_halign(gtk4::Align::Center);
         container.set_valign(gtk4::Align::Center);
-        container.set_margin_top(20);
-        container.set_margin_bottom(20);
-        container.set_margin_start(20);
-        container.set_margin_end(20);
-        container.set_size_request(250, 200);
 
         let icon = Image::from_icon_name("text-x-generic");
         icon.set_icon_size(gtk4::IconSize::Large);
         icon.add_css_class("preview-generic-icon");
+        icon.set_halign(gtk4::Align::Center);
+        icon.set_valign(gtk4::Align::Center);
 
         // Try to get file-specific icon, but fallback gracefully to avoid memory issues
         let file = gio::File::for_path(file_path);

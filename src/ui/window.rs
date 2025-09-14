@@ -31,6 +31,7 @@ use gtk4::{
     CssProvider,
     prelude::{EditableExt, EventControllerExt, ListItemExt, SelectionModelExt},
 };
+use gtk4::{DrawingArea, prelude::DrawingAreaExtManual};
 use gtk4::{
     GridView,
     glib::object::{CastNone, ObjectExt},
@@ -45,10 +46,11 @@ use gtk4::{
     glib::Object,
     prelude::{EntryExt, GtkWindowExt},
 };
+use hex_color::HexColor;
 use std::{
     cell::{Cell, OnceCell, RefCell},
     collections::HashMap,
-    process,
+    env, process,
 };
 
 thread_local! {
@@ -83,6 +85,7 @@ pub struct WindowData {
     pub elephant_hint: Label,
     pub keybinds: Option<Label>,
     pub scroll: ScrolledWindow,
+    pub border_gradient: Option<gtk4::DrawingArea>,
     pub search_container: Option<gtk4::Box>,
     pub preview_container: Option<gtk4::Box>,
     pub content_container: gtk4::Box,
@@ -148,6 +151,7 @@ pub fn setup_window(app: &Application) {
             let filter_model = FilterListModel::new(Some(items.clone()), Some(filter.clone()));
 
             let selection = SingleSelection::new(Some(filter_model.clone()));
+            let border_gradient: Option<DrawingArea> = builder.object("BorderGradient");
 
             let search_container: Option<Box> = builder.object("SearchContainer");
             let preview_container: Option<Box> = builder.object("Preview");
@@ -161,6 +165,7 @@ pub fn setup_window(app: &Application) {
                 box_wrapper,
                 preview_container,
                 elephant_hint,
+                border_gradient,
                 content_container,
                 search_container,
                 builder,
@@ -206,9 +211,137 @@ pub fn setup_window(app: &Application) {
     WINDOWS.with(|s| s.set(windows).expect("failed initializing windows"));
 }
 
+fn rotate_around_center(x: f64, y: f64, cx: f64, cy: f64, angle: f64) -> (f64, f64) {
+    let sin = angle.sin();
+    let cos = angle.cos();
+
+    let tx = x - cx;
+    let ty = y - cy;
+
+    // Rotate the point around the origin
+    let rx = tx * cos - ty * sin;
+    let ry = tx * sin + ty * cos;
+
+    (rx + cx, ry + cy)
+}
+
+fn setup_gradient_border(da: &gtk4::DrawingArea) {
+    let accent_1_raw =
+        "#".to_string() + &env::var("SHELL_ACCENT_1").unwrap_or("0781e3ff".to_string());
+    let accent_1 = HexColor::parse_rgba(&accent_1_raw).expect("Failed to parse accent color 1");
+    let (r1, g1, b1, a1) = accent_1.split_rgba();
+
+    let accent_2_raw =
+        "#".to_string() + &env::var("SHELL_ACCENT_2").unwrap_or("ff0077ff".to_string());
+    print!("{}", &accent_2_raw);
+    let accent_2 = HexColor::parse_rgba(&accent_2_raw).expect("Failed to parse accent color 2");
+    let (r2, g2, b2, a2) = accent_2.split_rgba();
+
+    da.set_draw_func(move |_, cr, width_i32, height_i32| {
+        let degrees = std::f64::consts::PI / 180f64;
+        let radius = 24f64;
+        let width = width_i32 as f64;
+        let height = height_i32 as f64;
+        let thickness = 1.0;
+
+        let millis = std::time::SystemTime::now()
+            .duration_since(std::time::UNIX_EPOCH)
+            .unwrap()
+            .as_millis() as f64;
+
+        let angle = millis % 3000.0 / 3000.0 * std::f64::consts::PI * 2.0;
+        let (rx0, ry0) = rotate_around_center(0.0, 0.0, width / 2.0, height / 2.0, angle);
+        let (rx1, ry1) = rotate_around_center(width, height, width / 2.0, height / 2.0, angle);
+
+        let gradient = gdk::cairo::LinearGradient::new(rx0, ry0, rx1, ry1);
+
+        gradient.add_color_stop_rgba(
+            0.0,
+            r1 as f64 / 255.0,
+            g1 as f64 / 255.0,
+            b1 as f64 / 255.0,
+            a1 as f64 / 255.0,
+        );
+
+        gradient.add_color_stop_rgba(
+            1.0,
+            r2 as f64 / 255.0,
+            g2 as f64 / 255.0,
+            b2 as f64 / 255.0,
+            a2 as f64 / 255.0,
+        );
+
+        cr.new_path();
+        cr.arc(width - radius, radius, radius, -90.0 * degrees, 0.0);
+        cr.arc(width - radius, height - radius, radius, 0.0, 90.0 * degrees);
+        cr.arc(
+            radius,
+            height - radius,
+            radius,
+            90.0 * degrees,
+            180.0 * degrees,
+        );
+        cr.arc(radius, radius, radius, 180.0 * degrees, 270.0 * degrees);
+        cr.close_path();
+
+        cr.set_source(gradient).unwrap();
+        cr.fill().unwrap();
+
+        cr.new_path();
+        cr.arc(
+            width - radius,
+            radius,
+            radius - thickness,
+            -90.0 * degrees,
+            0.0,
+        );
+        cr.arc(
+            width - radius,
+            height - radius,
+            radius - thickness,
+            0.0,
+            90.0 * degrees,
+        );
+        cr.arc(
+            radius,
+            height - radius,
+            radius - thickness,
+            90.0 * degrees,
+            180.0 * degrees,
+        );
+        cr.arc(
+            radius,
+            radius,
+            radius - thickness,
+            180.0 * degrees,
+            270.0 * degrees,
+        );
+        cr.close_path();
+
+        cr.set_source_rgba(0.0, 0.0, 0.0, 0.0);
+        cr.set_operator(gdk::cairo::Operator::Clear);
+        cr.fill().unwrap();
+    });
+
+    let tick = move || {
+        with_window(|w| {
+            if let Some(da) = &w.border_gradient {
+                da.queue_draw();
+            }
+            gtk4::glib::ControlFlow::Continue
+        })
+    };
+
+    gtk4::glib::timeout_add_local(std::time::Duration::from_millis(10), tick);
+}
+
 fn setup_window_behavior(ui: &WindowData, app: &Application) {
     if let Some(p) = &ui.placeholder {
         p.set_visible(false);
+    }
+
+    if let Some(da) = &ui.border_gradient {
+        setup_gradient_border(da);
     }
 
     ui.selection.set_autoselect(true);

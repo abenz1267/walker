@@ -18,7 +18,7 @@ use crate::{
         set_dmenu_exit_after, set_dmenu_keep_open, set_hide_qa, set_initial_placeholder,
         set_input_only, set_is_dmenu, set_is_visible, set_last_query, set_no_search,
         set_param_close, set_parameter_height, set_parameter_width, set_placeholder, set_provider,
-        set_theme,
+        set_query, set_theme,
     },
     theme::{setup_layer_shell, with_themes},
 };
@@ -576,6 +576,7 @@ pub fn quit(app: &Application, cancelled: bool) {
     set_input_only(false);
     set_param_close(false);
     set_hide_qa(false);
+    set_query("");
 
     if is_dmenu_exit_after() {
         set_dmenu_exit_after(false);

@@ -86,6 +86,7 @@ pub struct WindowData {
     pub search_container: Option<gtk4::Box>,
     pub preview_container: Option<gtk4::Box>,
     pub content_container: gtk4::Box,
+    pub box_wrapper: gtk4::Box,
 }
 
 pub fn with_window<F, R>(f: F) -> R
@@ -150,11 +151,14 @@ pub fn setup_window(app: &Application) {
 
             let search_container: Option<Box> = builder.object("SearchContainer");
             let preview_container: Option<Box> = builder.object("Preview");
+            let box_wrapper: gtk4::Box =
+                builder.object("BoxWrapper").expect("BoxWrapper not found");
             let content_container: gtk4::Box = builder
                 .object("ContentContainer")
                 .expect("ContentContainer not found");
 
             let ui = WindowData {
+                box_wrapper,
                 preview_container,
                 elephant_hint,
                 content_container,
@@ -613,13 +617,11 @@ pub fn quit(app: &Application, cancelled: bool) {
             }
 
             if get_initial_height() != 0 {
-                w.scroll.set_min_content_height(get_initial_height());
-                w.scroll.set_max_content_height(get_initial_height());
+                w.box_wrapper.set_height_request(get_initial_height());
             }
 
             if get_initial_width() != 0 {
-                w.scroll.set_min_content_width(get_initial_width());
-                w.scroll.set_max_content_width(get_initial_width());
+                w.box_wrapper.set_width_request(get_initial_width());
             }
 
             set_theme(get_config().theme.clone());

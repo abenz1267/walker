@@ -458,17 +458,15 @@ fn activate(app: &Application) {
         }
 
         if get_parameter_height() != 0 {
-            set_initial_height(w.scroll.max_content_height());
-            w.scroll.set_max_content_height(get_parameter_height());
-            w.scroll.set_min_content_height(get_parameter_height());
+            set_initial_height(w.box_wrapper.height_request());
+            w.box_wrapper.set_height_request(get_parameter_height());
         } else {
             set_initial_height(0);
         }
 
         if get_parameter_width() != 0 {
-            set_initial_width(w.scroll.max_content_width());
-            w.scroll.set_max_content_width(get_parameter_width());
-            w.scroll.set_min_content_width(get_parameter_width());
+            set_initial_width(w.box_wrapper.width_request());
+            w.box_wrapper.set_width_request(get_parameter_width());
         } else {
             set_initial_width(0);
         }

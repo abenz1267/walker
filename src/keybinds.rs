@@ -243,13 +243,6 @@ pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
 }
 
 pub fn get_provider_bind(provider: &str, key: Key, modifier: gdk::ModifierType) -> Option<Action> {
-    let cfg = get_config();
-    let mut modifier = modifier;
-
-    if let Some(keep_open) = MODIFIERS.get(cfg.keep_open_modifier.as_str()) {
-        modifier.remove(*keep_open);
-    }
-
     PROVIDER_BINDS
         .read()
         .ok()?
@@ -264,13 +257,6 @@ pub fn get_provider_global_bind(
     key: Key,
     modifier: gdk::ModifierType,
 ) -> Option<Action> {
-    let cfg = get_config();
-    let mut modifier = modifier;
-
-    if let Some(keep_open) = MODIFIERS.get(cfg.keep_open_modifier.as_str()) {
-        modifier.remove(*keep_open);
-    }
-
     PROVIDER_GLOBAL_BINDS
         .read()
         .ok()?

@@ -100,7 +100,7 @@ toggle_pin = "ctrl p"
 default = "open"
 open = "Return"
 open_dir = "ctrl Return"
-copy_path = "ctrl shift C"
+copy_path = "ctrl shift c"
 copy_file = "ctrl c"
 
 [providers.todo]

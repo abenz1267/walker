@@ -29,7 +29,7 @@ impl Files {
                     bind: config.providers.files.copy_file.clone(),
                     action: Action {
                         label: "copy",
-                        action: "copy".to_string(),
+                        action: "copyfile".to_string(),
                         after: AfterAction::Close,
                         required_states: None,
                     },

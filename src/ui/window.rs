@@ -25,6 +25,7 @@ use crate::{
 use gtk4::{
     Application, Builder, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, Label, ScrolledWindow, SignalListItemFactory, SingleSelection, Window,
+    gsk::ffi::gsk_opacity_node_new,
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -372,6 +373,8 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
             let mut response: Option<QueryResponse> = None;
 
+            let mut is_provider_action = false;
+
             if keybind_action.is_none() {
                 let items = &w.selection;
                 if items.n_items() == 0 {
@@ -402,6 +405,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     };
 
                     keybind_action = Some(action);
+                    is_provider_action = true;
                 }
 
                 let is_dmenu_next = item_clone.identifier.contains("dmenu:");
@@ -430,7 +434,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
             if let Some(a) = after {
                 match a {
                     AfterAction::Close => {
-                        if keep_open {
+                        if keep_open && !is_provider_action {
                             select_next();
                         } else {
                             quit(&app, false);

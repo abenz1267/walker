@@ -323,10 +323,6 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 return true;
             }
 
-            let keep_open = MODIFIERS
-                .get(get_config().keep_open_modifier.as_str())
-                .is_some_and(|keep_open| m.contains(*keep_open));
-
             if let Some(action) = get_bind(k, m) {
                 match action.action.as_str() {
                     ACTION_CLOSE => quit(&app, true),
@@ -337,7 +333,8 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     action if action.starts_with(ACTION_QUICK_ACTIVATE) => {
                         if let Some((_, after)) = action.split_once(":") {
                             let i: u32 = after.parse().unwrap();
-                            quick_activate(&app, i, keep_open)
+                            // TODO: keep open for quick activate
+                            quick_activate(&app, i, false)
                         }
                     }
                     _ => (),
@@ -434,11 +431,12 @@ fn setup_keyboard_handling(ui: &WindowData) {
             if let Some(a) = after {
                 match a {
                     AfterAction::Close => {
-                        if keep_open && !is_provider_action {
-                            select_next();
-                        } else {
-                            quit(&app, false);
-                        }
+                        quit(&app, false);
+
+                        return true;
+                    }
+                    AfterAction::KeepOpen => {
+                        select_next();
 
                         return true;
                     }

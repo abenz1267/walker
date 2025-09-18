@@ -118,6 +118,7 @@ pub struct Providerlist {
 pub struct DesktopApplications {
     pub default: String,
     pub start: String,
+    pub start_keep_open: String,
     pub remove_history: String,
     pub toggle_pin: String,
 }

@@ -27,6 +27,15 @@ impl DesktopApplications {
                     },
                 },
                 Keybind {
+                    bind: config.providers.desktopapplications.start_keep_open.clone(),
+                    action: Action {
+                        label: "open+next",
+                        action: String::new(),
+                        after: AfterAction::KeepOpen,
+                        required_states: None,
+                    },
+                },
+                Keybind {
                     bind: config.providers.desktopapplications.toggle_pin.clone(),
                     action: Action {
                         label: "un-pin",

@@ -13,6 +13,7 @@ pub const ACTION_QUICK_ACTIVATE: &str = "%QUICK_ACTIVATE%";
 
 #[derive(Debug, Clone)]
 pub enum AfterAction {
+    KeepOpen,
     Close,
     Nothing,
     Reload,

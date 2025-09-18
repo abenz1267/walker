@@ -93,6 +93,7 @@ toggle_images_only = "ctrl i"
 [providers.desktopapplications]
 default = "start"
 start = "Return"
+start_keep_open = "shift Return"
 remove_history = "ctrl BackSpace"
 toggle_pin = "ctrl p"
 

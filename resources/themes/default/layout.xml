@@ -17,6 +17,7 @@
         <property name="margin-top">300</property>
         <property name="valign">start</property>
         <property name="halign">center</property>
+        <property name="width-request">600</property>
         <child>
           <object class="GtkBox" id="Box">
             <style>
@@ -44,7 +45,6 @@
                     <property name="halign">fill</property>
                     <property name="hexpand-set">true</property>
                     <property name="hexpand">true</property>
-                    <property name="width-request">500</property>
                   </object>
                 </child>
               </object>
@@ -63,7 +63,7 @@
                     </style>
                     <property name="label">Waiting for elephant...</property>
                     <property name="height-request">400</property>
-                    <property name="width-request">500</property>
+                    <property name="hexpand">true</property>
                   </object>
                 </child>
                 <child>
@@ -73,7 +73,7 @@
                     </style>
                     <property name="label">No Results</property>
                     <property name="height-request">400</property>
-                    <property name="width-request">500</property>
+                    <property name="hexpand">true</property>
                   </object>
                 </child>
                 <child>
@@ -83,8 +83,8 @@
                     </style>
                     <property name="can_focus">false</property>
                     <property name="overlay-scrolling">true</property>
+                    <property name="hexpand">true</property>
                     <property name="max-content-width">500</property>
-                    <property name="min-content-width">500</property>
                     <property name="max-content-height">400</property>
                     <property name="min-content-height">400</property>
                     <property name="propagate-natural-height">true</property>

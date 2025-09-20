@@ -4,7 +4,7 @@ use crate::{
     data::{activate, clipboard_disable_images_only, input_changed},
     keybinds::{
         ACTION_CLOSE, ACTION_QUICK_ACTIVATE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT,
-        ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, Action, AfterAction, MODIFIERS, get_bind,
+        ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, Action, AfterAction, get_bind,
         get_provider_bind, get_provider_global_bind,
     },
     protos::generated_proto::query::QueryResponse,
@@ -12,20 +12,23 @@ use crate::{
     renderers::create_item,
     send_message,
     state::{
-        get_current_prefix, get_initial_height, get_initial_placeholder, get_initial_width,
+        get_current_prefix, get_initial_height, get_initial_max_height, get_initial_max_width,
+        get_initial_min_height, get_initial_min_width, get_initial_placeholder, get_initial_width,
         get_last_query, get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after,
         is_dmenu_keep_open, is_service, query, set_current_prefix, set_dmenu_current,
-        set_dmenu_exit_after, set_dmenu_keep_open, set_hide_qa, set_initial_placeholder,
-        set_input_only, set_is_dmenu, set_is_visible, set_last_query, set_no_search,
-        set_param_close, set_parameter_height, set_parameter_width, set_placeholder, set_provider,
-        set_query, set_theme,
+        set_dmenu_exit_after, set_dmenu_keep_open, set_hide_qa, set_initial_height,
+        set_initial_max_height, set_initial_max_width, set_initial_min_height,
+        set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
+        set_is_dmenu, set_is_visible, set_last_query, set_no_search, set_param_close,
+        set_parameter_height, set_parameter_max_height, set_parameter_max_width,
+        set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_placeholder,
+        set_provider, set_query, set_theme,
     },
     theme::{setup_layer_shell, with_themes},
 };
 use gtk4::{
     Application, Builder, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, Label, ScrolledWindow, SignalListItemFactory, SingleSelection, Window,
-    gsk::ffi::gsk_opacity_node_new,
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -370,8 +373,6 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
             let mut response: Option<QueryResponse> = None;
 
-            let mut is_provider_action = false;
-
             if keybind_action.is_none() {
                 let items = &w.selection;
                 if items.n_items() == 0 {
@@ -402,7 +403,6 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     };
 
                     keybind_action = Some(action);
-                    is_provider_action = true;
                 }
 
                 let is_dmenu_next = item_clone.identifier.contains("dmenu:");
@@ -572,8 +572,12 @@ pub fn quit(app: &Application, cancelled: bool) {
 
     set_current_prefix(String::new());
     set_provider(String::new());
-    set_parameter_height(0);
-    set_parameter_width(0);
+    set_parameter_height(None);
+    set_parameter_width(None);
+    set_parameter_min_height(None);
+    set_parameter_min_width(None);
+    set_parameter_max_height(None);
+    set_parameter_max_width(None);
     set_no_search(false);
     set_placeholder(String::new());
     set_is_visible(false);
@@ -589,20 +593,17 @@ pub fn quit(app: &Application, cancelled: bool) {
         set_dmenu_keep_open(false);
     }
 
-    with_window(|w| {
-        let Some(input) = &w.input else {
-            return;
-        };
-
-        set_last_query(input.text().to_string());
-        if !get_initial_placeholder().is_empty() {
-            input.set_placeholder_text(Some(&get_initial_placeholder()));
-            set_initial_placeholder(String::new());
-        }
-    });
-
     gtk4::glib::idle_add_once(|| {
         with_window(|w| {
+            if let Some(input) = &w.input {
+                set_last_query(input.text().to_string());
+
+                if !get_initial_placeholder().is_empty() {
+                    input.set_placeholder_text(Some(&get_initial_placeholder()));
+                    set_initial_placeholder(String::new());
+                }
+            };
+
             if let Some(search_container) = &w.search_container {
                 search_container.set_visible(true);
             }
@@ -618,12 +619,34 @@ pub fn quit(app: &Application, cancelled: bool) {
                 keybinds.set_visible(true);
             }
 
-            if get_initial_height() != 0 {
-                w.box_wrapper.set_height_request(get_initial_height());
+            if let Some(val) = get_initial_height() {
+                w.box_wrapper.set_height_request(val);
+                set_initial_height(None);
             }
 
-            if get_initial_width() != 0 {
-                w.box_wrapper.set_width_request(get_initial_width());
+            if let Some(val) = get_initial_width() {
+                w.box_wrapper.set_width_request(val);
+                set_initial_width(None);
+            }
+
+            if let Some(val) = get_initial_max_width() {
+                w.scroll.set_max_content_width(val);
+                set_initial_max_width(None);
+            }
+
+            if let Some(val) = get_initial_min_width() {
+                w.scroll.set_min_content_width(val);
+                set_initial_min_width(None);
+            }
+
+            if let Some(val) = get_initial_max_height() {
+                w.scroll.set_max_content_height(val);
+                set_initial_max_height(None);
+            }
+
+            if let Some(val) = get_initial_min_height() {
+                w.scroll.set_min_content_height(val);
+                set_initial_min_height(None);
             }
 
             set_theme(get_config().theme.clone());

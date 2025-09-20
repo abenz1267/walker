@@ -18,6 +18,7 @@
         <property name="valign">start</property>
         <property name="halign">center</property>
         <property name="width-request">600</property>
+        <property name="height-request">550</property>
         <child>
           <object class="GtkBox" id="Box">
             <style>
@@ -62,8 +63,9 @@
                       <class name="elephant-hint"></class>
                     </style>
                     <property name="label">Waiting for elephant...</property>
-                    <property name="height-request">400</property>
                     <property name="hexpand">true</property>
+                    <property name="vexpand">true</property>
+                    <property name="valign">0.5</property>
                   </object>
                 </child>
                 <child>
@@ -72,8 +74,9 @@
                       <class name="placeholder"></class>
                     </style>
                     <property name="label">No Results</property>
-                    <property name="height-request">400</property>
                     <property name="hexpand">true</property>
+                    <property name="vexpand">true</property>
+                    <property name="valign">0.5</property>
                   </object>
                 </child>
                 <child>
@@ -84,9 +87,9 @@
                     <property name="can_focus">false</property>
                     <property name="overlay-scrolling">true</property>
                     <property name="hexpand">true</property>
+                    <property name="vexpand">true</property>
                     <property name="max-content-width">500</property>
                     <property name="max-content-height">400</property>
-                    <property name="min-content-height">400</property>
                     <property name="propagate-natural-height">true</property>
                     <property name="propagate-natural-width">true</property>
                     <property name="hscrollbar-policy">automatic</property>

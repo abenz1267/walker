@@ -11,11 +11,19 @@ pub struct AppState {
     is_connecting: bool,
     dmenu_keep_open: bool,
     dmenu_exit_after: bool,
-    initial_height: i32,
-    initial_width: i32,
     dmenu_current: i64,
-    parameter_height: i32,
-    parameter_width: i32,
+    initial_height: Option<i32>,
+    initial_width: Option<i32>,
+    initial_max_height: Option<i32>,
+    initial_max_width: Option<i32>,
+    initial_min_height: Option<i32>,
+    initial_min_width: Option<i32>,
+    parameter_width: Option<i32>,
+    parameter_height: Option<i32>,
+    parameter_min_height: Option<i32>,
+    parameter_min_width: Option<i32>,
+    parameter_max_height: Option<i32>,
+    parameter_max_width: Option<i32>,
     last_query: String,
     placeholder: String,
     initial_placeholder: String,
@@ -196,36 +204,100 @@ pub fn set_no_search(val: bool) {
     STATE.get().unwrap().write().unwrap().no_search = val
 }
 
-pub fn set_initial_height(val: i32) {
+pub fn set_initial_height(val: Option<i32>) {
     STATE.get().unwrap().write().unwrap().initial_height = val
 }
 
-pub fn set_initial_width(val: i32) {
+pub fn set_initial_width(val: Option<i32>) {
     STATE.get().unwrap().write().unwrap().initial_width = val
 }
 
-pub fn get_initial_height() -> i32 {
+pub fn set_initial_max_height(val: Option<i32>) {
+    STATE.get().unwrap().write().unwrap().initial_max_height = val
+}
+
+pub fn set_initial_max_width(val: Option<i32>) {
+    STATE.get().unwrap().write().unwrap().initial_max_width = val
+}
+
+pub fn set_initial_min_height(val: Option<i32>) {
+    STATE.get().unwrap().write().unwrap().initial_min_height = val
+}
+
+pub fn set_initial_min_width(val: Option<i32>) {
+    STATE.get().unwrap().write().unwrap().initial_min_width = val
+}
+
+pub fn get_initial_height() -> Option<i32> {
     STATE.get().unwrap().read().unwrap().initial_height
 }
 
-pub fn get_initial_width() -> i32 {
+pub fn get_initial_width() -> Option<i32> {
     STATE.get().unwrap().read().unwrap().initial_width
 }
 
-pub fn set_parameter_height(val: i32) {
+pub fn get_initial_min_height() -> Option<i32> {
+    STATE.get().unwrap().read().unwrap().initial_min_height
+}
+
+pub fn get_initial_min_width() -> Option<i32> {
+    STATE.get().unwrap().read().unwrap().initial_min_width
+}
+
+pub fn get_initial_max_height() -> Option<i32> {
+    STATE.get().unwrap().read().unwrap().initial_max_height
+}
+
+pub fn get_initial_max_width() -> Option<i32> {
+    STATE.get().unwrap().read().unwrap().initial_max_width
+}
+
+pub fn set_parameter_height(val: Option<i32>) {
     STATE.get().unwrap().write().unwrap().parameter_height = val
 }
 
-pub fn set_parameter_width(val: i32) {
+pub fn set_parameter_width(val: Option<i32>) {
     STATE.get().unwrap().write().unwrap().parameter_width = val
 }
 
-pub fn get_parameter_height() -> i32 {
+pub fn set_parameter_min_height(val: Option<i32>) {
+    STATE.get().unwrap().write().unwrap().parameter_min_height = val
+}
+
+pub fn set_parameter_min_width(val: Option<i32>) {
+    STATE.get().unwrap().write().unwrap().parameter_min_width = val
+}
+
+pub fn set_parameter_max_height(val: Option<i32>) {
+    STATE.get().unwrap().write().unwrap().parameter_max_height = val
+}
+
+pub fn set_parameter_max_width(val: Option<i32>) {
+    STATE.get().unwrap().write().unwrap().parameter_max_width = val
+}
+
+pub fn get_parameter_height() -> Option<i32> {
     STATE.get().unwrap().read().unwrap().parameter_height
 }
 
-pub fn get_parameter_width() -> i32 {
+pub fn get_parameter_width() -> Option<i32> {
     STATE.get().unwrap().read().unwrap().parameter_width
+}
+
+pub fn get_parameter_min_height() -> Option<i32> {
+    STATE.get().unwrap().read().unwrap().parameter_min_height
+}
+
+pub fn get_parameter_min_width() -> Option<i32> {
+    STATE.get().unwrap().read().unwrap().parameter_min_width
+}
+
+pub fn get_parameter_max_height() -> Option<i32> {
+    STATE.get().unwrap().read().unwrap().parameter_max_height
+}
+
+pub fn get_parameter_max_width() -> Option<i32> {
+    STATE.get().unwrap().read().unwrap().parameter_max_width
 }
 
 pub fn get_dmenu_current() -> i64 {

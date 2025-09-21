@@ -104,6 +104,8 @@ nix.settings = {
 
 ### Basic Usage
 
+**Make sure `elephant` is running and you have providers installed. `elephant-providerlist` and f.e. `elephant-desktopapplications`.**
+
 Launch Walker with:
 
 ```bash

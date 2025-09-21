@@ -130,6 +130,10 @@ To get a full list of possible key values, look here: [GDK key-values](https://g
 
 F.e. `pub const GDK_KEY_semicolon: c_int = 59;` means that `ctrl semicolon` would be a valid keybind.
 
+## Config
+
+Check out the [default config](https://raw.githubusercontent.com/abenz1267/walker/refs/heads/master/resources/config.toml).
+
 ## Theming
 
 You can customize Walker's appearance by creating a custom theme. Checkout `resources/themes/default` for the default theme. Themes inherit the default theme by default, so if you just want to change the CSS, you can just create `themes/yours/style.css`.

@@ -89,6 +89,7 @@
                     <property name="hexpand">true</property>
                     <property name="vexpand">true</property>
                     <property name="max-content-width">500</property>
+                    <property name="min-content-width">500</property>
                     <property name="max-content-height">400</property>
                     <property name="propagate-natural-height">true</property>
                     <property name="propagate-natural-width">true</property>

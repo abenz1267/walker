@@ -173,7 +173,7 @@ fn add_flags(app: &Application) {
         b'p'.into(),
         OptionFlags::NONE,
         glib::OptionArg::String,
-        "input placeholder",
+        "input placeholder. dmenu only.",
         None,
     );
 

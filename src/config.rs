@@ -16,6 +16,7 @@ pub struct Elephant {
     pub keep_open_modifier: String,
     pub exact_search_prefix: String,
     pub providers: Providers,
+    pub installed_providers: Option<Vec<String>>,
     pub keybinds: Keybinds,
     pub shell: Shell,
     pub additional_theme_location: Option<String>,

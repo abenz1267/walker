@@ -8,6 +8,7 @@ use gtk4::{
 };
 
 use crate::{
+    config::get_config,
     keybinds::Keybind,
     protos::generated_proto::query::query_response::Item,
     providers::{
@@ -119,47 +120,62 @@ pub fn setup_providers(elephant: bool) {
     let mut providers: HashMap<String, Box<dyn Provider>> = HashMap::new();
     providers.insert("dmenu".to_string(), Box::new(Dmenu::new()));
 
-    if elephant {
-        let output = Command::new("elephant")
-            .arg("listproviders")
-            .output()
-            .expect("couldn't run 'elephant'. Make sure it is installed.");
+    let provider_list: Vec<String> = {
+        let config = get_config();
 
-        let stdout = String::from_utf8(output.stdout).unwrap();
+        if let Some(val) = &config.installed_providers {
+            val.clone()
+        } else if elephant {
+            match Command::new("elephant").arg("listproviders").output() {
+                Ok(output) => match String::from_utf8(output.stdout) {
+                    Ok(stdout) => stdout
+                        .lines()
+                        .filter_map(|line| line.split_once(';').map(|(_, value)| value.to_string()))
+                        .collect(),
+                    Err(e) => {
+                        eprintln!("Error parsing elephant output as UTF-8: {}", e);
+                        Vec::new()
+                    }
+                },
+                Err(e) => {
+                    eprintln!(
+                        "Error running 'elephant' command: {}. Make sure it is installed.",
+                        e
+                    );
+                    Vec::new()
+                }
+            }
+        } else {
+            Vec::new()
+        }
+    };
 
-        stdout
-            .lines()
-            .filter_map(|line| line.split_once(';').map(|(_, value)| value))
-            .for_each(|p| {
-                match p {
-                    "calc" => providers.insert("calc".to_string(), Box::new(Calc::new())),
-                    "clipboard" => {
-                        providers.insert("clipboard".to_string(), Box::new(Clipboard::new()))
-                    }
-                    "desktopapplications" => providers.insert(
-                        "desktopapplications".to_string(),
-                        Box::new(DesktopApplications::new()),
-                    ),
-                    "files" => providers.insert("files".to_string(), Box::new(Files::new())),
-                    "runner" => providers.insert("runner".to_string(), Box::new(Runner::new())),
-                    "symbols" => providers.insert("symbols".to_string(), Box::new(Symbols::new())),
-                    "unicode" => providers.insert("unicode".to_string(), Box::new(Unicode::new())),
-                    "providerlist" => {
-                        providers.insert("providerlist".to_string(), Box::new(Providerlist::new()))
-                    }
-                    provider if provider.starts_with("menus:") => {
-                        providers.insert(provider.to_string(), Box::new(Menus::new()))
-                    }
-                    "websearch" => {
-                        providers.insert("websearch".to_string(), Box::new(Websearch::new()))
-                    }
-                    "archlinuxpkgs" => providers
-                        .insert("archlinuxpkgs".to_string(), Box::new(ArchLinuxPkgs::new())),
-                    "todo" => providers.insert("todo".to_string(), Box::new(Todo::new())),
-                    _ => return,
-                };
-            });
-    }
+    provider_list.into_iter().for_each(|p| {
+        match p.as_str() {
+            "calc" => providers.insert("calc".to_string(), Box::new(Calc::new())),
+            "clipboard" => providers.insert("clipboard".to_string(), Box::new(Clipboard::new())),
+            "desktopapplications" => providers.insert(
+                "desktopapplications".to_string(),
+                Box::new(DesktopApplications::new()),
+            ),
+            "files" => providers.insert("files".to_string(), Box::new(Files::new())),
+            "runner" => providers.insert("runner".to_string(), Box::new(Runner::new())),
+            "symbols" => providers.insert("symbols".to_string(), Box::new(Symbols::new())),
+            "unicode" => providers.insert("unicode".to_string(), Box::new(Unicode::new())),
+            "providerlist" => {
+                providers.insert("providerlist".to_string(), Box::new(Providerlist::new()))
+            }
+            provider if provider.starts_with("menus:") => {
+                providers.insert(provider.to_string(), Box::new(Menus::new()))
+            }
+            "websearch" => providers.insert("websearch".to_string(), Box::new(Websearch::new())),
+            "archlinuxpkgs" => {
+                providers.insert("archlinuxpkgs".to_string(), Box::new(ArchLinuxPkgs::new()))
+            }
+            "todo" => providers.insert("todo".to_string(), Box::new(Todo::new())),
+            _ => return,
+        };
+    });
 
     PROVIDERS
         .set(providers)

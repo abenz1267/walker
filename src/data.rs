@@ -30,11 +30,19 @@ static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 pub fn input_changed(text: &str) {
     set_current_prefix(String::new());
 
-    if is_dmenu() {
-        if text.is_empty() {
-            set_query("");
+    with_window(|w| {
+        let is_empty = if text.is_empty() {
+            w.window.remove_css_class("has-input");
+            true
+        } else {
+            w.window.add_css_class("has-input");
+            false
+        };
 
-            with_window(|w| {
+        if is_dmenu() {
+            if is_empty {
+                set_query("");
+
                 let list_store = &w.items;
 
                 list_store
@@ -43,19 +51,15 @@ pub fn input_changed(text: &str) {
                     .map(Object::downcast::<QueryResponseObject>)
                     .filter_map(Result::ok)
                     .for_each(|i| i.set_dmenu_score(0));
-            });
-        } else {
-            set_query(text);
+            } else {
+                set_query(text);
+            }
+
+            sort_items_fuzzy(text);
+        } else if is_connected() {
+            query(text);
         }
-
-        sort_items_fuzzy(text);
-
-        return;
-    }
-
-    if is_connected() {
-        query(text);
-    }
+    });
 }
 
 fn sort_items_fuzzy(query: &str) {

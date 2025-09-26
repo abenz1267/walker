@@ -13,7 +13,6 @@ pub struct Elephant {
     pub selection_wrap: bool,
     pub global_argument_delimiter: String,
     pub theme: String,
-    pub keep_open_modifier: String,
     pub exact_search_prefix: String,
     pub providers: Providers,
     pub installed_providers: Option<Vec<String>>,

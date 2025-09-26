@@ -228,13 +228,6 @@ fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn s
 }
 
 pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
-    let cfg = get_config();
-    let mut modifier = modifier;
-
-    if let Some(keep_open) = MODIFIERS.get(cfg.keep_open_modifier.as_str()) {
-        modifier.remove(*keep_open);
-    }
-
     BINDS
         .read()
         .ok()?

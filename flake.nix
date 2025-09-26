@@ -7,6 +7,8 @@
     nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
     systems.url = "github:nix-systems/default-linux";
     elephant.url = "github:abenz1267/elephant";
+    elephant.inputs.nixpkgs.follows = "nixpkgs";
+    elephant.inputs.systems.follows = "systems";
   };
 
   outputs = {

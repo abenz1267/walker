@@ -2,13 +2,14 @@ use config::{Config, ConfigError, File, FileFormat};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::OnceLock};
 
-static LOADED_CONFIG: OnceLock<Elephant> = OnceLock::new();
+static LOADED_CONFIG: OnceLock<Walker> = OnceLock::new();
 const DEFAULT_CONFIG: &str = include_str!("../resources/config.toml");
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Elephant {
+pub struct Walker {
     pub force_keyboard_focus: bool,
     pub disable_mouse: bool,
+    pub click_to_close: bool,
     pub close_when_open: bool,
     pub selection_wrap: bool,
     pub global_argument_delimiter: String,
@@ -36,7 +37,7 @@ pub struct Placeholder {
     pub list: String,
 }
 
-impl Elephant {
+impl Walker {
     pub fn new() -> Result<Self, ConfigError> {
         let settings = Config::builder()
             .add_source(File::from_str(DEFAULT_CONFIG, FileFormat::Toml))
@@ -192,10 +193,10 @@ pub struct Clipboard {
 
 pub fn load() -> Result<(), Box<dyn std::error::Error>> {
     LOADED_CONFIG
-        .set(Elephant::new()?)
+        .set(Walker::new()?)
         .map_err(|_| "Failed to set loaded config".into())
 }
 
-pub fn get_config() -> &'static Elephant {
+pub fn get_config() -> &'static Walker {
     LOADED_CONFIG.get().expect("config not initialized")
 }

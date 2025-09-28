@@ -28,7 +28,8 @@ use crate::{
 };
 use gtk4::{
     Application, Builder, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
-    FilterListModel, Label, ScrolledWindow, SignalListItemFactory, SingleSelection, Window,
+    FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
+    SingleSelection, Window,
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -270,6 +271,20 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
             quit(&app_copy, false);
         });
     });
+
+    let config = get_config();
+
+    let app_copy = app.clone();
+
+    if config.click_to_close && !config.disable_mouse {
+        let gc = GestureClick::new();
+        gc.set_propagation_phase(PropagationPhase::Target);
+        gc.connect_pressed(move |_, _, _, _| {
+            quit(&app_copy, true);
+        });
+
+        ui.window.add_controller(gc);
+    }
 }
 
 fn setup_input_handling(input: &Entry) {

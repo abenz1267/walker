@@ -7,7 +7,7 @@ use gtk4::gio::File;
 use gtk4::glib::{self, Bytes};
 use gtk4::{
     Box as GtkBox, Builder, ContentFit, DragSource, Image, Orientation, Picture, PolicyType,
-    ScrolledWindow, Stack, TextView, WrapMode,
+    ScrolledWindow, Stack, TextView, Video, WrapMode,
 };
 use gtk4::{gio, prelude::*};
 use poppler::{Document, Page};
@@ -161,6 +161,7 @@ impl FilePreview {
             (mime::IMAGE, _) => Self::preview_image,
             (mime::APPLICATION, mime::PDF) => Self::preview_pdf,
             (mime::TEXT, _) => Self::preview_text,
+            (mime::VIDEO, _) => Self::preview_video,
             _ => Self::preview_generic,
         };
 
@@ -354,6 +355,20 @@ impl FilePreview {
 
         let scrolled = ScrolledWindow::new();
         scrolled.set_child(Some(&text_view));
+        scrolled.set_policy(PolicyType::Automatic, PolicyType::Automatic);
+        scrolled.set_size_request(300, 250);
+
+        self.preview_area.add_child(&scrolled);
+        self.preview_area.set_visible_child(&scrolled);
+        Ok(())
+    }
+
+    fn preview_video(&self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        let player = Video::for_filename(Some(file_path));
+        player.set_autoplay(true);
+
+        let scrolled = ScrolledWindow::new();
+        scrolled.set_child(Some(&player));
         scrolled.set_policy(PolicyType::Automatic, PolicyType::Automatic);
         scrolled.set_size_request(300, 250);
 

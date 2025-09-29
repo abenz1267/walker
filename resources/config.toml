@@ -95,7 +95,7 @@ toggle_images_only = "ctrl i"
 default = "start"
 start = "Return"
 start_keep_open = "shift Return"
-remove_history = "ctrl BackSpace"
+remove_history = "ctrl h"
 toggle_pin = "ctrl p"
 
 [providers.files]
@@ -117,7 +117,7 @@ clear = "ctrl x"
 default = "start"
 start = "Return"
 start_terminal = "shift Return"
-remove_history = "ctrl BackSpace"
+remove_history = "ctrl h"
 
 [providers.dmenu]
 default = "select"
@@ -126,14 +126,14 @@ select = "Return"
 [providers.symbols]
 default = "copy"
 copy = "Return"
-remove_history = "ctrl BackSpace"
+remove_history = "ctrl h"
 
 [providers.unicode]
 default = "copy"
 copy = "Return"
-remove_history = "ctrl BackSpace"
+remove_history = "ctrl h"
 
 [providers.menus]
 default = "activate"
 activate = "Return"
-remove_history = "ctrl BackSpace"
+remove_history = "ctrl h"

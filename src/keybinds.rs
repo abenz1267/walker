@@ -166,22 +166,56 @@ pub fn setup_binds() {
 
 fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn std::error::Error>> {
     let mut fields = b.bind.split_whitespace().peekable();
-
     if fields.peek().is_none() {
         return Err("incorrect bind".into());
     }
 
-    let mut modifiers_list = Vec::new();
-    let mut key: Option<Key> = None;
+    // helper to register a single key + modifier set for the action
+    let register = |key: Key, modifier: gdk::ModifierType| {
+        if provider.is_empty() {
+            let mut binds = BINDS.write().unwrap();
+            binds
+                .entry(key)
+                .or_insert_with(HashMap::new)
+                .insert(modifier, b.action.clone());
+            return;
+        }
 
+        if !global {
+            let mut provider_binds = PROVIDER_BINDS.write().unwrap();
+            provider_binds
+                .entry(provider.to_string())
+                .or_insert_with(HashMap::new)
+                .entry(key)
+                .or_insert_with(HashMap::new)
+                .insert(modifier, b.action.clone());
+        } else {
+            let mut provider_binds = PROVIDER_GLOBAL_BINDS.write().unwrap();
+            provider_binds
+                .entry(provider.to_string())
+                .or_insert_with(HashMap::new)
+                .entry(key)
+                .or_insert_with(HashMap::new)
+                .insert(modifier, b.action.clone());
+        }
+    };
+
+    let mut modifiers_list: Vec<gdk::ModifierType> = Vec::new();
+    let mut current_key: Option<Key> = None;
+
+    // iterate tokens; tokens are either modifiers (e.g. "ctrl") or key names (e.g. "j" or "Down").
+    // When we encounter a new key and a previous key already exists, register the previous key
+    // with the modifiers collected so far, then continue to the next.
     for field in fields {
         if let Some(&modifier) = MODIFIERS.get(field) {
             modifiers_list.push(modifier);
             continue;
         }
 
-        key = match Key::from_name(field.to_string()) {
-            Some(k) => Some(k),
+        // field is not a modifier, so it's a key name
+        let parsed = Key::from_name(field.to_string());
+        let parsed_key = match parsed {
+            Some(k) => k,
             None => {
                 eprintln!(
                     "Keybind Error: unable to create key from name: '{}' in '{}'.",
@@ -190,42 +224,31 @@ fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn s
                 std::process::exit(1);
             }
         };
+
+        if let Some(prev_key) = current_key.take() {
+            // register previous key with modifiers we've accumulated up to this point
+            let modifier = modifiers_list
+                .iter()
+                .fold(gdk::ModifierType::empty(), |acc, &m| acc | m);
+            register(prev_key, modifier);
+            // reset modifiers for the next key
+            modifiers_list.clear();
+        }
+
+        current_key = Some(parsed_key);
     }
 
+    // register last collected key + modifiers
+    let key = current_key.ok_or("incorrect bind")?;
     let modifier = modifiers_list
         .iter()
         .fold(gdk::ModifierType::empty(), |acc, &m| acc | m);
 
-    let key = key.ok_or("incorrect bind")?;
-    if provider.is_empty() {
-        let mut binds = BINDS.write().unwrap();
-        binds
-            .entry(key)
-            .or_insert_with(HashMap::new)
-            .insert(modifier, b.action.clone());
-        return Ok(());
-    }
-
-    if !global {
-        let mut provider_binds = PROVIDER_BINDS.write().unwrap();
-        provider_binds
-            .entry(provider.to_string())
-            .or_insert_with(HashMap::new)
-            .entry(key)
-            .or_insert_with(HashMap::new)
-            .insert(modifier, b.action.clone());
-    } else {
-        let mut provider_binds = PROVIDER_GLOBAL_BINDS.write().unwrap();
-        provider_binds
-            .entry(provider.to_string())
-            .or_insert_with(HashMap::new)
-            .entry(key)
-            .or_insert_with(HashMap::new)
-            .insert(modifier, b.action.clone());
-    }
+    register(key, modifier);
 
     Ok(())
 }
+
 
 pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
     BINDS

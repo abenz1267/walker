@@ -19,8 +19,8 @@ anchor_right = true
 
 [keybinds]
 close = "Escape"
-next = "Down"
-previous = "Up"
+next = "Down ctrl j"
+previous = "Up ctrl k"
 toggle_exact = "ctrl e"
 resume_last_query = "ctrl r"
 quick_activate = ["F1", "F2", "F3", "F4"]
@@ -137,3 +137,4 @@ remove_history = "ctrl BackSpace"
 default = "activate"
 activate = "Return"
 remove_history = "ctrl BackSpace"
+

@@ -106,23 +106,28 @@ nix.settings = {
 
 **Make sure `elephant` is running and you have providers installed. `elephant-providerlist` and f.e. `elephant-desktopapplications`.**
 
-Launch Walker with:
+Launch Walker with `walker`.
+
+In order to improve startup performance, run a Walker service with:
 
 ```bash
 walker --gapplication-service
 ```
 
-To open it, simply call:
+If the service is running, you can either open Walker with:
 
 ```bash
 walker
+
 ```
 
-or for an ever faster startup
+or for an even faster launch make a socket call, f.e. with `openbsd-netcat`:
 
 ```bash
 nc -U /run/user/1000/walker/walker.sock
 ```
+
+The downside of the socket call is that it does not handle any commandline options, so it's just a faster alternative to a simple `walker` call.
 
 ## Keybinds
 

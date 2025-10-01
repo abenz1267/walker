@@ -54,6 +54,15 @@ impl Clipboard {
                     },
                 },
                 Keybind {
+                    bind: config.providers.clipboard.delete_all.clone(),
+                    action: Action {
+                        label: "clear",
+                        required_states: None,
+                        action: "remove_all".to_string(),
+                        after: AfterAction::ClearReload,
+                    },
+                },
+                Keybind {
                     bind: config.providers.clipboard.edit.clone(),
                     action: Action {
                         label: "edit",

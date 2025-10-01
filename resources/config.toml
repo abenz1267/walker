@@ -88,6 +88,7 @@ time_format = "%d.%m. - %H:%M" # format for the clipboard item date
 default = "copy"
 copy = "Return"
 delete = "ctrl d"
+delete_all = "ctrl shift d"
 edit = "ctrl o"
 toggle_images_only = "ctrl i"
 

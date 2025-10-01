@@ -187,6 +187,7 @@ pub struct Clipboard {
     pub time_format: String,
     pub copy: String,
     pub delete: String,
+    pub delete_all: String,
     pub edit: String,
     pub toggle_images_only: String,
 }

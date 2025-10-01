@@ -14,8 +14,7 @@
         </style>
         <property name="overflow">hidden</property>
         <property name="orientation">horizontal</property>
-        <property name="margin-top">300</property>
-        <property name="valign">start</property>
+        <property name="valign">center</property>
         <property name="halign">center</property>
         <property name="width-request">600</property>
         <property name="height-request">550</property>

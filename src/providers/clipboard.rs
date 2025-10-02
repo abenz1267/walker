@@ -9,6 +9,7 @@ use gtk4::{
 use crate::{
     config::get_config,
     keybinds::{Action, AfterAction, Keybind},
+    protos::generated_proto::query::query_response::Item,
     providers::Provider,
 };
 
@@ -99,9 +100,9 @@ impl Provider for Clipboard {
         label.set_label(&text.trim());
     }
 
-    fn subtext_transformer(&self, text: &str, label: &gtk4::Label) {
-        let Ok(dt) = DateTime::parse_from_rfc2822(&text) else {
-            label.set_label(&text);
+    fn subtext_transformer(&self, item: &Item, label: &gtk4::Label) {
+        let Ok(dt) = DateTime::parse_from_rfc2822(&item.text) else {
+            label.set_label(&item.text);
             return;
         };
 

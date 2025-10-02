@@ -12,7 +12,7 @@ use crate::{
     keybinds::Keybind,
     protos::generated_proto::query::query_response::Item,
     providers::{
-        archlinuxpkgs::ArchLinuxPkgs, calc::Calc, clipboard::Clipboard,
+        archlinuxpkgs::ArchLinuxPkgs, bluetooth::Bluetooth, calc::Calc, clipboard::Clipboard,
         desktopapplications::DesktopApplications, dmenu::Dmenu, files::Files, menus::Menus,
         providerlist::Providerlist, runner::Runner, symbols::Symbols, todo::Todo, unicode::Unicode,
         websearch::Websearch,
@@ -20,6 +20,7 @@ use crate::{
 };
 
 pub mod archlinuxpkgs;
+pub mod bluetooth;
 pub mod calc;
 pub mod clipboard;
 pub mod desktopapplications;
@@ -70,13 +71,13 @@ pub trait Provider: Sync + Send + Debug {
         label.set_text(&text);
     }
 
-    fn subtext_transformer(&self, text: &str, label: &Label) {
-        if text.is_empty() {
+    fn subtext_transformer(&self, item: &Item, label: &Label) {
+        if item.text.is_empty() {
             label.set_visible(false);
             return;
         }
 
-        label.set_text(&text);
+        label.set_text(&item.text);
     }
 
     fn image_transformer(&self, b: &Builder, _: &ListItem, item: &Item) {
@@ -165,6 +166,7 @@ pub fn setup_providers(elephant: bool) {
                 Box::new(DesktopApplications::new()),
             ),
             "files" => providers.insert("files".to_string(), Box::new(Files::new())),
+            "bluetooth" => providers.insert("bluetooth".to_string(), Box::new(Bluetooth::new())),
             "runner" => providers.insert("runner".to_string(), Box::new(Runner::new())),
             "symbols" => providers.insert("symbols".to_string(), Box::new(Symbols::new())),
             "unicode" => providers.insert("unicode".to_string(), Box::new(Unicode::new())),

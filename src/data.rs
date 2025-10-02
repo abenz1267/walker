@@ -11,7 +11,7 @@ use crate::state::{
 use crate::ui::window::{set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
 use gtk4::glib::Object;
-use gtk4::{glib, prelude::*};
+use gtk4::{Entry, glib, prelude::*};
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher};
 use protobuf::{Message, MessageField};
@@ -26,6 +26,7 @@ use std::{env, thread};
 
 static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
+static BLUETOOTHCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 
 pub fn input_changed(text: &str) {
     set_current_prefix(String::new());
@@ -172,7 +173,21 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
 
     *MENUCONN.lock().unwrap() = Some(menuconn);
 
+    let bluetoothconn = loop {
+        match UnixStream::connect(&socket_path) {
+            Ok(conn) => break conn,
+            Err(e) => {
+                println!("Failed to connect to menu: {e}. Retrying in 1 second...");
+                thread::sleep(Duration::from_secs(1));
+            }
+        }
+    };
+
+    *BLUETOOTHCONN.lock().unwrap() = Some(bluetoothconn);
+
     subscribe_menu().unwrap();
+    // TODO: only if bluetooth provider
+    subscribe_bluetooth().unwrap();
     start_listening();
 
     glib::idle_add_once(|| {
@@ -209,6 +224,66 @@ fn start_listening() {
             eprintln!("Listen menu_loop error: {e}");
         }
     });
+
+    thread::spawn(|| {
+        if let Err(e) = listen_bluetooth_loop() {
+            handle_disconnect();
+            eprintln!("Listen menu_loop error: {e}");
+        }
+    });
+}
+
+fn listen_bluetooth_loop() -> Result<(), Box<dyn std::error::Error>> {
+    let mut conn_guard = BLUETOOTHCONN.lock().unwrap();
+    let conn = conn_guard.as_mut().ok_or("Connection not initialized")?;
+
+    let mut conn_clone = conn.try_clone()?;
+    drop(conn_guard);
+
+    let mut reader = BufReader::new(&mut conn_clone);
+
+    loop {
+        let mut header = [0u8; 5];
+        reader.read_exact(&mut header)?;
+
+        match header[0] {
+            0 => {
+                let length = u32::from_be_bytes(header[1..].try_into().unwrap());
+
+                let mut payload = vec![0u8; length as usize];
+                reader.read_exact(&mut payload)?;
+
+                let mut resp = SubscribeResponse::new();
+                resp.merge_from_bytes(&payload)?;
+
+                glib::idle_add_once(move || {
+                    with_window(|w| {
+                        if resp.value == "bluetooth:reload" {
+                            let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
+                            input_changed(&query);
+                        }
+
+                        if let Some(p) = &w.placeholder {
+                            match resp.value.as_str() {
+                                "bluetooth:remove" => p.set_text("Removing..."),
+                                "bluetooth:connnect" => p.set_text("Connecting..."),
+                                "bluetooth:disconnect" => p.set_text("Disconnecting..."),
+                                "bluetooth:trust" => p.set_text("Trusting..."),
+                                "bluetooth:untrust" => p.set_text("Un-Trusting..."),
+                                "bluetooth:pair" => p.set_text("Pairing..."),
+                                "bluetooth:find" => p.set_text("Scanning..."),
+                                _ => (),
+                            }
+
+                            p.set_visible(true);
+                            w.scroll.set_visible(false);
+                        }
+                    });
+                });
+            }
+            _ => continue,
+        }
+    }
 }
 
 fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
@@ -530,6 +605,28 @@ fn subscribe_menu() -> Result<(), Box<dyn std::error::Error>> {
 
     {
         let mut conn_guard = MENUCONN.lock().unwrap();
+
+        if let Some(conn) = conn_guard.as_mut() {
+            conn.write_all(&buffer)?;
+        } else {
+            return Err("Connection not available".into());
+        }
+    }
+
+    Ok(())
+}
+
+fn subscribe_bluetooth() -> Result<(), Box<dyn std::error::Error>> {
+    let mut req = SubscribeRequest::new();
+    req.provider = "bluetooth".to_string();
+
+    let mut buffer = vec![2];
+    let length = req.compute_size() as u32;
+    buffer.extend_from_slice(&length.to_be_bytes());
+    req.write_to_vec(&mut buffer).unwrap();
+
+    {
+        let mut conn_guard = BLUETOOTHCONN.lock().unwrap();
 
         if let Some(conn) = conn_guard.as_mut() {
             conn.write_all(&buffer)?;

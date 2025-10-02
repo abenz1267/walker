@@ -87,6 +87,7 @@ pub struct Providers {
     pub menus: Menus,
     pub websearch: Websearch,
     pub dmenu: Dmenu,
+    pub bluetooth: Bluetooth,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -147,6 +148,17 @@ pub struct Symbols {
 pub struct Unicode {
     pub default: String,
     pub copy: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Bluetooth {
+    pub connect: String,
+    pub remove: String,
+    pub pair: String,
+    pub disconnect: String,
+    pub trust: String,
+    pub untrust: String,
+    pub find: String,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -46,7 +46,7 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
     }
 
     if let Some(text) = b.object::<Label>("ItemSubtext") {
-        p.subtext_transformer(&item.subtext, &text);
+        p.subtext_transformer(item, &text);
     }
 
     p.image_transformer(&b, list_item, item);

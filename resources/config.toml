@@ -92,6 +92,15 @@ delete_all = "ctrl shift d"
 edit = "ctrl o"
 toggle_images_only = "ctrl i"
 
+[providers.bluetooth]
+connect = "ctrl shift d"
+disconnect = "ctrl d"
+trust = "ctrl t"
+untrust = "ctrl shift t"
+find = "ctrl f"
+remove = "ctrl shift p"
+pair = "ctrl p"
+
 [providers.desktopapplications]
 default = "start"
 start = "Return"

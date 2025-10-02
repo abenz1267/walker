@@ -173,21 +173,22 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
 
     *MENUCONN.lock().unwrap() = Some(menuconn);
 
-    let bluetoothconn = loop {
-        match UnixStream::connect(&socket_path) {
-            Ok(conn) => break conn,
-            Err(e) => {
-                println!("Failed to connect to menu: {e}. Retrying in 1 second...");
-                thread::sleep(Duration::from_secs(1));
+    if PROVIDERS.get().unwrap().get("bluetooth").is_some() {
+        let bluetoothconn = loop {
+            match UnixStream::connect(&socket_path) {
+                Ok(conn) => break conn,
+                Err(e) => {
+                    println!("Failed to connect to menu: {e}. Retrying in 1 second...");
+                    thread::sleep(Duration::from_secs(1));
+                }
             }
-        }
-    };
+        };
 
-    *BLUETOOTHCONN.lock().unwrap() = Some(bluetoothconn);
+        *BLUETOOTHCONN.lock().unwrap() = Some(bluetoothconn);
+        subscribe_bluetooth().unwrap();
+    }
 
     subscribe_menu().unwrap();
-    // TODO: only if bluetooth provider
-    subscribe_bluetooth().unwrap();
     start_listening();
 
     glib::idle_add_once(|| {
@@ -225,12 +226,14 @@ fn start_listening() {
         }
     });
 
-    thread::spawn(|| {
-        if let Err(e) = listen_bluetooth_loop() {
-            handle_disconnect();
-            eprintln!("Listen menu_loop error: {e}");
-        }
-    });
+    if PROVIDERS.get().unwrap().get("bluetooth").is_some() {
+        thread::spawn(|| {
+            if let Err(e) = listen_bluetooth_loop() {
+                handle_disconnect();
+                eprintln!("Listen menu_loop error: {e}");
+            }
+        });
+    }
 }
 
 fn listen_bluetooth_loop() -> Result<(), Box<dyn std::error::Error>> {

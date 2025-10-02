@@ -72,12 +72,12 @@ pub trait Provider: Sync + Send + Debug {
     }
 
     fn subtext_transformer(&self, item: &Item, label: &Label) {
-        if item.text.is_empty() {
+        if item.subtext.is_empty() {
             label.set_visible(false);
             return;
         }
 
-        label.set_text(&item.text);
+        label.set_text(&item.subtext);
     }
 
     fn image_transformer(&self, b: &Builder, _: &ListItem, item: &Item) {

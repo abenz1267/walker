@@ -80,11 +80,12 @@ pub trait Provider: Sync + Send + Debug {
     }
 
     fn image_transformer(&self, b: &Builder, _: &ListItem, item: &Item) {
-        if item.icon.is_empty() {
-            return;
-        }
-
         if let Some(image) = b.object::<Image>("ItemImage") {
+            if item.icon.is_empty() {
+                image.set_visible(false);
+                return;
+            }
+
             if !Path::new(&item.icon).is_absolute() {
                 image.set_icon_name(Some(&item.icon));
                 return;
@@ -100,6 +101,11 @@ pub trait Provider: Sync + Send + Debug {
                 image.set_paintable(Some(&texture));
             });
         } else if let Some(image) = b.object::<Picture>("ItemImage") {
+            if item.icon.is_empty() {
+                image.set_visible(false);
+                return;
+            }
+
             let icon = item.icon.clone();
 
             glib::spawn_future_local(async move {
@@ -173,7 +179,9 @@ pub fn setup_providers(elephant: bool) {
                 providers.insert("archlinuxpkgs".to_string(), Box::new(ArchLinuxPkgs::new()))
             }
             "todo" => providers.insert("todo".to_string(), Box::new(Todo::new())),
-            _ => return,
+            provider => {
+                providers.insert(provider.to_string(), Box::new(DesktopApplications::new()))
+            }
         };
     });
 

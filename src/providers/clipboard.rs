@@ -25,15 +25,26 @@ impl Clipboard {
 
         Self {
             default_action: config.providers.clipboard.default.clone(),
-            global_keybinds: vec![Keybind {
-                bind: config.providers.clipboard.toggle_images_only.clone(),
-                action: Action {
-                    label: "toggle images",
-                    required_states: None,
-                    action: "toggle_images".to_string(),
-                    after: AfterAction::ClearReload,
+            global_keybinds: vec![
+                Keybind {
+                    bind: config.providers.clipboard.toggle_images_only.clone(),
+                    action: Action {
+                        label: "toggle images",
+                        required_states: None,
+                        action: "toggle_images".to_string(),
+                        after: AfterAction::ClearReload,
+                    },
                 },
-            }],
+                Keybind {
+                    bind: config.providers.clipboard.delete_all.clone(),
+                    action: Action {
+                        label: "clear",
+                        required_states: None,
+                        action: "remove_all".to_string(),
+                        after: AfterAction::ClearReload,
+                    },
+                },
+            ],
             item_keybinds: vec![
                 Keybind {
                     bind: config.providers.clipboard.copy.clone(),
@@ -50,15 +61,6 @@ impl Clipboard {
                         label: "remove",
                         required_states: None,
                         action: "remove".to_string(),
-                        after: AfterAction::ClearReload,
-                    },
-                },
-                Keybind {
-                    bind: config.providers.clipboard.delete_all.clone(),
-                    action: Action {
-                        label: "clear",
-                        required_states: None,
-                        action: "remove_all".to_string(),
                         after: AfterAction::ClearReload,
                     },
                 },

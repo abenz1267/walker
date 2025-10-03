@@ -412,7 +412,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 let item_clone = item.clone();
                 provider = item.provider.clone();
 
-                if let Some(action) = get_provider_bind(&item.provider, k, m, &item.state) {
+                if let Some(action) = get_provider_bind(&item.provider, k, m, &item.actions) {
                     after = if item_clone.identifier.starts_with("keepopen:") {
                         Some(AfterAction::ClearReload)
                     } else {
@@ -884,11 +884,11 @@ pub fn set_keybind_hint() {
         let providers = PROVIDERS.get().unwrap();
 
         if let Some(p) = providers.get(&item.provider) {
-            k.set_text(&p.get_keybind_hint(&item.state));
+            k.set_text(&p.get_keybind_hint(&item.actions));
         } else if item.provider.starts_with("menus:")
             && let Some(p) = providers.get("menus")
         {
-            k.set_text(&p.get_keybind_hint(&item.state));
+            k.set_text(&p.get_keybind_hint(&item.actions));
         } else if providers.get("menus").is_some() {
             k.set_text("");
         }

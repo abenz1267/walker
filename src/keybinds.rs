@@ -29,7 +29,6 @@ pub struct Action {
     pub bind: String,
     pub after: Option<AfterAction>,
     pub label: Option<String>,
-    pub required_states: Option<Vec<String>>,
 }
 
 static BINDS: LazyLock<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> =
@@ -67,7 +66,6 @@ pub fn setup_binds() {
                 default: Some(true),
                 bind: b.clone(),
                 label: Some("close".to_string()),
-                required_states: None,
                 after: None,
             },
             "",
@@ -83,7 +81,6 @@ pub fn setup_binds() {
                 global: Some(true),
                 bind: b.clone(),
                 label: Some("select next".to_string()),
-                required_states: None,
                 after: Some(AfterAction::Nothing),
             },
             "",
@@ -99,7 +96,6 @@ pub fn setup_binds() {
                 global: Some(true),
                 bind: b.clone(),
                 label: Some("select previous".to_string()),
-                required_states: None,
                 after: Some(AfterAction::Nothing),
             },
             "",
@@ -115,7 +111,6 @@ pub fn setup_binds() {
                 global: Some(true),
                 bind: b.clone(),
                 label: Some("toggle exact search".to_string()),
-                required_states: None,
                 after: Some(AfterAction::Nothing),
             },
             "",
@@ -131,7 +126,6 @@ pub fn setup_binds() {
                 default: None,
                 global: Some(true),
                 label: Some("resume last query".to_string()),
-                required_states: None,
                 after: Some(AfterAction::Nothing),
             },
             "",
@@ -150,7 +144,6 @@ pub fn setup_binds() {
                     global: Some(true),
                     bind: s.clone(),
                     label: Some("quick activate".to_string()),
-                    required_states: None,
                     after: None,
                 },
                 "",
@@ -240,7 +233,7 @@ pub fn get_provider_bind(
     provider: &str,
     key: Key,
     modifier: gdk::ModifierType,
-    state: &Vec<String>,
+    actions: &[String],
 ) -> Option<Action> {
     PROVIDER_BINDS
         .read()
@@ -249,12 +242,7 @@ pub fn get_provider_bind(
         .get(&key.to_lower())?
         .get(&modifier)?
         .iter()
-        .find(|action| match &action.required_states {
-            Some(required) => required
-                .iter()
-                .any(|required_state| state.contains(&required_state.to_string())),
-            None => true,
-        })
+        .find(|action| actions.contains(&action.action))
         .cloned()
 }
 

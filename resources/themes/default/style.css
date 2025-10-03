@@ -140,7 +140,7 @@ child:selected .item-box {
   font-weight: bold;
 }
 
-.bluetooth.can_connect {
+.bluetooth.disconnected {
   opacity: 0.5;
 }
 

@@ -46,20 +46,14 @@ pub trait Provider: Sync + Send + Debug {
                     global: None,
                     after: None,
                     label: None,
-                    required_states: None,
                 }]
             })
     }
 
-    fn get_keybind_hint(&self, state: &[String]) -> String {
+    fn get_keybind_hint(&self, actions: &[String]) -> String {
         self.get_actions()
             .iter()
-            .filter(|v| match &v.required_states {
-                Some(required) => required
-                    .iter()
-                    .any(|required_state| state.contains(&required_state.to_string())),
-                None => true,
-            })
+            .filter(|v| actions.contains(&v.action) || v.global.unwrap_or(false))
             .map(|v| format!("{}: <{}>", v.label.as_ref().unwrap_or(&v.action), v.bind))
             .collect::<Vec<_>>()
             .join(" | ")

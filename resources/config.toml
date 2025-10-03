@@ -75,64 +75,36 @@ providerlist = [
 
 bluetooth = [
   { action = "find", bind = "ctrl f", after = "ClearReload" },
-  { action = "trust", bind = "ctrl t", after = "Nothing", required_states = [
-    "can_trust",
-  ] },
-  { action = "untrust", bind = "ctrl t", after = "Nothing", required_states = [
-    "can_untrust",
-  ] },
-  { action = "pair", bind = "Return", after = "Nothing", required_states = [
-    "can_pair",
-  ] },
-  { action = "remove", bind = "ctrl d", after = "Nothing", required_states = [
-    "can_remove",
-  ] },
-  { action = "connect", bind = "Return", after = "Nothing", required_states = [
-    "can_connect",
-  ] },
-  { action = "disconnect", bind = "Return", after = "Nothing", required_states = [
-    "can_disconnect",
-  ] },
+  { action = "trust", bind = "ctrl t", after = "Nothing" },
+  { action = "untrust", bind = "ctrl t", after = "Nothing" },
+  { action = "pair", bind = "Return", after = "Nothing" },
+  { action = "remove", bind = "ctrl d", after = "Nothing" },
+  { action = "connect", bind = "Return", after = "Nothing" },
+  { action = "disconnect", bind = "Return", after = "Nothing" },
 ]
 
 archlinuxpkgs = [
-  { action = "install", bind = "Return", default = true, required_states = [
-    "available",
-  ] },
-  { action = "remove", bind = "Return", required_states = [
-    "installed",
-  ] },
+  { action = "install", bind = "Return", default = true },
+  { action = "remove", bind = "Return" },
 ]
 
 calc = [
   { action = "copy", default = true, bind = "Return" },
-  { action = "delete", bind = "ctrl d", after = "Reload", required_states = [
-    "saved",
-  ] },
-  { action = "save", bind = "ctrl s", after = "ClearReload", required_states = [
-    "current",
-  ] },
+  { action = "delete", bind = "ctrl d", after = "Reload" },
+  { action = "save", bind = "ctrl s", after = "ClearReload" },
 ]
 
 websearch = [
   { action = "search", default = true, bind = "Return" },
-  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload", required_states = [
-    "history",
-  ] },
+  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload" },
 ]
 
 desktopapplications = [
   { action = "start", default = true, bind = "Return" },
-  { action = "start_keep_open", label = "open+next", bind = "shift Return", after = "KeepOpen" },
-  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload", required_states = [
-    "history",
-  ] },
-  { action = "toggle_pin", label = "pin", bind = "ctrl p", after = "Reload", required_states = [
-    "unpinned",
-  ] },
-  { action = "toggle_pin", label = "un-pin", bind = "ctrl p", after = "Reload", required_states = [
-    "pinned",
-  ] },
+  { action = "start", label = "open+next", bind = "shift Return", after = "KeepOpen" },
+  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload" },
+  { action = "pin", bind = "ctrl p", after = "Reload" },
+  { action = "unpin", bind = "ctrl p", after = "Reload" },
 ]
 
 files = [
@@ -145,31 +117,26 @@ files = [
 todo = [
   { action = "save", default = true, bind = "Return", after = "ClearReload" },
   { action = "delete", bind = "ctrl d", after = "ClearReload" },
-  { action = "active", bind = "ctrl a", after = "ClearReload" },
+  { action = "active", bind = "Return", after = "ClearReload" },
+  { action = "inactive", bind = "Return", after = "ClearReload" },
   { action = "done", bind = "ctrl f", after = "ClearReload" },
   { action = "clear", bind = "ctrl x", after = "ClearReload", global = true },
 ]
 
 runner = [
-  { action = "start", default = true, bind = "Return" },
+  { action = "run", default = true, bind = "Return" },
   { action = "runterminal", label = "run in terminal", bind = "shift Return" },
-  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload", required_states = [
-    "history",
-  ] },
+  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload" },
 ]
 
 symbols = [
-  { action = "copy", default = true, bind = "Return" },
-  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload", required_states = [
-    "history",
-  ] },
+  { action = "run_cmd", default = true, bind = "Return" },
+  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload" },
 ]
 
 unicode = [
-  { action = "copy", default = true, bind = "Return" },
-  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload", required_states = [
-    "history",
-  ] },
+  { action = "run_cmd", default = true, bind = "Return" },
+  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload" },
 ]
 
 clipboard = [

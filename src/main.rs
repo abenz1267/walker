@@ -406,6 +406,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
                                 item.text = line.to_string();
                                 item.provider = "dmenu".to_string();
                                 item.score = 1000000 - i;
+                                item.actions = vec!["select".to_string()];
 
                                 let mut response = QueryResponse::new();
                                 response.item = protobuf::MessageField::some(item);

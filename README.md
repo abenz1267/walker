@@ -142,7 +142,7 @@ F.e. `pub const GDK_KEY_semicolon: c_int = 59;` means that `ctrl semicolon` woul
 
 Configuration should be done in `~/.config/walker`.
 
-Check out the [default config](https://raw.githubusercontent.com/abenz1267/walker/refs/heads/master/resources/config.toml).
+Check out the [default config](https://raw.githubusercontent.com/abenz1267/walker/refs/heads/1.0.0/resources/config.toml).
 
 ## Theming
 

@@ -1,55 +1,21 @@
 use gtk4::{Builder, Label, ListItem};
 
-use crate::{
-    config::get_config,
-    keybinds::{Action, AfterAction, Keybind},
-    protos::generated_proto::query::query_response::Item,
-    providers::Provider,
-};
+use crate::{protos::generated_proto::query::query_response::Item, providers::Provider};
 
 #[derive(Debug)]
 pub struct Symbols {
-    keybinds: Vec<Keybind>,
-    default_action: String,
+    name: &'static str,
 }
 
 impl Symbols {
     pub fn new() -> Self {
-        let config = get_config();
-
-        Self {
-            default_action: config.providers.symbols.default.clone(),
-            keybinds: vec![
-                Keybind {
-                    bind: config.providers.symbols.copy.clone(),
-                    action: Action {
-                        label: "copy",
-                        required_states: None,
-                        action: "copy".to_string(),
-                        after: AfterAction::Close,
-                    },
-                },
-                Keybind {
-                    bind: config.providers.desktopapplications.remove_history.clone(),
-                    action: Action {
-                        label: "erase history",
-                        action: "erase_history".to_string(),
-                        after: AfterAction::Reload,
-                        required_states: Some(vec!["history"]),
-                    },
-                },
-            ],
-        }
+        Self { name: "symbols" }
     }
 }
 
 impl Provider for Symbols {
-    fn get_keybinds(&self) -> &Vec<Keybind> {
-        &self.keybinds
-    }
-
-    fn default_action(&self) -> &str {
-        &self.default_action
+    fn get_name(&self) -> &str {
+        self.name
     }
 
     fn get_item_layout(&self) -> String {

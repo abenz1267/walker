@@ -7,89 +7,23 @@ use gtk4::{
 };
 
 use crate::{
-    config::get_config,
-    keybinds::{Action, AfterAction, Keybind},
-    protos::generated_proto::query::query_response::Item,
-    providers::Provider,
+    config::get_config, protos::generated_proto::query::query_response::Item, providers::Provider,
 };
 
 #[derive(Debug)]
 pub struct Clipboard {
-    item_keybinds: Vec<Keybind>,
-    global_keybinds: Vec<Keybind>,
-    default_action: String,
+    name: &'static str,
 }
 
 impl Clipboard {
     pub fn new() -> Self {
-        let config = get_config();
-
-        Self {
-            default_action: config.providers.clipboard.default.clone(),
-            global_keybinds: vec![
-                Keybind {
-                    bind: config.providers.clipboard.toggle_images_only.clone(),
-                    action: Action {
-                        label: "toggle images",
-                        required_states: None,
-                        action: "toggle_images".to_string(),
-                        after: AfterAction::ClearReload,
-                    },
-                },
-                Keybind {
-                    bind: config.providers.clipboard.delete_all.clone(),
-                    action: Action {
-                        label: "clear",
-                        required_states: None,
-                        action: "remove_all".to_string(),
-                        after: AfterAction::ClearReload,
-                    },
-                },
-            ],
-            item_keybinds: vec![
-                Keybind {
-                    bind: config.providers.clipboard.copy.clone(),
-                    action: Action {
-                        label: "copy",
-                        required_states: None,
-                        action: "copy".to_string(),
-                        after: AfterAction::Close,
-                    },
-                },
-                Keybind {
-                    bind: config.providers.clipboard.delete.clone(),
-                    action: Action {
-                        label: "remove",
-                        required_states: None,
-                        action: "remove".to_string(),
-                        after: AfterAction::ClearReload,
-                    },
-                },
-                Keybind {
-                    bind: config.providers.clipboard.edit.clone(),
-                    action: Action {
-                        label: "edit",
-                        required_states: None,
-                        action: "edit".to_string(),
-                        after: AfterAction::Close,
-                    },
-                },
-            ],
-        }
+        Self { name: "clipboard" }
     }
 }
 
 impl Provider for Clipboard {
-    fn get_keybinds(&self) -> &Vec<Keybind> {
-        &self.item_keybinds
-    }
-
-    fn get_global_keybinds(&self) -> Option<&Vec<Keybind>> {
-        Some(&self.global_keybinds)
-    }
-
-    fn default_action(&self) -> &str {
-        &self.default_action
+    fn get_name(&self) -> &str {
+        self.name
     }
 
     fn get_item_layout(&self) -> String {
@@ -97,7 +31,7 @@ impl Provider for Clipboard {
     }
 
     fn text_transformer(&self, text: &str, label: &gtk4::Label) {
-        label.set_label(&text.trim());
+        label.set_label(text.trim());
     }
 
     fn subtext_transformer(&self, item: &Item, label: &gtk4::Label) {

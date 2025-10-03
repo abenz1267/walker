@@ -1,41 +1,19 @@
-use crate::{
-    config::get_config,
-    keybinds::{Action, AfterAction, Keybind},
-    providers::Provider,
-};
+use crate::providers::Provider;
 
 #[derive(Debug)]
 pub struct Dmenu {
-    keybinds: Vec<Keybind>,
-    default_action: String,
+    name: &'static str,
 }
 
 impl Dmenu {
     pub fn new() -> Self {
-        let config = get_config();
-
-        Self {
-            default_action: config.providers.dmenu.default.clone(),
-            keybinds: vec![Keybind {
-                bind: config.providers.dmenu.select.clone(),
-                action: Action {
-                    label: "select",
-                    required_states: None,
-                    action: "select".to_string(),
-                    after: AfterAction::Close,
-                },
-            }],
-        }
+        Self { name: "dmenu" }
     }
 }
 
 impl Provider for Dmenu {
-    fn get_keybinds(&self) -> &Vec<Keybind> {
-        &self.keybinds
-    }
-
-    fn default_action(&self) -> &str {
-        &self.default_action
+    fn get_name(&self) -> &str {
+        self.name
     }
 
     fn get_item_layout(&self) -> String {

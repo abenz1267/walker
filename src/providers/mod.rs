@@ -9,51 +9,58 @@ use gtk4::{
 
 use crate::{
     config::get_config,
-    keybinds::Keybind,
+    keybinds::Action,
     protos::generated_proto::query::query_response::Item,
     providers::{
-        archlinuxpkgs::ArchLinuxPkgs, bluetooth::Bluetooth, calc::Calc, clipboard::Clipboard,
-        desktopapplications::DesktopApplications, dmenu::Dmenu, files::Files, menus::Menus,
-        providerlist::Providerlist, runner::Runner, symbols::Symbols, todo::Todo, unicode::Unicode,
-        websearch::Websearch,
+        archlinuxpkgs::ArchLinuxPkgs, calc::Calc, clipboard::Clipboard,
+        default_provider::DefaultProvider, dmenu::Dmenu, files::Files, providerlist::Providerlist,
+        symbols::Symbols, todo::Todo, unicode::Unicode,
     },
 };
 
 pub mod archlinuxpkgs;
-pub mod bluetooth;
 pub mod calc;
 pub mod clipboard;
-pub mod desktopapplications;
+pub mod default_provider;
 pub mod dmenu;
 pub mod files;
-pub mod menus;
 pub mod providerlist;
-pub mod runner;
 pub mod symbols;
 pub mod todo;
 pub mod unicode;
-pub mod websearch;
 
 pub trait Provider: Sync + Send + Debug {
-    fn get_keybinds(&self) -> &Vec<Keybind>;
+    fn get_name(&self) -> &str;
 
-    fn get_global_keybinds(&self) -> Option<&Vec<Keybind>> {
-        return None;
+    fn get_actions(&self) -> Vec<Action> {
+        get_config()
+            .providers
+            .actions
+            .get(self.get_name())
+            .cloned()
+            .unwrap_or_else(|| {
+                vec![Action {
+                    action: "activate".to_string(),
+                    default: Some(true),
+                    bind: "Return".to_string(),
+                    global: None,
+                    after: None,
+                    label: None,
+                    required_states: None,
+                }]
+            })
     }
 
-    fn default_action(&self) -> &str;
-
-    fn get_keybind_hint(&self, state: &Vec<String>) -> String {
-        self.get_keybinds()
+    fn get_keybind_hint(&self, state: &[String]) -> String {
+        self.get_actions()
             .iter()
-            .chain(self.get_global_keybinds().unwrap_or(&Vec::new()).iter())
-            .filter(|keybind| match &keybind.action.required_states {
+            .filter(|v| match &v.required_states {
                 Some(required) => required
                     .iter()
                     .any(|required_state| state.contains(&required_state.to_string())),
                 None => true,
             })
-            .map(|keybind| format!("{}: <{}>", keybind.action.label, keybind.bind))
+            .map(|v| format!("{}: <{}>", v.label.as_ref().unwrap_or(&v.action), v.bind))
             .collect::<Vec<_>>()
             .join(" | ")
     }
@@ -68,7 +75,7 @@ pub trait Provider: Sync + Send + Debug {
             return;
         }
 
-        label.set_text(&text);
+        label.set_text(text);
     }
 
     fn subtext_transformer(&self, item: &Item, label: &Label) {
@@ -161,29 +168,24 @@ pub fn setup_providers(elephant: bool) {
         match p.as_str() {
             "calc" => providers.insert("calc".to_string(), Box::new(Calc::new())),
             "clipboard" => providers.insert("clipboard".to_string(), Box::new(Clipboard::new())),
-            "desktopapplications" => providers.insert(
-                "desktopapplications".to_string(),
-                Box::new(DesktopApplications::new()),
-            ),
             "files" => providers.insert("files".to_string(), Box::new(Files::new())),
-            "bluetooth" => providers.insert("bluetooth".to_string(), Box::new(Bluetooth::new())),
-            "runner" => providers.insert("runner".to_string(), Box::new(Runner::new())),
             "symbols" => providers.insert("symbols".to_string(), Box::new(Symbols::new())),
             "unicode" => providers.insert("unicode".to_string(), Box::new(Unicode::new())),
             "providerlist" => {
                 providers.insert("providerlist".to_string(), Box::new(Providerlist::new()))
             }
-            provider if provider.starts_with("menus:") => {
-                providers.insert(provider.to_string(), Box::new(Menus::new()))
-            }
-            "websearch" => providers.insert("websearch".to_string(), Box::new(Websearch::new())),
+            // provider if provider.starts_with("menus:") => providers.insert(
+            //     provider.to_string(),
+            //     Box::new(DefaultProvider::new(provider.to_string())),
+            // ),
             "archlinuxpkgs" => {
                 providers.insert("archlinuxpkgs".to_string(), Box::new(ArchLinuxPkgs::new()))
             }
             "todo" => providers.insert("todo".to_string(), Box::new(Todo::new())),
-            provider => {
-                providers.insert(provider.to_string(), Box::new(DesktopApplications::new()))
-            }
+            provider => providers.insert(
+                provider.to_string(),
+                Box::new(DefaultProvider::new(provider.to_string())),
+            ),
         };
     });
 

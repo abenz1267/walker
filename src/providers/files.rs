@@ -5,74 +5,22 @@ use gtk4::{
     gio::{self, prelude::FileExt},
 };
 
-use crate::{
-    config::get_config,
-    keybinds::{Action, AfterAction, Keybind},
-    protos::generated_proto::query::query_response::Item,
-    providers::Provider,
-};
+use crate::{protos::generated_proto::query::query_response::Item, providers::Provider};
 
 #[derive(Debug)]
 pub struct Files {
-    keybinds: Vec<Keybind>,
-    default_action: String,
+    name: &'static str,
 }
 
 impl Files {
     pub fn new() -> Self {
-        let config = get_config();
-
-        Self {
-            default_action: config.providers.files.default.clone(),
-            keybinds: vec![
-                Keybind {
-                    bind: config.providers.files.copy_file.clone(),
-                    action: Action {
-                        label: "copy",
-                        action: "copyfile".to_string(),
-                        after: AfterAction::Close,
-                        required_states: None,
-                    },
-                },
-                Keybind {
-                    bind: config.providers.files.copy_path.clone(),
-                    action: Action {
-                        label: "copy path",
-                        action: "copypath".to_string(),
-                        after: AfterAction::Close,
-                        required_states: None,
-                    },
-                },
-                Keybind {
-                    bind: config.providers.files.open.clone(),
-                    action: Action {
-                        label: "open",
-                        action: "open".to_string(),
-                        after: AfterAction::Close,
-                        required_states: None,
-                    },
-                },
-                Keybind {
-                    bind: config.providers.files.open_dir.clone(),
-                    action: Action {
-                        label: "open dir",
-                        action: "opendir".to_string(),
-                        after: AfterAction::Close,
-                        required_states: None,
-                    },
-                },
-            ],
-        }
+        Self { name: "files" }
     }
 }
 
 impl Provider for Files {
-    fn get_keybinds(&self) -> &Vec<Keybind> {
-        &self.keybinds
-    }
-
-    fn default_action(&self) -> &str {
-        &self.default_action
+    fn get_name(&self) -> &str {
+        self.name
     }
 
     fn get_item_layout(&self) -> String {

@@ -2,65 +2,22 @@ use std::path::Path;
 
 use gtk4::{Builder, Image, ListItem, prelude::WidgetExt};
 
-use crate::{
-    config::get_config,
-    keybinds::{Action, AfterAction, Keybind},
-    protos::generated_proto::query::query_response::Item,
-    providers::Provider,
-};
+use crate::{protos::generated_proto::query::query_response::Item, providers::Provider};
 
 #[derive(Debug)]
 pub struct Calc {
-    keybinds: Vec<Keybind>,
-    default_action: String,
+    name: &'static str,
 }
 
 impl Calc {
     pub fn new() -> Self {
-        let config = get_config();
-
-        Self {
-            default_action: config.providers.calc.default.clone(),
-            keybinds: vec![
-                Keybind {
-                    bind: config.providers.calc.copy.clone(),
-                    action: Action {
-                        label: "copy",
-                        required_states: None,
-                        action: "copy".to_string(),
-                        after: AfterAction::Close,
-                    },
-                },
-                Keybind {
-                    bind: config.providers.calc.delete.clone(),
-                    action: Action {
-                        label: "delete",
-                        required_states: Some(vec!["saved"]),
-                        action: "delete".to_string(),
-                        after: AfterAction::Reload,
-                    },
-                },
-                Keybind {
-                    bind: config.providers.calc.save.clone(),
-                    action: Action {
-                        label: "save",
-                        required_states: Some(vec!["current"]),
-                        action: "save".to_string(),
-                        after: AfterAction::ClearReload,
-                    },
-                },
-            ],
-        }
+        Self { name: "calc" }
     }
 }
 
 impl Provider for Calc {
-    fn get_keybinds(&self) -> &Vec<Keybind> {
-        &self.keybinds
-    }
-
-    fn default_action(&self) -> &str {
-        &self.default_action
+    fn get_name(&self) -> &str {
+        self.name
     }
 
     fn get_item_layout(&self) -> String {

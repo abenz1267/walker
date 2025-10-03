@@ -1,41 +1,21 @@
-use crate::{
-    config::get_config,
-    keybinds::{Action, AfterAction, Keybind},
-    providers::Provider,
-};
+use crate::providers::Provider;
 
 #[derive(Debug)]
 pub struct Providerlist {
-    keybinds: Vec<Keybind>,
-    default_action: String,
+    name: &'static str,
 }
 
 impl Providerlist {
     pub fn new() -> Self {
-        let config = get_config();
-
         Self {
-            default_action: config.providers.providerlist.default.clone(),
-            keybinds: vec![Keybind {
-                bind: config.providers.providerlist.activate.clone(),
-                action: Action {
-                    label: "select",
-                    required_states: None,
-                    action: "activate".to_string(),
-                    after: AfterAction::ClearReload,
-                },
-            }],
+            name: "providerlist",
         }
     }
 }
 
 impl Provider for Providerlist {
-    fn get_keybinds(&self) -> &Vec<Keybind> {
-        &self.keybinds
-    }
-
-    fn default_action(&self) -> &str {
-        &self.default_action
+    fn get_name(&self) -> &str {
+        self.name
     }
 
     fn get_item_layout(&self) -> String {

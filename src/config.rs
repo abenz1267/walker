@@ -2,6 +2,8 @@ use config::{Config, ConfigError, File, FileFormat};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::OnceLock};
 
+use crate::keybinds::{Action, AfterAction};
+
 static LOADED_CONFIG: OnceLock<Walker> = OnceLock::new();
 const DEFAULT_CONFIG: &str = include_str!("../resources/config.toml");
 
@@ -22,6 +24,9 @@ pub struct Walker {
     pub additional_theme_location: Option<String>,
     pub placeholders: Option<HashMap<String, Placeholder>>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CustomKeybind {}
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Shell {
@@ -61,11 +66,11 @@ fn get_user_config_path() -> String {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Keybinds {
-    pub close: String,
-    pub next: String,
-    pub previous: String,
-    pub toggle_exact: String,
-    pub resume_last_query: String,
+    pub close: Vec<String>,
+    pub next: Vec<String>,
+    pub previous: Vec<String>,
+    pub toggle_exact: Vec<String>,
+    pub resume_last_query: Vec<String>,
     pub quick_activate: Option<Vec<String>>,
 }
 
@@ -74,117 +79,8 @@ pub struct Providers {
     pub default: Vec<String>,
     pub empty: Vec<String>,
     pub prefixes: Vec<Prefix>,
-    pub calc: Calc,
-    pub providerlist: Providerlist,
     pub clipboard: Clipboard,
-    pub desktopapplications: DesktopApplications,
-    pub files: Files,
-    pub todo: Todo,
-    pub runner: Runner,
-    pub symbols: Symbols,
-    pub unicode: Unicode,
-    pub archlinuxpkgs: ArchLinuxPkgs,
-    pub menus: Menus,
-    pub websearch: Websearch,
-    pub dmenu: Dmenu,
-    pub bluetooth: Bluetooth,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Websearch {
-    pub default: String,
-    pub search: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Menus {
-    pub default: String,
-    pub activate: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Calc {
-    pub default: String,
-    pub copy: String,
-    pub save: String,
-    pub delete: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Providerlist {
-    pub default: String,
-    pub activate: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DesktopApplications {
-    pub default: String,
-    pub start: String,
-    pub start_keep_open: String,
-    pub remove_history: String,
-    pub toggle_pin: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Runner {
-    pub default: String,
-    pub start: String,
-    pub start_terminal: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Dmenu {
-    pub default: String,
-    pub select: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Symbols {
-    pub default: String,
-    pub copy: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Unicode {
-    pub default: String,
-    pub copy: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Bluetooth {
-    pub connect: String,
-    pub remove: String,
-    pub pair: String,
-    pub disconnect: String,
-    pub trust: String,
-    pub untrust: String,
-    pub find: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ArchLinuxPkgs {
-    pub default: String,
-    pub install: String,
-    pub remove: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Files {
-    pub default: String,
-    pub open: String,
-    pub open_dir: String,
-    pub copy_path: String,
-    pub copy_file: String,
-}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct Todo {
-    pub default: String,
-    pub save: String,
-    pub delete: String,
-    pub mark_active: String,
-    pub mark_done: String,
-    pub clear: String,
+    pub actions: HashMap<String, Vec<Action>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -195,13 +91,7 @@ pub struct Prefix {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Clipboard {
-    pub default: String,
     pub time_format: String,
-    pub copy: String,
-    pub delete: String,
-    pub delete_all: String,
-    pub edit: String,
-    pub toggle_images_only: String,
 }
 
 pub fn load() -> Result<(), Box<dyn std::error::Error>> {

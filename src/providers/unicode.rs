@@ -1,55 +1,21 @@
 use gtk4::{Builder, Label, ListItem};
 
-use crate::{
-    config::get_config,
-    keybinds::{Action, AfterAction, Keybind},
-    protos::generated_proto::query::query_response::Item,
-    providers::Provider,
-};
+use crate::{protos::generated_proto::query::query_response::Item, providers::Provider};
 
 #[derive(Debug)]
 pub struct Unicode {
-    keybinds: Vec<Keybind>,
-    default_action: String,
+    name: &'static str,
 }
 
 impl Unicode {
     pub fn new() -> Self {
-        let config = get_config();
-
-        Self {
-            default_action: config.providers.unicode.default.clone(),
-            keybinds: vec![
-                Keybind {
-                    bind: config.providers.unicode.copy.clone(),
-                    action: Action {
-                        label: "copy",
-                        required_states: None,
-                        action: "copy".to_string(),
-                        after: AfterAction::Close,
-                    },
-                },
-                Keybind {
-                    bind: config.providers.desktopapplications.remove_history.clone(),
-                    action: Action {
-                        label: "erase history",
-                        action: "erase_history".to_string(),
-                        after: AfterAction::Reload,
-                        required_states: Some(vec!["history"]),
-                    },
-                },
-            ],
-        }
+        Self { name: "unicode" }
     }
 }
 
 impl Provider for Unicode {
-    fn get_keybinds(&self) -> &Vec<Keybind> {
-        &self.keybinds
-    }
-
-    fn default_action(&self) -> &str {
-        &self.default_action
+    fn get_name(&self) -> &str {
+        self.name
     }
 
     fn get_item_layout(&self) -> String {

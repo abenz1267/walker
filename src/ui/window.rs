@@ -262,12 +262,14 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
             let providers = PROVIDERS.get().unwrap();
             let provider = i.item.provider.clone();
 
-            let action = providers
-                .get(&provider)
-                .map(|p| p.default_action())
-                .unwrap_or_default();
+            let action = providers.get(&provider).and_then(|p| {
+                p.get_actions()
+                    .iter()
+                    .find(|v| v.default.unwrap_or(false))
+                    .map(|k| k.action.clone())
+            });
 
-            activate(Some(i), &provider, &query, action);
+            activate(Some(i), &provider, &query, action.unwrap().as_str());
             quit(&app_copy, false);
         });
     });
@@ -383,7 +385,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 && let Some(action) = get_provider_global_bind(&provider, k, m)
             {
                 keybind_action = Some(action.clone());
-                after = Some(action.after);
+                after = Some(action.after.unwrap_or(AfterAction::Close));
             }
 
             let mut response: Option<QueryResponse> = None;
@@ -410,11 +412,11 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 let item_clone = item.clone();
                 provider = item.provider.clone();
 
-                if let Some(action) = get_provider_bind(&item.provider, k, m) {
+                if let Some(action) = get_provider_bind(&item.provider, k, m, &item.state) {
                     after = if item_clone.identifier.starts_with("keepopen:") {
                         Some(AfterAction::ClearReload)
                     } else {
-                        Some(action.after.clone())
+                        Some(action.after.as_ref().unwrap_or(&AfterAction::Close).clone())
                     };
 
                     keybind_action = Some(action);
@@ -739,16 +741,19 @@ fn quick_activate(app: &Application, i: u32, keep_open: bool) {
                 .as_ref()
                 .map_or(String::new(), |i| i.text().to_string());
 
+            let providers = PROVIDERS.get().unwrap();
+            let action = providers.get(&resp.item.provider).and_then(|p| {
+                p.get_actions()
+                    .iter()
+                    .find(|v| v.default.unwrap_or(false))
+                    .map(|k| k.action.clone())
+            });
+
             activate(
                 Some(resp.clone()),
                 resp.item.provider.as_str(),
                 &query,
-                PROVIDERS
-                    .get()
-                    .unwrap()
-                    .get(&resp.item.provider)
-                    .unwrap()
-                    .default_action(),
+                &action.unwrap(),
             );
 
             if resp.item.provider == "providerlist" || resp.item.identifier.contains("menus:") {

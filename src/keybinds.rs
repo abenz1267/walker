@@ -1,6 +1,7 @@
 use crate::config::get_config;
 use crate::providers::PROVIDERS;
 use gtk4::gdk::{self, Key};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{LazyLock, RwLock};
 
@@ -11,7 +12,7 @@ pub const ACTION_TOGGLE_EXACT: &str = "%TOGGLE_EXACT%";
 pub const ACTION_RESUME_LAST_QUERY: &str = "%RESUME_LAST_QUERY%";
 pub const ACTION_QUICK_ACTIVATE: &str = "%QUICK_ACTIVATE%";
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub enum AfterAction {
     KeepOpen,
     Close,
@@ -20,27 +21,24 @@ pub enum AfterAction {
     ClearReload,
 }
 
-#[derive(Debug, Clone)]
-pub struct Keybind {
-    pub bind: String,
-    pub action: Action,
-}
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Action {
     pub action: String,
-    pub after: AfterAction,
-    pub label: &'static str,
-    pub required_states: Option<Vec<&'static str>>,
+    pub global: Option<bool>,
+    pub default: Option<bool>,
+    pub bind: String,
+    pub after: Option<AfterAction>,
+    pub label: Option<String>,
+    pub required_states: Option<Vec<String>>,
 }
 
 static BINDS: LazyLock<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> =
     LazyLock::new(RwLock::default);
 static PROVIDER_BINDS: LazyLock<
-    RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>,
+    RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Vec<Action>>>>>,
 > = LazyLock::new(RwLock::default);
 static PROVIDER_GLOBAL_BINDS: LazyLock<
-    RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Action>>>>,
+    RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Vec<Action>>>>>,
 > = LazyLock::new(RwLock::default);
 
 pub static MODIFIERS: LazyLock<HashMap<&'static str, gdk::ModifierType>> = LazyLock::new(|| {
@@ -54,117 +52,115 @@ pub static MODIFIERS: LazyLock<HashMap<&'static str, gdk::ModifierType>> = LazyL
 
 pub fn setup_binds() {
     PROVIDERS.get().unwrap().iter().for_each(|(k, v)| {
-        v.get_keybinds().iter().for_each(|bind| {
-            parse_bind(bind, k, false).unwrap();
+        v.get_actions().iter().for_each(|v| {
+            parse_bind(v, k).unwrap();
         });
-
-        if let Some(binds) = v.get_global_keybinds() {
-            binds.iter().for_each(|bind| {
-                parse_bind(bind, k, true).unwrap();
-            });
-        }
     });
 
     let config = get_config();
 
-    parse_bind(
-        &Keybind {
-            bind: config.keybinds.close.clone(),
-            action: Action {
-                label: "close",
-                required_states: None,
+    config.keybinds.close.iter().for_each(|b| {
+        parse_bind(
+            &Action {
                 action: ACTION_CLOSE.to_string(),
-                after: AfterAction::Close,
-            },
-        },
-        "",
-        false,
-    )
-    .unwrap();
-
-    parse_bind(
-        &Keybind {
-            bind: config.keybinds.next.clone(),
-            action: Action {
-                label: "select next",
+                global: None,
+                default: Some(true),
+                bind: b.clone(),
+                label: Some("close".to_string()),
                 required_states: None,
+                after: None,
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.next.iter().for_each(|b| {
+        parse_bind(
+            &Action {
                 action: ACTION_SELECT_NEXT.to_string(),
-                after: AfterAction::Nothing,
-            },
-        },
-        "",
-        false,
-    )
-    .unwrap();
-
-    parse_bind(
-        &Keybind {
-            bind: config.keybinds.previous.clone(),
-            action: Action {
-                label: "select previous",
+                default: None,
+                global: Some(true),
+                bind: b.clone(),
+                label: Some("select next".to_string()),
                 required_states: None,
+                after: Some(AfterAction::Nothing),
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.previous.iter().for_each(|b| {
+        parse_bind(
+            &Action {
                 action: ACTION_SELECT_PREVIOUS.to_string(),
-                after: AfterAction::Nothing,
-            },
-        },
-        "",
-        false,
-    )
-    .unwrap();
-
-    parse_bind(
-        &Keybind {
-            bind: config.keybinds.toggle_exact.clone(),
-            action: Action {
-                label: "toggle exact search",
+                default: None,
+                global: Some(true),
+                bind: b.clone(),
+                label: Some("select previous".to_string()),
                 required_states: None,
+                after: Some(AfterAction::Nothing),
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.toggle_exact.iter().for_each(|b| {
+        parse_bind(
+            &Action {
                 action: ACTION_TOGGLE_EXACT.to_string(),
-                after: AfterAction::Nothing,
-            },
-        },
-        "",
-        false,
-    )
-    .unwrap();
-
-    parse_bind(
-        &Keybind {
-            bind: config.keybinds.resume_last_query.clone(),
-            action: Action {
-                label: "resume last query",
+                default: None,
+                global: Some(true),
+                bind: b.clone(),
+                label: Some("toggle exact search".to_string()),
                 required_states: None,
-                action: ACTION_RESUME_LAST_QUERY.to_string(),
-                after: AfterAction::Nothing,
+                after: Some(AfterAction::Nothing),
             },
-        },
-        "",
-        false,
-    )
-    .unwrap();
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.resume_last_query.iter().for_each(|b| {
+        parse_bind(
+            &Action {
+                action: ACTION_RESUME_LAST_QUERY.to_string(),
+                bind: b.clone(),
+                default: None,
+                global: Some(true),
+                label: Some("resume last query".to_string()),
+                required_states: None,
+                after: Some(AfterAction::Nothing),
+            },
+            "",
+        )
+        .unwrap();
+    });
 
     if let Some(qa) = &config.keybinds.quick_activate {
         qa.iter().enumerate().for_each(|(k, s)| {
             let action_str = format!("{}:{}", ACTION_QUICK_ACTIVATE, k);
 
             parse_bind(
-                &Keybind {
+                &Action {
+                    default: None,
+                    action: action_str,
+                    global: Some(true),
                     bind: s.clone(),
-                    action: Action {
-                        label: "quick activate",
-                        required_states: None,
-                        action: action_str,
-                        after: AfterAction::Close,
-                    },
+                    label: Some("quick activate".to_string()),
+                    required_states: None,
+                    after: None,
                 },
                 "",
-                false,
             )
             .unwrap();
         });
     }
 }
 
-fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn std::error::Error>> {
+fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut fields = b.bind.split_whitespace().peekable();
 
     if fields.peek().is_none() {
@@ -202,18 +198,20 @@ fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn s
         binds
             .entry(key)
             .or_insert_with(HashMap::new)
-            .insert(modifier, b.action.clone());
+            .insert(modifier, b.clone());
         return Ok(());
     }
 
-    if !global {
+    if !b.global.unwrap_or(false) {
         let mut provider_binds = PROVIDER_BINDS.write().unwrap();
         provider_binds
             .entry(provider.to_string())
             .or_insert_with(HashMap::new)
             .entry(key)
             .or_insert_with(HashMap::new)
-            .insert(modifier, b.action.clone());
+            .entry(modifier)
+            .or_insert_with(Vec::new)
+            .push(b.clone());
     } else {
         let mut provider_binds = PROVIDER_GLOBAL_BINDS.write().unwrap();
         provider_binds
@@ -221,7 +219,9 @@ fn parse_bind(b: &Keybind, provider: &str, global: bool) -> Result<(), Box<dyn s
             .or_insert_with(HashMap::new)
             .entry(key)
             .or_insert_with(HashMap::new)
-            .insert(modifier, b.action.clone());
+            .entry(modifier)
+            .or_insert_with(Vec::new)
+            .push(b.clone());
     }
 
     Ok(())
@@ -236,13 +236,25 @@ pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
         .cloned()
 }
 
-pub fn get_provider_bind(provider: &str, key: Key, modifier: gdk::ModifierType) -> Option<Action> {
+pub fn get_provider_bind(
+    provider: &str,
+    key: Key,
+    modifier: gdk::ModifierType,
+    state: &Vec<String>,
+) -> Option<Action> {
     PROVIDER_BINDS
         .read()
         .ok()?
         .get(provider)?
         .get(&key.to_lower())?
-        .get(&modifier)
+        .get(&modifier)?
+        .iter()
+        .find(|action| match &action.required_states {
+            Some(required) => required
+                .iter()
+                .any(|required_state| state.contains(&required_state.to_string())),
+            None => true,
+        })
         .cloned()
 }
 
@@ -256,6 +268,7 @@ pub fn get_provider_global_bind(
         .ok()?
         .get(provider)?
         .get(&key.to_lower())?
-        .get(&modifier)
+        .get(&modifier)?
+        .first()
         .cloned()
 }

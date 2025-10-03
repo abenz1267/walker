@@ -140,6 +140,10 @@ child:selected .item-box {
   font-weight: bold;
 }
 
+.bluetooth.can_connect {
+  opacity: 0.5;
+}
+
 .preview .large-icons {
   -gtk-icon-size: 64px;
 }

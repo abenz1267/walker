@@ -8,7 +8,7 @@ use crate::state::{
     get_provider, is_connected, is_connecting, is_dmenu, is_service, set_current_prefix,
     set_is_connected, set_is_connecting, set_is_visible, set_provider, set_query,
 };
-use crate::ui::window::{set_keybind_hint, with_window};
+use crate::ui::window::{set_input_text, set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
 use gtk4::glib::Object;
 use gtk4::{Entry, glib, prelude::*};
@@ -58,6 +58,8 @@ pub fn input_changed(text: &str) {
 
             sort_items_fuzzy(text);
         } else if is_connected() {
+            let list_store = &w.items;
+            list_store.remove_all();
             query(text);
         }
     });
@@ -316,11 +318,7 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
                     set_provider(resp.value);
 
                     with_window(|w| {
-                        if let Some(input) = &w.input {
-                            input.set_text("");
-                            input.emit_by_name::<()>("changed", &[]);
-                        }
-
+                        set_input_text("");
                         w.window.present();
                     });
 
@@ -415,19 +413,6 @@ fn update_existing_item(resp: QueryResponse) {
 fn add_new_item(resp: QueryResponse) {
     with_window(|w| {
         let items = &w.items;
-        let n_items = items.n_items();
-
-        if let Some(n_items) = n_items.checked_sub(1)
-            && let Some(last_obj) = items
-                .item(n_items)
-                .and_downcast::<crate::QueryResponseObject>()
-        {
-            let last_resp = last_obj.response();
-
-            if resp.qid > last_resp.qid || (resp.qid == last_resp.qid && resp.iid > last_resp.iid) {
-                items.remove_all();
-            }
-        }
 
         items.append(&crate::QueryResponseObject::new(resp));
     });
@@ -535,9 +520,9 @@ pub fn clipboard_disable_images_only() {
 pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str, action: &str) {
     let cfg = get_config();
 
-    let mut arguments = query;
-    if let Some(stripped) = arguments.strip_prefix(&cfg.exact_search_prefix) {
-        arguments = stripped;
+    let mut query = query;
+    if let Some(stripped) = query.strip_prefix(&cfg.exact_search_prefix) {
+        query = stripped;
     }
 
     let mut req = ActivateRequest::new();
@@ -560,7 +545,7 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
                 return;
             }
             _ => {
-                req.qid = item.qid;
+                req.query = query.to_string();
                 req.provider = item.item.provider.clone();
                 req.identifier = item.item.identifier.clone();
             }
@@ -571,14 +556,14 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
         .providers
         .prefixes
         .iter()
-        .find(|prefix| provider == prefix.provider && arguments.starts_with(&prefix.prefix))
+        .find(|prefix| provider == prefix.provider && query.starts_with(&prefix.prefix))
     {
-        arguments = arguments
+        query = query
             .strip_prefix(&prefix.prefix)
             .expect("couldn't trim prefix");
     }
 
-    req.arguments = arguments.to_string();
+    req.query = query.to_string();
 
     let mut buffer = vec![1];
     let length = req.compute_size() as u32;

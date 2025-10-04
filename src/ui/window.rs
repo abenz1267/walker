@@ -51,6 +51,7 @@ use gtk4::{
     prelude::{EntryExt, GtkWindowExt},
 };
 use std::{
+    backtrace::Backtrace,
     cell::{Cell, OnceCell, RefCell},
     collections::HashMap,
     process,
@@ -72,8 +73,9 @@ where
     CSS_PROVIDER.with(|p| p.borrow().as_ref().map(f))
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug)]
 pub struct WindowData {
+    pub sid: Option<gdk::glib::SignalHandlerId>,
     pub builder: Builder,
     pub preview_builder: RefCell<Option<Builder>>,
     pub mouse_x: Cell<f64>,
@@ -162,7 +164,8 @@ pub fn setup_window(app: &Application) {
                 .object("ContentContainer")
                 .expect("ContentContainer not found");
 
-            let ui = WindowData {
+            let mut ui = WindowData {
+                sid: None,
                 box_wrapper,
                 preview_container,
                 elephant_hint,
@@ -192,7 +195,7 @@ pub fn setup_window(app: &Application) {
             setup_window_behavior(&ui, app);
 
             if let Some(input) = &ui.input {
-                setup_input_handling(input);
+                ui.sid = Some(setup_input_handling(input))
             }
 
             setup_keyboard_handling(&ui);
@@ -289,7 +292,7 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
     }
 }
 
-fn setup_input_handling(input: &Entry) {
+fn setup_input_handling(input: &Entry) -> gdk::glib::SignalHandlerId {
     input.connect_changed(move |input| {
         disable_mouse();
 
@@ -298,7 +301,7 @@ fn setup_input_handling(input: &Entry) {
         if !text.contains(&get_config().global_argument_delimiter) {
             input_changed(&text);
         }
-    });
+    })
 }
 
 fn setup_keyboard_handling(ui: &WindowData) {
@@ -462,8 +465,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                             if input.text().is_empty() {
                                 input.emit_by_name::<()>("changed", &[]);
                             } else {
-                                input.set_text(&get_current_prefix());
-                                input.set_position(-1);
+                                set_input_text(&get_current_prefix());
                             }
                         }
                     }
@@ -625,10 +627,7 @@ pub fn quit(app: &Application, cancelled: bool) {
                 search_container.set_visible(true);
             }
 
-            if let Some(input) = &w.input {
-                input.set_text("");
-                input.emit_by_name::<()>("changed", &[]);
-            }
+            set_input_text("");
 
             w.content_container.set_visible(true);
 
@@ -757,13 +756,7 @@ fn quick_activate(app: &Application, i: u32, keep_open: bool) {
             );
 
             if resp.item.provider == "providerlist" || resp.item.identifier.contains("menus:") {
-                if let Some(input) = &w.input {
-                    if input.text().is_empty() {
-                        input.emit_by_name::<()>("changed", &[]);
-                    } else {
-                        input.set_text("");
-                    }
-                }
+                set_input_text("");
                 return;
             }
 
@@ -775,14 +768,9 @@ fn quick_activate(app: &Application, i: u32, keep_open: bool) {
 }
 
 fn resume_last_query() {
-    with_window(|w| {
-        if !get_last_query().is_empty()
-            && let Some(input) = &w.input
-        {
-            input.set_text(&get_last_query());
-            input.set_position(-1);
-        }
-    });
+    if !get_last_query().is_empty() {
+        set_input_text(&get_last_query());
+    }
 }
 
 pub fn toggle_exact() {
@@ -795,11 +783,9 @@ pub fn toggle_exact() {
         if i.text().starts_with(&cfg.exact_search_prefix)
             && let Some(t) = i.text().strip_prefix(&cfg.exact_search_prefix)
         {
-            i.set_text(t);
-            i.set_position(-1);
+            set_input_text(t);
         } else if i.text().strip_prefix(&cfg.exact_search_prefix).is_some() {
-            i.set_text(&format!("{}{}", cfg.exact_search_prefix, i.text()));
-            i.set_position(-1);
+            set_input_text(&format!("{}{}", cfg.exact_search_prefix, i.text()));
         }
     });
 }
@@ -893,4 +879,17 @@ pub fn set_keybind_hint() {
             k.set_text("");
         }
     });
+}
+
+pub fn set_input_text(text: &str) {
+    with_window(|w| {
+        if let Some(input) = &w.input {
+            let sid = w.sid.as_ref().unwrap();
+            input.block_signal(sid);
+            input.set_text(text);
+            input.unblock_signal(sid);
+            input.set_position(-1);
+            input.emit_by_name::<()>("changed", &[]);
+        }
+    })
 }

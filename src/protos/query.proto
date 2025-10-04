@@ -12,8 +12,7 @@ message QueryRequest {
 }
 
 message QueryResponse {
-  int32 qid = 1;
-  int32 iid = 2;
+  string query = 1;
 
   enum Type {
       REGULAR = 0;
@@ -41,5 +40,5 @@ message QueryResponse {
     repeated string actions = 12;
   }
 
-   Item item = 3;
+   Item item = 2;
 }

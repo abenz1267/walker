@@ -57,7 +57,7 @@ use crate::state::{
     set_parameter_width, set_placeholder, set_provider, set_theme,
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
-use crate::ui::window::{handle_preview, quit, setup_window, with_window};
+use crate::ui::window::{handle_preview, quit, set_input_text, setup_window, with_window};
 
 static GLOBAL_DMENU_SENDER: RwLock<Option<Sender<String>>> = RwLock::new(None);
 
@@ -375,9 +375,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
         }
 
         with_window(|w| {
-            if let Some(input) = &w.input {
-                input.set_text("");
-            }
+            set_input_text("");
 
             let items = w.items.clone();
             items.remove_all();

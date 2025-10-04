@@ -57,7 +57,9 @@ use crate::state::{
     set_parameter_width, set_placeholder, set_provider, set_theme,
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
-use crate::ui::window::{handle_preview, quit, set_input_text, setup_window, with_window};
+use crate::ui::window::{
+    handle_preview, quit, set_input_text, set_keybind_hint, setup_window, with_window,
+};
 
 static GLOBAL_DMENU_SENDER: RwLock<Option<Sender<String>>> = RwLock::new(None);
 
@@ -351,6 +353,8 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
         if !options.contains("dmenu") {
             set_dmenu_keep_open(false);
             break 'dmenu;
+        } else {
+            set_is_dmenu(true);
         }
 
         if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING)) {
@@ -414,7 +418,10 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
                             i += 1;
                         }
-                        Ok(None) => break,
+                        Ok(None) => {
+                            set_keybind_hint();
+                            break;
+                        }
                         Err(e) => {
                             eprintln!("Error reading: {e}");
                             break;
@@ -427,8 +434,6 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
                 read_lines_async(Rc::new(data_stream), items).await;
             });
         });
-
-        set_is_dmenu(true);
 
         if !is_service() {
             break 'dmenu;

@@ -1,10 +1,13 @@
 use std::collections::HashSet;
 use std::sync::{OnceLock, RwLock};
 
+use crate::keybinds::AfterAction;
+
 static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 
 #[derive(Debug, Clone, Default)]
 pub struct AppState {
+    async_after: Option<AfterAction>,
     hide_qa: bool,
     has_elephant: bool,
     is_connected: bool,
@@ -52,6 +55,14 @@ pub fn get_theme() -> String {
 
 pub fn set_theme(val: String) {
     STATE.get().unwrap().write().unwrap().theme = val
+}
+
+pub fn get_async_after() -> Option<AfterAction> {
+    STATE.get().unwrap().read().unwrap().async_after.clone()
+}
+
+pub fn set_async_after(val: Option<AfterAction>) {
+    STATE.get().unwrap().write().unwrap().async_after = val
 }
 
 pub fn get_current_prefix() -> String {

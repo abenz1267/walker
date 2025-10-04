@@ -50,13 +50,16 @@ pub trait Provider: Sync + Send + Debug {
             })
     }
 
-    fn get_keybind_hint(&self, actions: &[String]) -> String {
-        self.get_actions()
+    fn get_keybind_hint(&self, actions: &[String]) -> Vec<Action> {
+        let mut result: Vec<Action> = self
+            .get_actions()
             .iter()
             .filter(|v| actions.contains(&v.action) || v.global.unwrap_or(false))
-            .map(|v| format!("{}: <{}>", v.label.as_ref().unwrap_or(&v.action), v.bind))
-            .collect::<Vec<_>>()
-            .join(" | ")
+            .cloned()
+            .collect();
+
+        result.sort_by_key(|v| v.default.unwrap_or(false));
+        result
     }
 
     fn get_item_layout(&self) -> String {

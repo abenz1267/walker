@@ -18,6 +18,7 @@ thread_local! {
 #[derive(Debug)]
 pub struct Theme {
     pub layout: String,
+    pub keybind: String,
     pub preview: String,
     pub css: String,
     pub items: HashMap<String, String>,
@@ -27,6 +28,7 @@ impl Theme {
     pub fn default() -> Self {
         let mut s = Self {
             layout: include_str!("../../resources/themes/default/layout.xml").to_string(),
+            keybind: include_str!("../../resources/themes/default/keybind.xml").to_string(),
             preview: include_str!("../../resources/themes/default/preview.xml").to_string(),
             css: include_str!("../../resources/themes/default/style.css").to_string(),
             items: HashMap::new(),
@@ -36,7 +38,7 @@ impl Theme {
             s.items.insert(k.clone(), v.get_item_layout());
         }
 
-        return s;
+        s
     }
 }
 
@@ -55,6 +57,7 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
 
     let files = vec![
         "layout.xml".to_string(),
+        "keybind.xml".to_string(),
         "style.css".to_string(),
         "preview.xml".to_string(),
     ];
@@ -147,6 +150,11 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
                     theme.layout = s;
                 }
             }
+            "keybind.xml" => {
+                if let Some(s) = read_file(file) {
+                    theme.keybind = s;
+                }
+            }
             "preview.xml" => {
                 if let Some(s) = read_file(file) {
                     theme.preview = s;
@@ -166,7 +174,7 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
         }
     }
 
-    return theme;
+    theme
 }
 
 pub fn setup_css(theme: String) {

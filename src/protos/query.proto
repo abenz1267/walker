@@ -41,4 +41,5 @@ message QueryResponse {
   }
 
    Item item = 2;
+   int32 qid =3;
 }

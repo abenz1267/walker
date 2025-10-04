@@ -1,12 +1,14 @@
 use crate::config::get_config;
+use crate::keybinds::AfterAction;
 use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
-    get_provider, is_connected, is_connecting, is_dmenu, is_service, set_current_prefix,
-    set_is_connected, set_is_connecting, set_is_visible, set_provider, set_query,
+    get_async_after, get_current_prefix, get_provider, is_connected, is_connecting, is_dmenu,
+    is_service, set_async_after, set_current_prefix, set_is_connected, set_is_connecting,
+    set_is_visible, set_provider, set_query,
 };
 use crate::ui::window::{set_input_text, set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
@@ -58,8 +60,7 @@ pub fn input_changed(text: &str) {
 
             sort_items_fuzzy(text);
         } else if is_connected() {
-            let list_store = &w.items;
-            list_store.remove_all();
+            set_query(text);
             query(text);
         }
     });
@@ -349,6 +350,31 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                 handle_preview();
             }),
             254 => glib::idle_add_once(clear_items),
+            2 => glib::idle_add_once(move || match get_async_after() {
+                Some(AfterAction::AsyncReload) => {
+                    with_window(|w| {
+                        if let Some(input) = &w.input {
+                            set_input_text(&input.text());
+                        }
+                    });
+
+                    set_async_after(None);
+                }
+                Some(AfterAction::AsyncClearReload) => {
+                    with_window(|w| {
+                        if let Some(input) = &w.input {
+                            if input.text().is_empty() {
+                                input.emit_by_name::<()>("changed", &[]);
+                            } else {
+                                set_input_text(&get_current_prefix());
+                            }
+                        }
+                    });
+
+                    set_async_after(None);
+                }
+                _ => (),
+            }),
             _ => {
                 let length = u32::from_be_bytes(header[1..].try_into().unwrap());
 
@@ -413,6 +439,19 @@ fn update_existing_item(resp: QueryResponse) {
 fn add_new_item(resp: QueryResponse) {
     with_window(|w| {
         let items = &w.items;
+        let n_items = items.n_items();
+
+        if let Some(n_items) = n_items.checked_sub(1)
+            && let Some(last_obj) = items
+                .item(n_items)
+                .and_downcast::<crate::QueryResponseObject>()
+        {
+            let last_resp = last_obj.response();
+
+            if resp.qid > last_resp.qid {
+                items.remove_all();
+            }
+        }
 
         items.append(&crate::QueryResponseObject::new(resp));
     });

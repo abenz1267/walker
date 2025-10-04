@@ -74,13 +74,13 @@ providerlist = [
 ]
 
 bluetooth = [
-  { action = "find", bind = "ctrl f", after = "ClearReload" },
-  { action = "trust", bind = "ctrl t", after = "Nothing" },
-  { action = "untrust", bind = "ctrl t", after = "Nothing" },
-  { action = "pair", bind = "Return", after = "Nothing" },
-  { action = "remove", bind = "ctrl d", after = "Nothing" },
-  { action = "connect", bind = "Return", after = "Nothing" },
-  { action = "disconnect", bind = "Return", after = "Nothing" },
+  { action = "find", global = true, bind = "ctrl f", after = "ClearReload" },
+  { action = "trust", bind = "ctrl t", after = "AsyncReload" },
+  { action = "untrust", bind = "ctrl t", after = "AsyncReload" },
+  { action = "pair", bind = "Return", after = "AsyncReload" },
+  { action = "remove", bind = "ctrl d", after = "AsyncReload" },
+  { action = "connect", bind = "Return", after = "AsyncReload" },
+  { action = "disconnect", bind = "Return", after = "AsyncReload" },
 ]
 
 archlinuxpkgs = [
@@ -90,8 +90,8 @@ archlinuxpkgs = [
 
 calc = [
   { action = "copy", default = true, bind = "Return" },
-  { action = "delete", bind = "ctrl d", after = "Reload" },
-  { action = "save", bind = "ctrl s", after = "ClearReload" },
+  { action = "delete", bind = "ctrl d", after = "AsyncReload" },
+  { action = "save", bind = "ctrl s", after = "AsyncClearReload" },
 ]
 
 websearch = [
@@ -102,16 +102,18 @@ websearch = [
 desktopapplications = [
   { action = "start", default = true, bind = "Return" },
   { action = "start", label = "open+next", bind = "shift Return", after = "KeepOpen" },
-  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload" },
-  { action = "pin", bind = "ctrl p", after = "Reload" },
-  { action = "unpin", bind = "ctrl p", after = "Reload" },
+  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "AsyncReload" },
+  { action = "pin", bind = "ctrl p", after = "AsyncReload" },
+  { action = "unpin", bind = "ctrl p", after = "AsyncReload" },
+  { action = "pinup", bind = "ctrl n", after = "AsyncReload" },
+  { action = "pindown", bind = "ctrl m", after = "AsyncReload" },
 ]
 
 files = [
   { action = "open", default = true, bind = "Return" },
-  { action = "open_dir", label = "open dir", bind = "ctrl Return" },
-  { action = "copy_path", label = "copy path", bind = "ctrl shift c" },
-  { action = "copy_file", label = "copy file", bind = "ctrl c" },
+  { action = "opendir", label = "open dir", bind = "ctrl Return" },
+  { action = "copypath", label = "copy path", bind = "ctrl shift c" },
+  { action = "copyfile", label = "copy file", bind = "ctrl c" },
 ]
 
 todo = [
@@ -142,7 +144,7 @@ unicode = [
 clipboard = [
   { action = "copy", default = true, bind = "Return" },
   { action = "remove", bind = "ctrl d", after = "ClearReload" },
-  { action = "remove_all", label = "clear", bind = "ctrl shift d", after = "ClearReload" },
+  { action = "remove_all", global = true, label = "clear", bind = "ctrl shift d", after = "ClearReload" },
   { action = "toggle_images", label = "toggle images", bind = "ctrl i", after = "ClearReload" },
   { action = "edit", bind = "ctrl o" },
 ]

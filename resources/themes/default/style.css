@@ -104,12 +104,6 @@ child:selected .item-box {
   margin-right: 10px;
 }
 
-.keybind-hints {
-  font-size: 12px;
-  opacity: 0.5;
-  color: @theme_fg_color;
-}
-
 .preview {
   border: 1px solid alpha(@accent_bg_color, 0.25);
   padding: 10px;
@@ -146,4 +140,25 @@ child:selected .item-box {
 
 .preview .large-icons {
   -gtk-icon-size: 64px;
+}
+
+.keybinds-wrapper {
+  border-top: 1px solid lighter(@window_bg_color);
+  font-size: 12px;
+  opacity: 0.5;
+  color: @theme_fg_color;
+}
+
+.keybinds {
+}
+
+.keybind {
+}
+
+.keybind-bind {
+  /* color: lighter(@window_bg_color); */
+  font-weight: bold;
+}
+
+.keybind-label {
 }

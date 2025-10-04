@@ -8,16 +8,16 @@ use crate::{
         get_provider_bind, get_provider_global_bind,
     },
     protos::generated_proto::query::QueryResponse,
-    providers::PROVIDERS,
+    providers::{PROVIDERS, Provider},
     renderers::create_item,
     send_message,
     state::{
         get_current_prefix, get_initial_height, get_initial_max_height, get_initial_max_width,
         get_initial_min_height, get_initial_min_width, get_initial_placeholder, get_initial_width,
         get_last_query, get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after,
-        is_dmenu_keep_open, is_service, query, set_current_prefix, set_dmenu_current,
-        set_dmenu_exit_after, set_dmenu_keep_open, set_hide_qa, set_initial_height,
-        set_initial_max_height, set_initial_max_width, set_initial_min_height,
+        is_dmenu_keep_open, is_service, query, set_async_after, set_current_prefix,
+        set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open, set_hide_qa,
+        set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
         set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
         set_is_dmenu, set_is_visible, set_last_query, set_no_search, set_param_close,
         set_parameter_height, set_parameter_max_height, set_parameter_max_width,
@@ -29,7 +29,7 @@ use crate::{
 use gtk4::{
     Application, Builder, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
-    SingleSelection, Window,
+    SingleSelection, Window, ffi::GtkBox, prelude::BoxExt,
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -88,7 +88,7 @@ pub struct WindowData {
     pub items: ListStore,
     pub placeholder: Option<Label>,
     pub elephant_hint: Label,
-    pub keybinds: Option<Label>,
+    pub keybinds: Option<gtk4::Box>,
     pub scroll: ScrolledWindow,
     pub search_container: Option<gtk4::Box>,
     pub preview_container: Option<gtk4::Box>,
@@ -131,7 +131,7 @@ pub fn setup_window(app: &Application) {
             let elephant_hint: Label = builder
                 .object("ElephantHint")
                 .expect("can't get ElephantHint");
-            let keybinds: Option<Label> = builder.object("Keybinds");
+            let keybinds: Option<gtk4::Box> = builder.object("Keybinds");
 
             let filter = CustomFilter::new({
                 move |entry| {
@@ -229,7 +229,9 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
             w.scroll.set_visible(s.n_items() != 0);
 
             if let Some(k) = &w.keybinds {
-                k.set_text("");
+                while let Some(child) = k.first_child() {
+                    k.remove(&child);
+                }
             }
 
             if s.n_items() == 0 {
@@ -468,6 +470,10 @@ fn setup_keyboard_handling(ui: &WindowData) {
                                 set_input_text(&get_current_prefix());
                             }
                         }
+                    }
+                    AfterAction::AsyncReload => set_async_after(Some(AfterAction::AsyncReload)),
+                    AfterAction::AsyncClearReload => {
+                        set_async_after(Some(AfterAction::AsyncClearReload))
                     }
                     AfterAction::Reload => crate::data::input_changed(&query),
                     _ => {}
@@ -862,22 +868,64 @@ pub fn set_keybind_hint() {
             return;
         };
 
+        while let Some(child) = k.first_child() {
+            k.remove(&child);
+        }
+
         let Some(item) = get_selected_item() else {
-            k.set_text("");
+            while let Some(child) = k.first_child() {
+                k.remove(&child);
+            }
             return;
         };
 
         let providers = PROVIDERS.get().unwrap();
 
         if let Some(p) = providers.get(&item.provider) {
-            k.set_text(&p.get_keybind_hint(&item.actions));
+            generate_hints(p, &item.actions, k);
         } else if item.provider.starts_with("menus:")
             && let Some(p) = providers.get("menus")
         {
-            k.set_text(&p.get_keybind_hint(&item.actions));
+            generate_hints(p, &item.actions, k);
         } else if providers.get("menus").is_some() {
-            k.set_text("");
+            while let Some(child) = k.first_child() {
+                k.remove(&child);
+            }
         }
+    });
+}
+
+pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: &gtk4::Box) {
+    let hints = p.get_keybind_hint(actions);
+
+    hints.iter().for_each(|h| {
+        with_themes(|t| {
+            let theme = t.get(&get_theme()).unwrap();
+            let b = Builder::new();
+
+            let _ = b.add_from_string(&theme.keybind);
+
+            let container = b
+                .object::<Box>("Keybind")
+                .expect("keybind layout must contain Keybind");
+
+            let bind: Label = b
+                .object("KeybindBind")
+                .expect("keybind layout must contain KeybindBind");
+
+            bind.set_text(&h.bind);
+            let label: Option<Label> = b.object("KeybindLabel");
+
+            if let Some(l) = label {
+                if let Some(label) = &h.label {
+                    l.set_text(label);
+                } else {
+                    l.set_text(&h.action);
+                }
+            }
+
+            k.append(&container);
+        });
     });
 }
 

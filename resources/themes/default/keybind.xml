@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<interface>
+  <requires lib="gtk" version="4.0"></requires>
+  <object class="GtkBox" id="Keybind">
+    <style>
+      <class name="keybind"></class>
+    </style>
+    <property name="orientation">vertical</property>
+    <child>
+      <object class="GtkLabel" id="KeybindBind">
+        <style>
+          <class name="keybind-bind"></class>
+        </style>
+      </object>
+    </child>
+    <child>
+      <object class="GtkLabel" id="KeybindLabel">
+        <style>
+          <class name="keybind-label"></class>
+        </style>
+      </object>
+    </child>
+  </object>
+</interface>

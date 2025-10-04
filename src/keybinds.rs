@@ -12,13 +12,16 @@ pub const ACTION_TOGGLE_EXACT: &str = "%TOGGLE_EXACT%";
 pub const ACTION_RESUME_LAST_QUERY: &str = "%RESUME_LAST_QUERY%";
 pub const ACTION_QUICK_ACTIVATE: &str = "%QUICK_ACTIVATE%";
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum AfterAction {
     KeepOpen,
+    #[default]
     Close,
     Nothing,
     Reload,
     ClearReload,
+    AsyncClearReload,
+    AsyncReload,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

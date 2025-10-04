@@ -191,10 +191,7 @@ fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Erro
     let key = key.ok_or("incorrect bind")?;
     if provider.is_empty() {
         let mut binds = BINDS.write().unwrap();
-        binds
-            .entry(key)
-            .or_insert_with(HashMap::new)
-            .insert(modifier, b.clone());
+        binds.entry(key).or_default().insert(modifier, b.clone());
         return Ok(());
     }
 
@@ -202,21 +199,21 @@ fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Erro
         let mut provider_binds = PROVIDER_BINDS.write().unwrap();
         provider_binds
             .entry(provider.to_string())
-            .or_insert_with(HashMap::new)
+            .or_default()
             .entry(key)
-            .or_insert_with(HashMap::new)
+            .or_default()
             .entry(modifier)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(b.clone());
     } else {
         let mut provider_binds = PROVIDER_GLOBAL_BINDS.write().unwrap();
         provider_binds
             .entry(provider.to_string())
-            .or_insert_with(HashMap::new)
+            .or_default()
             .entry(key)
-            .or_insert_with(HashMap::new)
+            .or_default()
             .entry(modifier)
-            .or_insert_with(Vec::new)
+            .or_default()
             .push(b.clone());
     }
 

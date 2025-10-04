@@ -345,36 +345,43 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
         reader.read_exact(&mut header)?;
 
         match header[0] {
-            255 => glib::idle_add_once(|| {
-                set_keybind_hint();
-                handle_preview();
-            }),
-            254 => glib::idle_add_once(clear_items),
-            2 => glib::idle_add_once(move || match get_async_after() {
-                Some(AfterAction::AsyncReload) => {
-                    with_window(|w| {
-                        if let Some(input) = &w.input {
-                            set_input_text(&input.text());
-                        }
-                    });
-
-                    set_async_after(None);
-                }
-                Some(AfterAction::AsyncClearReload) => {
-                    with_window(|w| {
-                        if let Some(input) = &w.input {
-                            if input.text().is_empty() {
-                                input.emit_by_name::<()>("changed", &[]);
-                            } else {
-                                set_input_text(&get_current_prefix());
+            255 => {
+                glib::idle_add_once(|| {
+                    set_keybind_hint();
+                    handle_preview();
+                });
+            }
+            254 => {
+                glib::idle_add_once(clear_items);
+            }
+            230 => {}
+            2 => {
+                glib::idle_add_once(move || match get_async_after() {
+                    Some(AfterAction::AsyncReload) => {
+                        with_window(|w| {
+                            if let Some(input) = &w.input {
+                                set_input_text(&input.text());
                             }
-                        }
-                    });
+                        });
 
-                    set_async_after(None);
-                }
-                _ => (),
-            }),
+                        set_async_after(None);
+                    }
+                    Some(AfterAction::AsyncClearReload) => {
+                        with_window(|w| {
+                            if let Some(input) = &w.input {
+                                if input.text().is_empty() {
+                                    input.emit_by_name::<()>("changed", &[]);
+                                } else {
+                                    set_input_text(&get_current_prefix());
+                                }
+                            }
+                        });
+
+                        set_async_after(None);
+                    }
+                    _ => (),
+                });
+            }
             _ => {
                 let length = u32::from_be_bytes(header[1..].try_into().unwrap());
 
@@ -384,7 +391,7 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                 let mut resp = QueryResponse::new();
                 resp.merge_from_bytes(&payload)?;
 
-                glib::idle_add_once(move || handle_response(resp, header[0]))
+                glib::idle_add_once(move || handle_response(resp, header[0]));
             }
         };
     }

@@ -352,6 +352,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     'dmenu: {
         if !options.contains("dmenu") {
             set_dmenu_keep_open(false);
+            set_is_dmenu(false);
             break 'dmenu;
         } else {
             set_is_dmenu(true);
@@ -469,6 +470,10 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
 fn activate(app: &Application) {
     let cfg = get_config();
+
+    if is_dmenu() && is_visible() {
+        return;
+    }
 
     if (cfg.close_when_open && is_visible() && !is_dmenu_keep_open()) || is_param_close() {
         quit(app, false);

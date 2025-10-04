@@ -414,27 +414,15 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     return false;
                 };
 
-                let item_clone = item.clone();
                 provider = item.provider.clone();
 
                 if let Some(action) = get_provider_bind(&item.provider, k, m, &item.actions) {
-                    after = if item_clone.identifier.starts_with("keepopen:") {
-                        Some(AfterAction::ClearReload)
-                    } else {
-                        Some(action.after.as_ref().unwrap_or(&AfterAction::Close).clone())
-                    };
-
+                    after = Some(action.after.as_ref().unwrap_or(&AfterAction::Close).clone());
                     keybind_action = Some(action);
                 }
 
-                let is_dmenu_next = item_clone.identifier.contains("dmenu:");
-
-                if (is_dmenu_keep_open() && !is_dmenu_exit_after()) || is_dmenu_next {
+                if is_dmenu_keep_open() && !is_dmenu_exit_after() {
                     after = Some(AfterAction::Nothing)
-                }
-
-                if is_dmenu_next {
-                    set_is_dmenu(true);
                 }
             }
 

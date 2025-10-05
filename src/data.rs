@@ -264,11 +264,6 @@ fn listen_bluetooth_loop() -> Result<(), Box<dyn std::error::Error>> {
 
                 glib::idle_add_once(move || {
                     with_window(|w| {
-                        if resp.value == "bluetooth:reload" {
-                            let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
-                            input_changed(&query);
-                        }
-
                         if let Some(p) = &w.placeholder {
                             match resp.value.as_str() {
                                 "bluetooth:remove" => p.set_text("Removing..."),

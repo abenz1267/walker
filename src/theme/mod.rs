@@ -4,7 +4,7 @@ use crate::state::add_theme;
 use crate::ui::window::{set_css_provider, with_css_provider};
 use gtk4::gdk::Display;
 use gtk4::prelude::GtkWindowExt;
-use gtk4::{CssProvider, Window};
+use gtk4::{CssProvider, Window, gio};
 use gtk4_layer_shell::{Edge, KeyboardMode, Layer, LayerShell};
 use std::cell::OnceCell;
 use std::collections::HashMap;
@@ -20,7 +20,7 @@ pub struct Theme {
     pub layout: String,
     pub keybind: String,
     pub preview: String,
-    pub css: String,
+    pub css: Option<gio::File>,
     pub items: HashMap<String, String>,
 }
 
@@ -30,7 +30,7 @@ impl Theme {
             layout: include_str!("../../resources/themes/default/layout.xml").to_string(),
             keybind: include_str!("../../resources/themes/default/keybind.xml").to_string(),
             preview: include_str!("../../resources/themes/default/preview.xml").to_string(),
-            css: include_str!("../../resources/themes/default/style.css").to_string(),
+            css: None,
             items: HashMap::new(),
         };
 
@@ -124,6 +124,8 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
 fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
     let mut theme = Theme::default();
 
+    let mut pc = path.clone();
+
     let mut read_file = |filename: &str| -> Option<String> {
         path.push(filename);
         let result = fs::read_to_string(&path).ok();
@@ -139,11 +141,9 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
                 }
             }
             "style.css" => {
-                if let Some(s) = read_file(file)
-                    && let Ok(home) = env::var("HOME")
-                {
-                    theme.css = s.replace("~", &home);
-                }
+                pc.push("style.css");
+                theme.css = Some(gio::File::for_path(&pc));
+                pc.pop();
             }
             "layout.xml" => {
                 if let Some(s) = read_file(file) {
@@ -180,7 +180,13 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
 pub fn setup_css(theme: String) {
     with_themes(|t| {
         if let Some(t) = t.get(&theme) {
-            with_css_provider(|p| p.load_from_string(&t.css));
+            with_css_provider(|p| {
+                if let Some(f) = &t.css {
+                    p.load_from_file(f);
+                } else {
+                    p.load_from_string(include_str!("../../resources/themes/default/style.css"));
+                }
+            });
         }
     });
 }

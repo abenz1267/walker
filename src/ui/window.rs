@@ -223,7 +223,21 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
     ui.selection.connect_items_changed(move |s, _, _, _| {
         with_window(|w| {
             if let Some(p) = &w.placeholder {
-                p.set_visible(s.n_items() == 0);
+                let provider = if !get_provider().is_empty() {
+                    get_provider()
+                } else {
+                    get_prefix_provider()
+                };
+
+                if let Some(placeholders) = &get_config().placeholders {
+                    let ph = placeholders
+                        .get(&provider)
+                        .or(placeholders.get("default"))
+                        .unwrap();
+
+                    p.set_text(&ph.list);
+                    p.set_visible(s.n_items() == 0);
+                }
             }
 
             w.scroll.set_visible(s.n_items() != 0);

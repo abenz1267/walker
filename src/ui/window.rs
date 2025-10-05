@@ -14,13 +14,13 @@ use crate::{
     state::{
         get_current_prefix, get_initial_height, get_initial_max_height, get_initial_max_width,
         get_initial_min_height, get_initial_min_width, get_initial_placeholder, get_initial_width,
-        get_last_query, get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after,
-        is_dmenu_keep_open, is_service, query, set_async_after, set_current_prefix,
-        set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open, set_hide_qa,
-        set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
-        set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
-        set_is_dmenu, set_is_visible, set_last_query, set_no_search, set_param_close,
-        set_parameter_height, set_parameter_max_height, set_parameter_max_width,
+        get_last_query, get_prefix_provider, get_provider, get_theme, is_connected, is_dmenu,
+        is_dmenu_exit_after, is_dmenu_keep_open, is_service, query, set_async_after,
+        set_current_prefix, set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open,
+        set_hide_qa, set_initial_height, set_initial_max_height, set_initial_max_width,
+        set_initial_min_height, set_initial_min_width, set_initial_placeholder, set_initial_width,
+        set_input_only, set_is_dmenu, set_is_visible, set_last_query, set_no_search,
+        set_param_close, set_parameter_height, set_parameter_max_height, set_parameter_max_width,
         set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_placeholder,
         set_provider, set_query, set_theme,
     },
@@ -860,21 +860,28 @@ pub fn set_keybind_hint() {
             k.remove(&child);
         }
 
-        let Some(item) = get_selected_item() else {
-            while let Some(child) = k.first_child() {
-                k.remove(&child);
-            }
-            return;
+        let actions;
+        let provider;
+        if let Some(item) = get_selected_item() {
+            actions = item.actions;
+            provider = item.provider;
+        } else {
+            actions = Vec::new();
+            provider = if !get_provider().is_empty() {
+                get_provider()
+            } else {
+                get_prefix_provider()
+            };
         };
 
         let providers = PROVIDERS.get().unwrap();
 
-        if let Some(p) = providers.get(&item.provider) {
-            generate_hints(p, &item.actions, k);
-        } else if item.provider.starts_with("menus:")
+        if let Some(p) = providers.get(&provider) {
+            generate_hints(p, &actions, k);
+        } else if provider.starts_with("menus:")
             && let Some(p) = providers.get("menus")
         {
-            generate_hints(p, &item.actions, k);
+            generate_hints(p, &actions, k);
         } else if providers.get("menus").is_some() {
             while let Some(child) = k.first_child() {
                 k.remove(&child);

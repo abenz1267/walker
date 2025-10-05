@@ -32,6 +32,7 @@ pub struct AppState {
     initial_placeholder: String,
     available_themes: HashSet<String>,
     provider: String,
+    prefix_provider: String,
     theme: String,
     is_service: bool,
     no_search: bool,
@@ -79,6 +80,14 @@ pub fn get_provider() -> String {
 
 pub fn set_provider(val: String) {
     STATE.get().unwrap().write().unwrap().provider = val
+}
+
+pub fn get_prefix_provider() -> String {
+    STATE.get().unwrap().read().unwrap().prefix_provider.clone()
+}
+
+pub fn set_prefix_provider(val: String) {
+    STATE.get().unwrap().write().unwrap().prefix_provider = val
 }
 
 pub fn get_initial_placeholder() -> String {

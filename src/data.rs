@@ -8,7 +8,7 @@ use crate::providers::PROVIDERS;
 use crate::state::{
     get_async_after, get_current_prefix, get_provider, is_connected, is_connecting, is_dmenu,
     is_service, set_async_after, set_current_prefix, set_is_connected, set_is_connecting,
-    set_is_visible, set_provider, set_query,
+    set_is_visible, set_prefix_provider, set_provider, set_query,
 };
 use crate::ui::window::{set_input_text, set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
@@ -465,6 +465,8 @@ fn add_new_item(resp: QueryResponse) {
 }
 
 fn query(text: &str) {
+    set_prefix_provider(String::new());
+
     let mut query_text = text.to_string();
     let mut exact = false;
     let cfg = get_config();
@@ -482,6 +484,7 @@ fn query(text: &str) {
             .unwrap_or(text)
             .to_string();
         set_current_prefix(prefix.prefix.clone());
+        set_prefix_provider(provider.clone());
     }
 
     let delimiter = &cfg.global_argument_delimiter;

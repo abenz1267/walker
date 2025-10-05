@@ -132,12 +132,12 @@ runner = [
 ]
 
 symbols = [
-  { action = "run_cmd", default = true, bind = "Return" },
+  { action = "run_cmd", label = "select", default = true, bind = "Return" },
   { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload" },
 ]
 
 unicode = [
-  { action = "run_cmd", default = true, bind = "Return" },
+  { action = "run_cmd", label = "select", default = true, bind = "Return" },
   { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload" },
 ]
 

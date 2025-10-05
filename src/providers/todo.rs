@@ -41,6 +41,7 @@ impl Provider for Todo {
         } else {
             return;
         };
+
         function(&image, Some(&item.icon))
     }
 }

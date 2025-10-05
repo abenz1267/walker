@@ -32,6 +32,7 @@
             <property name="wrap">true</property>
             <property name="vexpand_set">true</property>
             <property name="vexpand">true</property>
+            <property name="hexpand">true</property>
             <property name="xalign">0</property>
           </object>
         </child>

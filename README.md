@@ -41,6 +41,9 @@ cargo build --release
 ./target/release/walker
 ```
 
+<details>
+    <summary>Install using Nix</summary>
+
 ### Install using Nix
 
 #### 1. Add flake inputs
@@ -108,6 +111,8 @@ nix.settings = {
   trusted-public-keys = ["walker-git.cachix.org-1:vmC0ocfPWh0S/vRAQGtChuiZBTAe4wiKDeyyXM0/7pM="];
 };
 ```
+
+</details>
 
 ### Dependencies
 

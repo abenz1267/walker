@@ -41,16 +41,31 @@ cargo build --release
 
 ### Install using Nix
 
-You have two options of installing walker using Nix.
+#### 1. Add flake inputs
 
-1. Using the package exposed by this flake
-   1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
-   2. Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`
+Add walker and elephant to the inputs of your configs `flake.nix` and set walker to follow elephant
 
-2. Using the home-manager module exposed by this flake:
-   1. Add to your flake `inputs.walker.url = "github:abenz1267/walker";`
-   2. Add `imports = [inputs.walker.homeManagerModules.default];` into your home-manager config
-   3. Configure walker using:
+```nix
+# Add this to your flake inputs
+elephant.url = "github:abenz1267/elephant";
+
+walker = {
+  url = "github:abenz1267/walker";
+  inputs.elephant.follows = "elephant";
+};
+```
+
+#### 2. Install walker
+
+You have 3 options for installing walker.
+
+   Option A (Home Manager Module): Import the home-manager module by adding `imports = [inputs.walker.homeManagerModules.default];` to your home-manager config. Then enable walker by setting `programs.walker.enable = true;` in your home-manager config.
+
+   Option B (NixOS Module): Import the nixos module by adding `imports = [inputs.walker.nixosModules.default];` to your NixOS config. Then enable walker by setting `programs.walker.enable = true;` in your NixOS config.
+
+   Option C (Package): Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`.
+
+#### 3. Configure walker:
 
 ```nix
 programs.walker = {
@@ -76,18 +91,18 @@ programs.walker = {
 };
 ```
 
-Additionally, there is a binary caches at `https://walker.cachix.org` and `https://walker-git.cachix.org` which you can use with the following:
+Additionally, there is 2 binary caches which can be used by adding the following to you config:
 
 ```nix
 nix.settings = {
-  substituters = ["https://walker.cachix.org"];
+  extra-substituters = ["https://walker.cachix.org"];
   trusted-public-keys = ["walker.cachix.org-1:fG8q+uAaMqhsMxWjwvk0IMb4mFPFLqHjuvfwQxE4oJM="];
 };
 ```
 
 ```nix
 nix.settings = {
-  substituters = ["https://walker-git.cachix.org"];
+  extra-substituters = ["https://walker-git.cachix.org"];
   trusted-public-keys = ["walker-git.cachix.org-1:vmC0ocfPWh0S/vRAQGtChuiZBTAe4wiKDeyyXM0/7pM="];
 };
 ```
@@ -119,7 +134,6 @@ If the service is running, you can either open Walker with:
 
 ```bash
 walker
-
 ```
 
 or for an even faster launch make a socket call, f.e. with `openbsd-netcat`:

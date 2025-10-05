@@ -2,13 +2,14 @@ use config::{Config, ConfigError, File, FileFormat};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::OnceLock};
 
-use crate::keybinds::{Action, AfterAction};
+use crate::keybinds::Action;
 
 static LOADED_CONFIG: OnceLock<Walker> = OnceLock::new();
 const DEFAULT_CONFIG: &str = include_str!("../resources/config.toml");
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Walker {
+    pub debug: bool,
     pub force_keyboard_focus: bool,
     pub disable_mouse: bool,
     pub click_to_close: bool,

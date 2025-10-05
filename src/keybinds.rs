@@ -1,6 +1,7 @@
 use crate::config::get_config;
 use crate::providers::PROVIDERS;
 use gtk4::gdk::{self, Key};
+use gtk4::glib::bitflags::Flags;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{LazyLock, RwLock};
@@ -221,6 +222,26 @@ fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Erro
 }
 
 pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
+    if get_config().debug {
+        if modifier != gdk::ModifierType::empty() {
+            let mut modifiers = Vec::new();
+
+            modifier.iter().for_each(|mt| {
+                let m = if let Some((key, _)) = MODIFIERS.iter().find(|&(_, &v)| v == mt) {
+                    key
+                } else {
+                    "modifier not supported"
+                };
+
+                modifiers.push(m);
+            });
+
+            println!("bind: {} {}", modifiers.join(" "), key.name().unwrap());
+        } else {
+            println!("bind: {}", key.name().unwrap());
+        }
+    }
+
     BINDS
         .read()
         .ok()?

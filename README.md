@@ -9,7 +9,7 @@ A fast, customizable application launcher built with GTK4 and Rust, designed for
 
 ## Features
 
-Walker offers multiple provider types for different use cases:
+The following Elephant providers are implemented by default:
 
 - **Desktop Applications**: Launch installed GUI applications
 - **Calculator**: Perform mathematical calculations with `=` prefix

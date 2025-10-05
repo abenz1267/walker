@@ -5,6 +5,8 @@ A fast, customizable application launcher built with GTK4 and Rust, designed for
 [![Discord](https://img.shields.io/discord/1402235361463242964?logo=discord)](https://discord.gg/mGQWBQHASt)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
+![screenshot](https://raw.githubusercontent.com/abenz1267/walker/refs/heads/master/resources/screenshot.png)
+
 ## Features
 
 Walker offers multiple provider types for different use cases:
@@ -59,11 +61,11 @@ walker = {
 
 You have 3 options for installing walker.
 
-   Option A (Home Manager Module): Import the home-manager module by adding `imports = [inputs.walker.homeManagerModules.default];` to your home-manager config. Then enable walker by setting `programs.walker.enable = true;` in your home-manager config.
+Option A (Home Manager Module): Import the home-manager module by adding `imports = [inputs.walker.homeManagerModules.default];` to your home-manager config. Then enable walker by setting `programs.walker.enable = true;` in your home-manager config.
 
-   Option B (NixOS Module): Import the nixos module by adding `imports = [inputs.walker.nixosModules.default];` to your NixOS config. Then enable walker by setting `programs.walker.enable = true;` in your NixOS config.
+Option B (NixOS Module): Import the nixos module by adding `imports = [inputs.walker.nixosModules.default];` to your NixOS config. Then enable walker by setting `programs.walker.enable = true;` in your NixOS config.
 
-   Option C (Package): Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`.
+Option C (Package): Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`.
 
 #### 3. Configure walker:
 

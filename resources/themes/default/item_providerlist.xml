@@ -8,6 +8,14 @@
     <property name="orientation">horizontal</property>
     <property name="spacing">0</property>
     <child>
+      <object class="GtkLabel" id="ItemImageFont">
+        <style>
+          <class name="item-image-text"></class>
+        </style>
+        <property name="width-chars">2</property>
+      </object>
+    </child>
+    <child>
       <object class="GtkImage" id="ItemImage">
         <style>
           <class name="item-image"></class>

@@ -1,7 +1,11 @@
-use std::{collections::HashMap, fmt::Debug, path::Path, process::Command, sync::OnceLock};
+use std::{
+    ascii::AsciiExt, collections::HashMap, fmt::Debug, path::Path, process::Command, sync::OnceLock,
+};
 
 use gtk4::{
-    Builder, Image, Label, ListItem, Picture, gdk,
+    Builder, Image, Label, ListItem, Picture,
+    ffi::GtkLabel,
+    gdk,
     gio::{self, prelude::FileExtManual},
     glib,
     prelude::WidgetExt,
@@ -85,7 +89,25 @@ pub trait Provider: Sync + Send + Debug {
     }
 
     fn image_transformer(&self, b: &Builder, _: &ListItem, item: &Item) {
+        let mut is_text = false;
+
+        if let Some(image) = b.object::<Label>("ItemImageFont") {
+            image.set_visible(false);
+
+            if !item.icon.is_ascii() {
+                image.set_text(&item.icon);
+                image.set_visible(true);
+                is_text = true;
+            }
+        }
+
         if let Some(image) = b.object::<Image>("ItemImage") {
+            image.set_visible(true);
+            if is_text {
+                image.set_visible(false);
+                return;
+            }
+
             if item.icon.is_empty() {
                 image.set_visible(false);
                 return;
@@ -106,6 +128,12 @@ pub trait Provider: Sync + Send + Debug {
                 image.set_paintable(Some(&texture));
             });
         } else if let Some(image) = b.object::<Picture>("ItemImage") {
+            image.set_visible(true);
+            if is_text {
+                image.set_visible(false);
+                return;
+            }
+
             if item.icon.is_empty() {
                 image.set_visible(false);
                 return;

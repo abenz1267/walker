@@ -100,8 +100,13 @@ child:selected .item-box {
   opacity: 0.5;
 }
 
-.item-image {
+.item-image,
+.item-image-text {
   margin-right: 10px;
+}
+
+.item-image-text {
+  font-size: 28px;
 }
 
 .preview {

@@ -907,6 +907,18 @@ pub fn set_keybind_hint() {
 pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: &gtk4::Box) {
     let hints = p.get_keybind_hint(actions);
 
+    if get_config().debug {
+        println!(
+            "available actions [{}]: {}",
+            p.get_name(),
+            hints
+                .iter()
+                .map(|h| h.action.clone())
+                .collect::<Vec<String>>()
+                .join(",")
+        )
+    }
+
     hints.iter().for_each(|h| {
         with_themes(|t| {
             let theme = t.get(&get_theme()).unwrap();

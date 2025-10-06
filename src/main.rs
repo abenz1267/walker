@@ -194,7 +194,7 @@ fn add_flags(app: &Application) {
         b'h'.into(),
         OptionFlags::NONE,
         glib::OptionArg::Int64,
-        "forced height. concerned with overall box. min 1.",
+        "forced height. concerned with overall box. min 1. DONT USE SHORTHAND.",
         None,
     );
 
@@ -230,7 +230,7 @@ fn add_flags(app: &Application) {
         b'w'.into(),
         OptionFlags::NONE,
         glib::OptionArg::Int64,
-        "forced width. concerned with overall box. min 1.",
+        "forced width. concerned with overall box. min 1. DONT USE SHORTHAND.",
         None,
     );
 

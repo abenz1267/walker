@@ -66,7 +66,7 @@ provider = "clipboard"
 [providers.clipboard]
 time_format = "%d.%m. - %H:%M" # format for the clipboard item date
 
-[providers.actions]
+[providers.actions] # This will be MERGED/OVEWRITTEN with what the user specifies
 dmenu = [{ action = "select", default = true, bind = "Return" }]
 
 providerlist = [

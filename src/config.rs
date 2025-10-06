@@ -233,12 +233,30 @@ impl Providers {
                         .get(key)
                         .unwrap()
                         .iter()
-                        .map(|action| (action.action.clone(), action.clone()))
+                        .map(|action| {
+                            (
+                                format!(
+                                    "{}{}",
+                                    action.action.clone(),
+                                    action.bind.clone().unwrap_or("".to_string()).clone()
+                                ),
+                                action.clone(),
+                            )
+                        })
                         .collect();
 
                     let user: HashMap<String, Action> = value
                         .iter()
-                        .map(|action| (action.action.clone(), action.clone()))
+                        .map(|action| {
+                            (
+                                format!(
+                                    "{}{}",
+                                    action.action.clone(),
+                                    action.bind.clone().unwrap_or("".to_string()).clone()
+                                ),
+                                action.clone(),
+                            )
+                        })
                         .collect();
 
                     defaults.extend(user);

@@ -271,40 +271,7 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
     let app_copy = app.clone();
 
     ui.list.connect_activate(move |_, _| {
-        with_window(|w| {
-            let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
-
-            if let Some(item) = get_selected_item() {
-                let provider = item.provider.clone();
-
-                let providers = PROVIDERS.get().unwrap();
-                let p = providers.get(&provider).unwrap();
-
-                let actions = p.get_keybind_hint(&item.actions);
-
-                let action = if item.actions.len() == 1 {
-                    actions
-                        .iter()
-                        .find(|a| a.action == *item.actions.first().unwrap())
-                        .unwrap()
-                } else {
-                    actions.iter().find(|a| a.default.unwrap_or(false)).unwrap()
-                };
-
-                let after = action.after.as_ref().unwrap_or(&AfterAction::Close).clone();
-
-                activate(
-                    get_selected_query_response(),
-                    &provider,
-                    &query,
-                    &action.action,
-                );
-
-                let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
-
-                handle_after(&after, &app_copy, query.to_string());
-            }
-        });
+        activate_default(&app_copy);
     });
 
     let config = get_config();
@@ -320,6 +287,38 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
 
         ui.window.add_controller(gc);
     }
+}
+
+fn activate_default(app: &Application) {
+    with_window(|w| {
+        let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
+
+        if let Some(item) = get_selected_item() {
+            let provider = item.provider.clone();
+
+            let providers = PROVIDERS.get().unwrap();
+            let p = providers.get(&provider).unwrap();
+
+            let actions = p.get_keybind_hint(&item.actions);
+
+            let action = if item.actions.len() == 1 {
+                actions
+                    .iter()
+                    .find(|a| a.action == *item.actions.first().unwrap())
+                    .unwrap()
+            } else {
+                actions.iter().find(|a| a.default.unwrap_or(false)).unwrap()
+            };
+
+            let after = action.after.as_ref().unwrap_or(&AfterAction::Close).clone();
+
+            activate(get_selected_query_response(), &provider, &query, &action);
+
+            let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
+
+            handle_after(&after, app, query.to_string());
+        }
+    });
 }
 
 fn setup_input_handling(input: &Entry) -> gdk::glib::SignalHandlerId {
@@ -386,8 +385,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     action if action.starts_with(ACTION_QUICK_ACTIVATE) => {
                         if let Some((_, after)) = action.split_once(":") {
                             let i: u32 = after.parse().unwrap();
-                            // TODO: keep open for quick activate
-                            quick_activate(&app, i, false)
+                            quick_activate(&app, i)
                         }
                     }
                     _ => (),
@@ -461,7 +459,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
             let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
 
             if let Some(a) = keybind_action {
-                activate(response, provider.as_str(), &query, &a.action);
+                activate(response, provider.as_str(), &query, &a);
             } else {
                 return false;
             }
@@ -756,44 +754,12 @@ pub fn select_previous() {
     });
 }
 
-fn quick_activate(app: &Application, i: u32, keep_open: bool) {
+fn quick_activate(app: &Application, i: u32) {
     with_window(|w| {
-        if let Some(item) = &w.selection.item(i) {
-            let item = item.clone().downcast::<QueryResponseObject>().unwrap();
-            let item = &item;
-
-            let resp = item.response();
-
-            let query = w
-                .input
-                .as_ref()
-                .map_or(String::new(), |i| i.text().to_string());
-
-            let providers = PROVIDERS.get().unwrap();
-            let action = providers.get(&resp.item.provider).and_then(|p| {
-                p.get_actions()
-                    .iter()
-                    .find(|v| v.default.unwrap_or(false))
-                    .map(|k| k.action.clone())
-            });
-
-            activate(
-                Some(resp.clone()),
-                resp.item.provider.as_str(),
-                &query,
-                &action.unwrap(),
-            );
-
-            if resp.item.provider == "providerlist" || resp.item.identifier.contains("menus:") {
-                set_input_text("");
-                return;
-            }
-
-            if !keep_open {
-                quit(app, false);
-            }
-        }
+        w.selection.set_selected(i);
     });
+
+    activate_default(app);
 }
 
 fn resume_last_query() {

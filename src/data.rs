@@ -1,5 +1,5 @@
 use crate::config::get_config;
-use crate::keybinds::AfterAction;
+use crate::keybinds::{Action, AfterAction};
 use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
@@ -561,7 +561,7 @@ pub fn clipboard_disable_images_only() {
     }
 }
 
-pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str, action: &str) {
+pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str, action: &Action) {
     let cfg = get_config();
 
     let mut query = query;
@@ -570,7 +570,7 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
     }
 
     let mut req = ActivateRequest::new();
-    req.action = action.to_string();
+    req.action = action.action.to_string();
     req.provider = provider.to_string();
 
     if let Some(item) = item_option {

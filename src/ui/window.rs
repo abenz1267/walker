@@ -876,6 +876,7 @@ pub fn set_keybind_hint() {
 
         let actions;
         let provider;
+
         if let Some(item) = get_selected_item() {
             actions = item.actions;
             provider = item.provider;

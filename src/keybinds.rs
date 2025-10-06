@@ -262,7 +262,7 @@ pub fn get_provider_bind(
     modifier: gdk::ModifierType,
     actions: &[String],
 ) -> Option<Action> {
-    PROVIDER_BINDS
+    let action = PROVIDER_BINDS
         .read()
         .ok()?
         .get(provider)?
@@ -270,7 +270,20 @@ pub fn get_provider_bind(
         .get(&modifier)?
         .iter()
         .find(|action| actions.contains(&action.action))
-        .cloned()
+        .cloned();
+
+    if actions.len() == 1 && action.is_none() {
+        return Some(Action {
+            action: actions.first().unwrap().to_string(),
+            global: None,
+            default: Some(true),
+            bind: Some("Return".to_string()),
+            after: None,
+            label: None,
+        });
+    }
+
+    action
 }
 
 pub fn get_provider_global_bind(

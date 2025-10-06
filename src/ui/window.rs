@@ -934,7 +934,7 @@ pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: 
                 .object("KeybindBind")
                 .expect("keybind layout must contain KeybindBind");
 
-            bind.set_text(&h.bind);
+            bind.set_text(&h.bind.as_ref().unwrap());
             let label: Option<Label> = b.object("KeybindLabel");
 
             if let Some(l) = label {

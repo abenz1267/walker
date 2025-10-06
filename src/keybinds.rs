@@ -30,9 +30,14 @@ pub struct Action {
     pub action: String,
     pub global: Option<bool>,
     pub default: Option<bool>,
-    pub bind: String,
+    #[serde(default = "default_bind")]
+    pub bind: Option<String>,
     pub after: Option<AfterAction>,
     pub label: Option<String>,
+}
+
+fn default_bind() -> Option<String> {
+    Some("Return".to_string())
 }
 
 static BINDS: LazyLock<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> =
@@ -68,7 +73,7 @@ pub fn setup_binds() {
                 action: ACTION_CLOSE.to_string(),
                 global: None,
                 default: Some(true),
-                bind: b.clone(),
+                bind: Some(b.clone()),
                 label: Some("close".to_string()),
                 after: None,
             },
@@ -83,7 +88,7 @@ pub fn setup_binds() {
                 action: ACTION_SELECT_NEXT.to_string(),
                 default: None,
                 global: Some(true),
-                bind: b.clone(),
+                bind: Some(b.clone()),
                 label: Some("select next".to_string()),
                 after: Some(AfterAction::Nothing),
             },
@@ -98,7 +103,7 @@ pub fn setup_binds() {
                 action: ACTION_SELECT_PREVIOUS.to_string(),
                 default: None,
                 global: Some(true),
-                bind: b.clone(),
+                bind: Some(b.clone()),
                 label: Some("select previous".to_string()),
                 after: Some(AfterAction::Nothing),
             },
@@ -113,7 +118,7 @@ pub fn setup_binds() {
                 action: ACTION_TOGGLE_EXACT.to_string(),
                 default: None,
                 global: Some(true),
-                bind: b.clone(),
+                bind: Some(b.clone()),
                 label: Some("toggle exact search".to_string()),
                 after: Some(AfterAction::Nothing),
             },
@@ -126,7 +131,7 @@ pub fn setup_binds() {
         parse_bind(
             &Action {
                 action: ACTION_RESUME_LAST_QUERY.to_string(),
-                bind: b.clone(),
+                bind: Some(b.clone()),
                 default: None,
                 global: Some(true),
                 label: Some("resume last query".to_string()),
@@ -139,14 +144,14 @@ pub fn setup_binds() {
 
     if let Some(qa) = &config.keybinds.quick_activate {
         qa.iter().enumerate().for_each(|(k, s)| {
-            let action_str = format!("{}:{}", ACTION_QUICK_ACTIVATE, k);
+            let action_str = format!("{ACTION_QUICK_ACTIVATE}:{k}");
 
             parse_bind(
                 &Action {
                     default: None,
                     action: action_str,
                     global: Some(true),
-                    bind: s.clone(),
+                    bind: Some(s.clone()),
                     label: Some("quick activate".to_string()),
                     after: None,
                 },
@@ -158,7 +163,7 @@ pub fn setup_binds() {
 }
 
 fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Error>> {
-    let mut fields = b.bind.split_whitespace().peekable();
+    let mut fields = b.bind.as_ref().unwrap().split_whitespace().peekable();
 
     if fields.peek().is_none() {
         return Err("incorrect bind".into());
@@ -178,7 +183,8 @@ fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Erro
             None => {
                 eprintln!(
                     "Keybind Error: unable to create key from name: '{}' in '{}'.",
-                    field, b.bind
+                    field,
+                    b.bind.as_ref().unwrap()
                 );
                 std::process::exit(1);
             }

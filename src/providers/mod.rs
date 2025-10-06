@@ -46,7 +46,7 @@ pub trait Provider: Sync + Send + Debug {
                 vec![Action {
                     action: "activate".to_string(),
                     default: Some(true),
-                    bind: "Return".to_string(),
+                    bind: Some("Return".to_string()),
                     global: None,
                     after: None,
                     label: None,

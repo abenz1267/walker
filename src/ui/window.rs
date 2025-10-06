@@ -277,23 +277,32 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
             if let Some(item) = get_selected_item() {
                 let provider = item.provider.clone();
 
+                let providers = PROVIDERS.get().unwrap();
+                let p = providers.get(&provider).unwrap();
+
+                let actions = p.get_keybind_hint(&item.actions);
+
                 let action = if item.actions.len() == 1 {
-                    item.actions.first().unwrap().to_string()
-                } else {
-                    let providers = PROVIDERS.get().unwrap();
-                    let p = providers.get(&provider).unwrap();
-
-                    let actions = p.get_keybind_hint(&item.actions);
-
                     actions
                         .iter()
-                        .find(|a| a.default.unwrap_or(false))
-                        .map(|a| a.action.clone())
+                        .find(|a| a.action == *item.actions.first().unwrap())
                         .unwrap()
+                } else {
+                    actions.iter().find(|a| a.default.unwrap_or(false)).unwrap()
                 };
 
-                activate(get_selected_query_response(), &provider, &query, &action);
-                quit(&app_copy, false);
+                let after = action.after.as_ref().unwrap_or(&AfterAction::Close).clone();
+
+                activate(
+                    get_selected_query_response(),
+                    &provider,
+                    &query,
+                    &action.action,
+                );
+
+                let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
+
+                handle_after(&after, &app_copy, query.to_string());
             }
         });
     });
@@ -458,33 +467,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
             }
 
             if let Some(a) = after {
-                match a {
-                    AfterAction::Close => {
-                        quit(&app, false);
-
-                        return true;
-                    }
-                    AfterAction::KeepOpen => {
-                        select_next();
-
-                        return true;
-                    }
-                    AfterAction::ClearReload => {
-                        if let Some(input) = &w.input {
-                            if input.text().is_empty() {
-                                input.emit_by_name::<()>("changed", &[]);
-                            } else {
-                                set_input_text(&get_current_prefix());
-                            }
-                        }
-                    }
-                    AfterAction::AsyncReload => set_async_after(Some(AfterAction::AsyncReload)),
-                    AfterAction::AsyncClearReload => {
-                        set_async_after(Some(AfterAction::AsyncClearReload))
-                    }
-                    AfterAction::Reload => crate::data::input_changed(&query),
-                    _ => {}
-                }
+                handle_after(&a, &app, query.to_string());
             }
 
             true
@@ -498,6 +481,34 @@ fn setup_keyboard_handling(ui: &WindowData) {
     });
 
     ui.window.add_controller(controller);
+}
+
+fn handle_after(a: &AfterAction, app: &Application, query: String) {
+    match a {
+        AfterAction::Close => {
+            quit(app, false);
+        }
+        AfterAction::KeepOpen => {
+            select_next();
+        }
+        AfterAction::ClearReload => {
+            with_window(|w| {
+                if let Some(input) = &w.input {
+                    if input.text().is_empty() {
+                        input.emit_by_name::<()>("changed", &[]);
+                    } else {
+                        set_input_text(&get_current_prefix());
+                    }
+                }
+            });
+        }
+        AfterAction::AsyncReload => set_async_after(Some(AfterAction::AsyncReload)),
+        AfterAction::AsyncClearReload => set_async_after(Some(AfterAction::AsyncClearReload)),
+        AfterAction::Reload => {
+            crate::data::input_changed(&query);
+        }
+        _ => {}
+    }
 }
 
 fn setup_list_behavior(ui: &WindowData) {

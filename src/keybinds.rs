@@ -30,14 +30,22 @@ pub struct Action {
     pub action: String,
     pub global: Option<bool>,
     pub default: Option<bool>,
+
     #[serde(default = "default_bind")]
     pub bind: Option<String>,
+
+    #[serde(default = "default_after")]
     pub after: Option<AfterAction>,
+
     pub label: Option<String>,
 }
 
 fn default_bind() -> Option<String> {
     Some("Return".to_string())
+}
+
+fn default_after() -> Option<AfterAction> {
+    Some(AfterAction::Close)
 }
 
 static BINDS: LazyLock<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> =

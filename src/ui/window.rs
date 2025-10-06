@@ -274,22 +274,27 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
         with_window(|w| {
             let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
 
-            let Some(i) = get_selected_query_response() else {
-                return;
-            };
+            if let Some(item) = get_selected_item() {
+                let provider = item.provider.clone();
 
-            let providers = PROVIDERS.get().unwrap();
-            let provider = i.item.provider.clone();
+                let action = if item.actions.len() == 1 {
+                    item.actions.first().unwrap().to_string()
+                } else {
+                    let providers = PROVIDERS.get().unwrap();
+                    let p = providers.get(&provider).unwrap();
 
-            let action = providers.get(&provider).and_then(|p| {
-                p.get_actions()
-                    .iter()
-                    .find(|v| v.default.unwrap_or(false))
-                    .map(|k| k.action.clone())
-            });
+                    let actions = p.get_keybind_hint(&item.actions);
 
-            activate(Some(i), &provider, &query, action.unwrap().as_str());
-            quit(&app_copy, false);
+                    actions
+                        .iter()
+                        .find(|a| a.default.unwrap_or(false))
+                        .map(|a| a.action.clone())
+                        .unwrap()
+                };
+
+                activate(get_selected_query_response(), &provider, &query, &action);
+                quit(&app_copy, false);
+            }
         });
     });
 

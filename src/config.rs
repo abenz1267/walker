@@ -133,7 +133,7 @@ impl Walker {
         }
 
         let env_config = Config::builder()
-            .add_source(config::Environment::with_prefix("WALKER").separator("__"))
+            .add_source(config::Environment::with_prefix("WALKER").separator("_"))
             .build()?;
 
         if let Ok(partial) = env_config.try_deserialize::<PartialWalker>() {

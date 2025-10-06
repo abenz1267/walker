@@ -594,6 +594,8 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
                 req.identifier = item.item.identifier.clone();
             }
         }
+    } else if provider.starts_with("menus:") {
+        req.identifier = provider.to_string();
     }
 
     if let Some(prefix) = cfg

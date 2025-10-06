@@ -375,40 +375,13 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 return true;
             }
 
-            if let Some(action) = get_bind(k, m) {
-                match action.action.as_str() {
-                    ACTION_CLOSE => quit(&app, true),
-                    ACTION_SELECT_NEXT => select_next(),
-                    ACTION_SELECT_PREVIOUS => select_previous(),
-                    ACTION_TOGGLE_EXACT => toggle_exact(),
-                    ACTION_RESUME_LAST_QUERY => resume_last_query(),
-                    action if action.starts_with(ACTION_QUICK_ACTIVATE) => {
-                        if let Some((_, after)) = action.split_once(":") {
-                            let i: u32 = after.parse().unwrap();
-                            quick_activate(&app, i)
-                        }
-                    }
-                    _ => (),
-                }
-
-                return true;
-            }
-
             let mut keybind_action: Option<Action> = None;
-            let mut provider = get_provider();
 
-            if provider.is_empty()
-                && let Some(prefix) = get_config().providers.prefixes.iter().find(|prefix| {
-                    if let Some(input) = &w.input {
-                        return input.text().starts_with(&prefix.prefix)
-                            && PROVIDERS.get().unwrap().contains_key(&prefix.provider);
-                    }
-
-                    false
-                })
-            {
-                provider = prefix.provider.clone();
-            }
+            let mut provider = if !get_provider().is_empty() {
+                get_provider()
+            } else {
+                get_prefix_provider()
+            };
 
             let mut after: Option<AfterAction> = None;
 
@@ -421,20 +394,9 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
             let mut response: Option<QueryResponse> = None;
 
-            if keybind_action.is_none() {
-                let items = &w.selection;
-                if items.n_items() == 0 {
-                    return false;
-                }
-
-                let Some(r) = selection
-                    .selected_item()
-                    .and_downcast::<QueryResponseObject>()
-                else {
-                    return false;
-                };
-
-                let r = r.response();
+            if keybind_action.is_none()
+                && let Some(r) = get_selected_query_response()
+            {
                 response = Some(r.clone());
                 let Some(item) = r.item.as_ref() else {
                     return false;
@@ -452,7 +414,29 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 }
             }
 
-            if keybind_action.is_none() {
+            if keybind_action.is_none()
+                || (keybind_action.as_ref().unwrap().action == "menus:parent"
+                    && !get_prefix_provider().is_empty())
+            {
+                if let Some(action) = get_bind(k, m) {
+                    match action.action.as_str() {
+                        ACTION_CLOSE => quit(&app, true),
+                        ACTION_SELECT_NEXT => select_next(),
+                        ACTION_SELECT_PREVIOUS => select_previous(),
+                        ACTION_TOGGLE_EXACT => toggle_exact(),
+                        ACTION_RESUME_LAST_QUERY => resume_last_query(),
+                        action if action.starts_with(ACTION_QUICK_ACTIVATE) => {
+                            if let Some((_, after)) = action.split_once(":") {
+                                let i: u32 = after.parse().unwrap();
+                                quick_activate(&app, i)
+                            }
+                        }
+                        _ => (),
+                    }
+
+                    return true;
+                }
+
                 return false;
             }
 
@@ -893,7 +877,11 @@ pub fn set_keybind_hint() {
 }
 
 pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: &gtk4::Box) {
-    let hints = p.get_keybind_hint(actions);
+    let mut hints = p.get_keybind_hint(actions);
+
+    if !get_prefix_provider().is_empty() {
+        hints.retain(|a| a.action != "menus:parent");
+    }
 
     if get_config().debug {
         println!(

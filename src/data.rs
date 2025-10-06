@@ -6,9 +6,9 @@ use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
-    get_async_after, get_current_prefix, get_provider, is_connected, is_connecting, is_dmenu,
-    is_service, set_async_after, set_current_prefix, set_is_connected, set_is_connecting,
-    set_is_visible, set_prefix_provider, set_provider, set_query,
+    get_async_after, get_current_prefix, get_current_set, get_provider, is_connected,
+    is_connecting, is_dmenu, is_service, set_async_after, set_current_prefix, set_is_connected,
+    set_is_connecting, set_is_visible, set_prefix_provider, set_provider, set_query,
 };
 use crate::ui::window::{set_input_text, set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
@@ -501,10 +501,27 @@ fn query(text: &str) {
 
     if !provider.is_empty() {
         req.providers.push(provider.clone());
-    } else if text.is_empty() {
-        req.providers = cfg.providers.empty.clone();
-    } else {
-        req.providers = cfg.providers.default.clone();
+    }
+
+    if req.providers.is_empty() {
+        if get_current_set().is_empty() {
+            if text.is_empty() {
+                req.providers = cfg.providers.empty.clone();
+            } else {
+                req.providers = cfg.providers.default.clone();
+            }
+        } else {
+            let set = cfg
+                .providers
+                .sets
+                .get(&get_current_set())
+                .expect("can't find specified set");
+            if text.is_empty() {
+                req.providers = set.empty.clone();
+            } else {
+                req.providers = set.default.clone();
+            }
+        }
     }
 
     let mut buffer = vec![0];

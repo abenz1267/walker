@@ -49,13 +49,13 @@ use crate::state::{
     get_parameter_min_height, get_parameter_min_width, get_parameter_width, get_placeholder,
     get_provider, get_theme, has_elephant, has_theme, is_connected, is_dmenu, is_dmenu_keep_open,
     is_input_only, is_no_hints, is_no_search, is_param_close, is_service, is_visible,
-    set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open, set_has_elephant, set_hide_qa,
-    set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
-    set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
-    set_is_dmenu, set_is_service, set_is_visible, set_no_hints, set_no_search, set_param_close,
-    set_parameter_height, set_parameter_max_height, set_parameter_max_width,
-    set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_placeholder,
-    set_provider, set_theme,
+    set_current_set, set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open,
+    set_has_elephant, set_hide_qa, set_initial_height, set_initial_max_height,
+    set_initial_max_width, set_initial_min_height, set_initial_min_width, set_initial_placeholder,
+    set_initial_width, set_input_only, set_is_dmenu, set_is_service, set_is_visible, set_no_hints,
+    set_no_search, set_param_close, set_parameter_height, set_parameter_max_height,
+    set_parameter_max_width, set_parameter_min_height, set_parameter_min_width,
+    set_parameter_width, set_placeholder, set_provider, set_theme,
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{
@@ -177,6 +177,15 @@ fn add_flags(app: &Application) {
         OptionFlags::NONE,
         glib::OptionArg::String,
         "exclusive provider to query",
+        None,
+    );
+
+    app.add_main_option(
+        "set",
+        b's'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::String,
+        "provider set to use",
         None,
     );
 
@@ -331,6 +340,11 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
             cmd.print_literal("theme not found. using default theme.\n");
             set_theme("default".to_string());
         }
+    }
+
+    if let Some(val) = options.lookup_value("set", Some(VariantTy::STRING)) {
+        let set = val.str().unwrap();
+        set_current_set(set.to_string());
     }
 
     if let Some(val) = options.lookup_value("height", Some(VariantTy::INT64)) {

@@ -41,6 +41,7 @@ pub struct AppState {
     is_dmenu: bool,
     is_param_close: bool,
     current_prefix: String,
+    current_set: String,
     is_visible: bool,
     query: String,
 }
@@ -73,6 +74,14 @@ pub fn get_current_prefix() -> String {
 
 pub fn set_current_prefix(val: String) {
     STATE.get().unwrap().write().unwrap().current_prefix = val
+}
+
+pub fn get_current_set() -> String {
+    STATE.get().unwrap().read().unwrap().current_set.clone()
+}
+
+pub fn set_current_set(val: String) {
+    STATE.get().unwrap().write().unwrap().current_set = val
 }
 
 pub fn get_provider() -> String {

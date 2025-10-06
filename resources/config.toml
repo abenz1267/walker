@@ -35,6 +35,8 @@ default = [
 ] # providers to be queried by default
 empty = ["desktopapplications"] # providers to be queried when query is empty
 
+[providers.sets] # define your own defaults/empty sets of providers
+
 [[providers.prefixes]]
 prefix = ";"
 provider = "providerlist"

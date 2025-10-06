@@ -74,6 +74,8 @@ struct PartialProviders {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub clipboard: Option<PartialClipboard>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub sets: Option<HashMap<String, ProviderSet>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub actions: Option<HashMap<String, Vec<Action>>>,
 }
 
@@ -204,6 +206,9 @@ impl Providers {
         if let Some(v) = partial.prefixes {
             self.prefixes = v;
         }
+        if let Some(v) = partial.sets {
+            self.sets = v;
+        }
         if let Some(v) = partial.actions {
             v.iter().for_each(|(key, value)| {
                 if !self.actions.contains_key(key) {
@@ -327,6 +332,13 @@ pub struct Providers {
     pub prefixes: Vec<Prefix>,
     pub clipboard: Clipboard,
     pub actions: HashMap<String, Vec<Action>>,
+    pub sets: HashMap<String, ProviderSet>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ProviderSet {
+    pub default: Vec<String>,
+    pub empty: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -1,11 +1,7 @@
-use std::{
-    ascii::AsciiExt, collections::HashMap, fmt::Debug, path::Path, process::Command, sync::OnceLock,
-};
+use std::{collections::HashMap, fmt::Debug, path::Path, process::Command, sync::OnceLock};
 
 use gtk4::{
-    Builder, Image, Label, ListItem, Picture,
-    ffi::GtkLabel,
-    gdk,
+    Builder, Image, Label, ListItem, Picture, gdk,
     gio::{self, prelude::FileExtManual},
     glib,
     prelude::WidgetExt,

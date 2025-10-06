@@ -30,7 +30,7 @@ use crate::{
 use gtk4::{
     Application, Builder, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
-    SingleSelection, Window, ffi::GtkBox, prelude::BoxExt,
+    SingleSelection, Window, prelude::BoxExt,
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -52,7 +52,6 @@ use gtk4::{
     prelude::{EntryExt, GtkWindowExt},
 };
 use std::{
-    backtrace::Backtrace,
     cell::{Cell, OnceCell, RefCell},
     collections::HashMap,
     process,

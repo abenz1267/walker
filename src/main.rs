@@ -12,7 +12,7 @@ use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard};
 use gtk4::glib::Priority;
 use gtk4::glib::object::ObjectExt;
-use gtk4::prelude::{EditableExt, EntryExt};
+use gtk4::prelude::EntryExt;
 
 use config::get_config;
 use state::init_app_state;

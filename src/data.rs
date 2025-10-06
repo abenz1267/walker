@@ -13,7 +13,7 @@ use crate::state::{
 use crate::ui::window::{set_input_text, set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
 use gtk4::glib::Object;
-use gtk4::{Entry, glib, prelude::*};
+use gtk4::{glib, prelude::*};
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
 use nucleo_matcher::{Config, Matcher};
 use protobuf::{Message, MessageField};
@@ -495,8 +495,6 @@ fn query(text: &str) {
 
     let mut req = QueryRequest::new();
     req.query = query_text;
-    // TODO: per provider config
-    req.maxresults = 50;
     req.exactsearch = exact;
 
     if !provider.is_empty() {
@@ -522,6 +520,20 @@ fn query(text: &str) {
                 req.providers = set.default.clone();
             }
         }
+    }
+
+    if req.providers.len() == 1 {
+        if let Some(mr) = cfg
+            .providers
+            .max_results_provider
+            .get(req.providers.first().unwrap())
+        {
+            req.maxresults = *mr;
+        } else {
+            req.maxresults = cfg.providers.max_results;
+        }
+    } else {
+        req.maxresults = cfg.providers.max_results;
     }
 
     let mut buffer = vec![0];

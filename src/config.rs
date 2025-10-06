@@ -68,6 +68,8 @@ struct PartialProviders {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub default: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_results: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub empty: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prefixes: Option<Vec<Prefix>>,
@@ -77,6 +79,8 @@ struct PartialProviders {
     pub sets: Option<HashMap<String, ProviderSet>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub actions: Option<HashMap<String, Vec<Action>>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_results_provider: Option<HashMap<String, i32>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -209,6 +213,16 @@ impl Providers {
         if let Some(v) = partial.sets {
             self.sets = v;
         }
+        if let Some(v) = partial.max_results {
+            self.max_results = v;
+        }
+
+        if let Some(v) = partial.max_results_provider {
+            v.iter().for_each(|(key, value)| {
+                self.max_results_provider.insert(key.clone(), *value);
+            });
+        }
+
         if let Some(v) = partial.actions {
             v.iter().for_each(|(key, value)| {
                 if !self.actions.contains_key(key) {
@@ -329,6 +343,8 @@ pub struct Keybinds {
 pub struct Providers {
     pub default: Vec<String>,
     pub empty: Vec<String>,
+    pub max_results: i32,
+    pub max_results_provider: HashMap<String, i32>,
     pub prefixes: Vec<Prefix>,
     pub clipboard: Clipboard,
     pub actions: HashMap<String, Vec<Action>>,

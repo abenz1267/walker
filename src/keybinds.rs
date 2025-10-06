@@ -1,7 +1,6 @@
 use crate::config::get_config;
 use crate::providers::PROVIDERS;
 use gtk4::gdk::{self, Key};
-use gtk4::glib::bitflags::Flags;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::sync::{LazyLock, RwLock};

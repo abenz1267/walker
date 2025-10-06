@@ -62,8 +62,9 @@ pub trait Provider: Sync + Send + Debug {
             .cloned()
             .collect();
 
-        if result.is_empty()
-            || (result.len() == 1 && result.first().unwrap().global.unwrap_or(false))
+        if !actions.is_empty()
+            && (result.is_empty()
+                || (result.len() == 1 && result.first().unwrap().global.unwrap_or(false)))
         {
             result.push(Action {
                 action: actions.first().unwrap().to_string(),

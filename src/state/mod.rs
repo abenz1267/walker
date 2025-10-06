@@ -36,6 +36,7 @@ pub struct AppState {
     theme: String,
     is_service: bool,
     no_search: bool,
+    no_hints: bool,
     input_only: bool,
     is_dmenu: bool,
     is_param_close: bool,
@@ -216,12 +217,20 @@ pub fn is_no_search() -> bool {
     STATE.get().unwrap().read().unwrap().no_search
 }
 
-pub fn is_service() -> bool {
-    STATE.get().unwrap().read().unwrap().is_service
-}
-
 pub fn set_no_search(val: bool) {
     STATE.get().unwrap().write().unwrap().no_search = val
+}
+
+pub fn is_no_hints() -> bool {
+    STATE.get().unwrap().read().unwrap().no_hints
+}
+
+pub fn set_no_hints(val: bool) {
+    STATE.get().unwrap().write().unwrap().no_hints = val
+}
+
+pub fn is_service() -> bool {
+    STATE.get().unwrap().read().unwrap().is_service
 }
 
 pub fn set_initial_height(val: Option<i32>) {

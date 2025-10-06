@@ -19,7 +19,7 @@ use crate::{
         set_current_prefix, set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open,
         set_hide_qa, set_initial_height, set_initial_max_height, set_initial_max_width,
         set_initial_min_height, set_initial_min_width, set_initial_placeholder, set_initial_width,
-        set_input_only, set_is_dmenu, set_is_visible, set_last_query, set_no_search,
+        set_input_only, set_is_dmenu, set_is_visible, set_last_query, set_no_hints, set_no_search,
         set_param_close, set_parameter_height, set_parameter_max_height, set_parameter_max_width,
         set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_placeholder,
         set_provider, set_query, set_theme,
@@ -622,6 +622,7 @@ pub fn quit(app: &Application, cancelled: bool) {
     set_parameter_max_height(None);
     set_parameter_max_width(None);
     set_no_search(false);
+    set_no_hints(false);
     set_placeholder(String::new());
     set_is_visible(false);
     set_dmenu_current(0);
@@ -649,6 +650,10 @@ pub fn quit(app: &Application, cancelled: bool) {
 
             if let Some(search_container) = &w.search_container {
                 search_container.set_visible(true);
+            }
+
+            if let Some(hints) = &w.keybinds {
+                hints.set_visible(true);
             }
 
             set_input_text("");

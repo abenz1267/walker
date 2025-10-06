@@ -48,13 +48,14 @@ use crate::state::{
     get_parameter_height, get_parameter_max_height, get_parameter_max_width,
     get_parameter_min_height, get_parameter_min_width, get_parameter_width, get_placeholder,
     get_provider, get_theme, has_elephant, has_theme, is_connected, is_dmenu, is_dmenu_keep_open,
-    is_input_only, is_no_search, is_param_close, is_service, is_visible, set_dmenu_current,
-    set_dmenu_exit_after, set_dmenu_keep_open, set_has_elephant, set_hide_qa, set_initial_height,
-    set_initial_max_height, set_initial_max_width, set_initial_min_height, set_initial_min_width,
-    set_initial_placeholder, set_initial_width, set_input_only, set_is_dmenu, set_is_service,
-    set_is_visible, set_no_search, set_param_close, set_parameter_height, set_parameter_max_height,
-    set_parameter_max_width, set_parameter_min_height, set_parameter_min_width,
-    set_parameter_width, set_placeholder, set_provider, set_theme,
+    is_input_only, is_no_hints, is_no_search, is_param_close, is_service, is_visible,
+    set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open, set_has_elephant, set_hide_qa,
+    set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
+    set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
+    set_is_dmenu, set_is_service, set_is_visible, set_no_hints, set_no_search, set_param_close,
+    set_parameter_height, set_parameter_max_height, set_parameter_max_width,
+    set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_placeholder,
+    set_provider, set_theme,
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{
@@ -146,6 +147,15 @@ fn add_flags(app: &Application) {
     app.add_main_option(
         "nosearch",
         b'n'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::None,
+        "hide search input",
+        None,
+    );
+
+    app.add_main_option(
+        "nohints",
+        b'N'.into(),
         OptionFlags::NONE,
         glib::OptionArg::None,
         "hide search input",
@@ -348,6 +358,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     }
 
     set_no_search(options.contains("nosearch"));
+    set_no_hints(options.contains("nohints"));
 
     'dmenu: {
         if !options.contains("dmenu") {
@@ -565,6 +576,12 @@ fn activate(app: &Application) {
             && let Some(search_container) = &w.search_container
         {
             search_container.set_visible(false);
+        }
+
+        if is_no_hints()
+            && let Some(hints) = &w.keybinds
+        {
+            hints.set_visible(false);
         }
 
         setup_css(get_theme());

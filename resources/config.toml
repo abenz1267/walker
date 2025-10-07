@@ -8,6 +8,13 @@ theme = "default"               # theme to use
 disable_mouse = false           # disable mouse (on input and list only)
 debug = false                   # enables debug printing for some stuff, f.e. keybinds
 
+[events]
+launch = "paplay ~/.config/walker/sounds/open.mp3"
+selection = "bash -c 'paplay ~/.config/walker/sounds/select-$((RANDOM % 3 + 1)).mp3'"
+activate = "notify-send 'Action: $WALKER_ACTION' \"$WALKER_SELECTION_TEXT\""
+query_change = "echo $WALKER_QUERY >>/tmp/walker_queries"
+exit = "bash -c '[ \"$WALKER_EXIT_CANCELLED\" = \"true\" ] && paplay ~/.config/walker/sounds/cancel.mp3 || paplay ~/.config/walker/sounds/close.mp3'"
+
 [shell]
 anchor_top = true
 anchor_bottom = true

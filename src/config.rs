@@ -24,6 +24,8 @@ pub struct Walker {
     pub shell: Shell,
     pub additional_theme_location: Option<String>,
     pub placeholders: Option<HashMap<String, Placeholder>>,
+    #[serde(default)]
+    pub events: Events,
 }
 
 // Partial config for user overrides
@@ -60,6 +62,8 @@ struct PartialWalker {
     pub additional_theme_location: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub placeholders: Option<HashMap<String, Placeholder>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub events: Option<PartialEvents>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -118,6 +122,36 @@ struct PartialShell {
 struct PartialClipboard {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub time_format: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
+pub struct Events {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub launch: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub selection: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub activate: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub query_change: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exit: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
+struct PartialEvents {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub launch: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub selection: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub activate: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub query_change: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exit: Option<String>,
 }
 
 impl Walker {
@@ -200,6 +234,9 @@ impl Walker {
         }
         if let Some(s) = partial.shell {
             self.shell.merge(s);
+        }
+        if let Some(e) = partial.events {
+            self.events.merge(e);
         }
     }
 }
@@ -321,6 +358,26 @@ impl Clipboard {
     fn merge(&mut self, partial: PartialClipboard) {
         if let Some(v) = partial.time_format {
             self.time_format = v;
+        }
+    }
+}
+
+impl Events {
+    fn merge(&mut self, partial: PartialEvents) {
+        if let Some(v) = partial.launch {
+            self.launch = Some(v);
+        }
+        if let Some(v) = partial.selection {
+            self.selection = Some(v);
+        }
+        if let Some(v) = partial.activate {
+            self.activate = Some(v);
+        }
+        if let Some(v) = partial.query_change {
+            self.query_change = Some(v);
+        }
+        if let Some(v) = partial.exit {
+            self.exit = Some(v);
         }
     }
 }

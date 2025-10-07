@@ -2,6 +2,7 @@ use crate::{
     GLOBAL_DMENU_SENDER, QueryResponseObject,
     config::get_config,
     data::{activate, clipboard_disable_images_only, input_changed},
+    events,
     keybinds::{
         ACTION_CLOSE, ACTION_QUICK_ACTIVATE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT,
         ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, Action, AfterAction, get_bind,
@@ -239,7 +240,7 @@ pub fn setup_window(app: &Application) {
                 Ok(res) => {
                     windows.insert(key.to_string(), res);
                 }
-                Err(error) => set_error(format!("Theme: {error}")),
+                Err(error) => set_error(format!("Theme [{key}]: {error}")),
             }
         }
     });
@@ -304,13 +305,30 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
     }
 
     ui.selection.connect_selection_changed(move |_, _, _| {
-        with_window(|w| {
+        let (selection, query) = with_window(|w| {
             crate::handle_preview();
             w.list
                 .scroll_to(w.selection.selected(), ListScrollFlags::NONE, None);
 
             set_keybind_hint();
+
+            let query = w
+                .input
+                .as_ref()
+                .map(|input| input.text().to_string())
+                .unwrap_or_default();
+
+            let selection = w
+                .selection
+                .selected_item()
+                .map(Object::downcast::<QueryResponseObject>)
+                .and_then(Result::ok)
+                .map(|obj| obj.response());
+
+            (selection, query)
         });
+
+        events::emit_selection(selection, &query);
     });
 
     let app_copy = app.clone();
@@ -605,6 +623,8 @@ fn setup_mouse_handling(ui: &WindowData) {
 }
 
 pub fn quit(app: &Application, cancelled: bool) {
+    events::emit_exit(cancelled);
+
     if PROVIDERS.get().unwrap().contains_key("clipboard") {
         clipboard_disable_images_only();
     }

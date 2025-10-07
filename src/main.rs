@@ -1,5 +1,6 @@
 mod config;
 mod data;
+mod events;
 mod keybinds;
 mod preview;
 mod protos;
@@ -652,6 +653,8 @@ fn startup(app: &Application) {
     init_ui(app, dmenu);
 
     listen_activation_socket(app.clone());
+
+    events::emit_launch();
 }
 
 fn listen_activation_socket(app_clone: Application) {

@@ -1,4 +1,5 @@
 use crate::config::get_config;
+use crate::events;
 use crate::keybinds::{Action, AfterAction};
 use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
@@ -64,6 +65,8 @@ pub fn input_changed(text: &str) {
             query(text);
         }
     });
+
+    events::emit_query_change(text);
 }
 
 fn sort_items_fuzzy(query: &str) {
@@ -598,6 +601,21 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
         query = stripped;
     }
 
+    if let Some(prefix) = cfg
+        .providers
+        .prefixes
+        .iter()
+        .find(|prefix| provider == prefix.provider && query.starts_with(&prefix.prefix))
+    {
+        query = query
+            .strip_prefix(&prefix.prefix)
+            .expect("couldn't trim prefix");
+    }
+
+    let mut item_option = item_option;
+
+    events::emit_activate(item_option.as_ref(), provider, query, action);
+
     let mut req = ActivateRequest::new();
     req.action = action.action.to_string();
     req.provider = provider.to_string();
@@ -625,17 +643,6 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
         }
     } else if provider.starts_with("menus:") {
         req.identifier = provider.to_string();
-    }
-
-    if let Some(prefix) = cfg
-        .providers
-        .prefixes
-        .iter()
-        .find(|prefix| provider == prefix.provider && query.starts_with(&prefix.prefix))
-    {
-        query = query
-            .strip_prefix(&prefix.prefix)
-            .expect("couldn't trim prefix");
     }
 
     req.query = query.to_string();

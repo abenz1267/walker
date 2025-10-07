@@ -619,6 +619,16 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
             }
             _ => {
                 req.query = query.to_string();
+
+                match query.split_once(&cfg.global_argument_delimiter) {
+                    Some(res) => {
+                        req.query = res.0.to_string();
+                        req.arguments = res.1.to_string();
+                    }
+                    None => {
+                        req.query = query.to_string();
+                    }
+                }
                 req.provider = item.item.provider.clone();
                 req.identifier = item.item.identifier.clone();
             }

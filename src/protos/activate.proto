@@ -9,4 +9,5 @@ message ActivateRequest {
   string identifier = 2;
   string action = 3;
   string query = 4;
+  string arguments = 5;
 }

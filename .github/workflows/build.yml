@@ -87,9 +87,13 @@ jobs:
           git log --pretty=format:"- %s (%h)" >> CHANGELOG.md
         fi
 
-        echo "" >> CHANGELOG.md
-        echo "## Downloads:" >> CHANGELOG.md
-        echo "- [walker-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz](https://github.com/${{ github.repository }}/releases/download/${{ github.ref_name }}/walker-${{ github.ref_name }}-x86_64-unknown-linux-gnu.tar.gz) - AMD64/x86_64" >> CHANGELOG.md
+        if [ -f "BREAKING.md" ]; then
+          echo "" >> CHANGELOG.md
+          echo "## ⚠️ Breaking Changes" >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+          cat BREAKING.md >> CHANGELOG.md
+          echo "" >> CHANGELOG.md
+        fi
 
     - name: Create release
       uses: softprops/action-gh-release@v1

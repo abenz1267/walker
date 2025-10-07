@@ -239,7 +239,7 @@ pub fn setup_window(app: &Application) {
                 Ok(res) => {
                     windows.insert(key.to_string(), res);
                 }
-                Err(error) => set_error(format!("Theme: {error}")),
+                Err(error) => set_error(format!("Theme [{key}]: {error}")),
             }
         }
     });

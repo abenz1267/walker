@@ -134,8 +134,10 @@ impl Walker {
                 .add_source(File::with_name(&user_config_path))
                 .build()?;
 
-            let partial: PartialWalker = user_config.try_deserialize()?;
-            config.merge(partial);
+            match user_config.try_deserialize() {
+                Ok(res) => config.merge(res),
+                Err(error) => println!("{error}"),
+            }
         }
 
         let env_config = Config::builder()

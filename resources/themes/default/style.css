@@ -1,6 +1,8 @@
 @define-color window_bg_color #1f1f28;
 @define-color accent_bg_color #54546d;
 @define-color theme_fg_color #f2ecbc;
+@define-color error_bg_color #C34043;
+@define-color error_fg_color #DCD7BA;
 
 * {
   all: unset;
@@ -166,4 +168,10 @@ child:selected .item-box {
 }
 
 .keybind-label {
+}
+
+.error {
+  padding: 10px;
+  background: @error_bg_color;
+  color: @error_fg_color;
 }

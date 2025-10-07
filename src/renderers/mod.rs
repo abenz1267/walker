@@ -1,8 +1,8 @@
 use crate::config::get_config;
 use crate::protos::generated_proto::query::query_response::Item;
 use crate::providers::PROVIDERS;
-use crate::state::{get_dmenu_current, is_hide_qa};
-use crate::theme::Theme;
+use crate::state::{get_dmenu_current, is_hide_qa, set_error};
+use crate::theme::{Theme, with_themes};
 use crate::ui::window::{quit, with_window};
 use gtk4::gdk::ContentProvider;
 use gtk4::gio::File;
@@ -12,7 +12,7 @@ use gtk4::{Box, Builder, DragSource, Label, ListItem, glib};
 use std::path::Path;
 
 pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
-    let b = Builder::new();
+    let mut b = Builder::new();
 
     let _ = b.add_from_string(
         theme
@@ -21,7 +21,27 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
             .expect("failed to get item layout"),
     );
 
-    let itembox: Box = b.object("ItemBox").expect("failed to get ItemBox");
+    let itembox: Box = match b.object("ItemBox") {
+        Some(w) => w,
+        None => {
+            set_error("Theme: missing 'ItemBox' object".to_string());
+
+            b = Builder::new();
+
+            with_themes(|t| {
+                let theme = t.get("default").unwrap();
+                let _ = b.add_from_string(
+                    theme
+                        .items
+                        .get(&item.provider)
+                        .expect("failed to get item layout"),
+                );
+            });
+
+            b.object("ItemBox").unwrap()
+        }
+    };
+
     itembox.add_css_class(&item.provider.replace("menus:", "menus-"));
 
     item.state

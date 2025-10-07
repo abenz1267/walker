@@ -1,12 +1,16 @@
 use std::collections::HashSet;
 use std::sync::{OnceLock, RwLock};
 
+use gtk4::prelude::WidgetExt;
+
 use crate::keybinds::AfterAction;
+use crate::ui::window::with_window;
 
 static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 
 #[derive(Debug, Clone, Default)]
 pub struct AppState {
+    error: String,
     async_after: Option<AfterAction>,
     hide_qa: bool,
     has_elephant: bool,
@@ -120,6 +124,14 @@ pub fn get_placeholder() -> String {
 
 pub fn set_placeholder(val: String) {
     STATE.get().unwrap().write().unwrap().placeholder = val
+}
+
+pub fn get_error() -> String {
+    STATE.get().unwrap().read().unwrap().error.clone()
+}
+
+pub fn set_error(val: String) {
+    STATE.get().unwrap().write().unwrap().error = val
 }
 
 pub fn get_last_query() -> String {

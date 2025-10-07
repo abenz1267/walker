@@ -2,7 +2,7 @@ use config::{Config, ConfigError, File, FileFormat};
 use serde::{Deserialize, Serialize};
 use std::{collections::HashMap, sync::OnceLock};
 
-use crate::keybinds::Action;
+use crate::{keybinds::Action, state::set_error};
 
 static LOADED_CONFIG: OnceLock<Walker> = OnceLock::new();
 const DEFAULT_CONFIG: &str = include_str!("../resources/config.toml");
@@ -136,7 +136,10 @@ impl Walker {
 
             match user_config.try_deserialize() {
                 Ok(res) => config.merge(res),
-                Err(error) => println!("{error}"),
+                Err(error) => {
+                    set_error(format!("Config: {error}"));
+                    println!("{error}");
+                }
             }
         }
 

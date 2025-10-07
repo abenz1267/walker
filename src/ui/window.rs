@@ -12,20 +12,20 @@ use crate::{
     renderers::create_item,
     send_message,
     state::{
-        get_current_prefix, get_initial_height, get_initial_max_height, get_initial_max_width,
-        get_initial_min_height, get_initial_min_width, get_initial_placeholder, get_initial_width,
-        get_last_query, get_prefix_provider, get_provider, get_theme, is_connected, is_dmenu,
-        is_dmenu_exit_after, is_dmenu_keep_open, is_service, query, set_async_after,
-        set_current_prefix, set_current_set, set_dmenu_current, set_dmenu_exit_after,
-        set_dmenu_keep_open, set_hide_qa, set_initial_height, set_initial_max_height,
-        set_initial_max_width, set_initial_min_height, set_initial_min_width,
-        set_initial_placeholder, set_initial_width, set_input_only, set_is_dmenu, set_is_visible,
-        set_last_query, set_no_hints, set_no_search, set_param_close, set_parameter_height,
-        set_parameter_max_height, set_parameter_max_width, set_parameter_min_height,
-        set_parameter_min_width, set_parameter_width, set_placeholder, set_provider, set_query,
-        set_theme,
+        get_current_prefix, get_error, get_initial_height, get_initial_max_height,
+        get_initial_max_width, get_initial_min_height, get_initial_min_width,
+        get_initial_placeholder, get_initial_width, get_last_query, get_prefix_provider,
+        get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open,
+        is_service, query, set_async_after, set_current_prefix, set_current_set, set_dmenu_current,
+        set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa, set_initial_height,
+        set_initial_max_height, set_initial_max_width, set_initial_min_height,
+        set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
+        set_is_dmenu, set_is_visible, set_last_query, set_no_hints, set_no_search, set_param_close,
+        set_parameter_height, set_parameter_max_height, set_parameter_max_width,
+        set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_placeholder,
+        set_provider, set_query, set_theme,
     },
-    theme::{setup_layer_shell, with_themes},
+    theme::{Theme, setup_layer_shell, with_themes},
 };
 use gtk4::{
     Application, Builder, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
@@ -94,6 +94,7 @@ pub struct WindowData {
     pub preview_container: Option<gtk4::Box>,
     pub content_container: gtk4::Box,
     pub box_wrapper: gtk4::Box,
+    pub error: gtk4::Label,
 }
 
 pub fn with_window<F, R>(f: F) -> R
@@ -104,11 +105,129 @@ where
         let windows_map = windows.get().unwrap();
         let theme = get_theme();
 
-        windows_map.get(&theme).map(f).unwrap_or_else(|| {
-            println!("theme not found: {theme}");
-            process::exit(130);
-        })
+        windows_map
+            .get(&theme)
+            .or_else(|| windows_map.get("default"))
+            .map(f)
+            .unwrap_or_else(|| {
+                println!("default theme not found");
+                process::exit(130);
+            })
     })
+}
+
+pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, String> {
+    let builder = Builder::new();
+    let _ = builder.add_from_string(&val.layout);
+
+    let window: Window = match builder.object("Window") {
+        Some(w) => w,
+        None => return Err("missing 'Window' object".into()),
+    };
+
+    let scroll: ScrolledWindow = match builder.object("Scroll") {
+        Some(w) => w,
+        None => return Err("missing 'Scroll' object".into()),
+    };
+
+    let list: GridView = match builder.object("List") {
+        Some(w) => w,
+        None => return Err("missing 'List' object".into()),
+    };
+
+    let elephant_hint: Label = match builder.object("ElephantHint") {
+        Some(w) => w,
+        None => return Err("missing 'ElephantHint' object".into()),
+    };
+
+    let error: Label = match builder.object("Error") {
+        Some(w) => w,
+        None => return Err("missing 'Error' object".into()),
+    };
+
+    let box_wrapper: gtk4::Box = match builder.object("BoxWrapper") {
+        Some(w) => w,
+        None => return Err("missing 'BoxWrapper' object".into()),
+    };
+
+    let content_container: gtk4::Box = match builder.object("ContentContainer") {
+        Some(w) => w,
+        None => return Err("missing 'ContentContainer' object".into()),
+    };
+
+    let input: Option<Entry> = builder.object("Input");
+    let placeholder: Option<Label> = builder.object("Placeholder");
+    let keybinds: Option<gtk4::Box> = builder.object("Keybinds");
+
+    let filter = CustomFilter::new({
+        move |entry| {
+            let item = entry.downcast_ref::<QueryResponseObject>().unwrap();
+
+            let q = query();
+
+            if is_dmenu() && !q.is_empty() {
+                let f = 18 * q.len();
+
+                if item.dmenu_score() < f as u32 {
+                    return false;
+                }
+            }
+
+            true
+        }
+    });
+
+    let items = ListStore::new::<QueryResponseObject>();
+    let filter_model = FilterListModel::new(Some(items.clone()), Some(filter.clone()));
+    let selection = SingleSelection::new(Some(filter_model.clone()));
+    let search_container: Option<Box> = builder.object("SearchContainer");
+    let preview_container: Option<Box> = builder.object("Preview");
+
+    let mut ui = WindowData {
+        error,
+        sid: None,
+        box_wrapper,
+        preview_container,
+        elephant_hint,
+        content_container,
+        search_container,
+        builder,
+        preview_builder: std::cell::RefCell::new(None),
+        scroll,
+        mouse_x: 0.0.into(),
+        mouse_y: 0.0.into(),
+        app: app.clone(),
+        window,
+        selection,
+        list,
+        input,
+        items,
+        placeholder,
+        keybinds,
+    };
+
+    if let Some(p) = &ui.preview_container {
+        p.set_visible(false);
+    }
+
+    ui.elephant_hint.set_visible(false);
+
+    setup_window_behavior(&ui, app);
+
+    if let Some(input) = &ui.input {
+        ui.sid = Some(setup_input_handling(input))
+    }
+
+    setup_keyboard_handling(&ui);
+    setup_list_behavior(&ui);
+    setup_mouse_handling(&ui);
+
+    ui.window.set_application(Some(app));
+    ui.window.set_css_classes(&[]);
+
+    setup_layer_shell(&ui.window);
+
+    Ok(ui)
 }
 
 pub fn setup_window(app: &Application) {
@@ -116,102 +235,25 @@ pub fn setup_window(app: &Application) {
 
     with_themes(|t| {
         for (key, val) in t {
-            let builder = Builder::new();
-            let _ = builder.add_from_string(&val.layout);
-
-            let window: Window = builder
-                .object("Window")
-                .expect("Couldn't get 'Window' from UI file");
-            let input: Option<Entry> = builder.object("Input");
-            let scroll: ScrolledWindow = builder
-                .object("Scroll")
-                .expect("can't get scroll from layout");
-            let list: GridView = builder.object("List").expect("can't get list from layout");
-            let placeholder: Option<Label> = builder.object("Placeholder");
-            let elephant_hint: Label = builder
-                .object("ElephantHint")
-                .expect("can't get ElephantHint");
-            let keybinds: Option<gtk4::Box> = builder.object("Keybinds");
-
-            let filter = CustomFilter::new({
-                move |entry| {
-                    let item = entry.downcast_ref::<QueryResponseObject>().unwrap();
-
-                    let q = query();
-
-                    if is_dmenu() && !q.is_empty() {
-                        let f = 18 * q.len();
-
-                        if item.dmenu_score() < f as u32 {
-                            return false;
-                        }
-                    }
-
-                    true
+            match setup_theme_window(app, val) {
+                Ok(res) => {
+                    windows.insert(key.to_string(), res);
                 }
-            });
-
-            let items = ListStore::new::<QueryResponseObject>();
-            let filter_model = FilterListModel::new(Some(items.clone()), Some(filter.clone()));
-
-            let selection = SingleSelection::new(Some(filter_model.clone()));
-
-            let search_container: Option<Box> = builder.object("SearchContainer");
-            let preview_container: Option<Box> = builder.object("Preview");
-            let box_wrapper: gtk4::Box =
-                builder.object("BoxWrapper").expect("BoxWrapper not found");
-            let content_container: gtk4::Box = builder
-                .object("ContentContainer")
-                .expect("ContentContainer not found");
-
-            let mut ui = WindowData {
-                sid: None,
-                box_wrapper,
-                preview_container,
-                elephant_hint,
-                content_container,
-                search_container,
-                builder,
-                preview_builder: std::cell::RefCell::new(None),
-                scroll,
-                mouse_x: 0.0.into(),
-                mouse_y: 0.0.into(),
-                app: app.clone(),
-                window,
-                selection,
-                list,
-                input,
-                items,
-                placeholder,
-                keybinds,
-            };
-
-            if let Some(p) = &ui.preview_container {
-                p.set_visible(false);
+                Err(error) => set_error(format!("Theme: {error}")),
             }
-
-            ui.elephant_hint.set_visible(false);
-
-            setup_window_behavior(&ui, app);
-
-            if let Some(input) = &ui.input {
-                ui.sid = Some(setup_input_handling(input))
-            }
-
-            setup_keyboard_handling(&ui);
-            setup_list_behavior(&ui);
-            setup_mouse_handling(&ui);
-
-            ui.window.set_application(Some(app));
-            ui.window.set_css_classes(&[]);
-
-            setup_layer_shell(&ui.window);
-
-            windows.insert(key.to_string(), ui);
         }
     });
 
     WINDOWS.with(|s| s.set(windows).expect("failed initializing windows"));
+}
+
+fn check_error() {
+    with_window(|w| {
+        if !get_error().is_empty() {
+            w.error.set_text(&get_error());
+            w.error.set_visible(true);
+        }
+    });
 }
 
 fn setup_window_behavior(ui: &WindowData, app: &Application) {
@@ -220,7 +262,10 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
     }
 
     ui.selection.set_autoselect(true);
+
     ui.selection.connect_items_changed(move |s, _, _, _| {
+        check_error();
+
         with_window(|w| {
             if let Some(p) = &w.placeholder {
                 let provider = if !get_provider().is_empty() {
@@ -903,16 +948,29 @@ pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: 
 
             let _ = b.add_from_string(&theme.keybind);
 
-            let container = b
-                .object::<Box>("Keybind")
-                .expect("keybind layout must contain Keybind");
+            let container = match b.object::<Box>("Keybind") {
+                Some(res) => Some(res),
+                None => {
+                    set_error("Theme: missing 'Keybind' object".to_string());
+                    None
+                }
+            };
 
-            let bind: Label = b
-                .object("KeybindBind")
-                .expect("keybind layout must contain KeybindBind");
+            let bind = match b.object::<Label>("KeybindBind") {
+                Some(res) => Some(res),
+                None => {
+                    set_error("Theme: missing 'KeybindBind' object".to_string());
+                    None
+                }
+            };
 
-            bind.set_text(&h.bind.as_ref().unwrap());
             let label: Option<Label> = b.object("KeybindLabel");
+
+            check_error();
+
+            if let Some(b) = bind {
+                b.set_text(h.bind.as_ref().unwrap())
+            }
 
             if let Some(l) = label {
                 if let Some(label) = &h.label {
@@ -922,7 +980,9 @@ pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: 
                 }
             }
 
-            k.append(&container);
+            if let Some(c) = container {
+                k.append(&c);
+            }
         });
     });
 }

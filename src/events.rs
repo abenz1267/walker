@@ -1,13 +1,57 @@
 use std::process::{Command, Stdio};
-
 use crate::config::get_config;
 use crate::keybinds::Action;
 use crate::protos::generated_proto::query::QueryResponse;
 use crate::state::{get_prefix_provider, get_provider};
 
-/// Commands run in background (fire-and-forget) with no output captured.
-fn run_event(event: &str, command: Option<&String>, mut envs: Vec<(&str, String)>) {
-    let Some(cmd) = command.filter(|cmd| !cmd.trim().is_empty()) else {
+/// Event types that can trigger user-defined commands
+#[derive(Debug, Clone, Copy)]
+pub enum Event {
+    Launch,
+    Selection,
+    Activate,
+    QueryChange,
+    Exit,
+}
+
+impl Event {
+    /// Get the command string from config for this event type
+    fn get_command<'a>(&self, config: &'a crate::config::Walker) -> Option<&'a String> {
+        match self {
+            Event::Launch => config.events.launch.as_ref(),
+            Event::Selection => config.events.selection.as_ref(),
+            Event::Activate => config.events.activate.as_ref(),
+            Event::QueryChange => config.events.query_change.as_ref(),
+            Event::Exit => config.events.exit.as_ref(),
+        }
+    }
+
+    /// Get the event name as a string (for WALKER_EVENT env var)
+    fn as_str(&self) -> &'static str {
+        match self {
+            Event::Launch => "launch",
+            Event::Selection => "selection",
+            Event::Activate => "activate",
+            Event::QueryChange => "query_change",
+            Event::Exit => "exit",
+        }
+    }
+}
+
+/// Run event command with environment variables
+/// 
+/// Environment variables are necessary because they provide context
+/// to user-defined scripts about what triggered the event:
+/// - WALKER_EVENT: which event occurred
+/// - WALKER_QUERY: current search query
+/// - WALKER_PROVIDER: active provider
+/// - WALKER_SELECTION_TEXT: selected item text
+/// - WALKER_ACTION: action being performed
+/// - WALKER_EXIT_CANCELLED: whether exit was cancelled
+fn run_event(event: Event, mut envs: Vec<(&str, String)>) {
+    let config = get_config();
+    
+    let Some(cmd) = event.get_command(config).filter(|cmd| !cmd.trim().is_empty()) else {
         return;
     };
 
@@ -15,28 +59,26 @@ fn run_event(event: &str, command: Option<&String>, mut envs: Vec<(&str, String)
     command
         .arg("-c")
         .arg(cmd)
-        .stdin(Stdio::null())
+        .stdin(Stdio::null())  // Needed: prevents child from reading stdin
         .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .env("WALKER_EVENT", event);
+        .stderr(Stdio::null());
+
+    command.env("WALKER_EVENT", event.as_str());
 
     for (key, value) in envs.drain(..) {
         command.env(key, value);
     }
 
     if let Err(err) = command.spawn() {
-        eprintln!("Failed to run event '{event}': {err}");
+        eprintln!("Failed to run event '{}': {}", event.as_str(), err);
     }
 }
 
-/// Emit event when Walker is launched.
 pub fn emit_launch() {
-    let config = get_config();
-    run_event("launch", config.events.launch.as_ref(), Vec::new());
+    run_event(Event::Launch, Vec::new());
 }
 
 pub fn emit_selection(selection: Option<QueryResponse>, query: &str) {
-    let config = get_config();
     let mut envs = vec![("WALKER_QUERY", query.to_string())];
 
     if let Some(selection) = selection {
@@ -50,11 +92,10 @@ pub fn emit_selection(selection: Option<QueryResponse>, query: &str) {
         }
     }
 
-    run_event("selection", config.events.selection.as_ref(), envs);
+    run_event(Event::Selection, envs);
 }
 
 pub fn emit_query_change(query: &str) {
-    let config = get_config();
     let mut envs = vec![("WALKER_QUERY", query.to_string())];
 
     let provider = {
@@ -70,17 +111,15 @@ pub fn emit_query_change(query: &str) {
         envs.push(("WALKER_PROVIDER", provider));
     }
 
-    run_event("query_change", config.events.query_change.as_ref(), envs);
+    run_event(Event::QueryChange, envs);
 }
 
-// Emit event when an item is activated.
 pub fn emit_activate(
     selection: Option<&QueryResponse>,
     provider: &str,
     query: &str,
     action: &Action,
 ) {
-    let config = get_config();
     let mut envs = vec![
         ("WALKER_QUERY", query.to_string()),
         ("WALKER_ACTION", action.action.clone()),
@@ -103,12 +142,10 @@ pub fn emit_activate(
         envs.push(("WALKER_PROVIDER", provider_name));
     }
 
-    run_event("activate", config.events.activate.as_ref(), envs);
+    run_event(Event::Activate, envs);
 }
 
-/// Emit event when Walker exit.
 pub fn emit_exit(cancelled: bool) {
-    let config = get_config();
     let envs = vec![("WALKER_EXIT_CANCELLED", cancelled.to_string())];
-    run_event("exit", config.events.exit.as_ref(), envs);
+    run_event(Event::Exit, envs);
 }

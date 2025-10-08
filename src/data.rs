@@ -612,15 +612,14 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
             .expect("couldn't trim prefix");
     }
 
-    let mut item_option = item_option;
-
-    events::emit_activate(item_option.as_ref(), provider, query, action);
+    // Don't make this mutable, and use reference in pattern matching
+    let item_option = item_option;
 
     let mut req = ActivateRequest::new();
     req.action = action.action.to_string();
     req.provider = provider.to_string();
 
-    if let Some(item) = item_option {
+    if let Some(ref item) = item_option {  // Changed to 'ref item' to borrow instead of move
         match provider {
             "dmenu" => {
                 if is_service() {
@@ -659,7 +658,11 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
             Err(_) => {
                 handle_disconnect();
             }
-            _ => (),
+            Ok(_) => {
+                // Emit event only on successful activation
+                // Now item_option is still valid because we only borrowed it above
+                events::emit_activate(item_option.as_ref(), provider, query, action);
+            }
         }
     }
 }

@@ -21,7 +21,7 @@ The following Elephant providers are implemented by default:
 - **Provider List**: Switch between providers with `;` prefix
 - **Menu Integration**: Create custom menus with elephant and let walker display them
 - **Dmenu**: Your good old dmenu ... with seamless menus!
-- **Arch Linux Packages**: Search through available packages (official and aur), install or delete a target! List all exlusively installed packages.
+- **Arch Linux Packages**: Search through available packages (official and aur), install or delete a target! List all exclusively installed packages.
 - **Todo List**: create simple todo items with basic time tracking, scheduling and notifications
 - **Bluetooth**: basic bluetooth management
 

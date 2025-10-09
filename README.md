@@ -175,6 +175,10 @@ Please refer to [the GTK4 docs](https://docs.gtk.org/gtk4/) to checkout how to w
 
 **THE DEFAULT THEME CANNOT BE CHANGED**.
 
+## Contributing
+
+Please do not make PRs to fix single typos. Fix all or nothing.
+
 ## License
 
 This project is licensed under the GNU General Public License v3.0 - see the [LICENSE](LICENSE) file for details.

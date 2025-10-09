@@ -931,14 +931,20 @@ pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: 
 
     if get_config().debug {
         println!(
-            "available actions [{}]: {}",
+            "configured actions [{}]: {}",
             p.get_name(),
             hints
                 .iter()
                 .map(|h| h.action.clone())
                 .collect::<Vec<String>>()
                 .join(",")
-        )
+        );
+
+        println!(
+            "available actions [{}]: {}",
+            p.get_name(),
+            actions.join(",")
+        );
     }
 
     hints.iter().for_each(|h| {

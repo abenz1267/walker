@@ -592,6 +592,7 @@ pub fn clipboard_disable_images_only() {
 
 pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str, action: &Action) {
     let cfg = get_config();
+    println!("{:?}", action);
 
     let mut query = query;
     if let Some(stripped) = query.strip_prefix(&cfg.exact_search_prefix) {

@@ -8,13 +8,14 @@ mod renderers;
 mod state;
 mod theme;
 mod ui;
-use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual};
+use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual, SettingsExt};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard};
 use gtk4::glib::Priority;
 use gtk4::glib::object::ObjectExt;
 use gtk4::prelude::EntryExt;
 
 use config::get_config;
+use gtk4::Settings;
 use state::init_app_state;
 use which::which;
 
@@ -117,7 +118,26 @@ fn init_ui(app: &Application, dmenu: bool) {
 
     setup_window(app);
 
-    // start_theme_watcher(s.get_theme());
+    let settings = gio::Settings::new("org.gnome.desktop.interface");
+    let settings_clone = settings.clone();
+    adjust_color_scheme(settings_clone);
+
+    let settings_clone = settings.clone();
+    settings.connect_changed(Some("color-scheme"), move |_, _| {
+        adjust_color_scheme(settings_clone.clone());
+    });
+}
+
+fn adjust_color_scheme(settings: gio::Settings) {
+    with_window(|w| {
+        w.window.remove_css_class("dark");
+        w.window.remove_css_class("light");
+        match settings.string("color-scheme").as_str() {
+            "prefer-dark" => w.window.add_css_class("dark"),
+            "prefer-light" => w.window.add_css_class("light"),
+            _ => (),
+        }
+    });
 }
 
 fn send_message(message: String) {

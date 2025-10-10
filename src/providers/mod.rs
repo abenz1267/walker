@@ -54,8 +54,15 @@ pub trait Provider: Sync + Send + Debug {
         let mut result: Vec<Action> = self
             .get_actions()
             .iter()
+            .map(|a| match a.action.split_once(":") {
+                Some((first, _)) => {
+                    let mut a = a.clone();
+                    a.action = first.to_string();
+                    a
+                }
+                None => a.clone(),
+            })
             .filter(|v| actions.contains(&v.action) || v.global.unwrap_or(false))
-            .cloned()
             .collect();
 
         if !actions.is_empty()

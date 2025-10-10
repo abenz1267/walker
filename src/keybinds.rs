@@ -170,6 +170,12 @@ pub fn setup_binds() {
 }
 
 fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Error>> {
+    let mut b = b.clone();
+
+    if let Some((first, _)) = b.action.split_once(":") {
+        b.action = first.to_string();
+    }
+
     let mut fields = b.bind.as_ref().unwrap().split_whitespace().peekable();
 
     if fields.peek().is_none() {

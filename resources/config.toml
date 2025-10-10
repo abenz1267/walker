@@ -105,7 +105,7 @@ websearch = [
 
 desktopapplications = [
   { action = "start", default = true, bind = "Return" },
-  { action = "start", label = "open+next", bind = "shift Return", after = "KeepOpen" },
+  { action = "start:keep", label = "open+next", bind = "shift Return", after = "KeepOpen" },
   { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "AsyncReload" },
   { action = "pin", bind = "ctrl p", after = "AsyncReload" },
   { action = "unpin", bind = "ctrl p", after = "AsyncReload" },

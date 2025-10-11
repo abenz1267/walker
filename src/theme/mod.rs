@@ -44,15 +44,15 @@ impl Theme {
 
 pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
     let mut themes: HashMap<String, Theme> = HashMap::new();
-    let mut path = dirs::config_dir().unwrap();
-    path.push("walker");
-    path.push("themes");
 
-    let mut paths = vec![path.to_string_lossy().to_string()];
+    let dirs = xdg::BaseDirectories::with_prefix("walker").find_config_files("themes");
+
+    let mut paths: Vec<PathBuf> = dirs.collect();
+
     if let Some(a) = &get_config().additional_theme_location
         && let Ok(home) = env::var("HOME")
     {
-        paths.push(a.replace("~", &home).to_string());
+        paths.push(PathBuf::from(a.replace("~", &home).to_string()));
     }
 
     let files = vec![
@@ -75,53 +75,57 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
         files
     };
 
-    if theme != "default" || is_service {
-        for mut path in paths {
-            if !is_service {
-                path = format!("{path}/{theme}");
+    for path in paths {
+        if !is_service {
+            if let Some(t) = setup_theme_from_path(path.clone(), &theme, &combined) {
+                themes.insert(theme.clone(), t);
+            }
 
-                themes.insert(
-                    theme.clone(),
-                    setup_theme_from_path(path.clone().into(), &combined),
-                );
+            continue;
+        }
+
+        let Ok(entries) = fs::read_dir(path) else {
+            continue;
+        };
+
+        for entry in entries {
+            let entry = entry.unwrap();
+            let path = entry.path();
+
+            if !path.is_dir() {
                 continue;
             }
 
-            let Ok(entries) = fs::read_dir(path) else {
+            let Some(name) = path.file_name() else {
                 continue;
             };
 
-            for entry in entries {
-                let entry = entry.unwrap();
-                let path = entry.path();
+            let path_theme = name.to_string_lossy();
 
-                if !path.is_dir() {
-                    continue;
-                }
-
-                let Some(name) = path.file_name() else {
-                    continue;
-                };
-
-                let path_theme = name.to_string_lossy();
-
-                themes.insert(
-                    path_theme.to_string(),
-                    setup_theme_from_path(path.clone(), &combined),
-                );
-
-                add_theme(path_theme.to_string());
+            if let Some(t) = setup_theme_from_path(path.clone(), &theme, &combined) {
+                themes.insert(path_theme.to_string(), t);
             }
+
+            add_theme(path_theme.to_string());
         }
     }
 
-    themes.insert("default".to_string(), Theme::default());
-    add_theme("default".to_string());
+    if !themes.contains_key("default") {
+        themes.insert("default".to_string(), Theme::default());
+        add_theme("default".to_string());
+    }
 
     THEMES.with(|s| s.set(themes).expect("failed initializing themes"));
 }
 
-fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
+fn setup_theme_from_path(path: PathBuf, theme: &str, files: &Vec<String>) -> Option<Theme> {
+    let mut path = path;
+    path.push(theme);
+
+    if !path.exists() {
+        return None;
+    }
+
     let mut theme = Theme::default();
 
     let mut pc = path.clone();
@@ -174,7 +178,7 @@ fn setup_theme_from_path(mut path: PathBuf, files: &Vec<String>) -> Theme {
         }
     }
 
-    theme
+    Some(theme)
 }
 
 pub fn setup_css(theme: String) {

@@ -128,10 +128,11 @@ impl Walker {
 
         let mut config: Walker = default_config.try_deserialize()?;
 
-        let user_config_path = get_user_config_path();
-        if std::path::Path::new(&user_config_path).exists() {
+        if let Some(user_config_path) =
+            xdg::BaseDirectories::with_prefix("walker").find_config_file("config.toml")
+        {
             let user_config = Config::builder()
-                .add_source(File::with_name(&user_config_path))
+                .add_source(File::from(user_config_path))
                 .build()?;
 
             match user_config.try_deserialize() {
@@ -322,16 +323,6 @@ pub struct Shell {
 pub struct Placeholder {
     pub input: String,
     pub list: String,
-}
-
-fn get_user_config_path() -> String {
-    dirs::config_dir()
-        .map(|mut path| {
-            path.push("walker");
-            path.push("config.toml");
-            path.to_string_lossy().to_string()
-        })
-        .unwrap_or_else(|| "~/.config/walker/config.toml".to_string())
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

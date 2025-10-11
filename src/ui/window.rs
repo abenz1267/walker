@@ -949,7 +949,9 @@ pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: 
 
     hints.iter().for_each(|h| {
         with_themes(|t| {
-            let theme = t.get(&get_theme()).unwrap();
+            let theme = t
+                .get(&get_theme())
+                .unwrap_or_else(|| panic!("couldn't get theme: {}", &get_theme()));
             let b = Builder::new();
 
             let _ = b.add_from_string(&theme.keybind);

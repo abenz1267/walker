@@ -15,7 +15,6 @@ use gtk4::glib::object::ObjectExt;
 use gtk4::prelude::EntryExt;
 
 use config::get_config;
-use gtk4::Settings;
 use state::init_app_state;
 use which::which;
 

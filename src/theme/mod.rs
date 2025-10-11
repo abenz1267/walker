@@ -79,6 +79,7 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
         if !is_service {
             if let Some(t) = setup_theme_from_path(path.clone(), &theme, &combined) {
                 themes.insert(theme.clone(), t);
+                add_theme(theme.clone());
             }
 
             continue;
@@ -104,9 +105,8 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
 
             if let Some(t) = setup_theme_from_path(path.clone(), &theme, &combined) {
                 themes.insert(path_theme.to_string(), t);
+                add_theme(path_theme.to_string());
             }
-
-            add_theme(path_theme.to_string());
         }
     }
 

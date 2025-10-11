@@ -1,10 +1,7 @@
 use std::collections::HashSet;
 use std::sync::{OnceLock, RwLock};
 
-use gtk4::prelude::WidgetExt;
-
 use crate::keybinds::AfterAction;
-use crate::ui::window::with_window;
 
 static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 

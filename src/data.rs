@@ -1,4 +1,5 @@
 use crate::config::get_config;
+use crate::events;
 use crate::keybinds::{Action, AfterAction};
 use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
@@ -64,6 +65,8 @@ pub fn input_changed(text: &str) {
             query(text);
         }
     });
+
+    events::emit_query_change(text);
 }
 
 fn sort_items_fuzzy(query: &str) {
@@ -598,11 +601,25 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
         query = stripped;
     }
 
+    if let Some(prefix) = cfg
+        .providers
+        .prefixes
+        .iter()
+        .find(|prefix| provider == prefix.provider && query.starts_with(&prefix.prefix))
+    {
+        query = query
+            .strip_prefix(&prefix.prefix)
+            .expect("couldn't trim prefix");
+    }
+
+    // Don't make this mutable, and use reference in pattern matching
+    let item_option = item_option;
+
     let mut req = ActivateRequest::new();
     req.action = action.action.to_string();
     req.provider = provider.to_string();
 
-    if let Some(item) = item_option {
+    if let Some(ref item) = item_option {  // Changed to 'ref item' to borrow instead of move
         match provider {
             "dmenu" => {
                 if is_service() {
@@ -637,17 +654,6 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
         req.identifier = provider.to_string();
     }
 
-    if let Some(prefix) = cfg
-        .providers
-        .prefixes
-        .iter()
-        .find(|prefix| provider == prefix.provider && query.starts_with(&prefix.prefix))
-    {
-        query = query
-            .strip_prefix(&prefix.prefix)
-            .expect("couldn't trim prefix");
-    }
-
     req.query = query.to_string();
 
     let mut buffer = vec![1];
@@ -662,7 +668,11 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
             Err(_) => {
                 handle_disconnect();
             }
-            _ => (),
+            Ok(_) => {
+                // Emit event only on successful activation
+                // Now item_option is still valid because we only borrowed it above
+                events::emit_activate(item_option.as_ref(), provider, query, action);
+            }
         }
     }
 }

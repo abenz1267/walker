@@ -8,6 +8,13 @@ theme = "default"               # theme to use
 disable_mouse = false           # disable mouse (on input and list only)
 debug = false                   # enables debug printing for some stuff, f.e. keybinds
 
+[events]
+launch = ""
+selection = ""
+activate = ""
+query_change = ""
+exit = ""
+
 [shell]
 anchor_top = true
 anchor_bottom = true

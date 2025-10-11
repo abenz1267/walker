@@ -85,27 +85,27 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
             continue;
         }
 
-        let Ok(entries) = fs::read_dir(path) else {
+        let Ok(entries) = fs::read_dir(path.clone()) else {
             continue;
         };
 
         for entry in entries {
             let entry = entry.unwrap();
-            let path = entry.path();
+            let entry_path = entry.path();
 
-            if !path.is_dir() {
+            if !entry_path.is_dir() {
                 continue;
             }
 
-            let Some(name) = path.file_name() else {
+            let Some(name) = entry_path.file_name() else {
                 continue;
             };
 
-            let path_theme = name.to_string_lossy();
+            let theme_name = name.to_string_lossy().to_string();
 
-            if let Some(t) = setup_theme_from_path(path.clone(), &theme, &combined) {
-                themes.insert(path_theme.to_string(), t);
-                add_theme(path_theme.to_string());
+            if let Some(t) = setup_theme_from_path(path.clone(), &theme_name, &combined) {
+                themes.insert(theme_name.clone(), t);
+                add_theme(theme_name);
             }
         }
     }

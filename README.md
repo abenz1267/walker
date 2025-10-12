@@ -104,9 +104,10 @@ programs.walker = {
   enable = true;
   runAsService = true;
 
-  # All options from the config.toml can be used here.
+  # All options from the config.toml can be used here https://github.com/abenz1267/walker/blob/master/resources/config.toml
   config = {
-    placeholders."default".input = "Example";
+    theme = "your theme name";
+    placeholders."default" = { input = "Search"; list = "Example"; };
     providers.prefixes = [
       {provider = "websearch"; prefix = "+";}
       {provider = "providerlist"; prefix = "_";}
@@ -114,13 +115,25 @@ programs.walker = {
     keybinds.quick_activate = ["F1" "F2" "F3"];
   };
 
-  # If this is not set the default styling is used.
-  theme.style = ''
-    * {
-      color: #dcd7ba;
-    }
-  '';
-};
+  themes = {
+    # set `programs.walker.config.theme="your theme name"` to choose the default theme
+    "your theme name" = {
+      # Check out the default css theme as an example https://github.com/abenz1267/walker/blob/master/resources/themes/default/style.css
+      style = " /* css */ ";
+
+      # Check out the default layouts for examples https://github.com/abenz1267/walker/tree/master/resources/themes/default
+      layouts = {
+        "layout" = " <!-- xml --> ";
+        "item_calc" = " <!-- xml --> "
+        # other provider layouts
+      };
+    };
+    "other theme name" = {
+        # ...
+    };
+    # more themes
+  };
+}
 ```
 
 Optionally, there is 2 binary caches which can be used by adding the following to you config:

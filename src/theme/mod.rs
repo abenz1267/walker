@@ -47,12 +47,12 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
 
     let dirs = xdg::BaseDirectories::with_prefix("walker").find_config_files("themes");
 
-    let mut paths: Vec<PathBuf> = dirs.collect();
+    let mut config_paths: Vec<PathBuf> = dirs.collect();
 
     if let Some(a) = &get_config().additional_theme_location
         && let Ok(home) = env::var("HOME")
     {
-        paths.push(PathBuf::from(a.replace("~", &home).to_string()));
+        config_paths.push(PathBuf::from(a.replace("~", &home).to_string()));
     }
 
     let files = vec![
@@ -75,22 +75,28 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
         files
     };
 
-    for path in paths {
+    for config_path in config_paths {
         if !is_service {
-            if let Some(t) = setup_theme_from_path(path.clone(), &theme, &combined) {
+            let mut path = config_path;
+
+            path.push(&theme);
+
+            if let Some(t) = setup_theme_from_path(path.clone(), &combined) {
                 themes.insert(theme.clone(), t);
                 add_theme(theme.clone());
             }
 
+            path.pop();
+
             continue;
         }
 
-        let Ok(entries) = fs::read_dir(path) else {
+        let Ok(theme_dirs) = fs::read_dir(config_path) else {
             continue;
         };
 
-        for entry in entries {
-            let entry = entry.unwrap();
+        for theme_dir in theme_dirs {
+            let entry = theme_dir.unwrap();
             let path = entry.path();
 
             if !path.is_dir() {
@@ -101,11 +107,11 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
                 continue;
             };
 
-            let path_theme = name.to_string_lossy();
+            let theme_name = name.to_string_lossy();
 
-            if let Some(t) = setup_theme_from_path(path.clone(), &theme, &combined) {
-                themes.insert(path_theme.to_string(), t);
-                add_theme(path_theme.to_string());
+            if let Some(t) = setup_theme_from_path(path.clone(), &combined) {
+                themes.insert(theme_name.to_string(), t);
+                add_theme(theme_name.to_string());
             }
         }
     }
@@ -118,9 +124,8 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
     THEMES.with(|s| s.set(themes).expect("failed initializing themes"));
 }
 
-fn setup_theme_from_path(path: PathBuf, theme: &str, files: &Vec<String>) -> Option<Theme> {
+fn setup_theme_from_path(path: PathBuf, files: &Vec<String>) -> Option<Theme> {
     let mut path = path;
-    path.push(theme);
 
     if !path.exists() {
         return None;

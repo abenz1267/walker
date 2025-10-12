@@ -172,7 +172,9 @@ pub fn setup_binds() {
 fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Error>> {
     let mut b = b.clone();
 
-    if let Some((first, _)) = b.action.split_once(":") {
+    if let Some((first, _)) = b.action.split_once(":")
+        && b.action.ends_with(":keep")
+    {
         b.action = first.to_string();
     }
 
@@ -217,6 +219,7 @@ fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Erro
 
     if !b.global.unwrap_or(false) {
         let mut provider_binds = PROVIDER_BINDS.write().unwrap();
+
         provider_binds
             .entry(provider.to_string())
             .or_default()
@@ -226,8 +229,8 @@ fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Erro
             .or_default()
             .push(b.clone());
     } else {
-        let mut provider_binds = PROVIDER_GLOBAL_BINDS.write().unwrap();
-        provider_binds
+        let mut global_binds = PROVIDER_GLOBAL_BINDS.write().unwrap();
+        global_binds
             .entry(provider.to_string())
             .or_default()
             .entry(key)

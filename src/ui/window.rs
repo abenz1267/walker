@@ -472,6 +472,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                         ACTION_RESUME_LAST_QUERY => resume_last_query(),
                         action if action.starts_with(ACTION_QUICK_ACTIVATE) => {
                             if let Some((_, after)) = action.split_once(":") {
+                                // println!("{}", after);
                                 let i: u32 = after.parse().unwrap();
                                 quick_activate(&app, i)
                             }

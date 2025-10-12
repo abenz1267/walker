@@ -442,6 +442,12 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     set_current_set(set.to_string());
                     set_provider(String::new());
                 }
+
+                if action.action.starts_with("provider:")
+                    && let Some((_, provider)) = action.action.split_once(":")
+                {
+                    set_provider(provider.to_string());
+                }
             }
 
             let mut response: Option<QueryResponse> = None;
@@ -495,7 +501,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
             let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
 
             if let Some(a) = keybind_action {
-                if !a.action.starts_with("set:") {
+                if !a.action.starts_with("set:") && !a.action.starts_with("provider:") {
                     activate(response, provider.as_str(), &query, &a);
                 }
             } else {

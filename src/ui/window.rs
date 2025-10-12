@@ -435,6 +435,13 @@ fn setup_keyboard_handling(ui: &WindowData) {
             {
                 keybind_action = Some(action.clone());
                 after = Some(action.after.unwrap_or(AfterAction::Close));
+
+                if action.action.starts_with("set:")
+                    && let Some((_, set)) = action.action.split_once(":")
+                {
+                    set_current_set(set.to_string());
+                    set_provider(String::new());
+                }
             }
 
             let mut response: Option<QueryResponse> = None;
@@ -472,7 +479,6 @@ fn setup_keyboard_handling(ui: &WindowData) {
                         ACTION_RESUME_LAST_QUERY => resume_last_query(),
                         action if action.starts_with(ACTION_QUICK_ACTIVATE) => {
                             if let Some((_, after)) = action.split_once(":") {
-                                // println!("{}", after);
                                 let i: u32 = after.parse().unwrap();
                                 quick_activate(&app, i)
                             }
@@ -489,7 +495,9 @@ fn setup_keyboard_handling(ui: &WindowData) {
             let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
 
             if let Some(a) = keybind_action {
-                activate(response, provider.as_str(), &query, &a);
+                if !a.action.starts_with("set:") {
+                    activate(response, provider.as_str(), &query, &a);
+                }
             } else {
                 return false;
             }

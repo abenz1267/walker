@@ -7,8 +7,9 @@ use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
     get_async_after, get_current_prefix, get_current_set, get_provider, is_connected,
-    is_connecting, is_dmenu, is_service, set_async_after, set_current_prefix, set_is_connected,
-    set_is_connecting, set_is_visible, set_prefix_provider, set_provider, set_query,
+    is_connecting, is_dmenu, is_service, set_async_after, set_current_prefix, set_current_set,
+    set_is_connected, set_is_connecting, set_is_visible, set_prefix_provider, set_provider,
+    set_query,
 };
 use crate::ui::window::{set_input_text, set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};

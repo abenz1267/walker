@@ -74,6 +74,16 @@ pub fn setup_binds() {
 
     let config = get_config();
 
+    config
+        .providers
+        .actions
+        .get("fallback")
+        .unwrap_or(&Vec::new())
+        .iter()
+        .for_each(|v| {
+            parse_bind(v, "fallback").unwrap();
+        });
+
     config.keybinds.close.iter().for_each(|b| {
         parse_bind(
             &Action {
@@ -278,17 +288,35 @@ pub fn get_provider_bind(
     modifier: gdk::ModifierType,
     actions: &[String],
 ) -> Option<Action> {
-    let action = PROVIDER_BINDS
-        .read()
-        .ok()?
-        .get(provider)?
-        .get(&key.to_lower())?
-        .get(&modifier)?
-        .iter()
-        .find(|action| actions.contains(&action.action))
-        .cloned();
+    let mut action = None;
 
-    if actions.len() == 1 && action.is_none() {
+    if let Ok(binds) = PROVIDER_BINDS.read() {
+        action = binds
+            .get(provider)
+            .and_then(|keys| keys.get(&key.to_lower()))
+            .and_then(|modifiers| modifiers.get(&modifier))
+            .and_then(|actions_list| {
+                actions_list
+                    .iter()
+                    .find(|action| actions.contains(&action.action))
+                    .cloned()
+            });
+
+        if action.is_none() {
+            action = binds
+                .get("fallback")
+                .and_then(|keys| keys.get(&key.to_lower()))
+                .and_then(|modifiers| modifiers.get(&modifier))
+                .and_then(|actions_list| {
+                    actions_list
+                        .iter()
+                        .find(|action| actions.contains(&action.action))
+                        .cloned()
+                });
+        }
+    }
+
+    if actions.len() == 1 && action.is_none() && key == gdk::Key::Return {
         return Some(Action {
             action: actions.first().unwrap().to_string(),
             global: None,

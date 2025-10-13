@@ -71,6 +71,11 @@ provider = "clipboard"
 time_format = "%d.%m. - %H:%M" # format for the clipboard item date
 
 [providers.actions] # This will be MERGED/OVEWRITTEN with what the user specifies
+fallback = [
+  { action = "menus:open", label = "open", after = "Nothing" },
+  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "AsyncReload" },
+]
+
 dmenu = [{ action = "select", default = true, bind = "Return" }]
 
 providerlist = [
@@ -98,15 +103,11 @@ calc = [
   { action = "save", bind = "ctrl s", after = "AsyncClearReload" },
 ]
 
-websearch = [
-  { action = "search", default = true, bind = "Return" },
-  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload" },
-]
+websearch = [{ action = "search", default = true, bind = "Return" }]
 
 desktopapplications = [
   { action = "start", default = true, bind = "Return" },
   { action = "start:keep", label = "open+next", bind = "shift Return", after = "KeepOpen" },
-  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "AsyncReload" },
   { action = "pin", bind = "ctrl p", after = "AsyncReload" },
   { action = "unpin", bind = "ctrl p", after = "AsyncReload" },
   { action = "pinup", bind = "ctrl n", after = "AsyncReload" },
@@ -132,17 +133,14 @@ todo = [
 runner = [
   { action = "run", default = true, bind = "Return" },
   { action = "runterminal", label = "run in terminal", bind = "shift Return" },
-  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload" },
 ]
 
 symbols = [
   { action = "run_cmd", label = "select", default = true, bind = "Return" },
-  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload" },
 ]
 
 unicode = [
   { action = "run_cmd", label = "select", default = true, bind = "Return" },
-  { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "Reload" },
 ]
 
 clipboard = [

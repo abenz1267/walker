@@ -1,4 +1,10 @@
-use std::{collections::HashMap, fmt::Debug, path::Path, process::Command, sync::OnceLock};
+use std::{
+    collections::{HashMap, HashSet},
+    fmt::Debug,
+    path::Path,
+    process::Command,
+    sync::OnceLock,
+};
 
 use gtk4::{
     Builder, Image, Label, ListItem, Picture, gdk,
@@ -51,6 +57,8 @@ pub trait Provider: Sync + Send + Debug {
     }
 
     fn get_keybind_hint(&self, actions: &[String]) -> Vec<Action> {
+        let mut present = HashSet::new();
+
         let mut result: Vec<Action> = self
             .get_actions()
             .iter()
@@ -68,8 +76,39 @@ pub trait Provider: Sync + Send + Debug {
 
                 a.clone()
             })
-            .filter(|v| actions.contains(&v.action) || v.global.unwrap_or(false))
+            .filter(|v| {
+                if actions.contains(&v.action) || v.global.unwrap_or(false) {
+                    present.insert(v.action.clone());
+                }
+
+                actions.contains(&v.action) || v.global.unwrap_or(false)
+            })
             .collect();
+
+        if let Some(r) = get_config().providers.actions.get("fallback") {
+            r.iter()
+                .map(|a| {
+                    if a.action.ends_with(":keep") {
+                        return match a.action.split_once(":") {
+                            Some((first, _)) => {
+                                let mut a = a.clone();
+                                a.action = first.to_string();
+                                a
+                            }
+                            None => a.clone(),
+                        };
+                    }
+
+                    a.clone()
+                })
+                .filter(|v| {
+                    (actions.contains(&v.action) || v.global.unwrap_or(false))
+                        && !present.contains(&v.action)
+                })
+                .for_each(|v| {
+                    result.push(v);
+                });
+        }
 
         if !actions.is_empty()
             && (result.is_empty()

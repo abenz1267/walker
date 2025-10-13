@@ -39,6 +39,7 @@ pub struct AppState {
     no_search: bool,
     no_hints: bool,
     input_only: bool,
+    index: bool,
     is_dmenu: bool,
     is_param_close: bool,
     current_prefix: String,
@@ -181,6 +182,14 @@ pub fn is_input_only() -> bool {
 
 pub fn set_input_only(val: bool) {
     STATE.get().unwrap().write().unwrap().input_only = val
+}
+
+pub fn is_index() -> bool {
+    STATE.get().unwrap().read().unwrap().index
+}
+
+pub fn set_index(val: bool) {
+    STATE.get().unwrap().write().unwrap().index = val
 }
 
 pub fn is_param_close() -> bool {

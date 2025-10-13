@@ -50,7 +50,7 @@ use crate::state::{
     get_provider, get_theme, has_elephant, has_theme, is_connected, is_dmenu, is_dmenu_keep_open,
     is_input_only, is_no_hints, is_no_search, is_param_close, is_service, is_visible,
     set_current_set, set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open,
-    set_has_elephant, set_hide_qa, set_initial_height, set_initial_max_height,
+    set_has_elephant, set_hide_qa, set_index, set_initial_height, set_initial_max_height,
     set_initial_max_width, set_initial_min_height, set_initial_min_width, set_initial_placeholder,
     set_initial_width, set_input_only, set_is_dmenu, set_is_service, set_is_visible, set_no_hints,
     set_no_search, set_param_close, set_parameter_height, set_parameter_max_height,
@@ -187,6 +187,15 @@ fn add_flags(app: &Application) {
         OptionFlags::NONE,
         glib::OptionArg::None,
         "only show input. dmenu only.",
+        None,
+    );
+
+    app.add_main_option(
+        "index",
+        b'i'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::None,
+        "prints the selected index instead of its value. dmenu only.",
         None,
     );
 
@@ -401,6 +410,8 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
         } else {
             set_is_dmenu(true);
         }
+
+        set_index(options.contains("index"));
 
         if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING)) {
             set_placeholder(val.str().unwrap().to_string());

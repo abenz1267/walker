@@ -7,8 +7,9 @@ use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
     get_async_after, get_current_prefix, get_current_set, get_provider, is_connected,
-    is_connecting, is_dmenu, is_service, set_async_after, set_current_prefix, set_is_connected,
-    set_is_connecting, set_is_visible, set_prefix_provider, set_provider, set_query,
+    is_connecting, is_dmenu, is_index, is_service, set_async_after, set_current_prefix,
+    set_is_connected, set_is_connecting, set_is_visible, set_prefix_provider, set_provider,
+    set_query,
 };
 use crate::ui::window::{set_input_text, set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
@@ -605,11 +606,18 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
     if let Some(item) = item_option {
         match provider {
             "dmenu" => {
-                if is_service() {
-                    send_message(item.item.text.clone());
-                } else {
-                    println!("{}", item.item.text.clone());
+                let mut res = item.item.text.clone();
+
+                if is_index() {
+                    res = format!("{}", 1000000 - item.item.score);
                 }
+
+                if is_service() {
+                    send_message(res);
+                } else {
+                    println!("{}", res);
+                }
+
                 return;
             }
             "providerlist" => {

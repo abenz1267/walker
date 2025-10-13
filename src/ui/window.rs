@@ -17,8 +17,8 @@ use crate::{
         get_initial_placeholder, get_initial_width, get_last_query, get_prefix_provider,
         get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open,
         is_service, query, set_async_after, set_current_prefix, set_current_set, set_dmenu_current,
-        set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa, set_initial_height,
-        set_initial_max_height, set_initial_max_width, set_initial_min_height,
+        set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa, set_index,
+        set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
         set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
         set_is_dmenu, set_is_visible, set_last_query, set_no_hints, set_no_search, set_param_close,
         set_parameter_height, set_parameter_max_height, set_parameter_max_width,
@@ -674,6 +674,7 @@ pub fn quit(app: &Application, cancelled: bool) {
     set_hide_qa(false);
     set_query("");
     set_current_set(String::new());
+    set_index(false);
 
     if is_dmenu_exit_after() {
         set_dmenu_exit_after(false);

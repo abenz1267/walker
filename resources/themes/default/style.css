@@ -165,6 +165,7 @@ child:selected .item-box {
 .keybind-bind {
   /* color: lighter(@window_bg_color); */
   font-weight: bold;
+  text-transform: lowercase;
 }
 
 .keybind-label {

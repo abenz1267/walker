@@ -41,17 +41,23 @@ cargo build --release
 ./target/release/walker
 ```
 
-<details>
-    <summary>Install using Nix</summary>
+### Dependencies
 
-### Install using Nix
+- GTK4 (version 4.6+)
+- gtk4-layer-shell
+- Protocol Buffers compiler
+- cairo
+- poppler-glib
+- make sure [elephant](https://github.com/abenz1267/elephant) is running before starting Walker
+
+<details>
+    <summary> <h3> Install using Nix </h3> </summary>
 
 #### 1. Add flake inputs
 
 Add walker and elephant to the inputs of your configs `flake.nix` and set walker to follow elephant
 
 ```nix
-# Add this to your flake inputs
 elephant.url = "github:abenz1267/elephant";
 
 walker = {
@@ -64,11 +70,32 @@ walker = {
 
 You have 3 options for installing walker.
 
-Option A (Home Manager Module): Import the home-manager module by adding `imports = [inputs.walker.homeManagerModules.default];` to your home-manager config. Then enable walker by setting `programs.walker.enable = true;` in your home-manager config.
+**Option A** (Home Manager Module): Import the home-manager module to your home-manager config and enable walker.
 
-Option B (NixOS Module): Import the nixos module by adding `imports = [inputs.walker.nixosModules.default];` to your NixOS config. Then enable walker by setting `programs.walker.enable = true;` in your NixOS config.
+```nix
+imports = [inputs.walker.homeManagerModules.default];
 
-Option C (Package): Add `inputs.walker.packages.<system>.default` to `environment.systemPackages` or `home.packages`.
+programs.walker.enable = true;
+```
+
+**Option B** (NixOS Module): Import the nixos module in your NixOS config and enable walker
+
+```nix
+imports = [inputs.walker.homeManagerModules.default];
+
+programs.walker.enable = true;
+```
+
+**Option C** (Package): Add `inputs.walker.packages.<system>.default` to your system packages or home-manager packages. replace `<system>` with your system architecture
+
+```nix
+home.packages = [inputs.walker.packages.<system>.default];
+```
+
+```nix
+environment.systemPackages = [inputs.walker.packages.<system>.default];
+
+```
 
 #### 3. Configure walker:
 
@@ -77,9 +104,10 @@ programs.walker = {
   enable = true;
   runAsService = true;
 
-  # All options from the config.toml can be used here.
+  # All options from the config.toml can be used here https://github.com/abenz1267/walker/blob/master/resources/config.toml
   config = {
-    placeholders."default".input = "Example";
+    theme = "your theme name";
+    placeholders."default" = { input = "Search"; list = "Example"; };
     providers.prefixes = [
       {provider = "websearch"; prefix = "+";}
       {provider = "providerlist"; prefix = "_";}
@@ -87,41 +115,37 @@ programs.walker = {
     keybinds.quick_activate = ["F1" "F2" "F3"];
   };
 
-  # If this is not set the default styling is used.
-  theme.style = ''
-    * {
-      color: #dcd7ba;
-    }
-  '';
-};
+  themes = {
+    # set `programs.walker.config.theme="your theme name"` to choose the default theme
+    "your theme name" = {
+      # Check out the default css theme as an example https://github.com/abenz1267/walker/blob/master/resources/themes/default/style.css
+      style = " /* css */ ";
+
+      # Check out the default layouts for examples https://github.com/abenz1267/walker/tree/master/resources/themes/default
+      layouts = {
+        "layout" = " <!-- xml --> ";
+        "item_calc" = " <!-- xml --> "
+        # other provider layouts
+      };
+    };
+    "other theme name" = {
+        # ...
+    };
+    # more themes
+  };
+}
 ```
 
-Additionally, there is 2 binary caches which can be used by adding the following to you config:
+Optionally, there is 2 binary caches which can be used by adding the following to you config:
 
 ```nix
 nix.settings = {
-  extra-substituters = ["https://walker.cachix.org"];
-  trusted-public-keys = ["walker.cachix.org-1:fG8q+uAaMqhsMxWjwvk0IMb4mFPFLqHjuvfwQxE4oJM="];
-};
-```
-
-```nix
-nix.settings = {
-  extra-substituters = ["https://walker-git.cachix.org"];
-  trusted-public-keys = ["walker-git.cachix.org-1:vmC0ocfPWh0S/vRAQGtChuiZBTAe4wiKDeyyXM0/7pM="];
+  extra-substituters = ["https://walker.cachix.org" "https://walker-git.cachix.org"];
+  extra-trusted-public-keys = ["walker.cachix.org-1:fG8q+uAaMqhsMxWjwvk0IMb4mFPFLqHjuvfwQxE4oJM=" "walker-git.cachix.org-1:vmC0ocfPWh0S/vRAQGtChuiZBTAe4wiKDeyyXM0/7pM="];
 };
 ```
 
 </details>
-
-### Dependencies
-
-- GTK4 (version 4.6+)
-- gtk4-layer-shell
-- Protocol Buffers compiler
-- cairo
-- poppler-glib
-- make sure [elephant](https://github.com/abenz1267/elephant) is running before starting Walker
 
 ## Usage
 

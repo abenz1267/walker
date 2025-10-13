@@ -12,10 +12,11 @@
   inherit (lib.trivial) importTOML;
   inherit (lib.meta) getExe;
   inherit (lib.types) nullOr bool;
-  inherit (lib) optional types;
+  inherit (lib) optional types mapAttrs' mapAttrsToList nameValuePair mkDefault literalExpression;
+
+  cfg = config.programs.walker;
 
   tomlFormat = pkgs.formats.toml {};
-  cfg = config.programs.walker;
 in {
   imports = [
     elephant.homeManagerModules.default
@@ -24,6 +25,7 @@ in {
   options = {
     programs.walker = {
       enable = mkEnableOption "walker";
+
       package = mkPackageOption self.packages.${pkgs.stdenv.system} "walker" {
         default = "default";
         pkgsText = "walker.packages.\${pkgs.stdenv.system}";
@@ -32,7 +34,7 @@ in {
       runAsService = mkOption {
         type = bool;
         default = false;
-        description = "Run walker as a service for faster startup times.";
+        description = "Run walker as a service for faster launch times.";
       };
 
       config = mkOption {
@@ -40,12 +42,62 @@ in {
         default = importTOML ../../resources/config.toml;
         defaultText = "importTOML ../../resources/config.toml";
         description = ''
-          Configuration written to {file}`$XDG_CONFIG_HOME/walker/config.toml`.
+          Configuration options for walker.
 
-          See <https://github.com/abenz1267/walker/wiki/Basic-Configuration> for the full list of options.
+          See the default configuration for available options: <https://github.com/abenz1267/walker/blob/master/resources/config.toml>
         '';
       };
 
+      themes = mkOption {
+        type = types.attrsOf (types.submodule {
+          options = {
+            style = mkOption {
+              type = types.lines;
+              default = "";
+              description = ''
+                The GTK CSS stylesheet used by this theme.
+
+                See the default style sheet for available classes: <https://github.com/abenz1267/walker/blob/master/resources/themes/default/style.css>
+              '';
+            };
+
+            layouts = mkOption {
+              type = types.attrsOf types.str;
+              default = {};
+              description = ''
+                The GTK xml layouts used for each provider.
+
+                See the default layouts for correct names and structure: <https://github.com/abenz1267/walker/tree/master/resources/themes/default>
+              '';
+            };
+          };
+        });
+        default = {};
+        example = literalExpression ''
+          themes."your-theme-name" = {
+            style = \'\'
+              /* CSS */
+            \'\';
+            layouts = {
+              "layout" = \'\'
+                <!-- XML Layout -->
+              \'\';
+              "item_calc" = \'\'
+                <!-- XML Layout -->
+              \'\';
+            };
+          };
+        '';
+        description = "Set of themes usable by walker";
+      };
+
+      elephant = mkOption {
+        inherit (tomlFormat) type;
+        default = {};
+        description = "Configuration for elephant";
+      };
+
+      # The `theme` option will soon be deprecated please use the above `themes` option instead.
       theme = mkOption {
         type = with types;
           nullOr (submodule {
@@ -64,55 +116,105 @@ in {
             };
           });
         default = null;
-        description = "The custom theme used by walker. Setting this option overrides `settings.theme`.";
-      };
-
-      elephant = mkOption {
-        inherit (tomlFormat) type;
-        default = {};
-        description = "Configuration for elephant";
+        description = "The custom theme used by walker. Setting this option overrides `programs.walker.config.theme`.";
       };
     };
   };
 
-  config = mkIf cfg.enable (mkMerge [
-    {
-      programs.elephant = mkMerge [
-        {enable = true;}
-        cfg.elephant
-      ];
+  config = mkIf cfg.enable {
+    warnings = optional (cfg.theme != null) ''
+      The option `programs.walker.theme` is deprecated. Please migrate to `programs.walker.themes` instead.
 
-      home.packages = [cfg.package];
+      From
 
-      xdg.configFile."walker/config.toml".source = mkIf (cfg.config != {}) (
-        tomlFormat.generate "walker-config.toml" cfg.config
-      );
-
-      systemd.user.services.walker = mkIf cfg.runAsService {
-        Unit = {
-          Description = "Walker - Application Runner";
-          ConditionEnvironment = "WAYLAND_DISPLAY";
-          After = [
-            "graphical-session.target"
-            "elephant.service"
-          ];
-          Requires = ["elephant.service"];
-          PartOf = ["graphical-session.target"];
-          X-Restart-Triggers =
-            optional (cfg.config != []) "${config.xdg.configFile."walker/config.toml".source}"
-            ++ optional (cfg.theme != null) "${config.xdg.configFile."walker/themes/${cfg.theme.name}/style.css".source}";
-        };
-        Service = {
-          ExecStart = "${getExe cfg.package} --gapplication-service";
-          Restart = "on-failure";
-        };
-        Install.WantedBy = ["graphical-session.target"];
+      programs.walker.theme = {
+        name = "${cfg.theme.name}";
+        style = " /* CSS */ ";
       };
-    }
 
-    (mkIf (cfg.theme != null) {
-      programs.walker.config.theme = cfg.theme.name;
-      xdg.configFile."walker/themes/${cfg.theme.name}/style.css".text = cfg.theme.style;
-    })
-  ]);
+      to
+
+      programs.walker = {
+        config.theme = "${cfg.theme.name}";
+        themes.${cfg.theme.name} = {
+          style = " /* CSS */ ";
+        };
+      }
+    '';
+
+    programs.elephant = mkMerge [
+      {enable = true;}
+      cfg.elephant
+    ];
+
+    home.packages = [cfg.package];
+
+    # deprecated functions start
+    programs.walker = mkIf (cfg.theme != null) {
+      themes = {
+        "${cfg.theme.name}" = mkDefault {
+          style = cfg.theme.style;
+        };
+      };
+
+      config.theme = mkDefault cfg.theme.name;
+    };
+    # deprecated functions end
+
+    xdg.configFile = mkMerge [
+      # Generate config file
+      (
+        mkIf (cfg.config != {}) {
+          "walker/config.toml".source = tomlFormat.generate "walker-config.toml" cfg.config;
+        }
+      )
+
+      # Generate theme files
+      (
+        mkMerge (
+          mapAttrsToList
+          (
+            themeName: theme:
+              {
+                "walker/themes/${themeName}/style.css".text = theme.style;
+              }
+              // (
+                mapAttrs'
+                (
+                  layoutName: layoutContent:
+                    nameValuePair "walker/themes/${themeName}/${layoutName}.xml" {
+                      text = layoutContent;
+                    }
+                )
+                theme.layouts
+              )
+          )
+          cfg.themes
+        )
+      )
+    ];
+
+    systemd.user.services.walker = mkIf cfg.runAsService {
+      Unit = {
+        Description = "Walker - Application Runner";
+        ConditionEnvironment = "WAYLAND_DISPLAY";
+        After = [
+          "graphical-session.target"
+          "elephant.service"
+        ];
+        Requires = ["elephant.service"];
+        PartOf = ["graphical-session.target"];
+        X-Restart-Triggers = [
+          (builtins.hashString "sha256" (builtins.toJSON {
+            inherit (cfg) config themes;
+          }))
+        ];
+      };
+      Service = {
+        ExecStart = "${getExe cfg.package} --gapplication-service";
+        Restart = "on-failure";
+      };
+      Install.WantedBy = ["graphical-session.target"];
+    };
+  };
 }

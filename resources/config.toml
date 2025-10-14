@@ -44,6 +44,10 @@ prefix = ";"
 provider = "providerlist"
 
 [[providers.prefixes]]
+prefix = ">"
+provider = "runner"
+
+[[providers.prefixes]]
 prefix = "/"
 provider = "files"
 

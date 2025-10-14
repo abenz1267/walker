@@ -139,7 +139,7 @@ in {
         themes."${cfg.theme.name}" = {
           style = " /* CSS */ ";
         };
-      }
+      };
     '';
 
     services.elephant = mkMerge [

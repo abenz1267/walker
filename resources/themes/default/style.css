@@ -176,3 +176,7 @@ child:selected .item-box {
   background: @error_bg_color;
   color: @error_fg_color;
 }
+
+.current {
+  font-style: italic;
+}

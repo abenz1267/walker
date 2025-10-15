@@ -177,7 +177,7 @@ fn add_flags(app: &Application) {
         b'N'.into(),
         OptionFlags::NONE,
         glib::OptionArg::None,
-        "hide search input",
+        "hide keybind hints",
         None,
     );
 

@@ -177,6 +177,6 @@ child:selected .item-box {
   color: @error_fg_color;
 }
 
-.current {
+:not(.calc).current {
   font-style: italic;
 }

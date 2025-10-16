@@ -88,6 +88,8 @@ imports = [inputs.walker.nixosModules.default];
 programs.walker.enable = true;
 ```
 
+> Note: this option doesn't support the `runAsService` option; It is recommended that you launch the elephant and walker services using your desktop instead.
+
 **Option C** (Package): Add `inputs.walker.packages.<system>.default` to your system packages or home-manager packages. replace `<system>` with your system architecture. Note: This option doesn't support configuration using nix.
 
 ```nix
@@ -103,7 +105,7 @@ environment.systemPackages = [inputs.walker.packages.<system>.default];
 ```nix
 programs.walker = {
   enable = true;
-  runAsService = true;
+  runAsService = true; # Note: this option isn't supported in the NixOS module only in the home-manager module
 
   # All options from the config.toml can be used here https://github.com/abenz1267/walker/blob/master/resources/config.toml
   config = {

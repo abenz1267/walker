@@ -12,7 +12,7 @@
   inherit (lib.trivial) importTOML;
   inherit (lib.meta) getExe;
   inherit (lib.types) nullOr bool;
-  inherit (lib) optional types mapAttrs' mapAttrsToList nameValuePair mkDefault literalExpression;
+  inherit (lib) optionalString types mapAttrs' mapAttrsToList nameValuePair mkDefault literalExpression;
 
   cfg = config.programs.walker;
 
@@ -31,6 +31,7 @@ in {
         pkgsText = "walker.packages.\${pkgs.stdenv.system}";
       };
 
+      # This option doesn't work in the NixOS module
       runAsService = mkOption {
         type = bool;
         default = false;
@@ -122,34 +123,48 @@ in {
   };
 
   config = mkIf cfg.enable {
-    warnings = optional (cfg.theme != null) ''
-      The option `programs.walker.theme` is deprecated. Please migrate to `programs.walker.themes` instead.
+    warnings = [
+      (optionalString (cfg.theme != null) ''
+        The option `programs.walker.theme` is deprecated. Please migrate to `programs.walker.themes` instead.
 
-      From
+        From
 
-      programs.walker.theme = {
-        name = "${cfg.theme.name}";
-        style = " /* CSS */ ";
-      };
-
-      to
-
-      programs.walker = {
-        config.theme = "${cfg.theme.name}";
-        themes."${cfg.theme.name}" = {
+        programs.walker.theme = {
+          name = "${cfg.theme.name}";
           style = " /* CSS */ ";
         };
-      };
-    '';
+
+        to
+
+        programs.walker = {
+          config.theme = "${cfg.theme.name}";
+          themes."${cfg.theme.name}" = {
+            style = " /* CSS */ ";
+          };
+        };
+      '')
+
+      (optionalString cfg.runAsService ''
+        The option `programs.walker.runAsService` is not supported in the NixOS module. It is recommended that you launch the elephant and walker services using your desktop instead.
+
+        elephant
+
+        walker --gapplication-service
+      '')
+    ];
 
     services.elephant = mkMerge [
-      {enable = true;}
+      {
+        enable = true;
+        installService = false; # Disable service option since its broken
+      }
       cfg.elephant
     ];
 
     environment.systemPackages = [cfg.package];
 
     # deprecated functions start
+
     programs.walker = mkIf (cfg.theme != null) {
       themes = {
         "${cfg.theme.name}" = mkDefault {
@@ -194,22 +209,22 @@ in {
       )
     ];
 
-    systemd.services.walker = mkIf cfg.runAsService {
-      description = "Walker - Application Runner";
-      unitConfig = {
-        ConditionEnvironment = "WAYLAND_DISPLAY";
-      };
-      after = [
-        "graphical-session.target"
-        "elephant.service"
-      ];
-      requires = ["elephant.service"];
-      partOf = ["graphical-session.target"];
-      wantedBy = ["graphical-session.target"];
-      serviceConfig = {
-        ExecStart = "${getExe cfg.package} --gapplication-service";
-        Restart = "on-failure";
-      };
-    };
+    # systemd.services.walker = mkIf cfg.runAsService {
+    #   description = "Walker - Application Runner";
+    #   unitConfig = {
+    #     ConditionEnvironment = "WAYLAND_DISPLAY";
+    #   };
+    #   after = [
+    #     "graphical-session.target"
+    #     "elephant.service"
+    #   ];
+    #   requires = ["elephant.service"];
+    #   partOf = ["graphical-session.target"];
+    #   wantedBy = ["graphical-session.target"];
+    #   serviceConfig = {
+    #     ExecStart = "${getExe cfg.package} --gapplication-service";
+    #     Restart = "on-failure";
+    #   };
+    # };
   };
 }

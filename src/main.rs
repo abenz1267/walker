@@ -375,26 +375,32 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
         set_current_set(set.to_string());
     }
 
+    set_parameter_height(None);
     if let Some(val) = options.lookup_value("height", Some(VariantTy::INT64)) {
         set_parameter_height(Some(val.get::<i64>().unwrap() as i32));
     }
 
+    set_parameter_width(None);
     if let Some(val) = options.lookup_value("width", Some(VariantTy::INT64)) {
         set_parameter_width(Some(val.get::<i64>().unwrap() as i32));
     }
 
+    set_parameter_min_width(None);
     if let Some(val) = options.lookup_value("minwidth", Some(VariantTy::INT64)) {
         set_parameter_min_width(Some(val.get::<i64>().unwrap() as i32));
     }
 
+    set_parameter_min_height(None);
     if let Some(val) = options.lookup_value("minheight", Some(VariantTy::INT64)) {
         set_parameter_min_height(Some(val.get::<i64>().unwrap() as i32));
     }
 
+    set_parameter_max_width(None);
     if let Some(val) = options.lookup_value("maxwidth", Some(VariantTy::INT64)) {
         set_parameter_max_width(Some(val.get::<i64>().unwrap() as i32));
     }
 
+    set_parameter_max_height(None);
     if let Some(val) = options.lookup_value("maxheight", Some(VariantTy::INT64)) {
         set_parameter_max_height(Some(val.get::<i64>().unwrap() as i32));
     }
@@ -526,6 +532,8 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 fn activate(app: &Application) {
     let cfg = get_config();
 
+    apply_flag_logic();
+
     if is_dmenu() && is_visible() {
         return;
     }
@@ -539,6 +547,46 @@ fn activate(app: &Application) {
         return;
     }
 
+    let provider = get_provider();
+    let provider = if provider.is_empty() {
+        "default"
+    } else {
+        provider.as_str()
+    };
+
+    with_window(|w| {
+        setup_css(get_theme());
+
+        if let Some(input) = &w.input {
+            if is_service() && provider != "default" {
+                input.emit_by_name::<()>("changed", &[]);
+            }
+
+            input.grab_focus();
+        }
+
+        if !is_connected() && !is_dmenu() {
+            w.elephant_hint.set_visible(true);
+            w.scroll.set_visible(false);
+        } else {
+            w.elephant_hint.set_visible(false);
+        }
+
+        w.window.set_visible(true);
+
+        if !is_dmenu() && !is_connected() && has_elephant() {
+            thread::spawn(|| init_socket().unwrap());
+        } else if !has_elephant() && !is_dmenu() {
+            println!("Please install elephant.");
+            process::exit(1);
+        }
+    });
+
+    set_is_visible(true);
+}
+
+fn apply_flag_logic() {
+    let cfg = get_config();
     let provider = get_provider();
     let provider = if provider.is_empty() {
         "default"
@@ -627,35 +675,7 @@ fn activate(app: &Application) {
         {
             hints.set_visible(false);
         }
-
-        setup_css(get_theme());
-
-        if let Some(input) = &w.input {
-            if is_service() && provider != "default" {
-                input.emit_by_name::<()>("changed", &[]);
-            }
-
-            input.grab_focus();
-        }
-
-        if !is_connected() && !is_dmenu() {
-            w.elephant_hint.set_visible(true);
-            w.scroll.set_visible(false);
-        } else {
-            w.elephant_hint.set_visible(false);
-        }
-
-        w.window.set_visible(true);
-
-        if !is_dmenu() && !is_connected() && has_elephant() {
-            thread::spawn(|| init_socket().unwrap());
-        } else if !has_elephant() && !is_dmenu() {
-            println!("Please install elephant.");
-            process::exit(1);
-        }
     });
-
-    set_is_visible(true);
 }
 
 fn startup(app: &Application) {
@@ -708,6 +728,17 @@ fn listen_activation_socket(app_clone: Application) {
             match listener.accept() {
                 Ok((stream, _)) => {
                     drop(stream);
+                    set_parameter_width(None);
+                    set_parameter_height(None);
+                    set_parameter_min_width(None);
+                    set_parameter_max_width(None);
+                    set_parameter_min_height(None);
+                    set_parameter_max_height(None);
+                    set_is_dmenu(false);
+                    set_dmenu_keep_open(false);
+                    set_param_close(false);
+                    set_hide_qa(false);
+
                     activate(&app_clone);
                 }
                 Err(e) if e.kind() == std::io::ErrorKind::WouldBlock => {}

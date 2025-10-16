@@ -38,7 +38,7 @@
             <style>
               <class name="item-text"></class>
             </style>
-            <property name="wrap">false</property>
+            <property name="ellipsize">end</property>
             <property name="vexpand_set">true</property>
             <property name="vexpand">true</property>
             <property name="xalign">0</property>
@@ -49,7 +49,7 @@
             <style>
               <class name="item-subtext"></class>
             </style>
-            <property name="wrap">true</property>
+            <property name="ellipsize">end</property>
             <property name="vexpand_set">true</property>
             <property name="vexpand">true</property>
             <property name="xalign">0</property>

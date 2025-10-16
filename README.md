@@ -83,7 +83,7 @@ programs.walker.enable = true;
 **Option B** (NixOS Module): Import the nixos module in your NixOS config and enable walker
 
 ```nix
-imports = [inputs.walker.homeManagerModules.default];
+imports = [inputs.walker.nixosModules.default];
 
 programs.walker.enable = true;
 ```

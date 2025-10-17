@@ -97,7 +97,7 @@ in {
         description = "Configuration for elephant";
       };
 
-      # The `theme` option will soon be deprecated please use the above `themes` option instead.
+      # The `theme` option will is deprecated please use the above `themes` option instead.
       theme = mkOption {
         type = with types;
           nullOr (submodule {
@@ -136,10 +136,10 @@ in {
 
       programs.walker = {
         config.theme = "${cfg.theme.name}";
-        themes.${cfg.theme.name} = {
+        themes."${cfg.theme.name}" = {
           style = " /* CSS */ ";
         };
-      }
+      };
     '';
 
     programs.elephant = mkMerge [
@@ -206,7 +206,7 @@ in {
         PartOf = ["graphical-session.target"];
         X-Restart-Triggers = [
           (builtins.hashString "sha256" (builtins.toJSON {
-            inherit (cfg) config themes;
+            inherit (cfg) config themes elephant;
           }))
         ];
       };

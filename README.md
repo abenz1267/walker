@@ -88,7 +88,9 @@ imports = [inputs.walker.nixosModules.default];
 programs.walker.enable = true;
 ```
 
-**Option C** (Package): Add `inputs.walker.packages.<system>.default` to your system packages or home-manager packages. replace `<system>` with your system architecture
+> Note: this option doesn't support the `runAsService` option; It is recommended that you launch the elephant and walker services using your desktop instead.
+
+**Option C** (Package): Add `inputs.walker.packages.<system>.default` to your system packages or home-manager packages. replace `<system>` with your system architecture. Note: This option doesn't support configuration using nix.
 
 ```nix
 home.packages = [inputs.walker.packages.<system>.default];
@@ -96,15 +98,14 @@ home.packages = [inputs.walker.packages.<system>.default];
 
 ```nix
 environment.systemPackages = [inputs.walker.packages.<system>.default];
-
 ```
 
-#### 3. Configure walker:
+#### 3. Configure walker
 
 ```nix
 programs.walker = {
   enable = true;
-  runAsService = true;
+  runAsService = true; # Note: this option isn't supported in the NixOS module only in the home-manager module
 
   # All options from the config.toml can be used here https://github.com/abenz1267/walker/blob/master/resources/config.toml
   config = {
@@ -116,9 +117,9 @@ programs.walker = {
     ];
     keybinds.quick_activate = ["F1" "F2" "F3"];
   };
-
+  
+  # Set `programs.walker.config.theme="your theme name"` to choose the default theme
   themes = {
-    # set `programs.walker.config.theme="your theme name"` to choose the default theme
     "your theme name" = {
       # Check out the default css theme as an example https://github.com/abenz1267/walker/blob/master/resources/themes/default/style.css
       style = " /* css */ ";
@@ -126,7 +127,7 @@ programs.walker = {
       # Check out the default layouts for examples https://github.com/abenz1267/walker/tree/master/resources/themes/default
       layouts = {
         "layout" = " <!-- xml --> ";
-        "item_calc" = " <!-- xml --> "
+        "item_calc" = " <!-- xml --> ";
         # other provider layouts
       };
     };
@@ -135,7 +136,7 @@ programs.walker = {
     };
     # more themes
   };
-}
+};
 ```
 
 Optionally, there is 2 binary caches which can be used by adding the following to you config:
@@ -199,7 +200,7 @@ You can customize rendering of list items for each provider individually, f.e. "
 
 Please refer to [the GTK4 docs](https://docs.gtk.org/gtk4/) to checkout how to write `*.xml` files for GTK4.
 
-**THE DEFAULT THEME CANNOT BE CHANGED**.
+You can set the default theme in your `config.toml` f.e. `theme = "yours"`.
 
 ## Contributing
 

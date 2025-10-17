@@ -222,7 +222,7 @@ fn add_flags(app: &Application) {
         b'p'.into(),
         OptionFlags::NONE,
         glib::OptionArg::String,
-        "input placeholder. dmenu only.",
+        "input placeholder.",
         None,
     );
 
@@ -408,6 +408,10 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     set_no_search(options.contains("nosearch"));
     set_no_hints(options.contains("nohints"));
 
+    if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING)) {
+        set_placeholder(val.str().unwrap().to_string());
+    }
+
     'dmenu: {
         if !options.contains("dmenu") {
             set_dmenu_keep_open(false);
@@ -418,10 +422,6 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
         }
 
         set_index(options.contains("index"));
-
-        if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING)) {
-            set_placeholder(val.str().unwrap().to_string());
-        }
 
         set_input_only(options.contains("inputonly"));
 

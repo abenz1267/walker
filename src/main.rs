@@ -65,7 +65,7 @@ use crate::ui::window::{
 static GLOBAL_DMENU_SENDER: RwLock<Option<Sender<String>>> = RwLock::new(None);
 
 thread_local! {
-    static HOLD_GUARD: OnceCell<ApplicationHoldGuard> = OnceCell::new();
+    static HOLD_GUARD: OnceCell<ApplicationHoldGuard> = const { OnceCell::new() };
 }
 
 fn main() -> glib::ExitCode {
@@ -74,7 +74,7 @@ fn main() -> glib::ExitCode {
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 
-    app.connect_handle_local_options(|_, _| return -1);
+    app.connect_handle_local_options(|_, _| -1);
 
     add_flags(&app);
 
@@ -143,7 +143,7 @@ fn send_message(message: String) {
     let mut sender_guard = GLOBAL_DMENU_SENDER.write().unwrap();
 
     if let Some(sender) = sender_guard.take() {
-        if let Err(_) = sender.send(message) {
+        if sender.send(message).is_err() {
             println!("the receiver dropped");
         }
 

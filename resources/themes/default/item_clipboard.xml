@@ -6,7 +6,7 @@
       <class name="item-box"></class>
     </style>
     <property name="orientation">horizontal</property>
-    <property name="spacing">0</property>
+    <property name="spacing">10</property>
     <child>
       <object class="GtkBox">
         <property name="orientation">vertical</property>

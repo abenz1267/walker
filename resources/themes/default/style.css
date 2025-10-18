@@ -80,7 +80,6 @@ child {
 }
 
 .item-quick-activation {
-  margin-left: 10px;
   background: alpha(@accent_bg_color, 0.25);
   border-radius: 5px;
   padding: 10px;
@@ -94,17 +93,9 @@ child:selected .item-box {
 .item-text-box {
 }
 
-.item-text {
-}
-
 .item-subtext {
   font-size: 12px;
   opacity: 0.5;
-}
-
-.item-image,
-.item-image-text {
-  margin-right: 10px;
 }
 
 .item-image-text {

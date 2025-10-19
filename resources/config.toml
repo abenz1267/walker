@@ -78,7 +78,7 @@ time_format = "%d.%m. - %H:%M" # format for the clipboard item date
 fallback = [
   { action = "menus:open", label = "open", after = "Nothing" },
   { action = "menus:default", label = "run", after = "Close" },
-  { action = "menus:parent", bind = "Escape", label = "back", after = "Nothing" },
+  { action = "menus:parent", bind = "Escape", global = true, label = "back", after = "Nothing" },
   { action = "erase_history", label = "clear hist", bind = "ctrl h", after = "AsyncReload" },
 ]
 

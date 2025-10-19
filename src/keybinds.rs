@@ -290,6 +290,9 @@ pub fn get_provider_bind(
 ) -> Option<Action> {
     let mut action = None;
 
+    // remove hardcoded global binds for elephant
+    let actions: Vec<_> = actions.iter().filter(|a| **a != "menus:parent").collect();
+
     if let Ok(binds) = PROVIDER_BINDS.read() {
         action = binds
             .get(provider)
@@ -298,7 +301,7 @@ pub fn get_provider_bind(
             .and_then(|actions_list| {
                 actions_list
                     .iter()
-                    .find(|action| actions.contains(&action.action))
+                    .find(|action| actions.contains(&&action.action))
                     .cloned()
             });
 
@@ -310,7 +313,7 @@ pub fn get_provider_bind(
                 .and_then(|actions_list| {
                     actions_list
                         .iter()
-                        .find(|action| actions.contains(&action.action))
+                        .find(|action| actions.contains(&&action.action))
                         .cloned()
                 });
         }

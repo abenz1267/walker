@@ -114,14 +114,29 @@ pub trait Provider: Sync + Send + Debug {
             && (result.is_empty()
                 || (result.len() == 1 && result.first().unwrap().global.unwrap_or(false)))
         {
-            result.push(Action {
-                action: actions.first().unwrap().to_string(),
-                global: None,
-                default: Some(true),
-                bind: Some("Return".to_string()),
-                after: None,
-                label: None,
-            });
+            if result.len() == 1 {
+                result.push(Action {
+                    action: actions
+                        .iter()
+                        .find(|a| result.first().unwrap().action != **a)
+                        .unwrap()
+                        .to_string(),
+                    global: None,
+                    default: Some(true),
+                    bind: Some("Return".to_string()),
+                    after: None,
+                    label: None,
+                });
+            } else {
+                result.push(Action {
+                    action: actions.first().unwrap().to_string(),
+                    global: None,
+                    default: Some(true),
+                    bind: Some("Return".to_string()),
+                    after: None,
+                    label: None,
+                });
+            }
         }
 
         result.sort_by_key(|v| v.default.unwrap_or(false));

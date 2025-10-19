@@ -218,23 +218,23 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
 fn start_listening() {
     thread::spawn(|| {
         if let Err(e) = listen_loop() {
-            handle_disconnect();
             eprintln!("Listen loop error: {e}");
+            handle_disconnect();
         }
     });
 
     thread::spawn(|| {
         if let Err(e) = listen_menus_loop() {
-            handle_disconnect();
             eprintln!("Listen menu_loop error: {e}");
+            handle_disconnect();
         }
     });
 
     if PROVIDERS.get().unwrap().get("bluetooth").is_some() {
         thread::spawn(|| {
             if let Err(e) = listen_bluetooth_loop() {
+                eprintln!("Listen bluetooth_loop error: {e}");
                 handle_disconnect();
-                eprintln!("Listen menu_loop error: {e}");
             }
         });
     }
@@ -544,7 +544,8 @@ fn query(text: &str) {
 
     if let Some(conn) = CONN.lock().unwrap().as_mut() {
         match conn.write_all(&buffer) {
-            Err(_) => {
+            Err(e) => {
+                eprintln!("send query socket error: {e}");
                 handle_disconnect();
             }
             _ => (),
@@ -583,7 +584,8 @@ pub fn clipboard_disable_images_only() {
 
     if let Some(conn) = conn_guard.as_mut() {
         match conn.write_all(&buffer) {
-            Err(_) => {
+            Err(e) => {
+                eprintln!("send clipboard disable images only socket error: {e}");
                 handle_disconnect();
             }
             _ => (),
@@ -667,7 +669,8 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
 
     if let Some(conn) = conn_guard.as_mut() {
         match conn.write_all(&buffer) {
-            Err(_) => {
+            Err(e) => {
+                eprintln!("send activate socket error: {e}");
                 handle_disconnect();
             }
             _ => (),

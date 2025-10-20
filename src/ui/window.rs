@@ -27,6 +27,7 @@ use crate::{
     },
     theme::{Theme, setup_layer_shell, with_themes},
 };
+use cairo::glib::property::PropertyGet;
 use gtk4::{
     Application, Builder, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
@@ -816,18 +817,20 @@ fn resume_last_query() {
 
 pub fn toggle_exact() {
     with_window(|w| {
-        let Some(i) = &w.input else {
-            return;
-        };
+        let Some(i) = &w.input else { return };
 
         let cfg = get_config();
-        if i.text().starts_with(&cfg.exact_search_prefix)
-            && let Some(t) = i.text().strip_prefix(&cfg.exact_search_prefix)
-        {
-            set_input_text(t);
-        } else if i.text().strip_prefix(&cfg.exact_search_prefix).is_some() {
-            set_input_text(&format!("{}{}", cfg.exact_search_prefix, i.text()));
-        }
+        let prefix = get_current_prefix();
+        let input_text = i.text();
+
+        let text = input_text.strip_prefix(&prefix).unwrap_or(&input_text);
+
+        let toggled = match text.strip_prefix(&cfg.exact_search_prefix) {
+            Some(t) => t.to_string(),
+            None => format!("{}{}", cfg.exact_search_prefix, text),
+        };
+
+        set_input_text(&format!("{}{}", prefix, toggled));
     });
 }
 

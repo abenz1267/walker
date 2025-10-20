@@ -3,21 +3,31 @@ use crate::protos::generated_proto::query::query_response::Item;
 use crate::ui::window::get_selected_item;
 use crate::{quit, with_window};
 use gtk4::gdk::ContentProvider;
-use gtk4::gio::File;
+use gtk4::gio::{self, Cancellable, File};
 use gtk4::glib::{self, Bytes};
 use gtk4::{
     Box as GtkBox, Builder, ContentFit, DragSource, Image, Orientation, Picture, PolicyType,
-    ScrolledWindow, Stack, TextView, Video, WrapMode,
+    ScrolledWindow, Stack, TextView, Video, WrapMode, gdk_pixbuf, prelude::*,
 };
-use gtk4::{gio, prelude::*};
 use poppler::{Document, Page};
 use std::cell::RefCell;
+use std::collections::HashMap;
 use std::fs;
 use std::path::Path;
+use std::rc::Rc;
 
 #[derive(Debug)]
 pub struct FilesPreviewHandler {
     cached_preview: RefCell<Option<FilePreview>>,
+}
+
+#[derive(Debug)]
+pub struct FilePreview {
+    pub box_widget: GtkBox,
+    preview_area: Stack,
+    current_file: String,
+    image_cache: Rc<RefCell<HashMap<String, gtk4::gdk::Texture>>>,
+    pub current_video_cancellable: Rc<RefCell<Option<Cancellable>>>,
 }
 
 impl FilesPreviewHandler {
@@ -33,6 +43,7 @@ impl PreviewHandler for FilesPreviewHandler {
         let mut cached_preview = self.cached_preview.borrow_mut();
         if let Some(preview) = cached_preview.as_mut() {
             preview.clear_preview();
+            preview.image_cache.borrow_mut().clear();
         }
         *cached_preview = None;
     }
@@ -113,13 +124,6 @@ impl PreviewHandler for FilesPreviewHandler {
     }
 }
 
-#[derive(Debug)]
-pub struct FilePreview {
-    pub box_widget: GtkBox,
-    preview_area: Stack,
-    current_file: String,
-}
-
 impl FilePreview {
     pub fn new_with_builder(builder: &Builder) -> Result<Self, Box<dyn std::error::Error>> {
         let box_widget = builder
@@ -134,6 +138,8 @@ impl FilePreview {
             box_widget,
             preview_area,
             current_file: String::new(),
+            image_cache: Rc::new(RefCell::new(HashMap::new())),
+            current_video_cancellable: Rc::new(RefCell::new(None)),
         })
     }
 
@@ -146,6 +152,8 @@ impl FilePreview {
             box_widget,
             preview_area,
             current_file: String::new(),
+            image_cache: Rc::new(RefCell::new(HashMap::new())),
+            current_video_cancellable: Rc::new(RefCell::new(None)),
         })
     }
 
@@ -315,7 +323,6 @@ impl FilePreview {
 
     fn preview_image(&self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
         let picture = Picture::new();
-        picture.set_filename(Some(file_path));
         picture.set_content_fit(ContentFit::Contain);
 
         let scrolled = ScrolledWindow::new();
@@ -325,7 +332,79 @@ impl FilePreview {
         self.preview_area.add_child(&scrolled);
         self.preview_area.set_visible_child(&scrolled);
 
+        if let Some(cached_texture) = self.image_cache.borrow().get(file_path) {
+            picture.set_paintable(Some(cached_texture));
+            return Ok(());
+        }
+
+        let file = gio::File::for_path(file_path);
+        picture.set_file(Some(&file));
+
+        // load and cache in background for future use
+        let file_path_clone = file_path.to_string();
+        let cache_clone = self.image_cache.clone();
+
+        glib::MainContext::ref_thread_default().spawn_local(async move {
+            let cancellable = gio::Cancellable::new();
+            match Self::load_image_async(&file_path_clone, &cancellable, cache_clone).await {
+                Ok(_) => {}
+                Err(e) => {
+                    eprintln!("Failed to cache image {}: {}", file_path_clone, e);
+                }
+            }
+        });
+
         Ok(())
+    }
+
+    async fn load_image_async(
+        file_path: &str,
+        cancellable: &gio::Cancellable,
+        cache: Rc<RefCell<HashMap<String, gtk4::gdk::Texture>>>,
+    ) -> Result<gtk4::gdk::Texture, Box<dyn std::error::Error>> {
+        if let Some(cached_texture) = cache.borrow().get(file_path) {
+            return Ok(cached_texture.clone());
+        }
+
+        let file = gio::File::for_path(file_path);
+
+        let (bytes, _) = file.load_bytes_future().await?;
+        let stream = gio::MemoryInputStream::from_bytes(&bytes);
+
+        let pixbuf = gdk_pixbuf::Pixbuf::from_stream(&stream, Some(cancellable))?;
+
+        // Downscale to small size for fast preview (max 360x360)
+        let max_size = 360;
+        let (width, height) = (pixbuf.width(), pixbuf.height());
+        let (new_width, new_height) = if width > max_size || height > max_size {
+            let ratio = (max_size as f64) / (width.max(height) as f64);
+            (
+                (width as f64 * ratio) as i32,
+                (height as f64 * ratio) as i32,
+            )
+        } else {
+            (width, height)
+        };
+
+        let scaled_pixbuf = if new_width != width || new_height != height {
+            pixbuf
+                .scale_simple(new_width, new_height, gdk_pixbuf::InterpType::Bilinear)
+                .ok_or("Failed to scale image")?
+        } else {
+            pixbuf
+        };
+
+        let texture = gtk4::gdk::Texture::for_pixbuf(&scaled_pixbuf);
+
+        let mut cache_mut = cache.borrow_mut();
+        if cache_mut.len() >= 50 {
+            if let Some(key) = cache_mut.keys().next().cloned() {
+                cache_mut.remove(&key);
+            }
+        }
+        cache_mut.insert(file_path.to_string(), texture.clone());
+
+        Ok(texture)
     }
 
     fn preview_text(&self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -364,17 +443,71 @@ impl FilePreview {
     }
 
     fn preview_video(&self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let player = Video::for_filename(Some(file_path));
-        player.set_autoplay(true);
+        // Cancel previous load
+        if let Some(c) = self.current_video_cancellable.borrow_mut().take() {
+            c.cancel();
+        }
 
+        let cancellable = Cancellable::new();
+        *self.current_video_cancellable.borrow_mut() = Some(cancellable.clone());
+
+        let scrolled = self.get_or_create_scrolled();
+        scrolled.set_size_request(128, 72);
+        scrolled.set_child(None::<gtk4::Widget>.as_ref());
+
+        let placeholder = GtkBox::new(Orientation::Vertical, 10);
+        placeholder.set_halign(gtk4::Align::Center);
+        placeholder.set_valign(gtk4::Align::Center);
+        let icon = Image::from_icon_name("video-x-generic");
+        icon.set_pixel_size(64);
+        placeholder.append(&icon);
+        scrolled.set_child(Some(&placeholder));
+
+        self.preview_area.set_visible_child(&scrolled);
+
+        //added a 200ms debounce to make fast scrolling smoother
+        let file_path_clone = file_path.to_string();
+        let scrolled_clone = scrolled.clone();
+        let placeholder_clone = placeholder.clone();
+        let cancellable_clone = cancellable.clone();
+
+        glib::timeout_add_local(std::time::Duration::from_millis(200), move || {
+            if cancellable_clone.is_cancelled() {
+                return glib::ControlFlow::Break;
+            }
+            if !scrolled_clone.is_visible() {
+                return glib::ControlFlow::Break;
+            }
+
+            let file = gio::File::for_path(&file_path_clone);
+            let video = Video::for_file(Some(&file));
+            video.set_autoplay(true);
+
+            // Replace placeholder with video
+            placeholder_clone.set_visible(false);
+            scrolled_clone.set_child(Some(&video));
+
+            glib::ControlFlow::Break
+        });
+
+        Ok(())
+    }
+
+    fn get_or_create_scrolled(&self) -> ScrolledWindow {
+        if let Some(child) = self.preview_area.first_child() {
+            if let Ok(scrolled) = child.downcast::<ScrolledWindow>() {
+                return scrolled;
+            }
+        }
         let scrolled = ScrolledWindow::new();
-        scrolled.set_child(Some(&player));
         scrolled.set_policy(PolicyType::Automatic, PolicyType::Automatic);
         scrolled.set_size_request(300, 250);
-
+        scrolled.set_halign(gtk4::Align::Fill);
+        scrolled.set_valign(gtk4::Align::Fill);
+        scrolled.set_hexpand(true);
+        scrolled.set_vexpand(true);
         self.preview_area.add_child(&scrolled);
-        self.preview_area.set_visible_child(&scrolled);
-        Ok(())
+        scrolled
     }
 
     fn preview_generic(&self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {

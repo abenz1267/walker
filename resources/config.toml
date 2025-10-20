@@ -71,6 +71,10 @@ provider = "websearch"
 prefix = ":"
 provider = "clipboard"
 
+[[providers.prefixes]]
+prefix = "$"
+provider = "windows"
+
 [providers.clipboard]
 time_format = "%d.%m. - %H:%M" # format for the clipboard item date
 

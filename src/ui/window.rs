@@ -16,12 +16,12 @@ use crate::{
         get_initial_max_width, get_initial_min_height, get_initial_min_width,
         get_initial_placeholder, get_initial_width, get_last_query, get_prefix_provider,
         get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open,
-        is_service, is_visible, query, set_async_after, set_current_prefix, set_current_set,
-        set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa,
-        set_index, set_initial_height, set_initial_max_height, set_initial_max_width,
-        set_initial_min_height, set_initial_min_width, set_initial_placeholder, set_initial_width,
-        set_input_only, set_is_dmenu, set_is_visible, set_last_query, set_no_hints, set_no_search,
-        set_param_close, set_parameter_height, set_parameter_max_height, set_parameter_max_width,
+        is_service, query, set_async_after, set_current_prefix, set_current_set, set_dmenu_current,
+        set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa, set_index,
+        set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
+        set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
+        set_is_dmenu, set_is_visible, set_last_query, set_no_hints, set_no_search, set_param_close,
+        set_parameter_height, set_parameter_max_height, set_parameter_max_width,
         set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_placeholder,
         set_provider, set_query, set_theme,
     },
@@ -30,7 +30,7 @@ use crate::{
 use gtk4::{
     Application, Builder, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
-    SingleSelection, Window, glib, prelude::BoxExt,
+    SingleSelection, Window, prelude::BoxExt,
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -51,12 +51,10 @@ use gtk4::{
     glib::Object,
     prelude::{EntryExt, GtkWindowExt},
 };
-use gtk4_layer_shell::{KeyboardMode, LayerShell};
 use std::{
     cell::{Cell, OnceCell, RefCell},
     collections::HashMap,
-    process, thread,
-    time::Duration,
+    process,
 };
 
 thread_local! {
@@ -359,7 +357,7 @@ fn activate_default(app: &Application) {
 
             let after = action.after.as_ref().unwrap_or(&AfterAction::Close).clone();
 
-            activate(get_selected_query_response(), &provider, &query, &action);
+            activate(get_selected_query_response(), &provider, &query, action);
 
             let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
 

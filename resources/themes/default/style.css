@@ -98,6 +98,11 @@ child:selected .item-box {
   opacity: 0.5;
 }
 
+.providerlist .item-subtext {
+  font-size: unset;
+  opacity: 0.75;
+}
+
 .item-image-text {
   font-size: 28px;
 }

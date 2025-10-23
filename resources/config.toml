@@ -153,6 +153,11 @@ unicode = [
   { action = "run_cmd", label = "select", default = true, bind = "Return" },
 ]
 
+nirisessions = [
+  { action = "start", label = "start", default = true, bind = "Return" },
+  { action = "start_new", label = "start blank", bind = "ctrl Return" },
+]
+
 clipboard = [
   { action = "copy", default = true, bind = "Return" },
   { action = "remove", bind = "ctrl d", after = "AsyncClearReload" },

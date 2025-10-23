@@ -76,22 +76,7 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
     };
 
     for config_path in config_paths {
-        if !is_service {
-            let mut path = config_path;
-
-            path.push(&theme);
-
-            if let Some(t) = setup_theme_from_path(path.clone(), &combined) {
-                themes.insert(theme.clone(), t);
-                add_theme(theme.clone());
-            }
-
-            path.pop();
-
-            continue;
-        }
-
-        let Ok(theme_dirs) = fs::read_dir(config_path) else {
+        let Ok(theme_dirs) = fs::read_dir(&config_path) else {
             continue;
         };
 
@@ -113,6 +98,21 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
                 themes.insert(theme_name.to_string(), t);
                 add_theme(theme_name.to_string());
             }
+        }
+
+        if !is_service {
+            let mut path = config_path;
+
+            path.push(&theme);
+
+            if let Some(t) = setup_theme_from_path(path.clone(), &combined) {
+                themes.insert(theme.clone(), t);
+                add_theme(theme.clone());
+            }
+
+            path.pop();
+
+            continue;
         }
     }
 

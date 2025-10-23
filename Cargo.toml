@@ -1,6 +1,6 @@
 [package]
 name = "walker"
-version = "2.6.0"
+version = "2.6.1"
 edition = "2024"
 
 [dependencies]

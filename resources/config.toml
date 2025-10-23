@@ -136,6 +136,7 @@ todo = [
   { action = "active", bind = "Return", after = "ClearReload" },
   { action = "inactive", bind = "Return", after = "ClearReload" },
   { action = "done", bind = "ctrl f", after = "ClearReload" },
+  { action = "change_category", bind = "ctrl y", label = "change category", after = "AsyncClearReload" },
   { action = "clear", bind = "ctrl x", after = "ClearReload", global = true },
 ]
 

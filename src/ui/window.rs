@@ -4,7 +4,7 @@ use crate::{
     data::{activate, clipboard_disable_images_only, input_changed},
     keybinds::{
         ACTION_CLOSE, ACTION_QUICK_ACTIVATE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT,
-        ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, Action, AfterAction, get_bind,
+        ACTION_SELECT_PREVIOUS, ACTION_TOGGLE_EXACT, ACTION_SELECT_PAGE_DOWN, ACTION_SELECT_PAGE_UP, Action, AfterAction, get_bind,
         get_provider_bind, get_provider_global_bind,
     },
     protos::generated_proto::query::QueryResponse,
@@ -483,6 +483,8 @@ fn setup_keyboard_handling(ui: &WindowData) {
                         ACTION_SELECT_PREVIOUS => select_previous(),
                         ACTION_TOGGLE_EXACT => toggle_exact(),
                         ACTION_RESUME_LAST_QUERY => resume_last_query(),
+                        ACTION_SELECT_PAGE_DOWN => select_page_down(),
+                        ACTION_SELECT_PAGE_UP => select_page_up(),
                         action if action.starts_with(ACTION_QUICK_ACTIVATE) => {
                             if let Some((_, after)) = action.split_once(":") {
                                 let i: u32 = after.parse().unwrap();
@@ -1028,4 +1030,65 @@ pub fn set_input_text(text: &str) {
             input.emit_by_name::<()>("changed", &[]);
         }
     })
+}
+
+pub fn select_page_down() {
+    disable_mouse();
+
+    with_window(|w| {
+        let selection = &w.selection;
+        if !get_config().selection_wrap {
+            let current = selection.selected();
+            let n_items = selection.n_items();
+            let jump = get_config().page_jump_items;
+            if current+jump <= n_items{
+                selection.set_selected(current + jump);
+            }
+            return;
+        }
+
+        let current = selection.selected();
+        let n_items = selection.n_items();
+        let jump = get_config().page_jump_items;
+        if n_items == 0 {
+            return;
+        }
+
+        let next = if current + jump >= n_items {
+            0
+        } else {
+            current + jump
+        };
+        selection.set_selected(next);
+    });
+}
+
+pub fn select_page_up() {
+    disable_mouse();
+    
+    with_window(|w| {
+        let selection = &w.selection;
+        let current = selection.selected();
+        let n_items = selection.n_items();
+        let jump = get_config().page_jump_items;
+        
+        if n_items == 0 {
+            return;
+        }
+        
+        if !get_config().selection_wrap {
+            let prev = current.saturating_sub(jump);
+            selection.set_selected(prev);
+            return;
+        }
+        
+        let prev = if current >= jump {
+            current - jump
+        } else {
+            let overflow = jump - current;
+            n_items.saturating_sub(overflow)
+        };
+        
+        selection.set_selected(prev);
+    });
 }

@@ -20,10 +20,11 @@ use crate::{
         set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa, set_index,
         set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
         set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
-        set_is_dmenu, set_is_visible, set_last_query, set_no_hints, set_no_search, set_param_close,
-        set_parameter_height, set_parameter_max_height, set_parameter_max_width,
-        set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_placeholder,
-        set_provider, set_query, set_theme,
+        set_is_dmenu, set_is_stay_open_explicit_provider, set_is_visible, set_last_query,
+        set_no_hints, set_no_search, set_param_close, set_parameter_height,
+        set_parameter_max_height, set_parameter_max_width, set_parameter_min_height,
+        set_parameter_min_width, set_parameter_width, set_placeholder, set_provider, set_query,
+        set_theme,
     },
     theme::{Theme, setup_layer_shell, with_themes},
 };
@@ -661,6 +662,7 @@ pub fn quit(app: &Application, cancelled: bool) {
 
     set_current_prefix(String::new());
     set_provider(String::new());
+    set_is_stay_open_explicit_provider(false);
     set_parameter_height(None);
     set_parameter_width(None);
     set_parameter_min_height(None);

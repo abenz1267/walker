@@ -48,11 +48,12 @@ use crate::state::{
     get_parameter_height, get_parameter_max_height, get_parameter_max_width,
     get_parameter_min_height, get_parameter_min_width, get_parameter_width, get_placeholder,
     get_provider, get_theme, has_elephant, has_theme, is_connected, is_dmenu, is_dmenu_keep_open,
-    is_input_only, is_no_hints, is_no_search, is_param_close, is_service, is_visible,
-    set_current_set, set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open,
-    set_has_elephant, set_hide_qa, set_index, set_initial_height, set_initial_max_height,
-    set_initial_max_width, set_initial_min_height, set_initial_min_width, set_initial_placeholder,
-    set_initial_width, set_input_only, set_is_dmenu, set_is_service, set_is_visible, set_no_hints,
+    is_input_only, is_no_hints, is_no_search, is_param_close, is_service,
+    is_stay_open_explicit_provider, is_visible, set_current_set, set_dmenu_current,
+    set_dmenu_exit_after, set_dmenu_keep_open, set_has_elephant, set_hide_qa, set_index,
+    set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
+    set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
+    set_is_dmenu, set_is_service, set_is_stay_open_explicit_provider, set_is_visible, set_no_hints,
     set_no_search, set_param_close, set_parameter_height, set_parameter_max_height,
     set_parameter_max_width, set_parameter_min_height, set_parameter_min_width,
     set_parameter_width, set_placeholder, set_provider, set_theme,
@@ -352,8 +353,17 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
         return 0;
     }
 
+    set_is_stay_open_explicit_provider(false);
+
     if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
+        let p = val.str().unwrap().to_string();
+
+        set_is_stay_open_explicit_provider(get_provider() != p);
+
         set_provider(val.str().unwrap().to_string());
+    } else {
+        set_is_stay_open_explicit_provider(!get_provider().is_empty());
+        set_provider("".to_string());
     }
 
     set_param_close(options.contains("close"));
@@ -538,7 +548,12 @@ fn activate(app: &Application) {
         return;
     }
 
-    if (cfg.close_when_open && is_visible() && !is_dmenu_keep_open()) || is_param_close() {
+    if (!is_stay_open_explicit_provider()
+        && cfg.close_when_open
+        && is_visible()
+        && !is_dmenu_keep_open())
+        || is_param_close()
+    {
         quit(app, false);
         return;
     }
@@ -581,6 +596,10 @@ fn activate(app: &Application) {
             process::exit(1);
         }
     });
+
+    if is_stay_open_explicit_provider() {
+        set_input_text("");
+    }
 
     set_is_visible(true);
 }
@@ -738,6 +757,8 @@ fn listen_activation_socket(app_clone: Application) {
                     set_dmenu_keep_open(false);
                     set_param_close(false);
                     set_hide_qa(false);
+                    set_provider("".to_string());
+                    set_is_stay_open_explicit_provider(false);
 
                     activate(&app_clone);
                 }

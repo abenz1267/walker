@@ -11,6 +11,7 @@ pub struct AppState {
     async_after: Option<AfterAction>,
     hide_qa: bool,
     has_elephant: bool,
+    stay_open_explicit_provider: bool,
     is_connected: bool,
     is_connecting: bool,
     dmenu_keep_open: bool,
@@ -166,6 +167,24 @@ pub fn is_connected() -> bool {
 
 pub fn set_is_connected(val: bool) {
     STATE.get().unwrap().write().unwrap().is_connected = val
+}
+
+pub fn is_stay_open_explicit_provider() -> bool {
+    STATE
+        .get()
+        .unwrap()
+        .read()
+        .unwrap()
+        .stay_open_explicit_provider
+}
+
+pub fn set_is_stay_open_explicit_provider(val: bool) {
+    STATE
+        .get()
+        .unwrap()
+        .write()
+        .unwrap()
+        .stay_open_explicit_provider = val
 }
 
 pub fn is_connecting() -> bool {

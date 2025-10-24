@@ -37,7 +37,8 @@
                 </style>
                 <property name="vexpand">true</property>
                 <property name="xalign">0</property>
-                <property name="lines">1</property>
+                <property name="lines">3</property>
+                <property name="wrap">true</property>
                 <property name="ellipsize">3</property>
                 <property name="single-line-mode">true</property>
               </object>

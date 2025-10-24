@@ -562,21 +562,11 @@ fn activate(app: &Application) {
         return;
     }
 
-    let provider = get_provider();
-    let provider = if provider.is_empty() {
-        "default"
-    } else {
-        provider.as_str()
-    };
-
     with_window(|w| {
         setup_css(get_theme());
 
         if let Some(input) = &w.input {
-            if is_service() && provider != "default" {
-                input.emit_by_name::<()>("changed", &[]);
-            }
-
+            set_input_text("");
             input.grab_focus();
         }
 
@@ -596,10 +586,6 @@ fn activate(app: &Application) {
             process::exit(1);
         }
     });
-
-    if is_stay_open_explicit_provider() {
-        set_input_text("");
-    }
 
     set_is_visible(true);
 }

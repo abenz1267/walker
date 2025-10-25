@@ -1,5 +1,6 @@
 mod files_preview;
 
+use crate::config::get_config;
 use crate::protos::generated_proto::query::query_response::Item;
 pub use files_preview::FilesPreviewHandler;
 use gtk4::{Box as GtkBox, Builder};
@@ -15,8 +16,24 @@ pub trait PreviewHandler: Debug {
 thread_local! {
     static PREVIEWERS: LazyCell<HashMap<String, Box<dyn PreviewHandler>>> = LazyCell::new(|| {
         let mut previewers: HashMap<String, Box<dyn PreviewHandler>> = HashMap::new();
-        previewers.insert("files".to_string(), Box::new(FilesPreviewHandler::new()));
-        previewers.insert("menus".to_string(), Box::new(FilesPreviewHandler::new()));
+
+        get_config().providers.previews.iter().for_each(|p| {
+            let b = match p.as_str() {
+                "files"|"menus" => {
+Some(Box::new(FilesPreviewHandler::new()))
+                },
+                _ => {
+                    None
+                }
+            };
+
+            if let Some(b) = b {
+                previewers.insert(p.to_string(), b);
+            } else {
+                eprintln!("preview not implemented for {}", p);
+            }
+        });
+
         previewers
     });
 }

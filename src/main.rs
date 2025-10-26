@@ -120,11 +120,32 @@ fn init_ui(app: &Application, dmenu: bool) {
 
     let settings = gio::Settings::new("org.gnome.desktop.interface");
     let settings_clone = settings.clone();
+    adjust_accent_color(settings_clone);
+
+
+    let settings_clone = settings.clone();
     adjust_color_scheme(settings_clone);
+
+    let settings_clone = settings.clone();
+    settings.connect_changed(Some("accent-color"), move |_, _| {
+        adjust_accent_color(settings_clone.clone());
+    });
 
     let settings_clone = settings.clone();
     settings.connect_changed(Some("color-scheme"), move |_, _| {
         adjust_color_scheme(settings_clone.clone());
+    });
+}
+
+fn adjust_accent_color(settings: gio::Settings) {
+    with_window(|w| {
+        w.window.css_classes()
+            .iter()
+            .filter(|c| c.starts_with("accent-"))
+            .for_each(|c| w.window.remove_css_class(c));
+
+        let new_accent_color = format!("accent-{}", settings.string("accent-color").as_str());
+        w.window.add_css_class(new_accent_color.as_str());
     });
 }
 

@@ -62,7 +62,7 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
     let p = PROVIDERS.get().unwrap().get(&item.provider).unwrap();
 
     if let Some(text) = b.object::<Label>("ItemText") {
-        p.text_transformer(&item.text, &text);
+        p.text_transformer(&item, &text);
     }
 
     if let Some(text) = b.object::<Label>("ItemSubtext") {

@@ -1,8 +1,10 @@
 mod files_preview;
+mod clipboard_preview;
 
 use crate::config::get_config;
 use crate::protos::generated_proto::query::query_response::Item;
 pub use files_preview::FilesPreviewHandler;
+pub use clipboard_preview::ClipboardPreviewHandler;
 use gtk4::{Box as GtkBox, Builder};
 use std::cell::LazyCell;
 use std::collections::HashMap;
@@ -18,9 +20,12 @@ thread_local! {
         let mut previewers: HashMap<String, Box<dyn PreviewHandler>> = HashMap::new();
 
         get_config().providers.previews.iter().for_each(|p| {
-            let b = match p.as_str() {
+            let b: Option<Box<dyn PreviewHandler>> = match p.as_str() {
                 "files"|"menus" => {
-Some(Box::new(FilesPreviewHandler::new()))
+                    Some(Box::new(FilesPreviewHandler::new()))
+                },
+                "clipboard" => {
+                    Some(Box::new(ClipboardPreviewHandler::new()))
                 },
                 _ => {
                     None

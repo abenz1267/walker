@@ -22,6 +22,7 @@ pub enum AfterAction {
     ClearReload,
     AsyncClearReload,
     AsyncReload,
+    AsyncReloadKeepSelection,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

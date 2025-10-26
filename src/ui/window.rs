@@ -15,10 +15,11 @@ use crate::{
         get_current_prefix, get_error, get_initial_height, get_initial_max_height,
         get_initial_max_width, get_initial_min_height, get_initial_min_width,
         get_initial_placeholder, get_initial_width, get_last_query, get_prefix_provider,
-        get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open,
-        is_service, query, set_async_after, set_current_prefix, set_current_set, set_dmenu_current,
-        set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa, set_index,
-        set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
+        get_provider, get_theme, is_block_scroll, is_connected, is_dmenu, is_dmenu_exit_after,
+        is_dmenu_keep_open, is_service, query, set_async_after, set_current_prefix,
+        set_current_selection, set_current_set, set_dmenu_current, set_dmenu_exit_after,
+        set_dmenu_keep_open, set_error, set_hide_qa, set_index, set_initial_height,
+        set_initial_max_height, set_initial_max_width, set_initial_min_height,
         set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
         set_is_dmenu, set_is_stay_open_explicit_provider, set_is_visible, set_last_query,
         set_no_hints, set_no_search, set_param_close, set_parameter_height,
@@ -307,8 +308,11 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
     ui.selection.connect_selection_changed(move |_, _, _| {
         with_window(|w| {
             crate::handle_preview();
-            w.list
-                .scroll_to(w.selection.selected(), ListScrollFlags::NONE, None);
+
+            if !is_block_scroll() {
+                w.list
+                    .scroll_to(w.selection.selected(), ListScrollFlags::NONE, None);
+            }
 
             set_keybind_hint();
         });
@@ -550,6 +554,13 @@ fn handle_after(a: &AfterAction, app: &Application, query: String) {
             });
         }
         AfterAction::AsyncReload => set_async_after(Some(AfterAction::AsyncReload)),
+        AfterAction::AsyncReloadKeepSelection => {
+            with_window(|w| {
+                set_current_selection(w.selection.selected());
+            });
+
+            set_async_after(Some(AfterAction::AsyncReloadKeepSelection))
+        }
         AfterAction::AsyncClearReload => set_async_after(Some(AfterAction::AsyncClearReload)),
         AfterAction::Reload => {
             crate::data::input_changed(&query);

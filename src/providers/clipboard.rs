@@ -1,10 +1,4 @@
 use chrono::DateTime;
-use gtk4::{
-    Label, Picture, gdk,
-    gio::{self, prelude::FileExtManual},
-    glib,
-    prelude::WidgetExt,
-};
 
 use crate::{
     config::get_config, protos::generated_proto::query::query_response::Item, providers::Provider,

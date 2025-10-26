@@ -11,7 +11,6 @@ mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual, SettingsExt};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard};
 use gtk4::glib::Priority;
-use gtk4::glib::object::ObjectExt;
 use gtk4::prelude::EntryExt;
 
 use config::get_config;
@@ -122,7 +121,6 @@ fn init_ui(app: &Application, dmenu: bool) {
     let settings_clone = settings.clone();
     adjust_accent_color(settings_clone);
 
-
     let settings_clone = settings.clone();
     adjust_color_scheme(settings_clone);
 
@@ -139,7 +137,8 @@ fn init_ui(app: &Application, dmenu: bool) {
 
 fn adjust_accent_color(settings: gio::Settings) {
     with_window(|w| {
-        w.window.css_classes()
+        w.window
+            .css_classes()
             .iter()
             .filter(|c| c.starts_with("accent-"))
             .for_each(|c| w.window.remove_css_class(c));

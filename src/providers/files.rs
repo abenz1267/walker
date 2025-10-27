@@ -27,9 +27,9 @@ impl Provider for Files {
         include_str!("../../resources/themes/default/item_files.xml").to_string()
     }
 
-    fn text_transformer(&self, text: &str, label: &gtk4::Label) {
+    fn text_transformer(&self, item: &Item, label: &gtk4::Label) {
         if let Ok(home) = env::var("HOME")
-            && let Some(stripped) = text.strip_prefix(&home)
+            && let Some(stripped) = item.text.strip_prefix(&home)
         {
             label.set_label(stripped);
         }

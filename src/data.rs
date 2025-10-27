@@ -6,10 +6,10 @@ use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
-    get_async_after, get_current_prefix, get_current_set, get_provider, is_connected,
-    is_connecting, is_dmenu, is_index, is_service, set_async_after, set_current_prefix,
-    set_is_connected, set_is_connecting, set_is_visible, set_prefix_provider, set_provider,
-    set_query,
+    get_async_after, get_current_prefix, get_current_selection, get_current_set, get_provider,
+    is_connected, is_connecting, is_dmenu, is_index, is_service, set_async_after, set_block_scroll,
+    set_current_prefix, set_is_connected, set_is_connecting, set_is_visible, set_prefix_provider,
+    set_provider, set_query,
 };
 use crate::ui::window::{set_input_text, set_keybind_hint, with_window};
 use crate::{QueryResponseObject, handle_preview, send_message};
@@ -345,6 +345,18 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                 glib::idle_add_once(|| {
                     set_keybind_hint();
                     handle_preview();
+
+                    match get_async_after() {
+                        Some(AfterAction::AsyncReloadKeepSelection) => {
+                            with_window(|w| {
+                                set_block_scroll(true);
+                                w.selection.set_selected(get_current_selection());
+                                set_async_after(None);
+                                set_block_scroll(false);
+                            });
+                        }
+                        _ => {}
+                    }
                 });
             }
             254 => {
@@ -361,6 +373,13 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                         });
 
                         set_async_after(None);
+                    }
+                    Some(AfterAction::AsyncReloadKeepSelection) => {
+                        with_window(|w| {
+                            if let Some(input) = &w.input {
+                                set_input_text(&input.text());
+                            }
+                        });
                     }
                     Some(AfterAction::AsyncClearReload) => {
                         with_window(|w| {

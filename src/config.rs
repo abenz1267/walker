@@ -357,6 +357,7 @@ pub struct Keybinds {
 pub struct Providers {
     pub default: Vec<String>,
     pub empty: Vec<String>,
+    pub previews: Vec<String>,
     pub max_results: i32,
     pub max_results_provider: HashMap<String, i32>,
     pub prefixes: Vec<Prefix>,

@@ -37,6 +37,11 @@ default = [
   "websearch",
 ] # providers to be queried by default
 empty = ["desktopapplications"] # providers to be queried when query is empty
+previews = [
+  "files",
+  "clipboard",
+  "menus",
+] # providers that have previews enabled. Caution: not every provider has an implementation for previews
 max_results = 50 # global max results
 
 [providers.sets] # define your own defaults/empty sets of providers

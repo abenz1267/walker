@@ -11,7 +11,6 @@ mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual, SettingsExt};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard};
 use gtk4::glib::Priority;
-use gtk4::glib::object::ObjectExt;
 use gtk4::prelude::EntryExt;
 
 use config::get_config;
@@ -120,11 +119,32 @@ fn init_ui(app: &Application, dmenu: bool) {
 
     let settings = gio::Settings::new("org.gnome.desktop.interface");
     let settings_clone = settings.clone();
+    adjust_accent_color(settings_clone);
+
+    let settings_clone = settings.clone();
     adjust_color_scheme(settings_clone);
+
+    let settings_clone = settings.clone();
+    settings.connect_changed(Some("accent-color"), move |_, _| {
+        adjust_accent_color(settings_clone.clone());
+    });
 
     let settings_clone = settings.clone();
     settings.connect_changed(Some("color-scheme"), move |_, _| {
         adjust_color_scheme(settings_clone.clone());
+    });
+}
+
+fn adjust_accent_color(settings: gio::Settings) {
+    with_window(|w| {
+        w.window
+            .css_classes()
+            .iter()
+            .filter(|c| c.starts_with("accent-"))
+            .for_each(|c| w.window.remove_css_class(c));
+
+        let new_accent_color = format!("accent-{}", settings.string("accent-color").as_str());
+        w.window.add_css_class(new_accent_color.as_str());
     });
 }
 
@@ -562,21 +582,11 @@ fn activate(app: &Application) {
         return;
     }
 
-    let provider = get_provider();
-    let provider = if provider.is_empty() {
-        "default"
-    } else {
-        provider.as_str()
-    };
-
     with_window(|w| {
         setup_css(get_theme());
 
         if let Some(input) = &w.input {
-            if is_service() && provider != "default" {
-                input.emit_by_name::<()>("changed", &[]);
-            }
-
+            set_input_text("");
             input.grab_focus();
         }
 
@@ -596,10 +606,6 @@ fn activate(app: &Application) {
             process::exit(1);
         }
     });
-
-    if is_stay_open_explicit_provider() {
-        set_input_text("");
-    }
 
     set_is_visible(true);
 }

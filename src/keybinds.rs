@@ -11,6 +11,8 @@ pub const ACTION_SELECT_PREVIOUS: &str = "%PREVIOUS%";
 pub const ACTION_TOGGLE_EXACT: &str = "%TOGGLE_EXACT%";
 pub const ACTION_RESUME_LAST_QUERY: &str = "%RESUME_LAST_QUERY%";
 pub const ACTION_QUICK_ACTIVATE: &str = "%QUICK_ACTIVATE%";
+pub const ACTION_SELECT_PAGE_DOWN: &str = "%PAGE_DOWN%";
+pub const ACTION_SELECT_PAGE_UP: &str = "%PAGE_UP%";
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum AfterAction {
@@ -153,6 +155,36 @@ pub fn setup_binds() {
                 default: None,
                 global: Some(true),
                 label: Some("resume last query".to_string()),
+                after: Some(AfterAction::Nothing),
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.page_down.iter().for_each(|b| {
+        parse_bind(
+            &Action {
+                action: ACTION_SELECT_PAGE_DOWN.to_string(),
+                default: None,
+                global: Some(true),
+                bind: Some(b.clone()),
+                label: Some("select page down".to_string()),
+                after: Some(AfterAction::Nothing),
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.page_up.iter().for_each(|b| {
+        parse_bind(
+            &Action {
+                action: ACTION_SELECT_PAGE_UP.to_string(),
+                default: None,
+                global: Some(true),
+                bind: Some(b.clone()),
+                label: Some("select page up".to_string()),
                 after: Some(AfterAction::Nothing),
             },
             "",

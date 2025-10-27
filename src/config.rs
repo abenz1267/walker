@@ -24,6 +24,7 @@ pub struct Walker {
     pub shell: Shell,
     pub additional_theme_location: Option<String>,
     pub placeholders: Option<HashMap<String, Placeholder>>,
+    pub page_jump_items: u32
 }
 
 // Partial config for user overrides
@@ -60,6 +61,8 @@ struct PartialWalker {
     pub additional_theme_location: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub placeholders: Option<HashMap<String, Placeholder>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub page_jump_items: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -98,6 +101,10 @@ struct PartialKeybinds {
     pub resume_last_query: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quick_activate: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub page_down: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub page_up: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -192,6 +199,9 @@ impl Walker {
         if let Some(v) = partial.placeholders {
             self.placeholders = Some(v);
         }
+        if let Some(v) = partial.page_jump_items {
+            self.page_jump_items = v;
+        }
 
         if let Some(p) = partial.providers {
             self.providers.merge(p);
@@ -280,6 +290,12 @@ impl Keybinds {
         if let Some(v) = partial.quick_activate {
             self.quick_activate = Some(v);
         }
+        if let Some(v) = partial.page_down {
+            self.page_down = v;
+        }
+        if let Some(v) = partial.page_up {
+            self.page_up = v;
+        }
     }
 }
 
@@ -333,6 +349,8 @@ pub struct Keybinds {
     pub toggle_exact: Vec<String>,
     pub resume_last_query: Vec<String>,
     pub quick_activate: Option<Vec<String>>,
+    pub page_down: Vec<String>,
+    pub page_up: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

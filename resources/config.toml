@@ -7,6 +7,7 @@ exact_search_prefix = "'"       # disable fuzzy searching
 theme = "default"               # theme to use
 disable_mouse = false           # disable mouse (on input and list only)
 debug = false                   # enables debug printing for some stuff, f.e. keybinds
+page_jump_items = 10            # number of items to skip with Page Up/Down
 
 [shell]
 anchor_top = true
@@ -24,6 +25,8 @@ previous = ["Up"]
 toggle_exact = ["ctrl e"]
 resume_last_query = ["ctrl r"]
 quick_activate = ["F1", "F2", "F3", "F4"]
+page_down = ["Page_Down"]
+page_up = ["Page_Up"]
 
 [providers]
 default = [

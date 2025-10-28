@@ -574,7 +574,10 @@ fn activate(app: &Application) {
         && !is_dmenu_keep_open())
         || is_param_close()
     {
-        quit(app, false);
+        if is_visible() {
+            quit(app, false);
+        }
+
         return;
     }
 

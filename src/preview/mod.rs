@@ -1,5 +1,6 @@
 use crate::config::get_config;
 use crate::protos::generated_proto::query::query_response::Item;
+use crate::renderers::create_drag_source;
 use crate::ui::window::get_selected_item;
 use gtk4::gio::{self, Cancellable};
 use gtk4::glib::{self, Bytes};
@@ -197,6 +198,11 @@ impl PreviewWidget {
     pub fn preview_file(&mut self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
         self.current_content = format!("file{}", file_path);
         self.clear_preview();
+
+        if Path::new(file_path).is_absolute() {
+            self.box_widget
+                .add_controller(create_drag_source(file_path));
+        }
 
         if !Path::new(file_path).exists() {
             return Err(format!("File does not exist: {}", file_path).into());

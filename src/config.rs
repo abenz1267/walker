@@ -75,6 +75,8 @@ struct PartialProviders {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub empty: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub previews: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub prefixes: Option<Vec<Prefix>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub clipboard: Option<PartialClipboard>,
@@ -222,6 +224,9 @@ impl Providers {
         }
         if let Some(v) = partial.empty {
             self.empty = v;
+        }
+        if let Some(v) = partial.previews {
+            self.previews = v;
         }
         if let Some(v) = partial.prefixes {
             self.prefixes = v;

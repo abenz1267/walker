@@ -307,7 +307,7 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
 
     ui.selection.connect_selection_changed(move |_, _, _| {
         with_window(|w| {
-            crate::handle_preview();
+            handle_preview();
 
             if !is_block_scroll() {
                 w.list
@@ -892,13 +892,15 @@ pub fn handle_preview() {
             return;
         };
 
-        let mut provider = item.provider.clone();
-
-        if provider.starts_with("menus:") {
-            provider = "menus".to_string();
+        // Check if preview should be shown (not in ignore list and has preview content)
+        let config = crate::config::get_config();
+        if config.providers.ignore_preview.contains(&item.provider) {
+            preview.set_visible(false);
+            return;
         }
 
-        if !crate::preview::has_previewer(&provider) {
+        // Only show preview if there's preview content or preview_type specified
+        if item.preview.is_empty() && item.preview_type.is_empty() {
             preview.set_visible(false);
             return;
         }
@@ -914,7 +916,7 @@ pub fn handle_preview() {
             preview_builder.as_ref().unwrap().clone()
         };
 
-        crate::preview::handle_preview(&provider, &item, &preview, &builder);
+        crate::preview::handle_preview(&item, &preview, &builder);
     });
 }
 

@@ -36,8 +36,9 @@ message QueryResponse {
     Type type = 8;
     string mimetype = 9;
     string preview = 10;
-    repeated string state = 11;
-    repeated string actions = 12;
+    string preview_type = 11;
+    repeated string state = 12;
+    repeated string actions = 13;
   }
 
    Item item = 2;

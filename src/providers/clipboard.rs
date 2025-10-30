@@ -25,7 +25,7 @@ impl Provider for Clipboard {
     }
 
     fn text_transformer(&self, item: &Item, label: &gtk4::Label) {
-        if !item.icon.is_empty() {
+        if item.preview_type == "file" {
             let Ok(dt) = DateTime::parse_from_rfc2822(&item.subtext) else {
                 label.set_label(&item.subtext);
                 return;
@@ -43,7 +43,7 @@ impl Provider for Clipboard {
     }
 
     fn subtext_transformer(&self, item: &Item, label: &gtk4::Label) {
-        if !item.icon.is_empty() {
+        if item.preview_type == "file" {
             label.set_label("Image");
             return;
         }

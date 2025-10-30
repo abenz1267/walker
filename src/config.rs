@@ -24,7 +24,7 @@ pub struct Walker {
     pub shell: Shell,
     pub additional_theme_location: Option<String>,
     pub placeholders: Option<HashMap<String, Placeholder>>,
-    pub page_jump_items: u32
+    pub page_jump_items: u32,
 }
 
 // Partial config for user overrides
@@ -75,7 +75,7 @@ struct PartialProviders {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub empty: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
-    pub previews: Option<Vec<String>>,
+    pub ignore_preview: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub prefixes: Option<Vec<Prefix>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -225,8 +225,8 @@ impl Providers {
         if let Some(v) = partial.empty {
             self.empty = v;
         }
-        if let Some(v) = partial.previews {
-            self.previews = v;
+        if let Some(v) = partial.ignore_preview {
+            self.ignore_preview = v;
         }
         if let Some(v) = partial.prefixes {
             self.prefixes = v;
@@ -362,7 +362,7 @@ pub struct Keybinds {
 pub struct Providers {
     pub default: Vec<String>,
     pub empty: Vec<String>,
-    pub previews: Vec<String>,
+    pub ignore_preview: Vec<String>,
     pub max_results: i32,
     pub max_results_provider: HashMap<String, i32>,
     pub prefixes: Vec<Prefix>,

@@ -12,7 +12,7 @@ use crate::state::{
     set_provider, set_query,
 };
 use crate::ui::window::{set_input_text, set_keybind_hint, with_window};
-use crate::{QueryResponseObject, handle_preview, send_message};
+use crate::{QueryResponseObject, send_message};
 use gtk4::glib::Object;
 use gtk4::{glib, prelude::*};
 use nucleo_matcher::pattern::{CaseMatching, Normalization, Pattern};
@@ -344,7 +344,7 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
             255 => {
                 glib::idle_add_once(|| {
                     set_keybind_hint();
-                    handle_preview();
+                    crate::ui::window::handle_preview();
 
                     match get_async_after() {
                         Some(AfterAction::AsyncReloadKeepSelection) => {

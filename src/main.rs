@@ -59,7 +59,7 @@ use crate::state::{
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{
-    handle_preview, quit, set_input_text, set_keybind_hint, setup_window, with_window,
+    quit, set_input_text, set_keybind_hint, setup_window, with_window,
 };
 
 static GLOBAL_DMENU_SENDER: RwLock<Option<Sender<String>>> = RwLock::new(None);

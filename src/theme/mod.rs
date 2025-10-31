@@ -196,6 +196,10 @@ pub fn setup_css(theme: String) {
                     p.load_from_string(include_str!("../../resources/themes/default/style.css"));
                 }
             });
+        } else {
+            with_css_provider(|p| {
+                p.load_from_string(include_str!("../../resources/themes/default/style.css"));
+            });
         }
     });
 }

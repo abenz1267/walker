@@ -596,10 +596,12 @@ fn setup_list_behavior(ui: &WindowData) {
         let response = response_obj.response();
 
         with_themes(|t| {
-            if let Some(theme) = t.get(&get_theme())
-                && let Some(i) = response.item.as_ref()
-            {
-                create_item(item, i, theme);
+            if let Some(i) = response.item.as_ref() {
+                if let Some(theme) = t.get(&get_theme()) {
+                    create_item(item, i, theme);
+                } else {
+                    create_item(item, i, t.get("default").unwrap());
+                }
             }
         });
     });
@@ -991,7 +993,14 @@ pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: 
         with_themes(|t| {
             let theme = t
                 .get(&get_theme())
-                .unwrap_or_else(|| panic!("couldn't get theme: {}", &get_theme()));
+                .or_else(|| {
+                    set_error(format!(
+                        "theme '{}' not found. falling back to default",
+                        &get_theme()
+                    ));
+                    t.get("default")
+                })
+                .unwrap();
             let b = Builder::new();
 
             let _ = b.add_from_string(&theme.keybind);
@@ -1108,4 +1117,3 @@ pub fn select_page_up() {
         selection.set_selected(prev);
     });
 }
-

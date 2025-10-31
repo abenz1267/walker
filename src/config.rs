@@ -14,6 +14,7 @@ pub struct Walker {
     pub disable_mouse: bool,
     pub click_to_close: bool,
     pub close_when_open: bool,
+    pub hide_quick_activation: bool,
     pub selection_wrap: bool,
     pub global_argument_delimiter: String,
     pub theme: String,
@@ -37,6 +38,8 @@ struct PartialWalker {
     pub force_keyboard_focus: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub disable_mouse: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hide_quick_activation: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub click_to_close: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -175,6 +178,9 @@ impl Walker {
         }
         if let Some(v) = partial.disable_mouse {
             self.disable_mouse = v;
+        }
+        if let Some(v) = partial.hide_quick_activation {
+            self.hide_quick_activation = v;
         }
         if let Some(v) = partial.click_to_close {
             self.click_to_close = v;

@@ -2,7 +2,6 @@ use std::collections::HashSet;
 use std::sync::{OnceLock, RwLock};
 
 use crate::keybinds::AfterAction;
-use crate::theme::with_themes;
 
 static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 

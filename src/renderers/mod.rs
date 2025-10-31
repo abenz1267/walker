@@ -62,7 +62,7 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
     let p = PROVIDERS.get().unwrap().get(&item.provider).unwrap();
 
     if let Some(text) = b.object::<Label>("ItemText") {
-        p.text_transformer(&item, &text);
+        p.text_transformer(item, &text);
     }
 
     if let Some(text) = b.object::<Label>("ItemSubtext") {
@@ -72,7 +72,7 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
     p.image_transformer(&b, list_item, item);
 
     if let Some(text) = b.object::<Label>("QuickActivation") {
-        if is_hide_qa() {
+        if is_hide_qa() || get_config().hide_quick_activation {
             text.set_visible(false);
             return;
         }

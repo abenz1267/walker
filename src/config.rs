@@ -86,6 +86,8 @@ struct PartialProviders {
     pub actions: Option<HashMap<String, Vec<Action>>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub max_results_provider: Option<HashMap<String, i32>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub argument_delimiter: Option<HashMap<String, String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -244,6 +246,13 @@ impl Providers {
             });
         }
 
+        if let Some(v) = partial.argument_delimiter {
+            v.iter().for_each(|(key, value)| {
+                self.argument_delimiter
+                    .insert(key.clone(), value.to_string());
+            });
+        }
+
         if let Some(v) = partial.actions {
             v.iter().for_each(|(key, value)| {
                 if !self.actions.contains_key(key) {
@@ -365,6 +374,7 @@ pub struct Providers {
     pub ignore_preview: Vec<String>,
     pub max_results: i32,
     pub max_results_provider: HashMap<String, i32>,
+    pub argument_delimiter: HashMap<String, String>,
     pub prefixes: Vec<Prefix>,
     pub clipboard: Clipboard,
     pub actions: HashMap<String, Vec<Action>>,

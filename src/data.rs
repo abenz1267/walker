@@ -679,12 +679,13 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
         .iter()
         .find(|prefix| provider == prefix.provider && query.starts_with(&prefix.prefix))
     {
-        query = query
+        req.query = req
+            .query
+            .to_string()
             .strip_prefix(&prefix.prefix)
-            .expect("couldn't trim prefix");
+            .expect("couldn't trim prefix")
+            .to_string();
     }
-
-    req.query = query.to_string();
 
     let mut buffer = vec![1, 0];
     let length = req.compute_size() as u32;

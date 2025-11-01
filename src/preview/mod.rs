@@ -6,12 +6,10 @@ use gtk4::gio::{self, Cancellable};
 use gtk4::glib::{self, Bytes};
 use gtk4::{
     Box as GtkBox, Builder, ContentFit, Image, Orientation, Picture, PolicyType, ScrolledWindow,
-    Stack, TextView, Video, WrapMode, gdk_pixbuf, prelude::*,
+    Stack, TextView, Video, WrapMode, prelude::*,
 };
 use poppler::{Document, Page};
 use std::cell::RefCell;
-use std::collections::HashMap;
-use std::fs;
 use std::path::Path;
 use std::process::Command;
 use std::rc::Rc;
@@ -26,7 +24,6 @@ pub struct PreviewWidget {
     pub box_widget: GtkBox,
     preview_area: Stack,
     current_content: String,
-    image_cache: Rc<RefCell<HashMap<String, gtk4::gdk::Texture>>>,
     pub current_video_cancellable: Rc<RefCell<Option<Cancellable>>>,
 }
 
@@ -41,7 +38,6 @@ impl UnifiedPreviewHandler {
         let mut cached_preview = self.cached_preview.borrow_mut();
         if let Some(preview) = cached_preview.as_mut() {
             preview.clear_preview();
-            preview.image_cache.borrow_mut().clear();
         }
         *cached_preview = None;
     }
@@ -146,7 +142,6 @@ impl PreviewWidget {
             box_widget,
             preview_area,
             current_content: String::new(),
-            image_cache: Rc::new(RefCell::new(HashMap::new())),
             current_video_cancellable: Rc::new(RefCell::new(None)),
         })
     }
@@ -160,7 +155,6 @@ impl PreviewWidget {
             box_widget,
             preview_area,
             current_content: String::new(),
-            image_cache: Rc::new(RefCell::new(HashMap::new())),
             current_video_cancellable: Rc::new(RefCell::new(None)),
         })
     }
@@ -316,27 +310,10 @@ impl PreviewWidget {
         self.preview_area.add_child(&scrolled);
         self.preview_area.set_visible_child(&scrolled);
 
-        if let Some(cached_texture) = self.image_cache.borrow().get(file_path) {
-            picture.set_paintable(Some(cached_texture));
-            return Ok(());
-        }
 
         let file = gio::File::for_path(file_path);
         picture.set_file(Some(&file));
 
-        // load and cache in background for future use
-        let file_path_clone = file_path.to_string();
-        let cache_clone = self.image_cache.clone();
-
-        glib::MainContext::ref_thread_default().spawn_local(async move {
-            let cancellable = gio::Cancellable::new();
-            match Self::load_image_async(&file_path_clone, &cancellable, cache_clone).await {
-                Ok(_) => {}
-                Err(e) => {
-                    eprintln!("Failed to cache image {}: {}", file_path_clone, e);
-                }
-            }
-        });
 
         Ok(())
     }
@@ -383,14 +360,14 @@ impl PreviewWidget {
         let render_height = ((height * render_scale) as i32).min(2400);
 
         let estimated_size = (render_width * render_height * 4) as usize;
-        if estimated_size > 15 * 1024 * 1024 {
+        if estimated_size > 10 * 1024 * 1024 {
             return Err("PDF page too large for preview".into());
         }
 
         let mut surface =
             cairo::ImageSurface::create(cairo::Format::ARgb32, render_width, render_height)?;
 
-        {
+        let bytes = {
             let ctx = cairo::Context::new(&surface)?;
 
             ctx.set_antialias(cairo::Antialias::Best);
@@ -402,14 +379,16 @@ impl PreviewWidget {
             page.render(&ctx);
 
             ctx.target().flush();
-            std::mem::drop(ctx);
-        }
-
-        surface.flush();
-
-        let bytes = {
-            let mut rgba_data = surface.data()?.to_vec();
-
+            drop(ctx);
+            
+            surface.flush();
+            
+            let surface_data = surface.data()?;
+            let mut rgba_data = Vec::with_capacity(surface_data.len());
+            rgba_data.extend_from_slice(&surface_data);
+            
+            drop(surface_data);
+            
             for chunk in rgba_data.chunks_exact_mut(4) {
                 chunk.swap(0, 2);
             }
@@ -417,7 +396,7 @@ impl PreviewWidget {
             Bytes::from_owned(rgba_data)
         };
 
-        std::mem::drop(surface);
+        drop(surface);
 
         let texture = gtk4::gdk::MemoryTexture::new(
             render_width,
@@ -451,7 +430,14 @@ impl PreviewWidget {
 
         let scrolled = self.get_or_create_scrolled();
         scrolled.set_size_request(128, 72);
-        scrolled.set_child(None::<gtk4::Widget>.as_ref());
+        
+        // Properly cleanup existing child
+        if let Some(existing_child) = scrolled.child() {
+            if let Some(video) = existing_child.downcast_ref::<Video>() {
+                video.set_file(None::<&gio::File>);
+            }
+            scrolled.set_child(None::<gtk4::Widget>.as_ref());
+        }
 
         let placeholder = GtkBox::new(Orientation::Vertical, 10);
         placeholder.set_halign(gtk4::Align::Center);
@@ -466,7 +452,6 @@ impl PreviewWidget {
         //added a 200ms debounce to make fast scrolling smoother
         let file_path_clone = file_path.to_string();
         let scrolled_clone = scrolled.clone();
-        let placeholder_clone = placeholder.clone();
         let cancellable_clone = cancellable.clone();
 
         glib::timeout_add_local(std::time::Duration::from_millis(200), move || {
@@ -477,12 +462,15 @@ impl PreviewWidget {
                 return glib::ControlFlow::Break;
             }
 
+            // Clean up placeholder properly before replacing
+            if let Some(_child) = scrolled_clone.child() {
+                scrolled_clone.set_child(None::<gtk4::Widget>.as_ref());
+            }
+
             let file = gio::File::for_path(&file_path_clone);
             let video = Video::for_file(Some(&file));
             video.set_autoplay(true);
 
-            // Replace placeholder with video
-            placeholder_clone.set_visible(false);
             scrolled_clone.set_child(Some(&video));
 
             glib::ControlFlow::Break
@@ -524,29 +512,41 @@ impl PreviewWidget {
     }
 
     fn preview_text_file(&self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
-        let content = fs::read(file_path)?;
-
-        let max_size = 1024 * 1024; // 1MB
-        let display_content = if content.len() > max_size {
-            let mut truncated = content[..max_size].to_vec();
-            truncated.extend_from_slice(b"\n\n[File truncated...]");
-            truncated
-        } else {
-            content
-        };
-
+        use std::io::{BufRead, BufReader};
+        
+        let file = std::fs::File::open(file_path)?;
+        let mut reader = BufReader::new(file);
+        
+        let max_size = 512 * 1024; // 512KB
+        let mut content = String::with_capacity(max_size.min(64 * 1024));
+        let mut total_read = 0;
+        let mut buffer = String::new();
+        
+        while total_read < max_size {
+            buffer.clear();
+            let bytes_read = reader.read_line(&mut buffer)?;
+            if bytes_read == 0 {
+                break; // EOF
+            }
+            
+            if total_read + bytes_read > max_size {
+                let remaining = max_size - total_read;
+                content.push_str(&buffer[..remaining]);
+                content.push_str("\n\n[File truncated...]");
+                break;
+            }
+            
+            content.push_str(&buffer);
+            total_read += bytes_read;
+        }
+        
         let text_view = TextView::new();
         text_view.set_editable(false);
         text_view.set_monospace(true);
         text_view.set_wrap_mode(WrapMode::Word);
         text_view.set_size_request(300, 200);
         let buffer = text_view.buffer();
-        buffer.set_text(
-            String::from_utf8(display_content)
-                .as_ref()
-                .map(String::as_str)
-                .unwrap_or("[Binary file - cannot display as text]"),
-        );
+        buffer.set_text(&content);
 
         let scrolled = ScrolledWindow::new();
         scrolled.set_child(Some(&text_view));
@@ -575,53 +575,4 @@ impl PreviewWidget {
         scrolled
     }
 
-    async fn load_image_async(
-        file_path: &str,
-        cancellable: &gio::Cancellable,
-        cache: Rc<RefCell<HashMap<String, gtk4::gdk::Texture>>>,
-    ) -> Result<gtk4::gdk::Texture, Box<dyn std::error::Error>> {
-        if let Some(cached_texture) = cache.borrow().get(file_path) {
-            return Ok(cached_texture.clone());
-        }
-
-        let file = gio::File::for_path(file_path);
-
-        let (bytes, _) = file.load_bytes_future().await?;
-        let stream = gio::MemoryInputStream::from_bytes(&bytes);
-
-        let pixbuf = gdk_pixbuf::Pixbuf::from_stream(&stream, Some(cancellable))?;
-
-        // Downscale to small size for fast preview (max 360x360)
-        let max_size = 360;
-        let (width, height) = (pixbuf.width(), pixbuf.height());
-        let (new_width, new_height) = if width > max_size || height > max_size {
-            let ratio = (max_size as f64) / (width.max(height) as f64);
-            (
-                (width as f64 * ratio) as i32,
-                (height as f64 * ratio) as i32,
-            )
-        } else {
-            (width, height)
-        };
-
-        let scaled_pixbuf = if new_width != width || new_height != height {
-            pixbuf
-                .scale_simple(new_width, new_height, gdk_pixbuf::InterpType::Bilinear)
-                .ok_or("Failed to scale image")?
-        } else {
-            pixbuf
-        };
-
-        let texture = gtk4::gdk::Texture::for_pixbuf(&scaled_pixbuf);
-
-        let mut cache_mut = cache.borrow_mut();
-        if cache_mut.len() >= 50 {
-            if let Some(key) = cache_mut.keys().next().cloned() {
-                cache_mut.remove(&key);
-            }
-        }
-        cache_mut.insert(file_path.to_string(), texture.clone());
-
-        Ok(texture)
-    }
 }

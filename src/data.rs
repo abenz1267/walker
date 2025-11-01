@@ -556,7 +556,7 @@ fn query(text: &str) {
         req.maxresults = cfg.providers.max_results;
     }
 
-    let mut buffer = vec![0];
+    let mut buffer = vec![0, 0];
     let length = req.compute_size() as u32;
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
@@ -594,7 +594,7 @@ pub fn clipboard_disable_images_only() {
     req.action = "disable_images_only".to_string();
     req.provider = "clipboard".to_string();
 
-    let mut buffer = vec![1];
+    let mut buffer = vec![1, 0];
     let length = req.compute_size() as u32;
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
@@ -686,7 +686,7 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
 
     req.query = query.to_string();
 
-    let mut buffer = vec![1];
+    let mut buffer = vec![1, 0];
     let length = req.compute_size() as u32;
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
@@ -708,7 +708,7 @@ fn subscribe_menu() -> Result<(), Box<dyn std::error::Error>> {
     let mut req = SubscribeRequest::new();
     req.provider = "menus".to_string();
 
-    let mut buffer = vec![2];
+    let mut buffer = vec![2, 0];
     let length = req.compute_size() as u32;
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();
@@ -730,7 +730,7 @@ fn subscribe_bluetooth() -> Result<(), Box<dyn std::error::Error>> {
     let mut req = SubscribeRequest::new();
     req.provider = "bluetooth".to_string();
 
-    let mut buffer = vec![2];
+    let mut buffer = vec![2, 0];
     let length = req.compute_size() as u32;
     buffer.extend_from_slice(&length.to_be_bytes());
     req.write_to_vec(&mut buffer).unwrap();

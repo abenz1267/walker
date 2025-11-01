@@ -1,7 +1,8 @@
 use std::env;
+use std::path::Path;
 
 use gtk4::{
-    Builder, Image, ListItem,
+    Builder, Image, Label, ListItem,
     gio::{self, prelude::FileExt},
 };
 
@@ -27,12 +28,30 @@ impl Provider for Files {
         include_str!("../../resources/themes/default/item_files.xml").to_string()
     }
 
-    fn text_transformer(&self, item: &Item, label: &gtk4::Label) {
-        if let Ok(home) = env::var("HOME")
-            && let Some(stripped) = item.text.strip_prefix(&home)
-        {
-            label.set_label(stripped);
-        }
+    fn text_transformer(&self, item: &Item, label: &Label) {
+        let text = Path::new(&item.text)
+            .file_name()
+            .and_then(|f| f.to_str())
+            .unwrap();
+
+        label.set_text(text);
+    }
+
+    fn subtext_transformer(&self, item: &Item, label: &Label) {
+        let subtext = Path::new(&item.text)
+            .parent()
+            .and_then(|p| p.to_str())
+            .map(|parent_folder| {
+                if let Ok(home) = env::var("HOME") {
+                    if let Some(stripped) = parent_folder.strip_prefix(&home) {
+                        return format!("~{}", stripped);
+                    }
+                }
+                parent_folder.to_string()
+            })
+            .unwrap_or_default();
+
+        label.set_text(&subtext);
     }
 
     fn image_transformer(&self, b: &Builder, _: &ListItem, item: &Item) {

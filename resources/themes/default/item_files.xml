@@ -37,6 +37,18 @@
             <property name="ellipsize">1</property>
           </object>
         </child>
+        <child>
+          <object class="GtkLabel" id="ItemSubtext">
+            <style>
+              <class name="item-subtext"></class>
+            </style>
+            <property name="wrap">false</property>
+            <property name="vexpand_set">true</property>
+            <property name="vexpand">true</property>
+            <property name="xalign">0</property>
+            <property name="ellipsize">1</property>
+          </object>
+        </child>
       </object>
     </child>
     <child>

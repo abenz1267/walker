@@ -378,7 +378,19 @@ fn setup_input_handling(input: &Entry) -> gdk::glib::SignalHandlerId {
 
         let text = input.text().to_string();
 
-        if !text.contains(&get_config().global_argument_delimiter) {
+        let cfg = get_config();
+
+        let delimiter = if let Some(item) = get_selected_query_response() {
+            if let Some(d) = cfg.providers.argument_delimiter.get(&item.item.provider) {
+                d
+            } else {
+                &cfg.global_argument_delimiter
+            }
+        } else {
+            &cfg.global_argument_delimiter
+        };
+
+        if !text.contains(delimiter) {
             input_changed(&text);
         }
     })

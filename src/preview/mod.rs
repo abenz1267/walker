@@ -6,7 +6,7 @@ use gtk4::gio::{self, Cancellable};
 use gtk4::glib::{self, Bytes};
 use gtk4::{
     Box as GtkBox, Builder, ContentFit, Image, Orientation, Picture, PolicyType, ScrolledWindow,
-    Stack, TextView, Video, WrapMode, prelude::*,
+    Stack, TextView, Video, WrapMode, gdk_pixbuf, prelude::*,
 };
 use poppler::{Document, Page};
 use std::cell::RefCell;
@@ -106,6 +106,7 @@ impl UnifiedPreviewHandler {
         preview.append(&preview_widget.box_widget);
         preview.set_visible(get_selected_item().is_some_and(|current| current == *item));
     }
+
 }
 
 pub fn handle_preview(item: &Item, preview: &GtkBox, builder: &Builder) {
@@ -310,10 +311,23 @@ impl PreviewWidget {
         self.preview_area.add_child(&scrolled);
         self.preview_area.set_visible_child(&scrolled);
 
-
-        let file = gio::File::for_path(file_path);
-        picture.set_file(Some(&file));
-
+        // Load and resize image for faster preview
+        let file_path_clone = file_path.to_string();
+        let picture_clone = picture.clone();
+        
+        glib::MainContext::ref_thread_default().spawn_local(async move {
+            match Self::load_and_resize_image(&file_path_clone).await {
+                Ok(texture) => {
+                    picture_clone.set_paintable(Some(&texture));
+                }
+                Err(e) => {
+                    eprintln!("Failed to load image {}: {}", file_path_clone, e);
+                    // Fallback to direct file loading
+                    let file = gio::File::for_path(&file_path_clone);
+                    picture_clone.set_file(Some(&file));
+                }
+            }
+        });
 
         Ok(())
     }
@@ -575,4 +589,43 @@ impl PreviewWidget {
         scrolled
     }
 
+    async fn load_and_resize_image(
+        file_path: &str,
+    ) -> Result<gtk4::gdk::Texture, Box<dyn std::error::Error>> {
+        let file = gio::File::for_path(file_path);
+        let (bytes, _) = file.load_bytes_future().await?;
+        let stream = gio::MemoryInputStream::from_bytes(&bytes);
+        
+        let cancellable = gio::Cancellable::new();
+        let pixbuf = gdk_pixbuf::Pixbuf::from_stream(&stream, Some(&cancellable))?;
+        
+        // Resize to reasonable preview size (max 800x600)
+        let max_width = 800;
+        let max_height = 600;
+        let (width, height) = (pixbuf.width(), pixbuf.height());
+        
+        let (new_width, new_height) = if width > max_width || height > max_height {
+            let width_ratio = max_width as f64 / width as f64;
+            let height_ratio = max_height as f64 / height as f64;
+            let ratio = width_ratio.min(height_ratio);
+            
+            (
+                (width as f64 * ratio) as i32,
+                (height as f64 * ratio) as i32,
+            )
+        } else {
+            (width, height)
+        };
+        
+        let resized_pixbuf = if new_width != width || new_height != height {
+            pixbuf
+                .scale_simple(new_width, new_height, gdk_pixbuf::InterpType::Bilinear)
+                .ok_or("Failed to resize image")?
+        } else {
+            pixbuf
+        };
+        
+        let texture = gtk4::gdk::Texture::for_pixbuf(&resized_pixbuf);
+        Ok(texture)
+    }
 }

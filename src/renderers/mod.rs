@@ -18,7 +18,7 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
         theme
             .items
             .get(&item.provider)
-            .expect("failed to get item layout"),
+            .unwrap_or_else(|| panic!("failed to get item layout: {}", &item.provider)),
     );
 
     let itembox: Box = match b.object("ItemBox") {

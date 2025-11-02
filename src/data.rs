@@ -9,8 +9,8 @@ use crate::providers::PROVIDERS;
 use crate::state::{
     get_async_after, get_current_prefix, get_current_selection, get_current_set, get_provider,
     is_connected, is_connecting, is_dmenu, is_index, is_service, set_async_after, set_block_scroll,
-    set_current_prefix, set_global_provider_state, set_is_connected, set_is_connecting,
-    set_is_visible, set_prefix_provider, set_provider, set_query,
+    set_current_prefix, set_global_provider_actions, set_global_provider_state, set_is_connected,
+    set_is_connecting, set_is_visible, set_prefix_provider, set_provider, set_query,
 };
 use crate::ui::window::{set_input_text, set_keybind_hint, with_window};
 use crate::{QueryResponseObject, send_message};
@@ -317,6 +317,7 @@ fn listen_menus_loop() -> Result<(), Box<dyn std::error::Error>> {
                 resp.merge_from_bytes(&payload)?;
 
                 glib::idle_add_once(move || {
+                    set_global_provider_actions(None);
                     set_provider(resp.value);
 
                     with_window(|w| {

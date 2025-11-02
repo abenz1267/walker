@@ -350,7 +350,7 @@ pub fn get_provider_global_bind(
     let global_actions = get_global_provider_actions()?;
 
     if let Ok(binds) = PROVIDER_BINDS.read() {
-        binds
+        let mut action = binds
             .get(provider)
             .and_then(|keys| keys.get(&key.to_lower()))
             .and_then(|modifiers| modifiers.get(&modifier))
@@ -359,7 +359,22 @@ pub fn get_provider_global_bind(
                     .iter()
                     .find(|action| global_actions.contains(&action.action))
                     .cloned()
-            })
+            });
+
+        if action.is_none() {
+            action = binds
+                .get("fallback")
+                .and_then(|keys| keys.get(&key.to_lower()))
+                .and_then(|modifiers| modifiers.get(&modifier))
+                .and_then(|actions_list| {
+                    actions_list
+                        .iter()
+                        .find(|action| global_actions.contains(&action.action))
+                        .cloned()
+                });
+        }
+
+        action
     } else {
         None
     }

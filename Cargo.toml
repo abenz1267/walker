@@ -1,6 +1,6 @@
 [package]
 name = "walker"
-version = "2.9.0-git"
+version = "2.8.2"
 edition = "2024"
 
 [dependencies]

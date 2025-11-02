@@ -679,12 +679,9 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
         .iter()
         .find(|prefix| provider == prefix.provider && query.starts_with(&prefix.prefix))
     {
-        req.query = req
-            .query
-            .to_string()
-            .strip_prefix(&prefix.prefix)
-            .expect("couldn't trim prefix")
-            .to_string();
+        if let Some(after) = req.query.to_string().strip_prefix(&prefix.prefix) {
+            req.query = after.to_string();
+        }
     }
 
     let mut buffer = vec![1, 0];

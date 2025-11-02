@@ -1,0 +1,15 @@
+syntax = "proto3";
+
+package pb;
+
+option go_package = "./pb";
+
+message ProviderStateRequest {
+   string provider = 1;
+}
+
+message ProviderStateResponse {
+  repeated string states = 1;
+  repeated string actions = 2;
+  string provider = 3;
+}

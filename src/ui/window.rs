@@ -92,6 +92,7 @@ pub struct WindowData {
     pub placeholder: Option<Label>,
     pub elephant_hint: Label,
     pub keybinds: Option<gtk4::Box>,
+    pub global_keybinds: Option<gtk4::Box>,
     pub scroll: ScrolledWindow,
     pub search_container: Option<gtk4::Box>,
     pub preview_container: Option<gtk4::Box>,
@@ -161,6 +162,7 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
     let input: Option<Entry> = builder.object("Input");
     let placeholder: Option<Label> = builder.object("Placeholder");
     let keybinds: Option<gtk4::Box> = builder.object("Keybinds");
+    let global_keybinds: Option<gtk4::Box> = builder.object("GlobalKeybinds");
 
     let filter = CustomFilter::new({
         move |entry| {
@@ -207,6 +209,7 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
         items,
         placeholder,
         keybinds,
+        global_keybinds,
     };
 
     if let Some(p) = &ui.preview_container {
@@ -932,6 +935,48 @@ pub fn handle_preview() {
         };
 
         crate::preview::handle_preview(&item, &preview, &builder);
+    });
+}
+
+pub fn clear_global_keybind_hints() {
+    gtk4::glib::idle_add_once(move || {
+        with_window(|w| {
+            let Some(k) = &w.global_keybinds else {
+                return;
+            };
+
+            while let Some(child) = k.first_child() {
+                k.remove(&child);
+            }
+        });
+    });
+}
+
+pub fn set_global_keybind_hints(actions: Vec<String>, provider: String) {
+    gtk4::glib::idle_add_once(move || {
+        with_window(|w| {
+            let Some(k) = &w.global_keybinds else {
+                return;
+            };
+
+            while let Some(child) = k.first_child() {
+                k.remove(&child);
+            }
+
+            let providers = PROVIDERS.get().unwrap();
+
+            let Some(k) = &w.global_keybinds else {
+                return;
+            };
+
+            while let Some(child) = k.first_child() {
+                k.remove(&child);
+            }
+
+            if let Some(p) = providers.get(&provider) {
+                generate_hints(p, &actions, k);
+            }
+        });
     });
 }
 

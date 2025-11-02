@@ -99,7 +99,7 @@ providerlist = [
 ]
 
 bluetooth = [
-  { action = "find", global = true, bind = "ctrl f", after = "AsyncClearReload" },
+  { action = "find", bind = "ctrl f", after = "AsyncClearReload" },
   { action = "trust", bind = "ctrl t", after = "AsyncReload" },
   { action = "untrust", bind = "ctrl t", after = "AsyncReload" },
   { action = "pair", bind = "Return", after = "AsyncReload" },
@@ -141,13 +141,13 @@ files = [
 ]
 
 todo = [
-  { action = "save", default = true, bind = "Return", after = "ClearReload" },
-  { action = "delete", bind = "ctrl d", after = "ClearReload" },
-  { action = "active", bind = "Return", after = "ClearReload" },
-  { action = "inactive", bind = "Return", after = "ClearReload" },
-  { action = "done", bind = "ctrl f", after = "ClearReload" },
+  { action = "save", default = true, bind = "Return", after = "AsyncClearReload" },
+  { action = "delete", bind = "ctrl d", after = "AsyncClearReload" },
+  { action = "active", bind = "Return", after = "AsyncClearReload" },
+  { action = "inactive", bind = "Return", after = "AsyncClearReload" },
+  { action = "done", bind = "ctrl f", after = "AsyncClearReload" },
   { action = "change_category", bind = "ctrl y", label = "change category", after = "AsyncClearReload" },
-  { action = "clear", bind = "ctrl x", after = "ClearReload", global = true },
+  { action = "clear", bind = "ctrl x", after = "AsyncClearReload" },
 ]
 
 runner = [
@@ -171,7 +171,9 @@ nirisessions = [
 clipboard = [
   { action = "copy", default = true, bind = "Return" },
   { action = "remove", bind = "ctrl d", after = "AsyncClearReload" },
-  { action = "remove_all", global = true, label = "clear", bind = "ctrl shift d", after = "AsyncClearReload" },
-  { action = "toggle_images", global = true, label = "toggle images", bind = "ctrl i", after = "AsyncClearReload" },
+  { action = "remove_all", label = "clear", bind = "ctrl shift d", after = "AsyncClearReload" },
+  { action = "show_images_only", label = "only images", bind = "ctrl i", after = "AsyncClearReload" },
+  { action = "show_text_only", label = "only text", bind = "ctrl i", after = "AsyncClearReload" },
+  { action = "show_combined", label = "show all", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "edit", bind = "ctrl o" },
 ]

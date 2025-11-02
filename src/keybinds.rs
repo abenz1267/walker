@@ -1,5 +1,6 @@
 use crate::config::get_config;
 use crate::providers::PROVIDERS;
+use crate::state::get_global_provider_actions;
 use gtk4::gdk::{self, Key};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
@@ -30,7 +31,6 @@ pub enum AfterAction {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Action {
     pub action: String,
-    pub global: Option<bool>,
     pub default: Option<bool>,
 
     #[serde(default = "default_bind")]
@@ -53,9 +53,6 @@ fn default_after() -> Option<AfterAction> {
 static BINDS: LazyLock<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> =
     LazyLock::new(RwLock::default);
 static PROVIDER_BINDS: LazyLock<
-    RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Vec<Action>>>>>,
-> = LazyLock::new(RwLock::default);
-static PROVIDER_GLOBAL_BINDS: LazyLock<
     RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Vec<Action>>>>>,
 > = LazyLock::new(RwLock::default);
 
@@ -91,7 +88,6 @@ pub fn setup_binds() {
         parse_bind(
             &Action {
                 action: ACTION_CLOSE.to_string(),
-                global: None,
                 default: Some(true),
                 bind: Some(b.clone()),
                 label: Some("close".to_string()),
@@ -107,7 +103,6 @@ pub fn setup_binds() {
             &Action {
                 action: ACTION_SELECT_NEXT.to_string(),
                 default: None,
-                global: Some(true),
                 bind: Some(b.clone()),
                 label: Some("select next".to_string()),
                 after: Some(AfterAction::Nothing),
@@ -122,7 +117,6 @@ pub fn setup_binds() {
             &Action {
                 action: ACTION_SELECT_PREVIOUS.to_string(),
                 default: None,
-                global: Some(true),
                 bind: Some(b.clone()),
                 label: Some("select previous".to_string()),
                 after: Some(AfterAction::Nothing),
@@ -137,7 +131,6 @@ pub fn setup_binds() {
             &Action {
                 action: ACTION_TOGGLE_EXACT.to_string(),
                 default: None,
-                global: Some(true),
                 bind: Some(b.clone()),
                 label: Some("toggle exact search".to_string()),
                 after: Some(AfterAction::Nothing),
@@ -153,7 +146,6 @@ pub fn setup_binds() {
                 action: ACTION_RESUME_LAST_QUERY.to_string(),
                 bind: Some(b.clone()),
                 default: None,
-                global: Some(true),
                 label: Some("resume last query".to_string()),
                 after: Some(AfterAction::Nothing),
             },
@@ -167,7 +159,6 @@ pub fn setup_binds() {
             &Action {
                 action: ACTION_SELECT_PAGE_DOWN.to_string(),
                 default: None,
-                global: Some(true),
                 bind: Some(b.clone()),
                 label: Some("select page down".to_string()),
                 after: Some(AfterAction::Nothing),
@@ -182,7 +173,6 @@ pub fn setup_binds() {
             &Action {
                 action: ACTION_SELECT_PAGE_UP.to_string(),
                 default: None,
-                global: Some(true),
                 bind: Some(b.clone()),
                 label: Some("select page up".to_string()),
                 after: Some(AfterAction::Nothing),
@@ -200,7 +190,6 @@ pub fn setup_binds() {
                 &Action {
                     default: None,
                     action: action_str,
-                    global: Some(true),
                     bind: Some(s.clone()),
                     label: Some("quick activate".to_string()),
                     after: None,
@@ -260,28 +249,16 @@ fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Erro
         return Ok(());
     }
 
-    if !b.global.unwrap_or(false) {
-        let mut provider_binds = PROVIDER_BINDS.write().unwrap();
+    let mut provider_binds = PROVIDER_BINDS.write().unwrap();
 
-        provider_binds
-            .entry(provider.to_string())
-            .or_default()
-            .entry(key)
-            .or_default()
-            .entry(modifier)
-            .or_default()
-            .push(b.clone());
-    } else {
-        let mut global_binds = PROVIDER_GLOBAL_BINDS.write().unwrap();
-        global_binds
-            .entry(provider.to_string())
-            .or_default()
-            .entry(key)
-            .or_default()
-            .entry(modifier)
-            .or_default()
-            .push(b.clone());
-    }
+    provider_binds
+        .entry(provider.to_string())
+        .or_default()
+        .entry(key)
+        .or_default()
+        .entry(modifier)
+        .or_default()
+        .push(b.clone());
 
     Ok(())
 }
@@ -355,7 +332,6 @@ pub fn get_provider_bind(
     if actions.len() == 1 && action.is_none() && key == gdk::Key::Return {
         return Some(Action {
             action: actions.first().unwrap().to_string(),
-            global: None,
             default: Some(true),
             bind: Some("Return".to_string()),
             after: None,
@@ -371,12 +347,20 @@ pub fn get_provider_global_bind(
     key: Key,
     modifier: gdk::ModifierType,
 ) -> Option<Action> {
-    PROVIDER_GLOBAL_BINDS
-        .read()
-        .ok()?
-        .get(provider)?
-        .get(&key.to_lower())?
-        .get(&modifier)?
-        .first()
-        .cloned()
+    let global_actions = get_global_provider_actions()?;
+
+    if let Ok(binds) = PROVIDER_BINDS.read() {
+        binds
+            .get(provider)
+            .and_then(|keys| keys.get(&key.to_lower()))
+            .and_then(|modifiers| modifiers.get(&modifier))
+            .and_then(|actions_list| {
+                actions_list
+                    .iter()
+                    .find(|action| global_actions.contains(&action.action))
+                    .cloned()
+            })
+    } else {
+        None
+    }
 }

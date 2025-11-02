@@ -1,12 +1,16 @@
 use std::collections::HashSet;
 use std::sync::{OnceLock, RwLock};
 
+use crate::data::get_provider_state;
 use crate::keybinds::AfterAction;
+use crate::protos::generated_proto::providerstate::ProviderStateResponse;
+use crate::ui::window::{clear_global_keybind_hints, set_global_keybind_hints};
 
 static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 
 #[derive(Debug, Clone, Default)]
 pub struct AppState {
+    global_provider_actions: Option<Vec<String>>,
     current_selection: u32,
     error: String,
     async_after: Option<AfterAction>,
@@ -69,6 +73,25 @@ pub fn get_current_selection() -> u32 {
     STATE.get().unwrap().read().unwrap().current_selection
 }
 
+pub fn set_global_provider_actions(val: Option<Vec<String>>) {
+    STATE
+        .get()
+        .unwrap()
+        .write()
+        .unwrap()
+        .global_provider_actions = val;
+}
+
+pub fn get_global_provider_actions() -> Option<Vec<String>> {
+    STATE
+        .get()
+        .unwrap()
+        .read()
+        .unwrap()
+        .global_provider_actions
+        .clone()
+}
+
 pub fn set_current_selection(val: u32) {
     STATE.get().unwrap().write().unwrap().current_selection = val
 }
@@ -102,7 +125,7 @@ pub fn get_provider() -> String {
 }
 
 pub fn set_provider(val: String) {
-    STATE.get().unwrap().write().unwrap().provider = val
+    STATE.get().unwrap().write().unwrap().provider = val.clone();
 }
 
 pub fn get_prefix_provider() -> String {
@@ -110,7 +133,13 @@ pub fn get_prefix_provider() -> String {
 }
 
 pub fn set_prefix_provider(val: String) {
-    STATE.get().unwrap().write().unwrap().prefix_provider = val
+    STATE.get().unwrap().write().unwrap().prefix_provider = val.clone();
+
+    if !val.is_empty() {
+        get_provider_state(val);
+    } else {
+        clear_global_keybind_hints();
+    }
 }
 
 pub fn get_initial_placeholder() -> String {
@@ -419,4 +448,13 @@ pub fn has_theme(val: &str) -> bool {
         .unwrap()
         .available_themes
         .contains(val)
+}
+
+pub fn set_global_provider_state(state: ProviderStateResponse) {
+    if !state.actions.is_empty() {
+        set_global_provider_actions(Some(state.actions.clone()));
+        set_global_keybind_hints(state.actions, state.provider);
+    } else {
+        clear_global_keybind_hints();
+    }
 }

@@ -49,7 +49,6 @@ pub trait Provider: Sync + Send + Debug {
                     action: "activate".to_string(),
                     default: Some(true),
                     bind: Some("Return".to_string()),
-                    global: None,
                     after: None,
                     label: None,
                 }]
@@ -77,11 +76,11 @@ pub trait Provider: Sync + Send + Debug {
                 a.clone()
             })
             .filter(|v| {
-                if actions.contains(&v.action) || v.global.unwrap_or(false) {
+                if actions.contains(&v.action) {
                     present.insert(v.action.clone());
                 }
 
-                actions.contains(&v.action) || v.global.unwrap_or(false)
+                actions.contains(&v.action)
             })
             .collect();
 
@@ -101,42 +100,20 @@ pub trait Provider: Sync + Send + Debug {
 
                     a.clone()
                 })
-                .filter(|v| {
-                    (actions.contains(&v.action) || v.global.unwrap_or(false))
-                        && !present.contains(&v.action)
-                })
+                .filter(|v| actions.contains(&v.action) && !present.contains(&v.action))
                 .for_each(|v| {
                     result.push(v);
                 });
         }
 
-        if !actions.is_empty()
-            && (result.is_empty()
-                || (result.len() == 1 && result.first().unwrap().global.unwrap_or(false)))
-        {
-            if result.len() == 1 {
-                result.push(Action {
-                    action: actions
-                        .iter()
-                        .find(|a| result.first().unwrap().action != **a)
-                        .unwrap()
-                        .to_string(),
-                    global: None,
-                    default: Some(true),
-                    bind: Some("Return".to_string()),
-                    after: None,
-                    label: None,
-                });
-            } else {
-                result.push(Action {
-                    action: actions.first().unwrap().to_string(),
-                    global: None,
-                    default: Some(true),
-                    bind: Some("Return".to_string()),
-                    after: None,
-                    label: None,
-                });
-            }
+        if !actions.is_empty() && result.is_empty() {
+            result.push(Action {
+                action: actions.first().unwrap().to_string(),
+                default: Some(true),
+                bind: Some("Return".to_string()),
+                after: None,
+                label: None,
+            });
         }
 
         result.sort_by_key(|v| v.default.unwrap_or(false));

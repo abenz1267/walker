@@ -1,6 +1,7 @@
 use crate::config::get_config;
 use crate::keybinds::{Action, AfterAction};
 use crate::protos::generated_proto::activate::ActivateRequest;
+use crate::protos::generated_proto::providerstate::{ProviderStateRequest, ProviderStateResponse};
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
@@ -8,8 +9,8 @@ use crate::providers::PROVIDERS;
 use crate::state::{
     get_async_after, get_current_prefix, get_current_selection, get_current_set, get_provider,
     is_connected, is_connecting, is_dmenu, is_index, is_service, set_async_after, set_block_scroll,
-    set_current_prefix, set_is_connected, set_is_connecting, set_is_visible, set_prefix_provider,
-    set_provider, set_query,
+    set_current_prefix, set_global_provider_state, set_is_connected, set_is_connecting,
+    set_is_visible, set_prefix_provider, set_provider, set_query,
 };
 use crate::ui::window::{set_input_text, set_keybind_hint, with_window};
 use crate::{QueryResponseObject, send_message};
@@ -61,6 +62,10 @@ pub fn input_changed(text: &str) {
 
             sort_items_fuzzy(text);
         } else if is_connected() {
+            if !get_provider().is_empty() {
+                get_provider_state(get_provider());
+            }
+
             set_query(text);
             query(text);
         }
@@ -363,6 +368,17 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                 glib::idle_add_once(clear_items);
             }
             230 => {}
+            3 => {
+                let length = u32::from_be_bytes(header[1..].try_into().unwrap());
+
+                let mut payload = vec![0u8; length as usize];
+                reader.read_exact(&mut payload)?;
+
+                let mut resp = ProviderStateResponse::new();
+                resp.merge_from_bytes(&payload)?;
+
+                set_global_provider_state(resp);
+            }
             2 => {
                 glib::idle_add_once(move || match get_async_after() {
                     Some(AfterAction::AsyncReload) => {
@@ -591,7 +607,7 @@ fn handle_disconnect() {
 
 pub fn clipboard_disable_images_only() {
     let mut req = ActivateRequest::new();
-    req.action = "disable_images_only".to_string();
+    req.action = "show_combined".to_string();
     req.provider = "clipboard".to_string();
 
     let mut buffer = vec![1, 0];
@@ -605,6 +621,28 @@ pub fn clipboard_disable_images_only() {
         match conn.write_all(&buffer) {
             Err(e) => {
                 eprintln!("send clipboard disable images only socket error: {e}");
+                handle_disconnect();
+            }
+            _ => (),
+        }
+    }
+}
+
+pub fn get_provider_state(provider: String) {
+    let mut req = ProviderStateRequest::new();
+    req.provider = provider;
+
+    let mut buffer = vec![4, 0];
+    let length = req.compute_size() as u32;
+    buffer.extend_from_slice(&length.to_be_bytes());
+    req.write_to_vec(&mut buffer).unwrap();
+
+    let mut conn_guard = CONN.lock().unwrap();
+
+    if let Some(conn) = conn_guard.as_mut() {
+        match conn.write_all(&buffer) {
+            Err(e) => {
+                eprintln!("send providerstate request socket error: {e}");
                 handle_disconnect();
             }
             _ => (),

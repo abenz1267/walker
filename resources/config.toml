@@ -111,6 +111,8 @@ bluetooth = [
 archlinuxpkgs = [
   { action = "install", bind = "Return", default = true },
   { action = "remove", bind = "Return" },
+  { action = "show_all", label = "show all", bind = "ctrl i", after = "AsyncClearReload" },
+  { action = "show_installed", label = "show installed", bind = "ctrl i", after = "AsyncClearReload" },
 ]
 
 calc = [

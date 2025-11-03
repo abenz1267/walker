@@ -58,9 +58,7 @@ use crate::state::{
     set_parameter_width, set_placeholder, set_provider, set_theme,
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
-use crate::ui::window::{
-    quit, set_input_text, set_keybind_hint, setup_window, with_window,
-};
+use crate::ui::window::{quit, set_input_text, set_keybind_hint, setup_window, with_window};
 
 static GLOBAL_DMENU_SENDER: RwLock<Option<Sender<String>>> = RwLock::new(None);
 
@@ -609,6 +607,12 @@ fn activate(app: &Application) {
             process::exit(1);
         }
     });
+
+    if !get_provider().is_empty() {
+        with_window(|w| {
+            w.items.remove_all();
+        });
+    }
 
     set_is_visible(true);
 }

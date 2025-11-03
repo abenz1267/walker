@@ -25,6 +25,7 @@ The following Elephant providers are implemented by default:
 - **Dmenu**: Your good old dmenu ... with seamless menus!
 - **Arch Linux Packages**: Search through available packages (official and aur), install or delete a target! List all exlusively installed packages.
 - **Todo List**: create simple todo items with basic time tracking, scheduling and notifications
+- **Bookmarks**: manage bookmarks, open with specified browsers, assign categories and import bookmarks from browsers
 - **Bluetooth**: basic bluetooth management
 
 ## Installation
@@ -117,7 +118,7 @@ programs.walker = {
     ];
     keybinds.quick_activate = ["F1" "F2" "F3"];
   };
-  
+
   # Set `programs.walker.config.theme="your theme name"` to choose the default theme
   themes = {
     "your theme name" = {

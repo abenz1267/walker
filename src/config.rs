@@ -345,9 +345,6 @@ impl Clipboard {
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct CustomKeybind {}
-
-#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Shell {
     pub anchor_top: bool,
     pub anchor_bottom: bool,

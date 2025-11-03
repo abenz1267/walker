@@ -67,6 +67,10 @@ prefix = "!"
 provider = "todo"
 
 [[providers.prefixes]]
+prefix = "%"
+provider = "bookmarks"
+
+[[providers.prefixes]]
 prefix = "="
 provider = "calc"
 
@@ -174,4 +178,13 @@ clipboard = [
   { action = "remove_all", global = true, label = "clear", bind = "ctrl shift d", after = "AsyncClearReload" },
   { action = "toggle_images", global = true, label = "toggle images", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "edit", bind = "ctrl o" },
+]
+
+bookmarks = [
+  { action = "save", default = true, bind = "Return", after = "AsyncClearReload" },
+  { action = "open", bind = "Return" },
+  { action = "delete", bind = "ctrl d", after = "AsyncClearReload" },
+  { action = "change_category", label = "Change category", bind = "ctrl y", after = "AsyncReloadKeepSelection" },
+  { action = "change_browser", label = "Change browser", bind = "ctrl b", after = "AsyncReloadKeepSelection" },
+  { action = "import", label = "Import", bind = "ctrl i", after = "AsyncClearReload" },
 ]

@@ -18,13 +18,14 @@ use crate::{
     keybinds::Action,
     protos::generated_proto::query::query_response::Item,
     providers::{
-        archlinuxpkgs::ArchLinuxPkgs, calc::Calc, clipboard::Clipboard,
+        archlinuxpkgs::ArchLinuxPkgs, bookmarks::Bookmarks, calc::Calc, clipboard::Clipboard,
         default_provider::DefaultProvider, dmenu::Dmenu, files::Files, providerlist::Providerlist,
         symbols::Symbols, todo::Todo, unicode::Unicode,
     },
 };
 
 pub mod archlinuxpkgs;
+pub mod bookmarks;
 pub mod calc;
 pub mod clipboard;
 pub mod default_provider;
@@ -283,6 +284,7 @@ pub fn setup_providers(elephant: bool) {
             "archlinuxpkgs" => {
                 providers.insert("archlinuxpkgs".to_string(), Box::new(ArchLinuxPkgs::new()))
             }
+            "bookmarks" => providers.insert("bookmarks".to_string(), Box::new(Bookmarks::new())),
             "todo" => providers.insert("todo".to_string(), Box::new(Todo::new())),
             provider => providers.insert(
                 provider.to_string(),

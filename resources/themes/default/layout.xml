@@ -64,6 +64,7 @@
                     <property name="label">Waiting for elephant...</property>
                     <property name="hexpand">true</property>
                     <property name="vexpand">true</property>
+                    <property name="visible">false</property>
                     <property name="valign">0.5</property>
                   </object>
                 </child>

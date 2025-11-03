@@ -269,7 +269,7 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
 
     ui.selection.set_autoselect(true);
 
-    ui.selection.connect_items_changed(move |s, _, _, _| {
+    ui.selection.connect_items_changed(move |_, _, _, _| {
         if is_dmenu() {
             handle_changed_items();
         }
@@ -626,7 +626,7 @@ fn setup_mouse_handling(ui: &WindowData) {
 }
 
 pub fn quit(app: &Application, cancelled: bool) {
-    if PROVIDERS.get().unwrap().contains_key("clipboard") {
+    if is_connected() && PROVIDERS.get().unwrap().contains_key("clipboard") {
         clipboard_disable_images_only();
     }
 
@@ -706,8 +706,6 @@ pub fn quit(app: &Application, cancelled: bool) {
             if let Some(hints) = &w.keybinds {
                 hints.set_visible(true);
             }
-
-            set_input_text("");
 
             w.content_container.set_visible(true);
 
@@ -1157,13 +1155,17 @@ pub fn handle_changed_items() {
             };
 
             if let Some(placeholders) = &get_config().placeholders {
-                let ph = placeholders
-                    .get(&provider)
-                    .or(placeholders.get("default"))
-                    .unwrap();
+                if s.n_items() == 0 {
+                    let ph = placeholders
+                        .get(&provider)
+                        .or(placeholders.get("default"))
+                        .unwrap();
 
-                p.set_text(&ph.list);
-                p.set_visible(s.n_items() == 0);
+                    p.set_text(&ph.list);
+                    p.set_visible(s.n_items() == 0);
+                } else {
+                    p.set_visible(false);
+                }
             }
         }
 

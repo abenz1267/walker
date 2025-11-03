@@ -253,7 +253,7 @@ pub fn setup_window(app: &Application) {
     WINDOWS.with(|s| s.set(windows).expect("failed initializing windows"));
 }
 
-fn check_error() {
+pub fn check_error() {
     with_window(|w| {
         if !get_error().is_empty() {
             w.error.set_text(&get_error());
@@ -270,39 +270,9 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
     ui.selection.set_autoselect(true);
 
     ui.selection.connect_items_changed(move |s, _, _, _| {
-        check_error();
-
-        with_window(|w| {
-            if let Some(p) = &w.placeholder {
-                let provider = if !get_provider().is_empty() {
-                    get_provider()
-                } else {
-                    get_prefix_provider()
-                };
-
-                if let Some(placeholders) = &get_config().placeholders {
-                    let ph = placeholders
-                        .get(&provider)
-                        .or(placeholders.get("default"))
-                        .unwrap();
-
-                    p.set_text(&ph.list);
-                    p.set_visible(s.n_items() == 0);
-                }
-            }
-
-            w.scroll.set_visible(s.n_items() != 0);
-
-            if let Some(k) = &w.keybinds {
-                while let Some(child) = k.first_child() {
-                    k.remove(&child);
-                }
-            }
-
-            if s.n_items() == 0 {
-                crate::preview::clear_all_caches();
-            }
-        });
+        if is_dmenu() {
+            handle_changed_items();
+        }
     });
 
     if let Some(preview) = ui.builder.object::<Box>("PreviewBox") {
@@ -1172,5 +1142,41 @@ pub fn select_page_up() {
         };
 
         selection.set_selected(prev);
+    });
+}
+
+pub fn handle_changed_items() {
+    with_window(|w| {
+        let s = &w.selection;
+
+        if let Some(p) = &w.placeholder {
+            let provider = if !get_provider().is_empty() {
+                get_provider()
+            } else {
+                get_prefix_provider()
+            };
+
+            if let Some(placeholders) = &get_config().placeholders {
+                let ph = placeholders
+                    .get(&provider)
+                    .or(placeholders.get("default"))
+                    .unwrap();
+
+                p.set_text(&ph.list);
+                p.set_visible(s.n_items() == 0);
+            }
+        }
+
+        w.scroll.set_visible(s.n_items() != 0);
+
+        if let Some(k) = &w.keybinds {
+            while let Some(child) = k.first_child() {
+                k.remove(&child);
+            }
+        }
+
+        if s.n_items() == 0 {
+            crate::preview::clear_all_caches();
+        }
     });
 }

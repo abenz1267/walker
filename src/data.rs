@@ -7,12 +7,15 @@ use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
-    get_async_after, get_current_prefix, get_current_selection, get_current_set, get_provider,
-    is_connected, is_connecting, is_dmenu, is_index, is_service, set_async_after, set_block_scroll,
-    set_current_prefix, set_global_provider_actions, set_global_provider_state, set_is_connected,
-    set_is_connecting, set_is_visible, set_prefix_provider, set_provider, set_query,
+    get_async_after, get_current_prefix, get_current_selection, get_current_set,
+    get_prefix_provider, get_provider, is_connected, is_connecting, is_dmenu, is_index, is_service,
+    set_async_after, set_block_scroll, set_current_prefix, set_global_provider_actions,
+    set_global_provider_state, set_is_connected, set_is_connecting, set_is_visible,
+    set_prefix_provider, set_provider, set_query,
 };
-use crate::ui::window::{set_input_text, set_keybind_hint, with_window};
+use crate::ui::window::{
+    check_error, handle_changed_items, set_input_text, set_keybind_hint, with_window,
+};
 use crate::{QueryResponseObject, send_message};
 use gtk4::glib::Object;
 use gtk4::{glib, prelude::*};
@@ -349,6 +352,10 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
         match header[0] {
             255 => {
                 glib::idle_add_once(|| {
+                    check_error();
+
+                    handle_changed_items();
+
                     set_keybind_hint();
                     crate::ui::window::handle_preview();
 

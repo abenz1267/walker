@@ -143,68 +143,72 @@ pub trait Provider: Sync + Send + Debug {
         label.set_text(&item.subtext);
     }
 
-    fn image_transformer(&self, b: &Builder, _: &ListItem, item: &Item) {
-        let mut is_text = false;
+    fn image_transformer(&self, b: &Builder, i: &ListItem, item: &Item) {
+        shared_image_transformer(b, i, item);
+    }
+}
 
-        if let Some(image) = b.object::<Label>("ItemImageFont") {
+pub fn shared_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
+    let mut is_text = false;
+
+    if let Some(image) = b.object::<Label>("ItemImageFont") {
+        image.set_visible(false);
+
+        if !item.icon.is_ascii() {
+            image.set_text(&item.icon);
+            image.set_visible(true);
+            is_text = true;
+        }
+    }
+
+    if let Some(image) = b.object::<Image>("ItemImage") {
+        image.set_visible(true);
+        if is_text {
             image.set_visible(false);
-
-            if !item.icon.is_ascii() {
-                image.set_text(&item.icon);
-                image.set_visible(true);
-                is_text = true;
-            }
+            return;
         }
 
-        if let Some(image) = b.object::<Image>("ItemImage") {
-            image.set_visible(true);
-            if is_text {
-                image.set_visible(false);
-                return;
-            }
+        if item.icon.is_empty() {
+            image.set_visible(false);
+            return;
+        }
 
-            if item.icon.is_empty() {
-                image.set_visible(false);
-                return;
-            }
+        if !Path::new(&item.icon).is_absolute() {
+            image.set_icon_name(Some(&item.icon));
+            return;
+        };
 
-            if !Path::new(&item.icon).is_absolute() {
-                image.set_icon_name(Some(&item.icon));
+        let icon = item.icon.clone();
+        glib::spawn_future_local(async move {
+            let Ok((bytes, _)) = gio::File::for_path(&icon).load_contents_future().await else {
                 return;
             };
 
-            let icon = item.icon.clone();
-            glib::spawn_future_local(async move {
-                let Ok((bytes, _)) = gio::File::for_path(&icon).load_contents_future().await else {
-                    return;
-                };
-
-                let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
-                image.set_paintable(Some(&texture));
-            });
-        } else if let Some(image) = b.object::<Picture>("ItemImage") {
-            image.set_visible(true);
-            if is_text {
-                image.set_visible(false);
-                return;
-            }
-
-            if item.icon.is_empty() {
-                image.set_visible(false);
-                return;
-            }
-
-            let icon = item.icon.clone();
-
-            glib::spawn_future_local(async move {
-                let Ok((bytes, _)) = gio::File::for_path(&icon).load_contents_future().await else {
-                    return;
-                };
-
-                let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
-                image.set_paintable(Some(&texture));
-            });
+            let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+            image.set_paintable(Some(&texture));
+        });
+    } else if let Some(image) = b.object::<Picture>("ItemImage") {
+        image.set_visible(true);
+        if is_text {
+            image.set_visible(false);
+            return;
         }
+
+        if item.icon.is_empty() {
+            image.set_visible(false);
+            return;
+        }
+
+        let icon = item.icon.clone();
+
+        glib::spawn_future_local(async move {
+            let Ok((bytes, _)) = gio::File::for_path(&icon).load_contents_future().await else {
+                return;
+            };
+
+            let texture = gdk::Texture::from_bytes(&glib::Bytes::from(&bytes)).unwrap();
+            image.set_paintable(Some(&texture));
+        });
     }
 }
 

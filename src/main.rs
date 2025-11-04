@@ -83,14 +83,18 @@ fn main() -> glib::ExitCode {
     app.run()
 }
 
-fn init_ui(app: &Application, dmenu: bool) {
+fn init_ui(app: &Application, dmenu: bool, theme: &str) {
     if app.flags().contains(ApplicationFlags::IS_SERVICE) {
         set_is_service(true);
     }
 
     config::load().unwrap();
 
-    let mut theme = get_config().theme.as_str();
+    let mut theme = if theme.is_empty() {
+        get_config().theme.as_str()
+    } else {
+        theme
+    };
 
     if theme.is_empty() {
         theme = "default";
@@ -390,6 +394,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
         let theme = val.str().unwrap();
 
+        println!("HERE0");
         if has_theme(theme) {
             set_theme(theme.to_string());
         } else {
@@ -719,6 +724,16 @@ fn startup(app: &Application) {
         process::exit(0);
     }
 
+    let theme = if let Some(i) = args.iter().position(|a| a == "-t" || a == "--theme") {
+        if let Some(res) = args.get(i + 1) {
+            res
+        } else {
+            ""
+        }
+    } else {
+        ""
+    };
+
     if version {
         return;
     }
@@ -730,7 +745,7 @@ fn startup(app: &Application) {
     HOLD_GUARD.with(|h| h.set(app.hold()).expect("couldn't set hold-guard"));
 
     init_app_state();
-    init_ui(app, dmenu);
+    init_ui(app, dmenu, theme);
 
     listen_activation_socket(app.clone());
 }

@@ -563,6 +563,12 @@ fn activate(app: &Application) {
     apply_flag_logic();
 
     if is_dmenu() && is_visible() {
+        with_window(|w| {
+            if let Some(preview) = w.builder.object::<gtk4::Box>("Preview") {
+                preview.set_visible(false);
+            };
+        });
+
         return;
     }
 

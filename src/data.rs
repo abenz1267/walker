@@ -152,32 +152,6 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
     set_is_connecting(true);
     println!("connecting to elephant...");
 
-    if let Some(e) = &get_config().emergencies {
-        set_is_emergency(true);
-
-        glib::idle_add_once(|| {
-            with_window(|w| {
-                w.items.remove_all();
-
-                e.iter().for_each(|e| {
-                    let mut item = query_response::Item::new();
-                    item.text = e.text.clone();
-                    item.provider = "emergency".to_string();
-                    item.actions = vec!["select".to_string()];
-
-                    let mut response = QueryResponse::new();
-                    response.item = protobuf::MessageField::some(item);
-
-                    w.items.append(&QueryResponseObject::new(response));
-                });
-
-                set_error("Emergency Mode".to_string());
-
-                set_keybind_hint();
-            });
-        });
-    }
-
     let mut socket_path = env::var("XDG_RUNTIME_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| env::temp_dir());
@@ -194,6 +168,7 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
             Err(e) => {
                 println!("Failed to connect: {e}. Retrying in 1 second...");
                 thread::sleep(Duration::from_secs(1));
+                handle_emergency();
             }
         }
     };
@@ -205,6 +180,7 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
             Err(e) => {
                 println!("Failed to connect to menu: {e}. Retrying in 1 second...");
                 thread::sleep(Duration::from_secs(1));
+                handle_emergency();
             }
         }
     };
@@ -218,6 +194,7 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
                 Err(e) => {
                     println!("Failed to connect to menu: {e}. Retrying in 1 second...");
                     thread::sleep(Duration::from_secs(1));
+                    handle_emergency();
                 }
             }
         };
@@ -607,8 +584,38 @@ fn query(text: &str) {
     }
 }
 
+fn handle_emergency() {
+    if let Some(e) = &get_config().emergencies {
+        set_is_emergency(true);
+
+        glib::idle_add_once(|| {
+            with_window(|w| {
+                w.items.remove_all();
+
+                e.iter().for_each(|e| {
+                    let mut item = query_response::Item::new();
+                    item.text = e.text.clone();
+                    item.provider = "emergency".to_string();
+                    item.actions = vec!["select".to_string()];
+
+                    let mut response = QueryResponse::new();
+                    response.item = protobuf::MessageField::some(item);
+
+                    w.items.append(&QueryResponseObject::new(response));
+                });
+
+                set_error("Emergency Mode".to_string());
+
+                set_keybind_hint();
+            });
+        });
+    }
+}
+
 fn handle_disconnect() {
     set_is_connected(false);
+
+    handle_emergency();
 
     thread::spawn(|| {
         glib::idle_add_once(|| {
@@ -811,7 +818,14 @@ fn subscribe_bluetooth() -> Result<(), Box<dyn std::error::Error>> {
 }
 
 fn wait_for_file(path: &str) {
+    let mut handled = false;
+
     while !Path::new(path).exists() {
         thread::sleep(Duration::from_millis(10));
+
+        if !handled {
+            handle_emergency();
+            handled = true
+        }
     }
 }

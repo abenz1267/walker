@@ -14,3 +14,7 @@ Walker now properly differentiates between global keybinds and entry-specific on
   </object>
 </child>
 ```
+
+## `AsyncReloadKeepSelection` => removed
+
+Use `Nothing` instead.

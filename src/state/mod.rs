@@ -11,12 +11,10 @@ static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 #[derive(Debug, Clone, Default)]
 pub struct AppState {
     global_provider_actions: Option<Vec<String>>,
-    current_selection: u32,
     error: String,
     async_after: Option<AfterAction>,
     hide_qa: bool,
     has_elephant: bool,
-    block_scroll: bool,
     stay_open_explicit_provider: bool,
     is_connected: bool,
     is_connecting: bool,
@@ -70,10 +68,6 @@ pub fn set_theme(val: String) {
     STATE.get().unwrap().write().unwrap().theme = val
 }
 
-pub fn get_current_selection() -> u32 {
-    STATE.get().unwrap().read().unwrap().current_selection
-}
-
 pub fn set_global_provider_actions(val: Option<Vec<String>>) {
     STATE
         .get()
@@ -91,10 +85,6 @@ pub fn get_global_provider_actions() -> Option<Vec<String>> {
         .unwrap()
         .global_provider_actions
         .clone()
-}
-
-pub fn set_current_selection(val: u32) {
-    STATE.get().unwrap().write().unwrap().current_selection = val
 }
 
 pub fn get_async_after() -> Option<AfterAction> {
@@ -191,14 +181,6 @@ pub fn is_visible() -> bool {
 
 pub fn set_is_visible(val: bool) {
     STATE.get().unwrap().write().unwrap().is_visible = val;
-}
-
-pub fn is_block_scroll() -> bool {
-    STATE.get().unwrap().read().unwrap().block_scroll
-}
-
-pub fn set_block_scroll(val: bool) {
-    STATE.get().unwrap().write().unwrap().block_scroll = val;
 }
 
 pub fn has_elephant() -> bool {

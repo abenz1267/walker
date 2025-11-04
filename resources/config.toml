@@ -105,10 +105,10 @@ providerlist = [
 
 bluetooth = [
   { action = "find", bind = "ctrl f", after = "AsyncClearReload" },
+  { action = "remove", bind = "ctrl d", after = "AsyncReload" },
   { action = "trust", bind = "ctrl t", after = "AsyncReload" },
   { action = "untrust", bind = "ctrl t", after = "AsyncReload" },
   { action = "pair", bind = "Return", after = "AsyncReload" },
-  { action = "remove", bind = "ctrl d", after = "AsyncReload" },
   { action = "connect", bind = "Return", after = "AsyncReload" },
   { action = "disconnect", bind = "Return", after = "AsyncReload" },
 ]
@@ -150,10 +150,10 @@ files = [
 todo = [
   { action = "save", default = true, bind = "Return", after = "AsyncClearReload" },
   { action = "delete", bind = "ctrl d", after = "AsyncClearReload" },
-  { action = "active", bind = "Return", after = "AsyncClearReload" },
-  { action = "inactive", bind = "Return", after = "AsyncClearReload" },
-  { action = "done", bind = "ctrl f", after = "AsyncClearReload" },
-  { action = "change_category", bind = "ctrl y", label = "change category", after = "AsyncClearReload" },
+  { action = "active", bind = "Return", after = "Nothing" },
+  { action = "inactive", bind = "Return", after = "Nothing" },
+  { action = "done", bind = "ctrl f", after = "Nothing" },
+  { action = "change_category", bind = "ctrl y", label = "change category", after = "Nothing" },
   { action = "clear", bind = "ctrl x", after = "AsyncClearReload" },
 ]
 
@@ -191,7 +191,7 @@ bookmarks = [
   { action = "save", bind = "Return", after = "AsyncClearReload" },
   { action = "open", default = true, bind = "Return" },
   { action = "delete", bind = "ctrl d", after = "AsyncClearReload" },
-  { action = "change_category", label = "Change category", bind = "ctrl y", after = "AsyncReloadKeepSelection" },
-  { action = "change_browser", label = "Change browser", bind = "ctrl b", after = "AsyncReloadKeepSelection" },
+  { action = "change_category", label = "Change category", bind = "ctrl y", after = "Nothing" },
+  { action = "change_browser", label = "Change browser", bind = "ctrl b", after = "Nothing" },
   { action = "import", label = "Import", bind = "ctrl i", after = "AsyncClearReload" },
 ]

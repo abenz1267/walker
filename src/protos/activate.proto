@@ -10,4 +10,5 @@ message ActivateRequest {
   string action = 3;
   string query = 4;
   string arguments = 5;
+  bool single = 6;
 }

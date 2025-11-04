@@ -7,11 +7,11 @@ use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
-    get_async_after, get_current_prefix, get_current_selection, get_current_set, get_error,
-    get_provider, is_connected, is_connecting, is_dmenu, is_emergency, is_index, is_service,
-    set_async_after, set_block_scroll, set_current_prefix, set_error, set_global_provider_actions,
-    set_global_provider_state, set_is_connected, set_is_connecting, set_is_emergency,
-    set_is_visible, set_prefix_provider, set_provider, set_query,
+    get_async_after, get_current_prefix, get_current_set, get_prefix_provider, get_provider,
+    is_connected, is_connecting, is_dmenu, is_emergency, is_index, is_service, set_async_after,
+    set_current_prefix, set_error, set_global_provider_actions, set_global_provider_state,
+    set_is_connected, set_is_connecting, set_is_emergency, set_is_visible, set_prefix_provider,
+    set_provider, set_query,
 };
 use crate::ui::window::{
     check_error, handle_changed_items, set_input_text, set_keybind_hint, with_window,
@@ -388,18 +388,6 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
 
                     set_keybind_hint();
                     crate::ui::window::handle_preview();
-
-                    match get_async_after() {
-                        Some(AfterAction::AsyncReloadKeepSelection) => {
-                            with_window(|w| {
-                                set_block_scroll(true);
-                                w.selection.set_selected(get_current_selection());
-                                set_async_after(None);
-                                set_block_scroll(false);
-                            });
-                        }
-                        _ => {}
-                    }
                 });
             }
             254 => {
@@ -427,13 +415,6 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                         });
 
                         set_async_after(None);
-                    }
-                    Some(AfterAction::AsyncReloadKeepSelection) => {
-                        with_window(|w| {
-                            if let Some(input) = &w.input {
-                                set_input_text(&input.text());
-                            }
-                        });
                     }
                     Some(AfterAction::AsyncClearReload) => {
                         with_window(|w| {
@@ -701,6 +682,11 @@ pub fn activate(item_option: Option<QueryResponse>, provider: &str, query: &str,
     let mut req = ActivateRequest::new();
     req.action = action.action.to_string();
     req.provider = provider.to_string();
+    req.single = false;
+
+    if !get_provider().is_empty() || !get_prefix_provider().is_empty() {
+        req.single = true;
+    }
 
     if let Some(item) = item_option {
         match provider {

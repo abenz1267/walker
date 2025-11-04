@@ -109,8 +109,8 @@ bluetooth = [
   { action = "trust", bind = "ctrl t", after = "AsyncReload" },
   { action = "untrust", bind = "ctrl t", after = "AsyncReload" },
   { action = "pair", bind = "Return", after = "AsyncReload" },
-  { action = "connect", bind = "Return", after = "AsyncReload" },
-  { action = "disconnect", bind = "Return", after = "AsyncReload" },
+  { action = "connect", default = true, bind = "Return", after = "AsyncReload" },
+  { action = "disconnect", default = true, bind = "Return", after = "AsyncReload" },
 ]
 
 archlinuxpkgs = [
@@ -131,7 +131,6 @@ websearch = [{ action = "search", default = true, bind = "Return" }]
 desktopapplications = [
   { action = "start", default = true, bind = "Return" },
   { action = "start:keep", label = "open+next", bind = "shift Return", after = "KeepOpen" },
-
   { action = "new_instance", label = "new instance", bind = "ctrl Return" },
   { action = "new_instance:keep", label = "new+next", bind = "ctrl alt Return", after = "KeepOpen" },
   { action = "pin", bind = "ctrl p", after = "AsyncReload" },
@@ -150,8 +149,8 @@ files = [
 todo = [
   { action = "save", default = true, bind = "Return", after = "AsyncClearReload" },
   { action = "delete", bind = "ctrl d", after = "AsyncClearReload" },
-  { action = "active", bind = "Return", after = "Nothing" },
-  { action = "inactive", bind = "Return", after = "Nothing" },
+  { action = "active", default = true, bind = "Return", after = "Nothing" },
+  { action = "inactive", default = true, bind = "Return", after = "Nothing" },
   { action = "done", bind = "ctrl f", after = "Nothing" },
   { action = "change_category", bind = "ctrl y", label = "change category", after = "Nothing" },
   { action = "clear", bind = "ctrl x", after = "AsyncClearReload" },

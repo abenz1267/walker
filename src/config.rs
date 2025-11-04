@@ -154,6 +154,8 @@ impl Walker {
         if let Some(user_config_path) =
             xdg::BaseDirectories::with_prefix("walker").find_config_file("config.toml")
         {
+            println!("config file: {}", user_config_path.to_string_lossy());
+
             let user_config = Config::builder()
                 .add_source(File::from(user_config_path))
                 .build()?;

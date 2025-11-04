@@ -215,8 +215,6 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
         p.set_visible(false);
     }
 
-    ui.elephant_hint.set_visible(false);
-
     setup_window_behavior(&ui, app);
 
     if let Some(input) = &ui.input {

@@ -597,13 +597,6 @@ fn activate(app: &Application) {
             input.grab_focus();
         }
 
-        if !is_connected() && !is_dmenu() && cfg.emergencies.is_none() {
-            w.elephant_hint.set_visible(true);
-            w.scroll.set_visible(false);
-        } else {
-            w.elephant_hint.set_visible(false);
-        }
-
         w.window.set_visible(true);
 
         if !is_dmenu() && !is_connected() && has_elephant() {

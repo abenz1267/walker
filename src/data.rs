@@ -168,7 +168,6 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
             Err(e) => {
                 println!("Failed to connect: {e}. Retrying in 1 second...");
                 thread::sleep(Duration::from_secs(1));
-                handle_emergency();
             }
         }
     };
@@ -180,7 +179,6 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
             Err(e) => {
                 println!("Failed to connect to menu: {e}. Retrying in 1 second...");
                 thread::sleep(Duration::from_secs(1));
-                handle_emergency();
             }
         }
     };
@@ -194,7 +192,6 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
                 Err(e) => {
                     println!("Failed to connect to menu: {e}. Retrying in 1 second...");
                     thread::sleep(Duration::from_secs(1));
-                    handle_emergency();
                 }
             }
         };
@@ -585,7 +582,9 @@ fn query(text: &str) {
 }
 
 fn handle_emergency() {
-    if let Some(e) = &get_config().emergencies {
+    if let Some(e) = &get_config().emergencies
+        && !is_emergency()
+    {
         set_is_emergency(true);
 
         glib::idle_add_once(|| {
@@ -609,24 +608,28 @@ fn handle_emergency() {
                 set_keybind_hint();
             });
         });
+    } else {
+        glib::idle_add_once(|| {
+            with_window(|w| {
+                w.elephant_hint.set_visible(true);
+                w.scroll.set_visible(false);
+
+                if let Some(b) = &w.keybinds {
+                    b.set_visible(false);
+                }
+
+                if let Some(b) = &w.global_keybinds {
+                    b.set_visible(false);
+                }
+            });
+        });
     }
 }
 
 fn handle_disconnect() {
     set_is_connected(false);
 
-    handle_emergency();
-
     thread::spawn(|| {
-        glib::idle_add_once(|| {
-            with_window(|w| {
-                if get_config().emergencies.is_none() {
-                    w.elephant_hint.set_visible(true);
-                    w.scroll.set_visible(false);
-                }
-            });
-        });
-
         while let Err(err) = init_socket() {
             println!("{err}");
         }

@@ -19,8 +19,8 @@ use crate::{
     protos::generated_proto::query::query_response::Item,
     providers::{
         archlinuxpkgs::ArchLinuxPkgs, bookmarks::Bookmarks, calc::Calc, clipboard::Clipboard,
-        default_provider::DefaultProvider, dmenu::Dmenu, files::Files, providerlist::Providerlist,
-        symbols::Symbols, todo::Todo, unicode::Unicode,
+        default_provider::DefaultProvider, dmenu::Dmenu, emergency::Emergency, files::Files,
+        providerlist::Providerlist, symbols::Symbols, todo::Todo, unicode::Unicode,
     },
 };
 
@@ -30,6 +30,7 @@ pub mod calc;
 pub mod clipboard;
 pub mod default_provider;
 pub mod dmenu;
+pub mod emergency;
 pub mod files;
 pub mod providerlist;
 pub mod symbols;
@@ -217,6 +218,7 @@ pub static PROVIDERS: OnceLock<HashMap<String, Box<dyn Provider>>> = OnceLock::n
 pub fn setup_providers(elephant: bool) {
     let mut providers: HashMap<String, Box<dyn Provider>> = HashMap::new();
     providers.insert("dmenu".to_string(), Box::new(Dmenu::new()));
+    providers.insert("emergency".to_string(), Box::new(Emergency::new()));
 
     let provider_list: Vec<String> = {
         let config = get_config();

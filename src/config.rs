@@ -8,6 +8,12 @@ static LOADED_CONFIG: OnceLock<Walker> = OnceLock::new();
 const DEFAULT_CONFIG: &str = include_str!("../resources/config.toml");
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct EmergencyEntry {
+    pub text: String,
+    pub command: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Walker {
     pub debug: bool,
     pub force_keyboard_focus: bool,
@@ -21,6 +27,7 @@ pub struct Walker {
     pub exact_search_prefix: String,
     pub providers: Providers,
     pub installed_providers: Option<Vec<String>>,
+    pub emergencies: Option<Vec<EmergencyEntry>>,
     pub keybinds: Keybinds,
     pub shell: Shell,
     pub additional_theme_location: Option<String>,
@@ -34,6 +41,8 @@ pub struct Walker {
 struct PartialWalker {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub debug: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub emergencies: Option<Vec<EmergencyEntry>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub force_keyboard_focus: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -172,6 +181,9 @@ impl Walker {
     fn merge(&mut self, partial: PartialWalker) {
         if let Some(v) = partial.debug {
             self.debug = v;
+        }
+        if let Some(v) = partial.emergencies {
+            self.emergencies = Some(v);
         }
         if let Some(v) = partial.force_keyboard_focus {
             self.force_keyboard_focus = v;

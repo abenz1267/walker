@@ -2,15 +2,16 @@ use crate::config::get_config;
 use crate::keybinds::{Action, AfterAction};
 use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::providerstate::{ProviderStateRequest, ProviderStateResponse};
-use crate::protos::generated_proto::query::{QueryRequest, QueryResponse};
+use crate::protos::generated_proto::query::{QueryRequest, QueryResponse, query_response};
 use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
-    get_async_after, get_current_prefix, get_current_selection, get_current_set, get_provider,
-    is_connected, is_connecting, is_dmenu, is_index, is_service, set_async_after, set_block_scroll,
-    set_current_prefix, set_global_provider_actions, set_global_provider_state, set_is_connected,
-    set_is_connecting, set_is_visible, set_prefix_provider, set_provider, set_query,
+    get_async_after, get_current_prefix, get_current_selection, get_current_set, get_error,
+    get_provider, is_connected, is_connecting, is_dmenu, is_emergency, is_index, is_service,
+    set_async_after, set_block_scroll, set_current_prefix, set_error, set_global_provider_actions,
+    set_global_provider_state, set_is_connected, set_is_connecting, set_is_emergency,
+    set_is_visible, set_prefix_provider, set_provider, set_query,
 };
 use crate::ui::window::{
     check_error, handle_changed_items, set_input_text, set_keybind_hint, with_window,
@@ -46,7 +47,7 @@ pub fn input_changed(text: &str) {
             false
         };
 
-        if is_dmenu() {
+        if is_dmenu() || is_emergency() {
             if is_empty {
                 set_query("");
 
@@ -151,6 +152,32 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
     set_is_connecting(true);
     println!("connecting to elephant...");
 
+    if let Some(e) = &get_config().emergencies {
+        set_is_emergency(true);
+
+        glib::idle_add_once(|| {
+            with_window(|w| {
+                w.items.remove_all();
+
+                e.iter().for_each(|e| {
+                    let mut item = query_response::Item::new();
+                    item.text = e.text.clone();
+                    item.provider = "emergency".to_string();
+                    item.actions = vec!["select".to_string()];
+
+                    let mut response = QueryResponse::new();
+                    response.item = protobuf::MessageField::some(item);
+
+                    w.items.append(&QueryResponseObject::new(response));
+                });
+
+                set_error("Emergency Mode".to_string());
+
+                set_keybind_hint();
+            });
+        });
+    }
+
     let mut socket_path = env::var("XDG_RUNTIME_DIR")
         .map(PathBuf::from)
         .unwrap_or_else(|_| env::temp_dir());
@@ -212,10 +239,14 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(input) = &w.input {
                 input.emit_by_name::<()>("changed", &[]);
             }
+
+            set_error(String::new());
+            check_error();
         });
     });
 
     set_is_connecting(false);
+    set_is_emergency(false);
 
     println!("connected.");
 
@@ -601,8 +632,10 @@ fn handle_disconnect() {
     thread::spawn(|| {
         glib::idle_add_once(|| {
             with_window(|w| {
-                w.elephant_hint.set_visible(true);
-                w.scroll.set_visible(false);
+                if get_config().emergencies.is_none() {
+                    w.elephant_hint.set_visible(true);
+                    w.scroll.set_visible(false);
+                }
             });
         });
 

@@ -48,6 +48,7 @@ pub struct AppState {
     input_only: bool,
     index: bool,
     is_dmenu: bool,
+    is_emergency: bool,
     is_param_close: bool,
     current_prefix: String,
     current_set: String,
@@ -288,6 +289,14 @@ pub fn is_dmenu() -> bool {
 
 pub fn set_is_dmenu(val: bool) {
     STATE.get().unwrap().write().unwrap().is_dmenu = val
+}
+
+pub fn is_emergency() -> bool {
+    STATE.get().unwrap().read().unwrap().is_emergency
+}
+
+pub fn set_is_emergency(val: bool) {
+    STATE.get().unwrap().write().unwrap().is_emergency = val
 }
 
 pub fn is_hide_qa() -> bool {

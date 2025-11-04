@@ -17,7 +17,7 @@ use crate::{
         get_initial_max_width, get_initial_min_height, get_initial_min_width,
         get_initial_placeholder, get_initial_width, get_last_query, get_prefix_provider,
         get_provider, get_theme, is_block_scroll, is_connected, is_dmenu, is_dmenu_exit_after,
-        is_dmenu_keep_open, is_service, query, set_async_after, set_current_prefix,
+        is_dmenu_keep_open, is_emergency, is_service, query, set_async_after, set_current_prefix,
         set_current_selection, set_current_set, set_dmenu_current, set_dmenu_exit_after,
         set_dmenu_keep_open, set_error, set_hide_qa, set_index, set_initial_height,
         set_initial_max_height, set_initial_max_width, set_initial_min_height,
@@ -57,7 +57,7 @@ use gtk4::{
 use std::{
     cell::{Cell, OnceCell, RefCell},
     collections::HashMap,
-    process,
+    process::{self, Command, Stdio},
 };
 
 thread_local! {
@@ -170,7 +170,7 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
 
             let q = query();
 
-            if is_dmenu() && !q.is_empty() {
+            if (is_dmenu() || is_emergency()) && !q.is_empty() {
                 let f = 18 * q.len();
 
                 if item.dmenu_score() < f as u32 {
@@ -258,6 +258,9 @@ pub fn check_error() {
         if !get_error().is_empty() {
             w.error.set_text(&get_error());
             w.error.set_visible(true);
+        } else {
+            w.error.set_text("");
+            w.error.set_visible(false);
         }
     });
 }
@@ -376,6 +379,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
     let app = ui.app.clone();
 
     controller.connect_key_pressed(move |_, k, _, m| {
+
         let handled = with_window(|w| {
             if !is_connected() && !is_dmenu() {
                 if let Some(action) = get_bind(k, m)
@@ -384,10 +388,29 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     quit(&app, true);
                 }
 
-                return true;
+                if !is_emergency() {
+                    return true;
+                }
             }
 
+        if !is_connected() && let Some(e) = &get_config().emergencies && k == gdk::Key::Return {
+            if let Some(i) = get_selected_item() {
+                if let Some(item) = e.iter().find(|e| e.text == i.text) {
+                    Command::new("sh")
+                        .arg("-c")
+                        .arg(&item.command)
+                        .stdin(Stdio::null())  // Detach from stdin
+                        .stdout(Stdio::null()) // Detach from stdout
+                        .stderr(Stdio::null()) // Detach from stderr
+                        .spawn().expect("failed to run emergency command");
+
+                    quit(&app, true);
+                };
+            };
+        };
+
             let selection = &w.selection;
+
 
             if is_dmenu() && k == gdk::Key::Return && selection.selected_item().is_none() {
                 let mut text = w

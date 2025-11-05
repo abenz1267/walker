@@ -1,5 +1,5 @@
 use crate::config::get_config;
-use crate::keybinds::{Action, AfterAction};
+use crate::keybinds::{self, Action, AfterAction};
 use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::providerstate::{ProviderStateRequest, ProviderStateResponse};
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse, query_response};
@@ -223,6 +223,10 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
 
             set_error(String::new());
             check_error();
+
+            if is_dmenu() {
+                set_keybind_hint();
+            }
         });
     });
 
@@ -833,7 +837,11 @@ fn wait_for_file(path: &str) {
     while !Path::new(path).exists() {
         thread::sleep(Duration::from_millis(10));
 
-        if !handled {
+        if is_dmenu() {
+            handled = false
+        }
+
+        if !handled && !is_dmenu() {
             handle_emergency();
             handled = true
         }

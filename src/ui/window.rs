@@ -1,7 +1,7 @@
 use crate::{
     GLOBAL_DMENU_SENDER, QueryResponseObject,
     config::get_config,
-    data::{activate, clipboard_disable_images_only, input_changed},
+    data::{activate, input_changed, set_state},
     keybinds::{
         ACTION_CLOSE, ACTION_QUICK_ACTIVATE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT,
         ACTION_SELECT_PAGE_DOWN, ACTION_SELECT_PAGE_UP, ACTION_SELECT_PREVIOUS,
@@ -634,10 +634,22 @@ fn setup_mouse_handling(ui: &WindowData) {
     ui.window.add_controller(motion);
 }
 
-pub fn quit(app: &Application, cancelled: bool) {
+fn reset_provider_states() {
     if is_connected() && PROVIDERS.get().unwrap().contains_key("clipboard") {
-        clipboard_disable_images_only();
+        set_state("clipboard", "show_combined");
     }
+
+    if is_connected() && PROVIDERS.get().unwrap().contains_key("todo") {
+        set_state("todo", "search");
+    }
+
+    if is_connected() && PROVIDERS.get().unwrap().contains_key("bookmarks") {
+        set_state("bookmarks", "search");
+    }
+}
+
+pub fn quit(app: &Application, cancelled: bool) {
+    reset_provider_states();
 
     if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
         send_message("CNCLD".to_string());

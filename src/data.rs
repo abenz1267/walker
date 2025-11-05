@@ -649,10 +649,10 @@ fn handle_disconnect() {
     });
 }
 
-pub fn clipboard_disable_images_only() {
+pub fn set_state(provider: &str, action: &str) {
     let mut req = ActivateRequest::new();
-    req.action = "show_combined".to_string();
-    req.provider = "clipboard".to_string();
+    req.action = action.to_string();
+    req.provider = provider.to_string();
 
     let mut buffer = vec![1, 0];
     let length = req.compute_size() as u32;

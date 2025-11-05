@@ -148,12 +148,15 @@ files = [
 
 todo = [
   { action = "save", default = true, bind = "Return", after = "AsyncClearReload" },
+  { action = "save_next", label = "save & new", bind = "shift Return", after = "AsyncClearReload" },
   { action = "delete", bind = "ctrl d", after = "AsyncClearReload" },
   { action = "active", default = true, bind = "Return", after = "Nothing" },
   { action = "inactive", default = true, bind = "Return", after = "Nothing" },
   { action = "done", bind = "ctrl f", after = "Nothing" },
   { action = "change_category", bind = "ctrl y", label = "change category", after = "Nothing" },
   { action = "clear", bind = "ctrl x", after = "AsyncClearReload" },
+  { action = "create", bind = "ctrl a", after = "AsyncClearReload" },
+  { action = "search", bind = "ctrl a", after = "AsyncClearReload" },
 ]
 
 runner = [
@@ -193,4 +196,6 @@ bookmarks = [
   { action = "change_category", label = "Change category", bind = "ctrl y", after = "Nothing" },
   { action = "change_browser", label = "Change browser", bind = "ctrl b", after = "Nothing" },
   { action = "import", label = "Import", bind = "ctrl i", after = "AsyncClearReload" },
+  { action = "create", bind = "ctrl a", after = "AsyncClearReload" },
+  { action = "search", bind = "ctrl a", after = "AsyncClearReload" },
 ]

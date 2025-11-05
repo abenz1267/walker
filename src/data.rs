@@ -1,5 +1,5 @@
 use crate::config::get_config;
-use crate::keybinds::{self, Action, AfterAction};
+use crate::keybinds::{Action, AfterAction};
 use crate::protos::generated_proto::activate::ActivateRequest;
 use crate::protos::generated_proto::providerstate::{ProviderStateRequest, ProviderStateResponse};
 use crate::protos::generated_proto::query::{QueryRequest, QueryResponse, query_response};
@@ -7,11 +7,11 @@ use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
-    get_async_after, get_current_prefix, get_current_set, get_prefix_provider, get_provider,
-    is_connected, is_connecting, is_dmenu, is_emergency, is_index, is_service, set_async_after,
-    set_current_prefix, set_error, set_global_provider_actions, set_global_provider_state,
-    set_is_connected, set_is_connecting, set_is_emergency, set_is_visible, set_prefix_provider,
-    set_provider, set_query,
+    get_async_after, get_current_prefix, get_current_set, get_error, get_prefix_provider,
+    get_provider, is_connected, is_connecting, is_dmenu, is_emergency, is_index, is_service,
+    set_async_after, set_current_prefix, set_error, set_global_provider_actions,
+    set_global_provider_state, set_is_connected, set_is_connecting, set_is_emergency,
+    set_is_visible, set_prefix_provider, set_provider, set_query,
 };
 use crate::ui::window::{
     check_error, handle_changed_items, set_input_text, set_keybind_hint, with_window,
@@ -221,8 +221,10 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
                 input.emit_by_name::<()>("changed", &[]);
             }
 
-            set_error(String::new());
-            check_error();
+            if !is_emergency() && get_error() == "Emergency Mode" {
+                set_error(String::new());
+                check_error();
+            }
 
             if is_dmenu() {
                 set_keybind_hint();

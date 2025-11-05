@@ -672,6 +672,29 @@ pub fn clipboard_disable_images_only() {
     }
 }
 
+pub fn archlinuxpkgs_clear_cache() {
+    let mut req = ActivateRequest::new();
+    req.action = "clear_cache".to_string();
+    req.provider = "archlinuxpkgs".to_string();
+
+    let mut buffer = vec![1, 0];
+    let length = req.compute_size() as u32;
+    buffer.extend_from_slice(&length.to_be_bytes());
+    req.write_to_vec(&mut buffer).unwrap();
+
+    let mut conn_guard = CONN.lock().unwrap();
+
+    if let Some(conn) = conn_guard.as_mut() {
+        match conn.write_all(&buffer) {
+            Err(e) => {
+                eprintln!("send archlinuxpkgs clear cache socket error: {e}");
+                handle_disconnect();
+            }
+            _ => (),
+        }
+    }
+}
+
 pub fn get_provider_state(provider: String) {
     let mut req = ProviderStateRequest::new();
     req.provider = provider;

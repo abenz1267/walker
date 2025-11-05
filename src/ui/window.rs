@@ -1,7 +1,7 @@
 use crate::{
     GLOBAL_DMENU_SENDER, QueryResponseObject,
     config::get_config,
-    data::{activate, clipboard_disable_images_only, input_changed},
+    data::{activate, archlinuxpkgs_clear_cache, clipboard_disable_images_only, input_changed},
     keybinds::{
         ACTION_CLOSE, ACTION_QUICK_ACTIVATE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT,
         ACTION_SELECT_PAGE_DOWN, ACTION_SELECT_PAGE_UP, ACTION_SELECT_PREVIOUS,
@@ -637,6 +637,10 @@ fn setup_mouse_handling(ui: &WindowData) {
 pub fn quit(app: &Application, cancelled: bool) {
     if is_connected() && PROVIDERS.get().unwrap().contains_key("clipboard") {
         clipboard_disable_images_only();
+    }
+
+    if is_connected() && PROVIDERS.get().unwrap().contains_key("archlinuxpkgs") {
+        archlinuxpkgs_clear_cache();
     }
 
     if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {

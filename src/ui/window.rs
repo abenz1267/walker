@@ -388,9 +388,9 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 }
             }
 
-        if !is_connected() && let Some(e) = &get_config().emergencies && k == gdk::Key::Return {
-            if let Some(i) = get_selected_item() {
-                if let Some(item) = e.iter().find(|e| e.text == i.text) {
+        if !is_connected() && let Some(e) = &get_config().emergencies && k == gdk::Key::Return
+            && let Some(i) = get_selected_item()
+                && let Some(item) = e.iter().find(|e| e.text == i.text) {
                     Command::new("sh")
                         .arg("-c")
                         .arg(&item.command)
@@ -401,8 +401,6 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
                     quit(&app, true);
                 };
-            };
-        };
 
             let selection = &w.selection;
 

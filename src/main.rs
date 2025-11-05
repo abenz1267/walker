@@ -475,6 +475,11 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
         with_window(|w| {
             set_input_text("");
+            w.elephant_hint.set_visible(false);
+
+            if let Some(preview) = w.builder.object::<gtk4::Box>("Preview") {
+                preview.set_visible(false);
+            };
 
             let items = w.items.clone();
             items.remove_all();
@@ -568,12 +573,6 @@ fn activate(app: &Application) {
     apply_flag_logic();
 
     if is_dmenu() && is_visible() {
-        with_window(|w| {
-            if let Some(preview) = w.builder.object::<gtk4::Box>("Preview") {
-                preview.set_visible(false);
-            };
-        });
-
         return;
     }
 

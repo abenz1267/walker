@@ -162,10 +162,17 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
     println!("waiting for elephant to start...");
     wait_for_file(&socket_path.to_string_lossy());
 
+    let mut handled = false;
+
     let conn = loop {
         match UnixStream::connect(&socket_path) {
             Ok(conn) => break conn,
             Err(e) => {
+                if !handled {
+                    handle_emergency();
+                    handled = true
+                }
+
                 println!("Failed to connect: {e}. Retrying in 1 second...");
                 thread::sleep(Duration::from_secs(1));
             }

@@ -380,6 +380,7 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
             254 => {
                 glib::idle_add_once(clear_items);
             }
+            253 => {}
             230 => {}
             3 => {
                 let length = u32::from_be_bytes(header[1..].try_into().unwrap());

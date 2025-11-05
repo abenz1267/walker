@@ -269,7 +269,7 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
 
     ui.selection.set_autoselect(true);
 
-    ui.selection.connect_items_changed(move |_, _, _, _| {
+    ui.selection.connect_items_changed(move |s, _, _, _| {
         if is_dmenu() {
             handle_changed_items();
         }
@@ -478,6 +478,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                     after = Some(AfterAction::Nothing)
                 }
             }
+
 
             if keybind_action.is_none()
                 || (keybind_action.as_ref().unwrap().action == "menus:parent"

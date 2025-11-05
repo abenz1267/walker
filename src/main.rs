@@ -396,7 +396,6 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     if let Some(val) = options.lookup_value("theme", Some(VariantTy::STRING)) {
         let theme = val.str().unwrap();
 
-        println!("HERE0");
         if has_theme(theme) {
             set_theme(theme.to_string());
         } else {

@@ -5,8 +5,8 @@ use crate::ui::window::get_selected_item;
 use gtk4::gio::{self, Cancellable};
 use gtk4::glib::{self, Bytes};
 use gtk4::{
-    Box as GtkBox, Builder, ContentFit, Image, Orientation, Picture, PolicyType, ScrolledWindow,
-    Stack, TextView, Video, WrapMode, gdk_pixbuf, prelude::*,
+    Box as GtkBox, Builder, ContentFit, Image, Label, Orientation, Picture, PolicyType,
+    ScrolledWindow, Stack, TextView, Video, WrapMode, gdk_pixbuf, prelude::*,
 };
 use poppler::{Document, Page};
 use std::cell::RefCell;
@@ -80,7 +80,7 @@ impl UnifiedPreviewHandler {
 
         // Handle preview based on preview_type
         let result = match item.preview_type.as_str() {
-            "text" => preview_widget.preview_text(&item.preview),
+            "text" | "pango" => preview_widget.preview_text(&item.preview, &item.preview_type),
             "file" => {
                 if item.preview.is_empty() {
                     preview_widget.preview_file(&item.text)
@@ -106,7 +106,6 @@ impl UnifiedPreviewHandler {
         preview.append(&preview_widget.box_widget);
         preview.set_visible(get_selected_item().is_some_and(|current| current == *item));
     }
-
 }
 
 pub fn handle_preview(item: &Item, preview: &GtkBox, builder: &Builder) {
@@ -160,29 +159,36 @@ impl PreviewWidget {
         })
     }
 
-    pub fn preview_text(&mut self, text: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn preview_text(&mut self, text: &str, pt: &str) -> Result<(), Box<dyn std::error::Error>> {
         self.current_content = format!("text{}", text);
         self.clear_preview();
 
-        let text_view = TextView::new();
-        text_view.set_editable(false);
-        text_view.set_monospace(true);
-        text_view.set_wrap_mode(WrapMode::Word);
-        text_view.set_size_request(400, 300);
+        let label = Label::new(None);
+        label.set_selectable(true);
+        label.set_wrap_mode(gtk4::pango::WrapMode::Word);
+        label.set_wrap(true);
+        label.set_size_request(-1, -1);
+        label.set_halign(gtk4::Align::Start);
+        label.set_valign(gtk4::Align::Start);
 
-        let buffer = text_view.buffer();
         let display_text = if text.len() > 10000 {
             format!("{}\n\n[Text truncated...]", &text[..10000])
         } else {
             text.to_string()
         };
 
-        buffer.set_text(&display_text);
+        if pt == "pango" {
+            label.set_use_markup(true);
+            label.set_markup(&display_text);
+        } else {
+            label.set_text(&display_text);
+        }
 
         let scrolled = ScrolledWindow::new();
-        scrolled.set_child(Some(&text_view));
+        scrolled.set_child(Some(&label));
         scrolled.set_policy(PolicyType::Automatic, PolicyType::Automatic);
         scrolled.set_size_request(400, 300);
+        scrolled.set_vadjustment(Some(&gtk4::Adjustment::new(0.0, 0.0, 0.0, 0.0, 0.0, 0.0)));
 
         self.preview_area.add_child(&scrolled);
         self.preview_area.set_visible_child(&scrolled);
@@ -314,7 +320,7 @@ impl PreviewWidget {
         // Load and resize image for faster preview
         let file_path_clone = file_path.to_string();
         let picture_clone = picture.clone();
-        
+
         glib::MainContext::ref_thread_default().spawn_local(async move {
             match Self::load_and_resize_image(&file_path_clone).await {
                 Ok(texture) => {
@@ -394,15 +400,15 @@ impl PreviewWidget {
 
             ctx.target().flush();
             drop(ctx);
-            
+
             surface.flush();
-            
+
             let surface_data = surface.data()?;
             let mut rgba_data = Vec::with_capacity(surface_data.len());
             rgba_data.extend_from_slice(&surface_data);
-            
+
             drop(surface_data);
-            
+
             for chunk in rgba_data.chunks_exact_mut(4) {
                 chunk.swap(0, 2);
             }
@@ -444,7 +450,7 @@ impl PreviewWidget {
 
         let scrolled = self.get_or_create_scrolled();
         scrolled.set_size_request(128, 72);
-        
+
         // Properly cleanup existing child
         if let Some(existing_child) = scrolled.child() {
             if let Some(video) = existing_child.downcast_ref::<Video>() {
@@ -527,33 +533,33 @@ impl PreviewWidget {
 
     fn preview_text_file(&self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
         use std::io::{BufRead, BufReader};
-        
+
         let file = std::fs::File::open(file_path)?;
         let mut reader = BufReader::new(file);
-        
+
         let max_size = 512 * 1024; // 512KB
         let mut content = String::with_capacity(max_size.min(64 * 1024));
         let mut total_read = 0;
         let mut buffer = String::new();
-        
+
         while total_read < max_size {
             buffer.clear();
             let bytes_read = reader.read_line(&mut buffer)?;
             if bytes_read == 0 {
                 break; // EOF
             }
-            
+
             if total_read + bytes_read > max_size {
                 let remaining = max_size - total_read;
                 content.push_str(&buffer[..remaining]);
                 content.push_str("\n\n[File truncated...]");
                 break;
             }
-            
+
             content.push_str(&buffer);
             total_read += bytes_read;
         }
-        
+
         let text_view = TextView::new();
         text_view.set_editable(false);
         text_view.set_monospace(true);
@@ -595,20 +601,20 @@ impl PreviewWidget {
         let file = gio::File::for_path(file_path);
         let (bytes, _) = file.load_bytes_future().await?;
         let stream = gio::MemoryInputStream::from_bytes(&bytes);
-        
+
         let cancellable = gio::Cancellable::new();
         let pixbuf = gdk_pixbuf::Pixbuf::from_stream(&stream, Some(&cancellable))?;
-        
+
         // Resize to reasonable preview size (max 800x600)
         let max_width = 800;
         let max_height = 600;
         let (width, height) = (pixbuf.width(), pixbuf.height());
-        
+
         let (new_width, new_height) = if width > max_width || height > max_height {
             let width_ratio = max_width as f64 / width as f64;
             let height_ratio = max_height as f64 / height as f64;
             let ratio = width_ratio.min(height_ratio);
-            
+
             (
                 (width as f64 * ratio) as i32,
                 (height as f64 * ratio) as i32,
@@ -616,7 +622,7 @@ impl PreviewWidget {
         } else {
             (width, height)
         };
-        
+
         let resized_pixbuf = if new_width != width || new_height != height {
             pixbuf
                 .scale_simple(new_width, new_height, gdk_pixbuf::InterpType::Bilinear)
@@ -624,7 +630,7 @@ impl PreviewWidget {
         } else {
             pixbuf
         };
-        
+
         let texture = gtk4::gdk::Texture::for_pixbuf(&resized_pixbuf);
         Ok(texture)
     }

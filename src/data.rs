@@ -617,7 +617,12 @@ fn handle_emergency() {
                     w.items.append(&QueryResponseObject::new(response));
                 });
 
+                if let Some(p) = &w.preview_container {
+                    p.set_visible(false);
+                }
+
                 set_error("Emergency Mode".to_string());
+                set_input_text("");
 
                 set_keybind_hint();
             });
@@ -627,6 +632,10 @@ fn handle_emergency() {
             with_window(|w| {
                 w.elephant_hint.set_visible(true);
                 w.scroll.set_visible(false);
+
+                if let Some(p) = &w.preview_container {
+                    p.set_visible(false);
+                }
 
                 if let Some(b) = &w.keybinds {
                     b.set_visible(false);

@@ -5,6 +5,7 @@
   protobuf,
   glib,
   gobject-introspection,
+  gst_all_1,
   gtk4,
   gtk4-layer-shell,
   gdk-pixbuf,
@@ -47,7 +48,12 @@ rustPlatform.buildRustPackage rec {
     cairo
     pango
     poppler
-  ];
+  ] ++ (with gst_all_1; [
+    gstreamer
+    gst-plugins-base
+    gst-plugins-good
+    gst-libav
+  ]);
 
   meta = {
     description = "Wayland-native application runner";

@@ -109,7 +109,7 @@ child:selected .item-box {
 
 .preview {
   border: 1px solid alpha(@accent_bg_color, 0.25);
-  padding: 10px;
+  /* padding: 10px; */
   border-radius: 10px;
   color: @theme_fg_color;
 }

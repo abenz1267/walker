@@ -167,6 +167,7 @@ impl PreviewWidget {
         label.set_selectable(true);
         label.set_wrap_mode(gtk4::pango::WrapMode::Word);
         label.set_wrap(true);
+        label.set_xalign(0.0);
         label.set_size_request(-1, -1);
         label.set_halign(gtk4::Align::Start);
         label.set_valign(gtk4::Align::Start);

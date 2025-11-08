@@ -118,6 +118,7 @@ archlinuxpkgs = [
   { action = "remove", bind = "Return" },
   { action = "show_all", label = "show all", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "refresh", label = "refresh", bind = "ctrl r", after = "AsyncReload" },
+  { action = "visit_url", label = "open URL", bind = "ctrl o" },
   { action = "show_installed", label = "show installed", bind = "ctrl i", after = "AsyncClearReload" },
 ]
 

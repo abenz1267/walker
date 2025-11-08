@@ -113,6 +113,9 @@ pub fn handle_preview(item: &Item, preview: &GtkBox, builder: &Builder) {
         static PREVIEW_HANDLER: std::cell::RefCell<UnifiedPreviewHandler> = std::cell::RefCell::new(UnifiedPreviewHandler::new());
     }
 
+    preview.add_css_class("preview-content");
+    preview.add_css_class(&item.provider);
+
     PREVIEW_HANDLER.with(|handler| {
         handler.borrow().handle(item, preview, builder);
     });

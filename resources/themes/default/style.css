@@ -176,3 +176,7 @@ child:selected .item-box {
 :not(.calc).current {
   font-style: italic;
 }
+
+.preview-content.archlinuxpkgs {
+  font-family: monospace;
+}

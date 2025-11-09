@@ -11,7 +11,7 @@ mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual, SettingsExt};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard};
 use gtk4::glib::Priority;
-use gtk4::prelude::EntryExt;
+use gtk4::prelude::{EditableExt, EntryExt};
 
 use config::get_config;
 use state::init_app_state;
@@ -59,7 +59,8 @@ use crate::state::{
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{
-    check_error, quit, set_input_text, set_keybind_hint, setup_window, with_window,
+    check_error, quit, resume_last_query, set_input_text, set_keybind_hint, setup_window,
+    with_window,
 };
 
 static GLOBAL_DMENU_SENDER: RwLock<Option<Sender<String>>> = RwLock::new(None);
@@ -605,7 +606,11 @@ fn activate(app: &Application) {
         setup_css(get_theme());
 
         if let Some(input) = &w.input {
-            set_input_text("");
+            if cfg.resume_last_query {
+                resume_last_query();
+            } else {
+                set_input_text("");
+            }
             input.grab_focus();
         }
 

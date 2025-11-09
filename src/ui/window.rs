@@ -835,7 +835,7 @@ fn quick_activate(app: &Application, i: u32) {
     activate_default(app);
 }
 
-fn resume_last_query() {
+pub fn resume_last_query() {
     if !get_last_query().is_empty() {
         set_input_text(&get_last_query());
     }

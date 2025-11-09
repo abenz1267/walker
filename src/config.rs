@@ -22,6 +22,7 @@ pub struct Walker {
     pub close_when_open: bool,
     pub hide_quick_activation: bool,
     pub selection_wrap: bool,
+    pub resume_last_query: bool,
     pub global_argument_delimiter: String,
     pub theme: String,
     pub exact_search_prefix: String,
@@ -41,6 +42,8 @@ pub struct Walker {
 struct PartialWalker {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub debug: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub resume_last_query: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub emergencies: Option<Vec<EmergencyEntry>>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -181,6 +184,9 @@ impl Walker {
     fn merge(&mut self, partial: PartialWalker) {
         if let Some(v) = partial.debug {
             self.debug = v;
+        }
+        if let Some(v) = partial.resume_last_query {
+            self.resume_last_query = v;
         }
         if let Some(v) = partial.emergencies {
             self.emergencies = Some(v);

@@ -9,6 +9,7 @@ disable_mouse = false           # disable mouse (on input and list only)
 debug = false                   # enables debug printing for some stuff, f.e. keybinds
 page_jump_items = 10            # number of items to skip with Page Up/Down
 hide_quick_activation = false   # globally hide the quick activation buttons
+resume_last_query = false       # open walker with the last query in place
 
 [shell]
 anchor_top = true

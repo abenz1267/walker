@@ -47,6 +47,10 @@ scrollbar {
   opacity: 0.5;
 }
 
+.input selection {
+  background: lighter(lighter(lighter(@window_bg_color)));
+}
+
 .input {
   caret-color: @theme_fg_color;
   background: lighter(@window_bg_color);

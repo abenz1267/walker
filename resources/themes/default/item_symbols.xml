@@ -12,7 +12,7 @@
         <style>
           <class name="item-image"></class>
         </style>
-        <property name="width-chars">3</property>
+        <property name="width-chars">2</property>
       </object>
     </child>
     <child>

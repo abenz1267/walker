@@ -48,6 +48,7 @@ pub trait Provider: Sync + Send + Debug {
             .cloned()
             .unwrap_or_else(|| {
                 vec![Action {
+                    unset: None,
                     action: "activate".to_string(),
                     default: Some(true),
                     bind: Some("Return".to_string()),
@@ -110,6 +111,7 @@ pub trait Provider: Sync + Send + Debug {
 
         if !actions.is_empty() && result.is_empty() {
             result.push(Action {
+                unset: None,
                 action: actions.first().unwrap().to_string(),
                 default: Some(true),
                 bind: Some("Return".to_string()),

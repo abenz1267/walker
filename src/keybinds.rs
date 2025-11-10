@@ -31,6 +31,7 @@ pub enum AfterAction {
 pub struct Action {
     pub action: String,
     pub default: Option<bool>,
+    pub unset: Option<bool>,
 
     #[serde(default = "default_bind")]
     pub bind: Option<String>,
@@ -87,6 +88,7 @@ pub fn setup_binds() {
         parse_bind(
             &Action {
                 action: ACTION_CLOSE.to_string(),
+                unset: None,
                 default: Some(true),
                 bind: Some(b.clone()),
                 label: Some("close".to_string()),
@@ -101,6 +103,7 @@ pub fn setup_binds() {
         parse_bind(
             &Action {
                 action: ACTION_SELECT_NEXT.to_string(),
+                unset: None,
                 default: None,
                 bind: Some(b.clone()),
                 label: Some("select next".to_string()),
@@ -115,6 +118,7 @@ pub fn setup_binds() {
         parse_bind(
             &Action {
                 action: ACTION_SELECT_PREVIOUS.to_string(),
+                unset: None,
                 default: None,
                 bind: Some(b.clone()),
                 label: Some("select previous".to_string()),
@@ -129,6 +133,7 @@ pub fn setup_binds() {
         parse_bind(
             &Action {
                 action: ACTION_TOGGLE_EXACT.to_string(),
+                unset: None,
                 default: None,
                 bind: Some(b.clone()),
                 label: Some("toggle exact search".to_string()),
@@ -143,6 +148,7 @@ pub fn setup_binds() {
         parse_bind(
             &Action {
                 action: ACTION_RESUME_LAST_QUERY.to_string(),
+                unset: None,
                 bind: Some(b.clone()),
                 default: None,
                 label: Some("resume last query".to_string()),
@@ -158,6 +164,7 @@ pub fn setup_binds() {
             &Action {
                 action: ACTION_SELECT_PAGE_DOWN.to_string(),
                 default: None,
+                unset: None,
                 bind: Some(b.clone()),
                 label: Some("select page down".to_string()),
                 after: Some(AfterAction::Nothing),
@@ -170,6 +177,7 @@ pub fn setup_binds() {
     config.keybinds.page_up.iter().for_each(|b| {
         parse_bind(
             &Action {
+                unset: None,
                 action: ACTION_SELECT_PAGE_UP.to_string(),
                 default: None,
                 bind: Some(b.clone()),
@@ -189,6 +197,7 @@ pub fn setup_binds() {
                 &Action {
                     default: None,
                     action: action_str,
+                    unset: None,
                     bind: Some(s.clone()),
                     label: Some("quick activate".to_string()),
                     after: None,
@@ -330,6 +339,7 @@ pub fn get_provider_bind(
 
     if actions.len() == 1 && action.is_none() && key == gdk::Key::Return {
         return Some(Action {
+            unset: None,
             action: actions.first().unwrap().to_string(),
             default: Some(true),
             bind: Some("Return".to_string()),

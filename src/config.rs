@@ -297,6 +297,8 @@ impl Providers {
 
                     defaults.extend(user);
 
+                    defaults.retain(|_, v| !v.unset.unwrap_or_default());
+
                     self.actions
                         .insert(key.clone(), defaults.into_values().collect());
                 }

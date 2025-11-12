@@ -197,6 +197,7 @@ clipboard = [
   { action = "pause", bind = "ctrl p" },
   { action = "unpause", bind = "ctrl p" },
   { action = "edit", bind = "ctrl o" },
+  { action = "localsend", bind = "ctrl l" },
 ]
 
 bookmarks = [

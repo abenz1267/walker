@@ -282,29 +282,30 @@ impl Providers {
                 if !self.actions.contains_key(key) {
                     self.actions.insert(key.clone(), value.clone());
                 } else {
-                    let mut defaults: HashMap<String, Action> = self
-                        .actions
-                        .get(key)
-                        .unwrap()
-                        .iter()
-                        .map(|action| (action.action.clone(), action.clone()))
-                        .collect();
+                    let mut merged_actions = self.actions.get(key).unwrap().clone();
+                    
+                    let mut unset_actions: std::collections::HashSet<String> = 
+                        std::collections::HashSet::new();
+                    
+                    for action in value {
+                        if action.unset.unwrap_or_default() {
+                            unset_actions.insert(format!("{}:{}", action.action, action.bind.as_ref().unwrap_or(&String::new())));
+                        } else {
+                            merged_actions.push(action.clone());
+                        }
+                    }
+                    
+                    if !unset_actions.is_empty() {
+                        merged_actions.retain(|a| {
+                            let key = format!("{}:{}", a.action, a.bind.as_ref().unwrap_or(&String::new()));
+                            !unset_actions.contains(&key)
+                        });
+                    }
 
-                    let user: HashMap<String, Action> = value
-                        .iter()
-                        .map(|action| (action.action.clone(), action.clone()))
-                        .collect();
-
-                    defaults.extend(user);
-
-                    defaults.retain(|_, v| !v.unset.unwrap_or_default());
-
-                    self.actions
-                        .insert(key.clone(), defaults.into_values().collect());
+                    self.actions.insert(key.clone(), merged_actions);
                 }
             });
-        }
-        if let Some(c) = partial.clipboard {
+        }        if let Some(c) = partial.clipboard {
             self.clipboard.merge(c);
         }
     }

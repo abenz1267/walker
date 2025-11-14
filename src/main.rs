@@ -11,7 +11,8 @@ mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual, SettingsExt};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard};
 use gtk4::glib::Priority;
-use gtk4::prelude::{EditableExt, EntryExt};
+use gtk4::glib::object::ObjectExt;
+use gtk4::prelude::EntryExt;
 
 use config::get_config;
 use state::init_app_state;
@@ -123,24 +124,21 @@ fn init_ui(app: &Application, dmenu: bool, theme: &str) {
     setup_window(app);
 
     let settings = gio::Settings::new("org.gnome.desktop.interface");
-    let settings_clone = settings.clone();
-    adjust_accent_color(settings_clone);
 
-    let settings_clone = settings.clone();
-    adjust_color_scheme(settings_clone);
-
-    let settings_clone = settings.clone();
-    settings.connect_changed(Some("accent-color"), move |_, _| {
-        adjust_accent_color(settings_clone.clone());
+    adjust_color_scheme(&settings);
+    settings.connect_changed(Some("color-scheme"), move |s, _| {
+        adjust_color_scheme(s);
     });
 
-    let settings_clone = settings.clone();
-    settings.connect_changed(Some("color-scheme"), move |_, _| {
-        adjust_color_scheme(settings_clone.clone());
-    });
+    if settings.has_property("accent-color", None) {
+        adjust_accent_color(&settings);
+        settings.connect_changed(Some("accent-color"), move |s, _| {
+            adjust_accent_color(s);
+        });
+    }
 }
 
-fn adjust_accent_color(settings: gio::Settings) {
+fn adjust_accent_color(settings: &gio::Settings) {
     with_window(|w| {
         w.window
             .css_classes()
@@ -153,7 +151,7 @@ fn adjust_accent_color(settings: gio::Settings) {
     });
 }
 
-fn adjust_color_scheme(settings: gio::Settings) {
+fn adjust_color_scheme(settings: &gio::Settings) {
     with_window(|w| {
         w.window.remove_css_class("dark");
         w.window.remove_css_class("light");

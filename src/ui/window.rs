@@ -269,7 +269,7 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
 
     ui.selection.set_autoselect(true);
 
-    ui.selection.connect_items_changed(move |s, _, _, _| {
+    ui.selection.connect_items_changed(move |_, _, _, _| {
         if is_dmenu() {
             handle_changed_items();
         }

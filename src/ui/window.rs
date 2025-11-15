@@ -3,10 +3,10 @@ use crate::{
     config::get_config,
     data::{activate, input_changed, set_state},
     keybinds::{
-        ACTION_CLOSE, ACTION_QUICK_ACTIVATE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_NEXT,
-        ACTION_SELECT_PAGE_DOWN, ACTION_SELECT_PAGE_UP, ACTION_SELECT_PREVIOUS,
-        ACTION_TOGGLE_EXACT, Action, AfterAction, get_bind, get_provider_bind,
-        get_provider_global_bind,
+        ACTION_CLOSE, ACTION_QUICK_ACTIVATE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_DOWN,
+        ACTION_SELECT_LEFT, ACTION_SELECT_NEXT, ACTION_SELECT_PAGE_DOWN, ACTION_SELECT_PAGE_UP,
+        ACTION_SELECT_PREVIOUS, ACTION_SELECT_RIGHT, ACTION_SELECT_UP, ACTION_TOGGLE_EXACT, Action,
+        AfterAction, get_bind, get_provider_bind, get_provider_global_bind,
     },
     protos::generated_proto::query::QueryResponse,
     providers::{PROVIDERS, Provider},
@@ -17,9 +17,9 @@ use crate::{
         get_initial_max_width, get_initial_min_height, get_initial_min_width,
         get_initial_placeholder, get_initial_width, get_last_query, get_prefix_provider,
         get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open,
-        is_emergency, is_service, query, set_async_after, set_current_prefix, set_current_set,
-        set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa,
-        set_index, set_initial_height, set_initial_max_height, set_initial_max_width,
+        is_emergency, is_grid, is_service, query, set_async_after, set_current_prefix,
+        set_current_set, set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open, set_error,
+        set_hide_qa, set_index, set_initial_height, set_initial_max_height, set_initial_max_width,
         set_initial_min_height, set_initial_min_width, set_initial_placeholder, set_initial_width,
         set_input_only, set_is_dmenu, set_is_grid, set_is_stay_open_explicit_provider,
         set_is_visible, set_last_query, set_no_hints, set_no_search, set_param_close,
@@ -377,7 +377,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
         let handled = with_window(|w| {
             if !is_connected() && !is_dmenu() {
-                if let Some(action) = get_bind(k, m)
+                if let Some(action) = get_bind(k, m, is_grid())
                     && action.action == ACTION_CLOSE
                 {
                     quit(&app, true);
@@ -480,15 +480,21 @@ fn setup_keyboard_handling(ui: &WindowData) {
             }
 
 
+            let is_grid = is_grid();
+
             if keybind_action.is_none()
                 || (keybind_action.as_ref().unwrap().action == "menus:parent"
                     && !get_prefix_provider().is_empty())
             {
-                if let Some(action) = get_bind(k, m) {
+                if let Some(action) = get_bind(k, m, is_grid) {
                     match action.action.as_str() {
                         ACTION_CLOSE => quit(&app, true),
-                        ACTION_SELECT_NEXT => select_next(),
-                        ACTION_SELECT_PREVIOUS => select_previous(),
+                        ACTION_SELECT_NEXT if !is_grid => select_next(),
+                        ACTION_SELECT_PREVIOUS if !is_grid => select_previous(),
+                        ACTION_SELECT_LEFT if is_grid => select_previous(),
+                        ACTION_SELECT_RIGHT if is_grid => select_next(),
+                        ACTION_SELECT_UP if is_grid => select_up(),
+                        ACTION_SELECT_DOWN if is_grid => select_down(),
                         ACTION_TOGGLE_EXACT => toggle_exact(),
                         ACTION_RESUME_LAST_QUERY => resume_last_query(),
                         ACTION_SELECT_PAGE_DOWN => select_page_down(),
@@ -767,6 +773,34 @@ pub fn quit(app: &Application, cancelled: bool) {
 
             set_theme(get_config().theme.clone());
         });
+    });
+}
+
+pub fn select_up() {
+    with_window(|w| {
+        let selection = &w.selection;
+        let current = selection.selected();
+
+        if current < w.list.max_columns() {
+            return;
+        }
+
+        selection.set_selected(current - w.list.max_columns());
+    });
+}
+
+pub fn select_down() {
+    with_window(|w| {
+        let selection = &w.selection;
+        let current = selection.selected();
+        let n_items = selection.n_items();
+
+        if current + w.list.max_columns() >= n_items {
+            selection.set_selected(n_items - 1);
+            return;
+        }
+
+        selection.set_selected(current + w.list.max_columns());
     });
 }
 

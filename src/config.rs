@@ -114,6 +114,14 @@ struct PartialKeybinds {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub close: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub left: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub right: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub up: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub down: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub next: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub previous: Option<Vec<String>>,
@@ -324,6 +332,18 @@ impl Keybinds {
         if let Some(v) = partial.next {
             self.next = v;
         }
+        if let Some(v) = partial.left {
+            self.left = v;
+        }
+        if let Some(v) = partial.right {
+            self.right = v;
+        }
+        if let Some(v) = partial.up {
+            self.up = v;
+        }
+        if let Some(v) = partial.down {
+            self.down = v;
+        }
         if let Some(v) = partial.previous {
             self.previous = v;
         }
@@ -389,6 +409,10 @@ pub struct Keybinds {
     pub close: Vec<String>,
     pub next: Vec<String>,
     pub previous: Vec<String>,
+    pub left: Vec<String>,
+    pub right: Vec<String>,
+    pub up: Vec<String>,
+    pub down: Vec<String>,
     pub toggle_exact: Vec<String>,
     pub resume_last_query: Vec<String>,
     pub quick_activate: Option<Vec<String>>,

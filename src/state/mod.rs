@@ -4,7 +4,9 @@ use std::sync::{OnceLock, RwLock};
 use crate::data::get_provider_state;
 use crate::keybinds::AfterAction;
 use crate::protos::generated_proto::providerstate::ProviderStateResponse;
-use crate::ui::window::{clear_global_keybind_hints, set_global_keybind_hints};
+use crate::ui::window::{
+    clear_global_keybind_hints, handle_grid_setting, set_global_keybind_hints,
+};
 
 static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 
@@ -41,6 +43,7 @@ pub struct AppState {
     prefix_provider: String,
     theme: String,
     is_service: bool,
+    is_grid: bool,
     no_search: bool,
     no_hints: bool,
     input_only: bool,
@@ -117,6 +120,7 @@ pub fn get_provider() -> String {
 
 pub fn set_provider(val: String) {
     STATE.get().unwrap().write().unwrap().provider = val.clone();
+    handle_grid_setting();
 }
 
 pub fn get_prefix_provider() -> String {
@@ -131,6 +135,8 @@ pub fn set_prefix_provider(val: String) {
     } else {
         clear_global_keybind_hints();
     }
+
+    handle_grid_setting();
 }
 
 pub fn get_initial_placeholder() -> String {
@@ -175,6 +181,14 @@ pub fn set_is_service(val: bool) {
     STATE.get().unwrap().write().unwrap().is_service = val
 }
 
+pub fn set_is_grid(val: bool) {
+    STATE.get().unwrap().write().unwrap().is_grid = val
+}
+
+pub fn is_grid() -> bool {
+    STATE.get().unwrap().read().unwrap().is_grid
+}
+
 pub fn is_visible() -> bool {
     STATE.get().unwrap().read().unwrap().is_visible
 }
@@ -194,7 +208,6 @@ pub fn set_has_elephant(val: bool) {
 pub fn is_connected() -> bool {
     STATE.get().unwrap().read().unwrap().is_connected
 }
-
 pub fn set_is_connected(val: bool) {
     STATE.get().unwrap().write().unwrap().is_connected = val
 }

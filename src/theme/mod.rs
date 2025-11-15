@@ -22,6 +22,7 @@ pub struct Theme {
     pub preview: String,
     pub css: Option<gio::File>,
     pub items: HashMap<String, String>,
+    pub grid_items: HashMap<String, String>,
 }
 
 impl Theme {
@@ -32,10 +33,15 @@ impl Theme {
             preview: include_str!("../../resources/themes/default/preview.xml").to_string(),
             css: None,
             items: HashMap::new(),
+            grid_items: HashMap::new(),
         };
 
         for (k, v) in PROVIDERS.get().unwrap() {
             s.items.insert(k.clone(), v.get_item_layout());
+        }
+
+        for (k, v) in PROVIDERS.get().unwrap() {
+            s.grid_items.insert(k.clone(), v.get_item_grid_layout());
         }
 
         s
@@ -169,7 +175,20 @@ fn setup_theme_from_path(path: PathBuf, files: &Vec<String>) -> Option<Theme> {
                     theme.preview = s;
                 }
             }
-            name if name.ends_with(".xml") && name.starts_with("item_") => {
+            name if name.ends_with("_grid.xml") && name.starts_with("item_") => {
+                if let Some(s) = read_file(file) {
+                    let key = name
+                        .strip_prefix("item_")
+                        .unwrap()
+                        .strip_suffix(".xml")
+                        .unwrap();
+                    theme.grid_items.insert(key.to_string(), s);
+                }
+            }
+            name if name.ends_with(".xml")
+                && name.starts_with("item_")
+                && !name.ends_with("grid.xml") =>
+            {
                 if let Some(s) = read_file(file) {
                     let key = name
                         .strip_prefix("item_")

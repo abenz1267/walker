@@ -1,7 +1,7 @@
 use crate::config::get_config;
 use crate::protos::generated_proto::query::query_response::Item;
 use crate::providers::PROVIDERS;
-use crate::state::{get_dmenu_current, is_hide_qa, set_error};
+use crate::state::{get_dmenu_current, is_grid, is_hide_qa, set_error};
 use crate::theme::{Theme, with_themes};
 use crate::ui::window::{quit, with_window};
 use gtk4::gdk::ContentProvider;
@@ -14,12 +14,21 @@ use std::path::Path;
 pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
     let mut b = Builder::new();
 
-    let _ = b.add_from_string(
-        theme
-            .items
-            .get(&item.provider)
-            .unwrap_or_else(|| panic!("failed to get item layout: {}", &item.provider)),
-    );
+    let _ = if !is_grid() {
+        b.add_from_string(
+            theme
+                .items
+                .get(&item.provider)
+                .unwrap_or_else(|| panic!("failed to get item layout: {}", &item.provider)),
+        )
+    } else {
+        b.add_from_string(
+            theme
+                .grid_items
+                .get(&item.provider)
+                .unwrap_or_else(|| panic!("failed to get item grid layout: {}", &item.provider)),
+        )
+    };
 
     let itembox: Box = match b.object("ItemBox") {
         Some(w) => w,

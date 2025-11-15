@@ -128,6 +128,10 @@ pub trait Provider: Sync + Send + Debug {
         include_str!("../../resources/themes/default/item.xml").to_string()
     }
 
+    fn get_item_grid_layout(&self) -> String {
+        include_str!("../../resources/themes/default/item.xml").to_string()
+    }
+
     fn text_transformer(&self, item: &Item, label: &Label) {
         if item.text.is_empty() {
             label.set_visible(false);

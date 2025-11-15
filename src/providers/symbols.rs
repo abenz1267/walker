@@ -22,6 +22,10 @@ impl Provider for Symbols {
         include_str!("../../resources/themes/default/item_symbols.xml").to_string()
     }
 
+    fn get_item_grid_layout(&self) -> String {
+        include_str!("../../resources/themes/default/item_symbols_grid.xml").to_string()
+    }
+
     fn image_transformer(&self, b: &Builder, _: &ListItem, item: &Item) {
         if let Some(image) = b.object::<Label>("ItemImage")
             && !item.icon.is_empty()

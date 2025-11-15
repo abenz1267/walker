@@ -14,7 +14,8 @@ use crate::state::{
     set_is_visible, set_prefix_provider, set_provider, set_query,
 };
 use crate::ui::window::{
-    check_error, handle_changed_items, set_input_text, set_keybind_hint, with_window,
+    check_error, handle_changed_items, handle_grid_setting, set_input_text, set_keybind_hint,
+    with_window,
 };
 use crate::{QueryResponseObject, send_message};
 use gtk4::glib::Object;
@@ -372,7 +373,6 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                     check_error();
 
                     handle_changed_items();
-
                     set_keybind_hint();
                     crate::ui::window::handle_preview();
                 });
@@ -503,8 +503,6 @@ fn add_new_item(resp: QueryResponse) {
 }
 
 fn query(text: &str) {
-    set_prefix_provider(String::new());
-
     let mut query_text = text.to_string();
     let mut exact = false;
     let cfg = get_config();
@@ -523,6 +521,8 @@ fn query(text: &str) {
             .to_string();
         set_current_prefix(prefix.prefix.clone());
         set_prefix_provider(provider.clone());
+    } else {
+        set_prefix_provider(String::new());
     }
 
     let delimiter = &cfg.global_argument_delimiter;

@@ -21,18 +21,18 @@ use crate::{
         set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa,
         set_index, set_initial_height, set_initial_max_height, set_initial_max_width,
         set_initial_min_height, set_initial_min_width, set_initial_placeholder, set_initial_width,
-        set_input_only, set_is_dmenu, set_is_stay_open_explicit_provider, set_is_visible,
-        set_last_query, set_no_hints, set_no_search, set_param_close, set_parameter_height,
-        set_parameter_max_height, set_parameter_max_width, set_parameter_min_height,
-        set_parameter_min_width, set_parameter_width, set_placeholder, set_provider, set_query,
-        set_theme,
+        set_input_only, set_is_dmenu, set_is_grid, set_is_stay_open_explicit_provider,
+        set_is_visible, set_last_query, set_no_hints, set_no_search, set_param_close,
+        set_parameter_height, set_parameter_max_height, set_parameter_max_width,
+        set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_placeholder,
+        set_provider, set_query, set_theme,
     },
     theme::{Theme, setup_layer_shell, with_themes},
 };
 use gtk4::{
     Application, Builder, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
-    SingleSelection, Window, prelude::BoxExt,
+    SingleSelection, Window, glib, prelude::BoxExt,
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -1159,6 +1159,36 @@ pub fn select_page_up() {
 
         selection.set_selected(prev);
     });
+}
+
+pub fn handle_grid_setting() {
+    let p = if !get_provider().is_empty() {
+        get_provider()
+    } else {
+        get_prefix_provider()
+    };
+
+    if p.is_empty() {
+        with_window(|w| {
+            w.items.remove_all();
+            w.list.set_max_columns(1);
+            w.list.set_min_columns(1);
+            set_is_grid(false);
+        });
+
+        return;
+    }
+
+    if let Some(cols) = &get_config().columns
+        && let Some(c) = cols.get(&p)
+    {
+        with_window(|w| {
+            w.items.remove_all();
+            w.list.set_max_columns(*c);
+            w.list.set_min_columns(*c);
+            set_is_grid(true);
+        });
+    }
 }
 
 pub fn handle_changed_items() {

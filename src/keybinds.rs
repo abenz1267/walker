@@ -7,6 +7,10 @@ use std::collections::HashMap;
 use std::sync::{LazyLock, RwLock};
 
 pub const ACTION_CLOSE: &str = "%CLOSE%";
+pub const ACTION_SELECT_LEFT: &str = "%SELECT_LEFT%";
+pub const ACTION_SELECT_RIGHT: &str = "%SELECT_RIGHT%";
+pub const ACTION_SELECT_UP: &str = "%SELECT_UP%";
+pub const ACTION_SELECT_DOWN: &str = "%SELECT_DOWN%";
 pub const ACTION_SELECT_NEXT: &str = "%NEXT%";
 pub const ACTION_SELECT_PREVIOUS: &str = "%PREVIOUS%";
 pub const ACTION_TOGGLE_EXACT: &str = "%TOGGLE_EXACT%";
@@ -51,6 +55,8 @@ fn default_after() -> Option<AfterAction> {
 }
 
 static BINDS: LazyLock<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> =
+    LazyLock::new(RwLock::default);
+static GRID_BINDS: LazyLock<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Action>>>> =
     LazyLock::new(RwLock::default);
 static PROVIDER_BINDS: LazyLock<
     RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Vec<Action>>>>>,
@@ -107,6 +113,66 @@ pub fn setup_binds() {
                 default: None,
                 bind: Some(b.clone()),
                 label: Some("select next".to_string()),
+                after: Some(AfterAction::Nothing),
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.left.iter().for_each(|b| {
+        parse_bind(
+            &Action {
+                action: ACTION_SELECT_LEFT.to_string(),
+                unset: None,
+                default: None,
+                bind: Some(b.clone()),
+                label: Some("select left".to_string()),
+                after: Some(AfterAction::Nothing),
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.right.iter().for_each(|b| {
+        parse_bind(
+            &Action {
+                action: ACTION_SELECT_RIGHT.to_string(),
+                unset: None,
+                default: None,
+                bind: Some(b.clone()),
+                label: Some("select right".to_string()),
+                after: Some(AfterAction::Nothing),
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.up.iter().for_each(|b| {
+        parse_bind(
+            &Action {
+                action: ACTION_SELECT_UP.to_string(),
+                unset: None,
+                default: None,
+                bind: Some(b.clone()),
+                label: Some("select up".to_string()),
+                after: Some(AfterAction::Nothing),
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.down.iter().for_each(|b| {
+        parse_bind(
+            &Action {
+                action: ACTION_SELECT_DOWN.to_string(),
+                unset: None,
+                default: None,
+                bind: Some(b.clone()),
+                label: Some("select down".to_string()),
                 after: Some(AfterAction::Nothing),
             },
             "",
@@ -251,9 +317,30 @@ fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Erro
         .fold(gdk::ModifierType::empty(), |acc, &m| acc | m);
 
     let key = key.ok_or("incorrect bind")?;
+
     if provider.is_empty() {
         let mut binds = BINDS.write().unwrap();
-        binds.entry(key).or_default().insert(modifier, b.clone());
+        let mut grid_binds = GRID_BINDS.write().unwrap();
+
+        match b.action.as_str() {
+            ACTION_SELECT_PREVIOUS | ACTION_SELECT_NEXT => {
+                binds.entry(key).or_default().insert(modifier, b.clone());
+            }
+            ACTION_SELECT_UP | ACTION_SELECT_DOWN | ACTION_SELECT_LEFT | ACTION_SELECT_RIGHT => {
+                grid_binds
+                    .entry(key)
+                    .or_default()
+                    .insert(modifier, b.clone());
+            }
+            _ => {
+                binds.entry(key).or_default().insert(modifier, b.clone());
+                grid_binds
+                    .entry(key)
+                    .or_default()
+                    .insert(modifier, b.clone());
+            }
+        };
+
         return Ok(());
     }
 
@@ -271,7 +358,7 @@ fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Erro
     Ok(())
 }
 
-pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
+pub fn get_bind(key: Key, modifier: gdk::ModifierType, is_grid: bool) -> Option<Action> {
     if get_config().debug {
         if modifier != gdk::ModifierType::empty() {
             let mut modifiers = Vec::new();
@@ -292,12 +379,21 @@ pub fn get_bind(key: Key, modifier: gdk::ModifierType) -> Option<Action> {
         }
     }
 
-    BINDS
-        .read()
-        .ok()?
-        .get(&key.to_lower())?
-        .get(&modifier)
-        .cloned()
+    if is_grid {
+        GRID_BINDS
+            .read()
+            .ok()?
+            .get(&key.to_lower())?
+            .get(&modifier)
+            .cloned()
+    } else {
+        BINDS
+            .read()
+            .ok()?
+            .get(&key.to_lower())?
+            .get(&modifier)
+            .cloned()
+    }
 }
 
 pub fn get_provider_bind(

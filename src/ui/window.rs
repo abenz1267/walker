@@ -1109,29 +1109,25 @@ pub fn select_page_down() {
 
     with_window(|w| {
         let selection = &w.selection;
-        if !get_config().selection_wrap {
-            let current = selection.selected();
-            let n_items = selection.n_items();
-            let jump = get_config().page_jump_items;
-            if current + jump <= n_items {
-                selection.set_selected(current + jump);
-            }
-            return;
-        }
-
         let current = selection.selected();
         let n_items = selection.n_items();
         let jump = get_config().page_jump_items;
+
         if n_items == 0 {
             return;
         }
 
-        let next = if current + jump >= n_items {
-            0
+        let next = current + jump;
+        if next < n_items {
+            selection.set_selected(next);
         } else {
-            current + jump
-        };
-        selection.set_selected(next);
+            if get_config().selection_wrap {
+                selection.set_selected(0);
+            }
+            else {
+                selection.set_selected(n_items - 1);
+            }
+        }
     });
 }
 

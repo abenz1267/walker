@@ -373,7 +373,10 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
     let app = ui.app.clone();
 
-    controller.connect_key_pressed(move |_, k, _, m| {
+    controller.connect_key_pressed(move |_, mut k, _, m| {
+        if k == gdk::Key::KP_Enter {
+            k = gdk::Key::Return;
+        }
 
         let handled = with_window(|w| {
             if !is_connected() && !is_dmenu() {

@@ -1015,6 +1015,14 @@ pub fn set_keybind_hint() {
             return;
         };
 
+        if let Some(binds) = &w.keybinds {
+            if w.items.n_items() == 0 {
+                binds.set_visible(false);
+            } else {
+                binds.set_visible(true);
+            }
+        }
+
         while let Some(child) = k.first_child() {
             k.remove(&child);
         }
@@ -1193,8 +1201,7 @@ pub fn select_page_down() {
         } else {
             if get_config().selection_wrap {
                 selection.set_selected(0);
-            }
-            else {
+            } else {
                 selection.set_selected(n_items - 1);
             }
         }

@@ -643,9 +643,7 @@ fn apply_flag_logic() {
     with_window(|w| {
         if is_input_only() {
             w.content_container.set_visible(false);
-            if let Some(keybinds) = &w.keybinds {
-                keybinds.set_visible(false);
-            }
+            w.keybinds.set_visible(false);
         }
 
         if let Some(placeholders) = &cfg.placeholders
@@ -716,10 +714,8 @@ fn apply_flag_logic() {
             search_container.set_visible(false);
         }
 
-        if is_no_hints()
-            && let Some(hints) = &w.keybinds
-        {
-            hints.set_visible(false);
+        if is_no_hints() {
+            w.keybinds.set_visible(false);
         }
     });
 }

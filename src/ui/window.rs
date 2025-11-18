@@ -17,7 +17,7 @@ use crate::{
         get_initial_max_width, get_initial_min_height, get_initial_min_width,
         get_initial_placeholder, get_initial_width, get_last_query, get_prefix_provider,
         get_provider, get_theme, is_connected, is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open,
-        is_emergency, is_grid, is_service, query, set_async_after, set_current_prefix,
+        is_emergency, is_grid, is_no_hints, is_service, query, set_async_after, set_current_prefix,
         set_current_set, set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open, set_error,
         set_hide_qa, set_index, set_initial_height, set_initial_max_height, set_initial_max_width,
         set_initial_min_height, set_initial_min_width, set_initial_placeholder, set_initial_width,
@@ -91,9 +91,9 @@ pub struct WindowData {
     pub items: ListStore,
     pub placeholder: Option<Label>,
     pub elephant_hint: Label,
-    pub keybinds: Option<gtk4::Box>,
-    pub global_keybinds: Option<gtk4::Box>,
-    pub item_keybinds: Option<gtk4::Box>,
+    pub keybinds: gtk4::Box,
+    pub global_keybinds: gtk4::Box,
+    pub item_keybinds: gtk4::Box,
     pub scroll: ScrolledWindow,
     pub search_container: Option<gtk4::Box>,
     pub preview_container: Option<gtk4::Box>,
@@ -160,11 +160,23 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
         None => return Err("missing 'ContentContainer' object".into()),
     };
 
+    let keybinds: gtk4::Box = match builder.object("Keybinds") {
+        Some(w) => w,
+        None => return Err("missing 'Keybinds' object".into()),
+    };
+
+    let global_keybinds: gtk4::Box = match builder.object("GlobalKeybinds") {
+        Some(w) => w,
+        None => return Err("missing 'GlobalKeybinds' object".into()),
+    };
+
+    let item_keybinds: gtk4::Box = match builder.object("ItemKeybinds") {
+        Some(w) => w,
+        None => return Err("missing 'ItemKeybinds' object".into()),
+    };
+
     let input: Option<Entry> = builder.object("Input");
     let placeholder: Option<Label> = builder.object("Placeholder");
-    let keybinds: Option<gtk4::Box> = builder.object("Keybinds");
-    let global_keybinds: Option<gtk4::Box> = builder.object("GlobalKeybinds");
-    let item_keybinds: Option<gtk4::Box> = builder.object("ItemKeybinds");
 
     let filter = CustomFilter::new({
         move |entry| {
@@ -736,15 +748,10 @@ pub fn quit(app: &Application, cancelled: bool) {
                 search_container.set_visible(true);
             }
 
-            if let Some(hints) = &w.item_keybinds {
-                hints.set_visible(true);
-            }
+            w.item_keybinds.set_visible(true);
+            w.keybinds.set_visible(true);
 
             w.content_container.set_visible(true);
-
-            if let Some(keybinds) = &w.keybinds {
-                keybinds.set_visible(true);
-            }
 
             if let Some(val) = get_initial_height() {
                 w.box_wrapper.set_height_request(val);
@@ -970,12 +977,8 @@ pub fn handle_preview() {
 pub fn clear_global_keybind_hints() {
     gtk4::glib::idle_add_once(move || {
         with_window(|w| {
-            let Some(k) = &w.global_keybinds else {
-                return;
-            };
-
-            while let Some(child) = k.first_child() {
-                k.remove(&child);
+            while let Some(child) = w.global_keybinds.first_child() {
+                w.global_keybinds.remove(&child);
             }
         });
     });
@@ -984,9 +987,7 @@ pub fn clear_global_keybind_hints() {
 pub fn set_global_keybind_hints(actions: Vec<String>, provider: String) {
     gtk4::glib::idle_add_once(move || {
         with_window(|w| {
-            let Some(k) = &w.global_keybinds else {
-                return;
-            };
+            let k = &w.global_keybinds;
 
             while let Some(child) = k.first_child() {
                 k.remove(&child);
@@ -994,16 +995,12 @@ pub fn set_global_keybind_hints(actions: Vec<String>, provider: String) {
 
             let providers = PROVIDERS.get().unwrap();
 
-            let Some(k) = &w.global_keybinds else {
-                return;
-            };
-
             while let Some(child) = k.first_child() {
                 k.remove(&child);
             }
 
             if let Some(p) = providers.get(&provider) {
-                generate_hints(p, &actions, k);
+                generate_hints(p, &actions, &k);
             }
         });
     });
@@ -1011,16 +1008,12 @@ pub fn set_global_keybind_hints(actions: Vec<String>, provider: String) {
 
 pub fn set_keybind_hint() {
     with_window(|w| {
-        let Some(k) = &w.item_keybinds else {
-            return;
-        };
+        let k = &w.item_keybinds;
 
-        if let Some(binds) = &w.keybinds {
-            if w.items.n_items() == 0 {
-                binds.set_visible(false);
-            } else {
-                binds.set_visible(true);
-            }
+        if w.items.n_items() == 0 || is_no_hints() {
+            w.keybinds.set_visible(false);
+        } else {
+            w.keybinds.set_visible(true);
         }
 
         while let Some(child) = k.first_child() {
@@ -1296,10 +1289,8 @@ pub fn handle_changed_items() {
 
         w.scroll.set_visible(s.n_items() != 0);
 
-        if let Some(k) = &w.item_keybinds {
-            while let Some(child) = k.first_child() {
-                k.remove(&child);
-            }
+        while let Some(child) = w.item_keybinds.first_child() {
+            w.item_keybinds.remove(&child);
         }
 
         if s.n_items() == 0 {

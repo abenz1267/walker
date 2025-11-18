@@ -637,9 +637,7 @@ fn handle_emergency() {
                     p.set_visible(false);
                 }
 
-                if let Some(b) = &w.keybinds {
-                    b.set_visible(false);
-                }
+                w.keybinds.set_visible(false);
             });
         });
     }

@@ -16,6 +16,7 @@ pub struct EmergencyEntry {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Walker {
     pub debug: bool,
+    pub single_click_activation: bool,
     pub force_keyboard_focus: bool,
     pub disable_mouse: bool,
     pub click_to_close: bool,
@@ -49,6 +50,8 @@ struct PartialWalker {
     pub emergencies: Option<Vec<EmergencyEntry>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub force_keyboard_focus: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub single_click_activation: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub disable_mouse: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -204,6 +207,9 @@ impl Walker {
         }
         if let Some(v) = partial.force_keyboard_focus {
             self.force_keyboard_focus = v;
+        }
+        if let Some(v) = partial.single_click_activation {
+            self.single_click_activation = v;
         }
         if let Some(v) = partial.disable_mouse {
             self.disable_mouse = v;

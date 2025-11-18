@@ -301,6 +301,9 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
 
     let config = get_config();
 
+    ui.list
+        .set_single_click_activate(config.single_click_activation);
+
     let app_copy = app.clone();
 
     if config.click_to_close && !config.disable_mouse {
@@ -623,8 +626,6 @@ fn setup_mouse_handling(ui: &WindowData) {
         }
         return;
     }
-
-    ui.list.set_single_click_activate(true);
 
     let motion = EventControllerMotion::new();
     motion.connect_motion(|_, x, y| {

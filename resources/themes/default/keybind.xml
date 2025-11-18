@@ -7,10 +7,17 @@
     </style>
     <property name="orientation">vertical</property>
     <child>
-      <object class="GtkLabel" id="KeybindLabel">
+      <object class="GtkButton" id="KeybindButton">
         <style>
-          <class name="keybind-label"></class>
+          <class name="keybind-button"></class>
         </style>
+        <child>
+          <object class="GtkLabel" id="KeybindLabel">
+            <style>
+              <class name="keybind-label"></class>
+            </style>
+          </object>
+        </child>
       </object>
     </child>
     <child>

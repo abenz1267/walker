@@ -30,9 +30,10 @@ use crate::{
     theme::{Theme, setup_layer_shell, with_themes},
 };
 use gtk4::{
-    Application, Builder, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
+    Application, Builder, Button, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
-    SingleSelection, Window, prelude::BoxExt,
+    SingleSelection, Window,
+    prelude::{BoxExt, ButtonExt},
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -1104,6 +1105,37 @@ pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: 
                     set_error("Theme: missing 'KeybindBind' object".to_string());
                     None
                 }
+            };
+
+            let button = match b.object::<Button>("KeybindButton") {
+                Some(res) => Some(res),
+                None => {
+                    set_error("Theme: missing 'KeybindBind' object".to_string());
+                    None
+                }
+            };
+
+            let h_clone = h.clone();
+
+            if let Some(b) = button {
+                b.connect_clicked(move |_| {
+                    with_window(|w| {
+                        let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
+
+                        if let Some(item) = get_selected_item() {
+                            let provider = item.provider.clone();
+
+                            activate(get_selected_query_response(), &provider, &query, &h_clone);
+
+                            let after = h_clone
+                                .after
+                                .as_ref()
+                                .unwrap_or(&AfterAction::Close)
+                                .clone();
+                            handle_after(&after, &w.app, query.to_string());
+                        }
+                    });
+                });
             };
 
             let label: Option<Label> = b.object("KeybindLabel");

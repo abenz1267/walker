@@ -152,9 +152,8 @@ child:selected .item-box {
 .keybinds {
   padding-top: 10px;
   border-top: 1px solid lighter(@window_bg_color);
-  font-size: 10px;
+  font-size: 12px;
   color: @theme_fg_color;
-  opacity: 0.5;
 }
 
 .global-keybinds {
@@ -166,10 +165,18 @@ child:selected .item-box {
 .keybind {
 }
 
-.keybind-bind {
-  /* color: lighter(@window_bg_color); */
-  text-transform: lowercase;
+.keybind-button {
+  opacity: 0.5;
+}
+
+.keybind-button:hover {
   opacity: 0.75;
+  cursor: pointer;
+}
+
+.keybind-bind {
+  text-transform: lowercase;
+  opacity: 0.35;
 }
 
 .keybind-label {

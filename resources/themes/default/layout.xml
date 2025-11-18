@@ -17,7 +17,7 @@
         <property name="valign">center</property>
         <property name="halign">center</property>
         <property name="width-request">600</property>
-        <property name="height-request">550</property>
+        <property name="height-request">570</property>
         <child>
           <object class="GtkBox" id="Box">
             <style>
@@ -148,7 +148,7 @@
                   <class name="error"></class>
                 </style>
                 <property name="xalign">0</property>
-               <property name="visible">false</property>
+                <property name="visible">false</property>
               </object>
             </child>
           </object>

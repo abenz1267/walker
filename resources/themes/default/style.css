@@ -8,6 +8,13 @@
   all: unset;
 }
 
+popover {
+  background: lighter(@window_bg_color);
+  border: 1px solid darker(@accent_bg_color);
+  border-radius: 18px;
+  padding: 10px;
+}
+
 .normal-icons {
   -gtk-icon-size: 16px;
 }

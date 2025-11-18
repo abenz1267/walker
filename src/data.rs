@@ -640,10 +640,6 @@ fn handle_emergency() {
                 if let Some(b) = &w.keybinds {
                     b.set_visible(false);
                 }
-
-                if let Some(b) = &w.global_keybinds {
-                    b.set_visible(false);
-                }
             });
         });
     }

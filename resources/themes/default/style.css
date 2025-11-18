@@ -89,7 +89,7 @@ child {
   padding: 10px;
 }
 
-child:hover .item-box,
+/* child:hover .item-box, */
 child:selected .item-box {
   background: alpha(@accent_bg_color, 0.25);
 }
@@ -149,14 +149,18 @@ child:selected .item-box {
   -gtk-icon-size: 64px;
 }
 
-.keybinds-wrapper {
+.keybinds {
+  padding-top: 10px;
   border-top: 1px solid lighter(@window_bg_color);
-  font-size: 12px;
-  opacity: 0.5;
+  font-size: 10px;
   color: @theme_fg_color;
+  opacity: 0.5;
 }
 
-.keybinds {
+.global-keybinds {
+}
+
+.item-keybinds {
 }
 
 .keybind {
@@ -164,11 +168,14 @@ child:selected .item-box {
 
 .keybind-bind {
   /* color: lighter(@window_bg_color); */
-  font-weight: bold;
   text-transform: lowercase;
+  opacity: 0.75;
 }
 
 .keybind-label {
+  padding: 2px 4px;
+  border-radius: 4px;
+  border: 1px solid @theme_fg_color;
 }
 
 .error {

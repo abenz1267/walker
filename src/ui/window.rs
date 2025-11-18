@@ -32,7 +32,7 @@ use crate::{
 use gtk4::{
     Application, Builder, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
-    SingleSelection, Window, glib, prelude::BoxExt,
+    SingleSelection, Window, prelude::BoxExt,
 };
 use gtk4::{Box, ListScrollFlags};
 use gtk4::{
@@ -92,6 +92,7 @@ pub struct WindowData {
     pub elephant_hint: Label,
     pub keybinds: Option<gtk4::Box>,
     pub global_keybinds: Option<gtk4::Box>,
+    pub item_keybinds: Option<gtk4::Box>,
     pub scroll: ScrolledWindow,
     pub search_container: Option<gtk4::Box>,
     pub preview_container: Option<gtk4::Box>,
@@ -162,6 +163,7 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
     let placeholder: Option<Label> = builder.object("Placeholder");
     let keybinds: Option<gtk4::Box> = builder.object("Keybinds");
     let global_keybinds: Option<gtk4::Box> = builder.object("GlobalKeybinds");
+    let item_keybinds: Option<gtk4::Box> = builder.object("ItemKeybinds");
 
     let filter = CustomFilter::new({
         move |entry| {
@@ -209,6 +211,7 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
         placeholder,
         keybinds,
         global_keybinds,
+        item_keybinds,
     };
 
     if let Some(p) = &ui.preview_container {
@@ -332,12 +335,9 @@ fn activate_default(app: &Application) {
                 actions.iter().find(|a| a.default.unwrap_or(false)).unwrap()
             };
 
-            let after = action.after.as_ref().unwrap_or(&AfterAction::Close).clone();
-
             activate(get_selected_query_response(), &provider, &query, action);
 
-            let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
-
+            let after = action.after.as_ref().unwrap_or(&AfterAction::Close).clone();
             handle_after(&after, app, query.to_string());
         }
     });
@@ -734,7 +734,7 @@ pub fn quit(app: &Application, cancelled: bool) {
                 search_container.set_visible(true);
             }
 
-            if let Some(hints) = &w.keybinds {
+            if let Some(hints) = &w.item_keybinds {
                 hints.set_visible(true);
             }
 
@@ -1009,7 +1009,7 @@ pub fn set_global_keybind_hints(actions: Vec<String>, provider: String) {
 
 pub fn set_keybind_hint() {
     with_window(|w| {
-        let Some(k) = &w.keybinds else {
+        let Some(k) = &w.item_keybinds else {
             return;
         };
 
@@ -1256,7 +1256,7 @@ pub fn handle_changed_items() {
 
         w.scroll.set_visible(s.n_items() != 0);
 
-        if let Some(k) = &w.keybinds {
+        if let Some(k) = &w.item_keybinds {
             while let Some(child) = k.first_child() {
                 k.remove(&child);
             }

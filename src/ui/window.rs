@@ -1010,7 +1010,7 @@ pub fn set_keybind_hint() {
     with_window(|w| {
         let k = &w.item_keybinds;
 
-        if w.items.n_items() == 0 || is_no_hints() || get_config().hide_action_hints {
+        if is_no_hints() || get_config().hide_action_hints {
             w.keybinds.set_visible(false);
         } else {
             w.keybinds.set_visible(true);

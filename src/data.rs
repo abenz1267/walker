@@ -14,8 +14,7 @@ use crate::state::{
     set_is_visible, set_prefix_provider, set_provider, set_query,
 };
 use crate::ui::window::{
-    check_error, handle_changed_items, handle_grid_setting, set_input_text, set_keybind_hint,
-    with_window,
+    check_error, handle_changed_items, set_input_text, set_keybind_hint, with_window,
 };
 use crate::{QueryResponseObject, send_message};
 use gtk4::glib::Object;

@@ -11,7 +11,6 @@ mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual, SettingsExt};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard};
 use gtk4::glib::Priority;
-use gtk4::glib::object::ObjectExt;
 use gtk4::prelude::EntryExt;
 
 use config::get_config;
@@ -130,11 +129,13 @@ fn init_ui(app: &Application, dmenu: bool, theme: &str) {
         adjust_color_scheme(s);
     });
 
-    if settings.has_property("accent-color", None) {
-        adjust_accent_color(&settings);
-        settings.connect_changed(Some("accent-color"), move |s, _| {
-            adjust_accent_color(s);
-        });
+    if let Some(schema) = settings.settings_schema() {
+        if schema.has_key("accent-color") {
+            adjust_accent_color(&settings);
+            settings.connect_changed(Some("accent-color"), move |s, _| {
+                adjust_accent_color(s);
+            });
+        }
     }
 }
 

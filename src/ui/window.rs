@@ -1009,8 +1009,9 @@ pub fn set_global_keybind_hints(actions: Vec<String>, provider: String) {
 pub fn set_keybind_hint() {
     with_window(|w| {
         let k = &w.item_keybinds;
+        let cfg = get_config();
 
-        if is_no_hints() || get_config().hide_action_hints {
+        if is_no_hints() || cfg.hide_action_hints || (is_dmenu() && cfg.hide_action_hints_dmenu) {
             w.keybinds.set_visible(false);
         } else {
             w.keybinds.set_visible(true);

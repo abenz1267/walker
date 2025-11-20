@@ -23,6 +23,7 @@ pub struct Walker {
     pub close_when_open: bool,
     pub hide_quick_activation: bool,
     pub hide_action_hints: bool,
+    pub hide_action_hints_dmenu: bool,
     pub selection_wrap: bool,
     pub resume_last_query: bool,
     pub global_argument_delimiter: String,
@@ -59,6 +60,8 @@ struct PartialWalker {
     pub hide_quick_activation: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hide_action_hints: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub hide_action_hints_dmenu: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub click_to_close: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -222,6 +225,9 @@ impl Walker {
         }
         if let Some(v) = partial.hide_action_hints {
             self.hide_action_hints = v;
+        }
+        if let Some(v) = partial.hide_action_hints_dmenu {
+            self.hide_action_hints_dmenu = v;
         }
         if let Some(v) = partial.click_to_close {
             self.click_to_close = v;

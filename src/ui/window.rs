@@ -1188,16 +1188,16 @@ pub fn select_page_down() {
             return;
         }
 
-        let next = current + jump;
-        if next < n_items {
-            selection.set_selected(next);
+        let next = if current + jump < n_items {
+            current + jump
         } else {
-            if get_config().selection_wrap {
-                selection.set_selected(0);
+            if get_config().selection_wrap && current == n_items - 1 {
+                0
             } else {
-                selection.set_selected(n_items - 1);
+                n_items - 1
             }
-        }
+        };
+        selection.set_selected(next);
     });
 }
 
@@ -1214,19 +1214,15 @@ pub fn select_page_up() {
             return;
         }
 
-        if !get_config().selection_wrap {
-            let prev = current.saturating_sub(jump);
-            selection.set_selected(prev);
-            return;
-        }
-
         let prev = if current >= jump {
             current - jump
         } else {
-            let overflow = jump - current;
-            n_items.saturating_sub(overflow)
+            if get_config().selection_wrap && current == 0 {
+                n_items - 1
+            } else {
+                0
+            }
         };
-
         selection.set_selected(prev);
     });
 }

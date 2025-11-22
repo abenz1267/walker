@@ -1074,12 +1074,13 @@ pub fn set_keybind_hint() {
 
 pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: &gtk4::Box) {
     let mut hints = p.get_keybind_hint(actions);
+    let cfg = get_config();
 
     if !get_prefix_provider().is_empty() {
         hints.retain(|a| a.action != "menus:parent");
     }
 
-    if get_config().debug {
+    if cfg.debug {
         println!(
             "configured actions [{}]: {}",
             p.get_name(),
@@ -1097,7 +1098,30 @@ pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: 
         );
     }
 
-    hints.iter().for_each(|h| {
+    let filtered: Vec<Action> = hints
+        .into_iter()
+        .filter(|h| {
+            if cfg.hide_return_action && h.bind.as_ref().unwrap() == "Return" {
+                return false;
+            }
+
+            true
+        })
+        .collect();
+
+    if filtered.is_empty() {
+        with_window(|w| {
+            w.keybinds.set_visible(false);
+        });
+
+        return;
+    }
+
+    filtered.iter().for_each(|h| {
+        if cfg.hide_return_action && h.bind.as_ref().unwrap() == "Return" {
+            return;
+        }
+
         with_themes(|t| {
             let theme = t
                 .get(&get_theme())

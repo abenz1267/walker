@@ -1011,7 +1011,11 @@ pub fn set_keybind_hint() {
         let k = &w.item_keybinds;
         let cfg = get_config();
 
-        if is_no_hints() || cfg.hide_action_hints || (is_dmenu() && cfg.hide_action_hints_dmenu) {
+        if is_no_hints()
+            || cfg.hide_action_hints
+            || (is_dmenu() && cfg.hide_action_hints_dmenu)
+            || w.items.n_items() == 0
+        {
             w.keybinds.set_visible(false);
         } else {
             w.keybinds.set_visible(true);

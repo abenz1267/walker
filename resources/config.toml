@@ -139,7 +139,10 @@ calc = [
   { action = "save", bind = "ctrl s", after = "AsyncClearReload" },
 ]
 
-websearch = [{ action = "search", default = true, bind = "Return" }]
+websearch = [
+  { action = "search", default = true, bind = "Return" },
+  { action = "open_url", label = "open url", default = true, bind = "Return" },
+]
 
 desktopapplications = [
   { action = "start", default = true, bind = "Return" },

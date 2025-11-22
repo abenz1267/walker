@@ -12,7 +12,7 @@
   graphene,
   cairo,
   pango,
-  wrapGAppsHook3,
+  wrapGAppsHook4,
   poppler,
 }:
 rustPlatform.buildRustPackage rec {
@@ -36,7 +36,7 @@ rustPlatform.buildRustPackage rec {
     gobject-introspection
     pkg-config
     protobuf
-    wrapGAppsHook3
+    wrapGAppsHook4
   ];
 
   buildInputs = [

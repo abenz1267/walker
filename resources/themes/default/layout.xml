@@ -101,6 +101,7 @@
                           <class name="list"></class>
                         </style>
                         <property name="max_columns">1</property>
+                        <property name="min_columns">1</property>
                         <property name="can_focus">false</property>
                       </object>
                     </child>

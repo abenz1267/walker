@@ -56,6 +56,7 @@ use crate::state::{
     set_is_visible, set_no_hints, set_no_search, set_param_close, set_parameter_height,
     set_parameter_max_height, set_parameter_max_width, set_parameter_min_height,
     set_parameter_min_width, set_parameter_width, set_placeholder, set_provider, set_theme,
+    set_theme_grid_columns,
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{
@@ -628,6 +629,10 @@ fn activate(app: &Application) {
             w.items.remove_all();
         });
     }
+
+    with_window(|w| {
+        set_theme_grid_columns(w.list.max_columns());
+    });
 
     set_is_visible(true);
 }

@@ -8,8 +8,8 @@ use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
     get_async_after, get_current_prefix, get_current_set, get_error, get_prefix_provider,
-    get_provider, is_connected, is_connecting, is_dmenu, is_emergency, is_index, is_service,
-    set_async_after, set_current_prefix, set_error, set_global_provider_actions,
+    get_provider, is_actions_menu, is_connected, is_connecting, is_dmenu, is_emergency, is_index,
+    is_service, set_async_after, set_current_prefix, set_error, set_global_provider_actions,
     set_global_provider_state, set_is_connected, set_is_connecting, set_is_emergency,
     set_is_visible, set_prefix_provider, set_provider, set_query,
 };
@@ -47,7 +47,7 @@ pub fn input_changed(text: &str) {
             false
         };
 
-        if is_dmenu() || is_emergency() {
+        if is_dmenu() || is_emergency() || is_actions_menu() {
             if is_empty {
                 set_query("");
 

@@ -18,6 +18,7 @@ pub const ACTION_RESUME_LAST_QUERY: &str = "%RESUME_LAST_QUERY%";
 pub const ACTION_QUICK_ACTIVATE: &str = "%QUICK_ACTIVATE%";
 pub const ACTION_SELECT_PAGE_DOWN: &str = "%PAGE_DOWN%";
 pub const ACTION_SELECT_PAGE_UP: &str = "%PAGE_UP%";
+pub const ACTION_SHOW_ACTIONS: &str = "%SHOW_ACTIONS%";
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum AfterAction {
@@ -98,6 +99,21 @@ pub fn setup_binds() {
                 default: Some(true),
                 bind: Some(b.clone()),
                 label: Some("close".to_string()),
+                after: None,
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.show_actions.iter().for_each(|b| {
+        parse_bind(
+            &Action {
+                action: ACTION_SHOW_ACTIONS.to_string(),
+                unset: None,
+                default: Some(true),
+                bind: Some(b.clone()),
+                label: Some("actions".to_string()),
                 after: None,
             },
             "",
@@ -358,6 +374,17 @@ fn parse_bind(b: &Action, provider: &str) -> Result<(), Box<dyn std::error::Erro
     Ok(())
 }
 
+pub fn get_show_actions_action() -> Action {
+    BINDS
+        .read()
+        .unwrap()
+        .values()
+        .flat_map(|inner| inner.values())
+        .find(|a| a.action == ACTION_SHOW_ACTIONS)
+        .unwrap()
+        .clone()
+}
+
 pub fn get_bind(key: Key, modifier: gdk::ModifierType, is_grid: bool) -> Option<Action> {
     if get_config().debug {
         if modifier != gdk::ModifierType::empty() {
@@ -394,6 +421,18 @@ pub fn get_bind(key: Key, modifier: gdk::ModifierType, is_grid: bool) -> Option<
             .get(&modifier)
             .cloned()
     }
+}
+
+pub fn get_fallback_action(action: &str) -> Option<Action> {
+    PROVIDER_BINDS
+        .read()
+        .unwrap()
+        .get("fallback")?
+        .values()
+        .flat_map(|modifier_map| modifier_map.values())
+        .flat_map(|action_vec| action_vec.iter())
+        .find(|a| a.action == action)
+        .cloned()
 }
 
 pub fn get_provider_bind(

@@ -4,6 +4,7 @@ use std::sync::{OnceLock, RwLock};
 use crate::data::get_provider_state;
 use crate::keybinds::AfterAction;
 use crate::protos::generated_proto::providerstate::ProviderStateResponse;
+use crate::protos::generated_proto::query::QueryResponse;
 use crate::ui::window::{
     clear_global_keybind_hints, handle_grid_setting, set_global_keybind_hints,
 };
@@ -50,6 +51,10 @@ pub struct AppState {
     input_only: bool,
     index: bool,
     is_dmenu: bool,
+    is_actions_menu: bool,
+    action_menu_item: QueryResponse,
+    action_menu_prefix: Option<String>,
+    action_menu_query: String,
     is_emergency: bool,
     is_param_close: bool,
     current_prefix: String,
@@ -295,6 +300,56 @@ pub fn set_is_dmenu(val: bool) {
     STATE.get().unwrap().write().unwrap().is_dmenu = val
 }
 
+pub fn is_actions_menu() -> bool {
+    STATE.get().unwrap().read().unwrap().is_actions_menu
+}
+
+pub fn set_is_actions_menu(val: bool) {
+    STATE.get().unwrap().write().unwrap().is_actions_menu = val
+}
+
+pub fn get_action_menu_query() -> String {
+    STATE
+        .get()
+        .unwrap()
+        .read()
+        .unwrap()
+        .action_menu_query
+        .clone()
+}
+
+pub fn set_action_menu_query(val: String) {
+    STATE.get().unwrap().write().unwrap().action_menu_query = val
+}
+
+pub fn get_action_menu_prefix() -> Option<String> {
+    STATE
+        .get()
+        .unwrap()
+        .read()
+        .unwrap()
+        .action_menu_prefix
+        .clone()
+}
+
+pub fn set_action_menu_prefix(val: Option<String>) {
+    STATE.get().unwrap().write().unwrap().action_menu_prefix = val
+}
+
+pub fn get_action_menu_item() -> QueryResponse {
+    STATE
+        .get()
+        .unwrap()
+        .read()
+        .unwrap()
+        .action_menu_item
+        .clone()
+}
+
+pub fn set_action_menu_item(val: QueryResponse) {
+    STATE.get().unwrap().write().unwrap().action_menu_item = val
+}
+
 pub fn is_emergency() -> bool {
     STATE.get().unwrap().read().unwrap().is_emergency
 }
@@ -311,7 +366,7 @@ pub fn set_hide_qa(val: bool) {
     STATE.get().unwrap().write().unwrap().hide_qa = val
 }
 
-pub fn query() -> String {
+pub fn get_query() -> String {
     STATE.get().unwrap().read().unwrap().query.clone()
 }
 

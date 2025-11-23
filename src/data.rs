@@ -7,14 +7,15 @@ use crate::protos::generated_proto::subscribe::SubscribeRequest;
 use crate::protos::generated_proto::subscribe::SubscribeResponse;
 use crate::providers::PROVIDERS;
 use crate::state::{
-    get_async_after, get_current_prefix, get_current_set, get_error, get_prefix_provider,
-    get_provider, is_connected, is_connecting, is_dmenu, is_emergency, is_index, is_service,
-    set_async_after, set_current_prefix, set_error, set_global_provider_actions,
-    set_global_provider_state, set_is_connected, set_is_connecting, set_is_emergency,
-    set_is_visible, set_prefix_provider, set_provider, set_query,
+    get_action_menu_query, get_async_after, get_current_prefix, get_current_set, get_error,
+    get_prefix_provider, get_provider, is_actions_menu, is_connected, is_connecting, is_dmenu,
+    is_emergency, is_index, is_service, set_async_after, set_current_prefix, set_error,
+    set_global_provider_actions, set_global_provider_state, set_is_connected, set_is_connecting,
+    set_is_emergency, set_is_visible, set_prefix_provider, set_provider, set_query,
 };
 use crate::ui::window::{
-    check_error, handle_changed_items, set_input_text, set_keybind_hint, with_window,
+    check_error, handle_changed_items, reset_actions_menu, set_input_text, set_keybind_hint,
+    with_window,
 };
 use crate::{QueryResponseObject, send_message};
 use gtk4::glib::Object;
@@ -47,7 +48,7 @@ pub fn input_changed(text: &str) {
             false
         };
 
-        if is_dmenu() || is_emergency() {
+        if is_dmenu() || is_emergency() || is_actions_menu() {
             if is_empty {
                 set_query("");
 
@@ -226,7 +227,7 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
                 check_error();
             }
 
-            if is_dmenu() {
+            if !is_dmenu() {
                 set_keybind_hint();
             }
         });
@@ -396,7 +397,14 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                 glib::idle_add_once(move || match get_async_after() {
                     Some(AfterAction::AsyncReload) => {
                         with_window(|w| {
-                            if let Some(input) = &w.input {
+                            if is_actions_menu() {
+                                reset_actions_menu();
+
+                                set_input_text(
+                                    format!("{}{}", get_current_prefix(), get_action_menu_query(),)
+                                        .trim(),
+                                );
+                            } else if let Some(input) = &w.input {
                                 set_input_text(&input.text());
                             }
                         });
@@ -404,15 +412,13 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
                         set_async_after(None);
                     }
                     Some(AfterAction::AsyncClearReload) => {
-                        with_window(|w| {
-                            if let Some(input) = &w.input {
-                                if input.text().is_empty() {
-                                    input.emit_by_name::<()>("changed", &[]);
-                                } else {
-                                    set_input_text(&get_current_prefix());
-                                }
-                            }
-                        });
+                        reset_actions_menu();
+
+                        if !get_current_prefix().is_empty() {
+                            set_input_text(&get_current_prefix());
+                        } else {
+                            set_input_text("");
+                        }
 
                         set_async_after(None);
                     }

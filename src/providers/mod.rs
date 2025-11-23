@@ -18,12 +18,14 @@ use crate::{
     keybinds::Action,
     protos::generated_proto::query::query_response::Item,
     providers::{
-        archlinuxpkgs::ArchLinuxPkgs, bookmarks::Bookmarks, calc::Calc, clipboard::Clipboard,
-        default_provider::DefaultProvider, dmenu::Dmenu, emergency::Emergency, files::Files,
-        providerlist::Providerlist, symbols::Symbols, todo::Todo, unicode::Unicode,
+        actionsmenu::ActionsMenu, archlinuxpkgs::ArchLinuxPkgs, bookmarks::Bookmarks, calc::Calc,
+        clipboard::Clipboard, default_provider::DefaultProvider, dmenu::Dmenu,
+        emergency::Emergency, files::Files, providerlist::Providerlist, symbols::Symbols,
+        todo::Todo, unicode::Unicode,
     },
 };
 
+pub mod actionsmenu;
 pub mod archlinuxpkgs;
 pub mod bookmarks;
 pub mod calc;
@@ -224,6 +226,7 @@ pub static PROVIDERS: OnceLock<HashMap<String, Box<dyn Provider>>> = OnceLock::n
 pub fn setup_providers(elephant: bool) {
     let mut providers: HashMap<String, Box<dyn Provider>> = HashMap::new();
     providers.insert("dmenu".to_string(), Box::new(Dmenu::new()));
+    providers.insert("actionmenu".to_string(), Box::new(ActionsMenu::new()));
     providers.insert("emergency".to_string(), Box::new(Emergency::new()));
 
     let provider_list: Vec<String> = {

@@ -17,6 +17,7 @@ pub struct EmergencyEntry {
 pub struct Walker {
     pub debug: bool,
     pub single_click_activation: bool,
+    pub actions_as_menu: bool,
     pub force_keyboard_focus: bool,
     pub disable_mouse: bool,
     pub click_to_close: bool,
@@ -55,6 +56,8 @@ struct PartialWalker {
     pub force_keyboard_focus: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub single_click_activation: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub actions_as_menu: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub disable_mouse: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -219,6 +222,9 @@ impl Walker {
         }
         if let Some(v) = partial.single_click_activation {
             self.single_click_activation = v;
+        }
+        if let Some(v) = partial.actions_as_menu {
+            self.actions_as_menu = v;
         }
         if let Some(v) = partial.disable_mouse {
             self.disable_mouse = v;
@@ -438,6 +444,7 @@ pub struct Keybinds {
     pub up: Vec<String>,
     pub down: Vec<String>,
     pub toggle_exact: Vec<String>,
+    pub show_actions: Vec<String>,
     pub resume_last_query: Vec<String>,
     pub quick_activate: Option<Vec<String>>,
     pub page_down: Vec<String>,

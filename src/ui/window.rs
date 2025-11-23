@@ -5,28 +5,34 @@ use crate::{
     keybinds::{
         ACTION_CLOSE, ACTION_QUICK_ACTIVATE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_DOWN,
         ACTION_SELECT_LEFT, ACTION_SELECT_NEXT, ACTION_SELECT_PAGE_DOWN, ACTION_SELECT_PAGE_UP,
-        ACTION_SELECT_PREVIOUS, ACTION_SELECT_RIGHT, ACTION_SELECT_UP, ACTION_TOGGLE_EXACT, Action,
-        AfterAction, get_bind, get_provider_bind, get_provider_global_bind,
+        ACTION_SELECT_PREVIOUS, ACTION_SELECT_RIGHT, ACTION_SELECT_UP, ACTION_SHOW_ACTIONS,
+        ACTION_TOGGLE_EXACT, Action, AfterAction, get_bind, get_fallback_action, get_provider_bind,
+        get_provider_global_bind, get_show_actions_action,
     },
-    protos::generated_proto::query::QueryResponse,
+    protos::generated_proto::query::{
+        QueryResponse,
+        query_response::{self, Item},
+    },
     providers::{PROVIDERS, Provider},
     renderers::create_item,
     send_message,
     state::{
-        get_current_prefix, get_error, get_initial_height, get_initial_max_height,
+        get_action_menu_item, get_action_menu_prefix, get_action_menu_query, get_current_prefix,
+        get_error, get_global_provider_actions, get_initial_height, get_initial_max_height,
         get_initial_max_width, get_initial_min_height, get_initial_min_width,
         get_initial_placeholder, get_initial_width, get_last_query, get_prefix_provider,
-        get_provider, get_theme, get_theme_grid_columns, is_connected, is_dmenu,
-        is_dmenu_exit_after, is_dmenu_keep_open, is_emergency, is_grid, is_no_hints, is_service,
-        query, set_async_after, set_current_prefix, set_current_set, set_dmenu_current,
+        get_provider, get_query, get_theme, get_theme_grid_columns, is_actions_menu, is_connected,
+        is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open, is_emergency, is_grid, is_no_hints,
+        is_service, set_action_menu_item, set_action_menu_prefix, set_action_menu_query,
+        set_async_after, set_current_prefix, set_current_set, set_dmenu_current,
         set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa, set_index,
         set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
         set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
-        set_is_dmenu, set_is_grid, set_is_stay_open_explicit_provider, set_is_visible,
-        set_last_query, set_no_hints, set_no_search, set_param_close, set_parameter_height,
-        set_parameter_max_height, set_parameter_max_width, set_parameter_min_height,
-        set_parameter_min_width, set_parameter_width, set_placeholder, set_provider, set_query,
-        set_theme,
+        set_is_actions_menu, set_is_dmenu, set_is_grid, set_is_stay_open_explicit_provider,
+        set_is_visible, set_last_query, set_no_hints, set_no_search, set_param_close,
+        set_parameter_height, set_parameter_max_height, set_parameter_max_width,
+        set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_placeholder,
+        set_provider, set_query, set_theme,
     },
     theme::{Theme, setup_layer_shell, with_themes},
 };
@@ -183,9 +189,9 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
         move |entry| {
             let item = entry.downcast_ref::<QueryResponseObject>().unwrap();
 
-            let q = query();
+            let q = get_query();
 
-            if (is_dmenu() || is_emergency()) && !q.is_empty() {
+            if (is_actions_menu() || is_dmenu() || is_emergency()) && !q.is_empty() {
                 let f = 18 * q.len();
 
                 if item.dmenu_score() < f as u32 {
@@ -287,7 +293,7 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
     ui.selection.set_autoselect(true);
 
     ui.selection.connect_items_changed(move |_, _, _, _| {
-        if is_dmenu() {
+        if is_dmenu() || is_emergency() || is_actions_menu() {
             handle_changed_items();
         }
     });
@@ -384,6 +390,154 @@ fn setup_input_handling(input: &Entry) -> gdk::glib::SignalHandlerId {
     })
 }
 
+fn handle_dmenu_print(w: &WindowData) -> Option<AfterAction> {
+    let mut text = w
+        .input
+        .as_ref()
+        .map(Entry::text)
+        .unwrap_or_default()
+        .to_string();
+
+    if text.is_empty() {
+        text = "CNCLD".to_string();
+    }
+
+    if is_service() {
+        send_message(text);
+    } else {
+        println!("{text}");
+    }
+
+    Some(AfterAction::Close)
+}
+
+fn handle_emergency(selected: &Item) -> Option<AfterAction> {
+    if let Some(e) = &get_config().emergencies
+        && let Some(item) = e.iter().find(|e| e.text == selected.text)
+    {
+        Command::new("sh")
+            .arg("-c")
+            .arg(&item.command)
+            .stdin(Stdio::null()) // Detach from stdin
+            .stdout(Stdio::null()) // Detach from stdout
+            .stderr(Stdio::null()) // Detach from stderr
+            .spawn()
+            .expect("failed to run emergency command");
+
+        return Some(AfterAction::Close);
+    };
+
+    None
+}
+
+fn handle_provider(query: &str, k: gdk::Key, m: gdk::ModifierType) -> Option<AfterAction> {
+    let mut keybind_action: Option<Action> = None;
+
+    let mut provider = if !get_provider().is_empty() {
+        get_provider()
+    } else {
+        get_prefix_provider()
+    };
+
+    let mut after = None;
+
+    if !provider.is_empty()
+        && let Some(action) = get_provider_global_bind(&provider, k, m)
+    {
+        keybind_action = Some(action.clone());
+        after = Some(action.after.unwrap_or(AfterAction::Close));
+
+        if action.action.starts_with("set:")
+            && let Some((_, set)) = action.action.split_once(":")
+        {
+            set_current_set(set.to_string());
+            set_provider(String::new());
+        }
+
+        if action.action.starts_with("provider:")
+            && let Some((_, provider)) = action.action.split_once(":")
+        {
+            set_provider(provider.to_string());
+        }
+    }
+
+    let mut response: Option<QueryResponse> = None;
+
+    if keybind_action.is_none()
+        && let Some(r) = get_selected_query_response()
+    {
+        response = Some(r.clone());
+        let Some(item) = r.item.as_ref() else {
+            return None;
+        };
+
+        provider = item.provider.clone();
+
+        if let Some(action) = get_provider_bind(&item.provider, k, m, &item.actions) {
+            after = Some(action.after.as_ref().unwrap_or(&AfterAction::Close).clone());
+            keybind_action = Some(action);
+        }
+
+        if is_dmenu_keep_open() && !is_dmenu_exit_after() {
+            after = Some(AfterAction::Nothing)
+        }
+    }
+
+    if let Some(a) = keybind_action {
+        if !a.action.starts_with("set:") && !a.action.starts_with("provider:") {
+            if provider == "windows" && get_config().force_keyboard_focus {
+                println!(
+                    "windows might potentially not be focused if force_keyboard_focus is true"
+                );
+            }
+
+            activate(response, provider.as_str(), &query, &a);
+            return after;
+        }
+    }
+
+    None
+}
+
+fn handle_actions_menu(selected: &Item) -> Option<AfterAction> {
+    let response = get_action_menu_item();
+    let item = response.item.as_ref()?;
+    let providers = PROVIDERS.get().unwrap();
+
+    if let Some(p) = &providers.get(&item.provider) {
+        let action = if let Some(action) = p
+            .get_actions()
+            .into_iter()
+            .find(|a| a.action == selected.identifier)
+        {
+            Some(action)
+        } else {
+            get_fallback_action(&selected.identifier)
+        };
+
+        action.as_ref()?;
+
+        let action = action.unwrap();
+
+        let after = if let Some(a) = &action.after {
+            Some(a.clone())
+        } else {
+            Some(AfterAction::Close)
+        };
+
+        activate(
+            Some(get_action_menu_item()),
+            &item.provider,
+            &get_action_menu_query(),
+            &action,
+        );
+
+        return after;
+    }
+
+    None
+}
+
 fn setup_keyboard_handling(ui: &WindowData) {
     let controller = EventControllerKey::new();
     controller.set_propagation_phase(gtk4::PropagationPhase::Capture);
@@ -408,104 +562,31 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 }
             }
 
-        if !is_connected() && let Some(e) = &get_config().emergencies && k == gdk::Key::Return
-            && let Some(i) = get_selected_item()
-                && let Some(item) = e.iter().find(|e| e.text == i.text) {
-                    Command::new("sh")
-                        .arg("-c")
-                        .arg(&item.command)
-                        .stdin(Stdio::null())  // Detach from stdin
-                        .stdout(Stdio::null()) // Detach from stdout
-                        .stderr(Stdio::null()) // Detach from stderr
-                        .spawn().expect("failed to run emergency command");
-
-                    quit(&app, true);
-                };
-
-            let selection = &w.selection;
-
-
-            if is_dmenu() && k == gdk::Key::Return && selection.selected_item().is_none() {
-                let mut text = w
-                    .input
-                    .as_ref()
-                    .map(Entry::text)
-                    .unwrap_or_default()
-                    .to_string();
-
-                if text.is_empty() {
-                    text = "CNCLD".to_string();
-                }
-
-                if is_service() {
-                    send_message(text);
-                } else {
-                    println!("{text}");
-                }
-
-                quit(&app, false);
-                return true;
-            }
-
-            let mut keybind_action: Option<Action> = None;
-
-            let mut provider = if !get_provider().is_empty() {
-                get_provider()
-            } else {
-                get_prefix_provider()
-            };
-
             let mut after: Option<AfterAction> = None;
 
-            if !provider.is_empty()
-                && let Some(action) = get_provider_global_bind(&provider, k, m)
-            {
-                keybind_action = Some(action.clone());
-                after = Some(action.after.unwrap_or(AfterAction::Close));
+            if k == gdk::Key::Return {
+                if let Some(item) = get_selected_item() {
+                    if is_emergency() {
+                        after = handle_emergency(&item);
+                    }
 
-                if action.action.starts_with("set:")
-                    && let Some((_, set)) = action.action.split_once(":")
-                {
-                    set_current_set(set.to_string());
-                    set_provider(String::new());
-                }
-
-                if action.action.starts_with("provider:")
-                    && let Some((_, provider)) = action.action.split_once(":")
-                {
-                    set_provider(provider.to_string());
+                    if is_actions_menu() {
+                        after = handle_actions_menu(&item);
+                    }
+                } else if is_dmenu() {
+                    after = handle_dmenu_print(w);
                 }
             }
 
-            let mut response: Option<QueryResponse> = None;
+            let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
 
-            if keybind_action.is_none()
-                && let Some(r) = get_selected_query_response()
-            {
-                response = Some(r.clone());
-                let Some(item) = r.item.as_ref() else {
-                    return false;
-                };
-
-                provider = item.provider.clone();
-
-                if let Some(action) = get_provider_bind(&item.provider, k, m, &item.actions) {
-                    after = Some(action.after.as_ref().unwrap_or(&AfterAction::Close).clone());
-                    keybind_action = Some(action);
-                }
-
-                if is_dmenu_keep_open() && !is_dmenu_exit_after() {
-                    after = Some(AfterAction::Nothing)
-                }
+            if after.is_none() {
+                after = handle_provider(&query, k, m)
             }
 
+            if after.is_none() {
+                let is_grid = is_grid();
 
-            let is_grid = is_grid();
-
-            if keybind_action.is_none()
-                || (keybind_action.as_ref().unwrap().action == "menus:parent"
-                    && !get_prefix_provider().is_empty())
-            {
                 if let Some(action) = get_bind(k, m, is_grid) {
                     match action.action.as_str() {
                         ACTION_CLOSE => quit(&app, true),
@@ -519,6 +600,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                         ACTION_RESUME_LAST_QUERY => resume_last_query(),
                         ACTION_SELECT_PAGE_DOWN => select_page_down(),
                         ACTION_SELECT_PAGE_UP => select_page_up(),
+                        ACTION_SHOW_ACTIONS => show_actions_menu(get_selected_query_response()),
                         action if action.starts_with(ACTION_QUICK_ACTIVATE) => {
                             if let Some((_, after)) = action.split_once(":") {
                                 let i: u32 = after.parse().unwrap();
@@ -530,39 +612,30 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
                     return true;
                 }
-
-                return false;
-            }
-
-            let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
-
-            if let Some(a) = keybind_action {
-                if !a.action.starts_with("set:") && !a.action.starts_with("provider:") {
-                    if provider == "windows" && get_config().force_keyboard_focus {
-                        println!("windows might potentially not be focused if force_keyboard_focus is true");
-                    }
-
-                    activate(response, provider.as_str(), &query, &a);
-                }
-            } else {
-                return false;
             }
 
             if let Some(a) = after {
                 handle_after(&a, &app, query.to_string());
+                return true;
             }
 
-            true
+            false
         });
 
-        if handled {
-            return true.into();
-        }
-
-        false.into()
+        handled.into()
     });
 
     ui.window.add_controller(controller);
+}
+
+pub fn reset_actions_menu() {
+    if is_actions_menu() {
+        set_is_actions_menu(false);
+
+        if let Some(p) = get_action_menu_prefix() {
+            set_current_prefix(p);
+        }
+    }
 }
 
 fn handle_after(a: &AfterAction, app: &Application, query: String) {
@@ -571,9 +644,17 @@ fn handle_after(a: &AfterAction, app: &Application, query: String) {
             quit(app, false);
         }
         AfterAction::KeepOpen => {
-            select_next();
+            reset_actions_menu();
+
+            if is_actions_menu() {
+                set_input_text(&get_action_menu_query());
+            } else {
+                select_next();
+            }
         }
         AfterAction::ClearReload => {
+            reset_actions_menu();
+
             with_window(|w| {
                 if let Some(input) = &w.input {
                     if input.text().is_empty() {
@@ -587,6 +668,7 @@ fn handle_after(a: &AfterAction, app: &Application, query: String) {
         AfterAction::AsyncReload => set_async_after(Some(AfterAction::AsyncReload)),
         AfterAction::AsyncClearReload => set_async_after(Some(AfterAction::AsyncClearReload)),
         AfterAction::Reload => {
+            reset_actions_menu();
             crate::data::input_changed(&query);
         }
         _ => {}
@@ -716,6 +798,7 @@ pub fn quit(app: &Application, cancelled: bool) {
     set_parameter_min_width(None);
     set_parameter_max_height(None);
     set_parameter_max_width(None);
+    set_is_actions_menu(false);
     set_no_search(false);
     set_no_hints(false);
     set_placeholder(String::new());
@@ -1001,6 +1084,10 @@ pub fn clear_global_keybind_hints() {
 }
 
 pub fn set_global_keybind_hints(actions: Vec<String>, provider: String) {
+    if get_config().actions_as_menu {
+        return;
+    }
+
     gtk4::glib::idle_add_once(move || {
         with_window(|w| {
             let k = &w.global_keybinds;
@@ -1016,7 +1103,7 @@ pub fn set_global_keybind_hints(actions: Vec<String>, provider: String) {
             }
 
             if let Some(p) = providers.get(&provider) {
-                generate_hints(p, &actions, &k);
+                generate_hints(p, &actions, k);
             }
         });
     });
@@ -1029,6 +1116,7 @@ pub fn set_keybind_hint() {
 
         if is_no_hints()
             || cfg.hide_action_hints
+            || is_actions_menu()
             || (is_dmenu() && cfg.hide_action_hints_dmenu)
             || w.items.n_items() == 0
         {
@@ -1074,6 +1162,7 @@ pub fn set_keybind_hint() {
 
 pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: &gtk4::Box) {
     let mut hints = p.get_keybind_hint(actions);
+    let len = hints.len();
     let cfg = get_config();
 
     if !get_prefix_provider().is_empty() {
@@ -1098,16 +1187,37 @@ pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: 
         );
     }
 
-    let filtered: Vec<Action> = hints
-        .into_iter()
-        .filter(|h| {
-            if cfg.hide_return_action && h.bind.as_ref().unwrap() == "Return" {
-                return false;
-            }
+    let mut filtered: Vec<Action> = if cfg.actions_as_menu {
+        hints
+            .into_iter()
+            .filter(|h| {
+                if h.bind.as_ref().unwrap() == "Return" {
+                    return true;
+                }
 
-            true
-        })
-        .collect();
+                false
+            })
+            .collect()
+    } else {
+        hints
+            .into_iter()
+            .filter(|h| {
+                if cfg.hide_return_action && h.bind.as_ref().unwrap() == "Return" {
+                    return false;
+                }
+
+                true
+            })
+            .collect()
+    };
+
+    if cfg.actions_as_menu
+        && (len > 1
+            || get_global_provider_actions().is_some()
+                && !get_global_provider_actions().unwrap().is_empty())
+    {
+        filtered.push(get_show_actions_action());
+    }
 
     if filtered.is_empty() {
         with_window(|w| {
@@ -1243,6 +1353,71 @@ pub fn select_page_down() {
             }
         };
         selection.set_selected(next);
+    });
+}
+
+pub fn show_actions_menu(response: Option<crate::protos::generated_proto::query::QueryResponse>) {
+    let response = if let Some(item) = response {
+        item
+    } else {
+        return;
+    };
+
+    set_action_menu_item(response.clone());
+    set_action_menu_query(get_query());
+
+    if !get_current_prefix().is_empty() {
+        set_action_menu_prefix(Some(get_current_prefix()));
+    }
+
+    set_is_actions_menu(true);
+
+    let Some(item) = response.item.as_ref() else {
+        return;
+    };
+
+    with_window(move |w| {
+        if let Some(p) = &w.preview_container {
+            p.set_visible(false);
+        }
+
+        w.keybinds.set_visible(false);
+
+        w.items.remove_all();
+        set_input_text("");
+
+        let providers = PROVIDERS.get().unwrap();
+
+        let mut actions = item.actions.clone();
+        let provider = &item.provider;
+
+        if let Some(globals) = get_global_provider_actions() {
+            actions.extend(globals);
+        }
+
+        if let Some(p) = providers.get(provider) {
+            let hints = p.get_keybind_hint(&actions);
+
+            hints.iter().enumerate().for_each(|(i, h)| {
+                let mut item = query_response::Item::new();
+                item.text = if let Some(label) = &h.label {
+                    label.clone()
+                } else {
+                    h.action.clone()
+                };
+
+                item.subtext = h.bind.clone().unwrap();
+                item.provider = "actionmenu".to_string();
+                item.score = 1000000 - i as i32;
+                item.actions = vec!["select".to_string()];
+                item.identifier = h.action.clone();
+
+                let mut response = QueryResponse::new();
+                response.item = protobuf::MessageField::some(item);
+
+                w.items.append(&QueryResponseObject::new(response));
+            });
+        }
     });
 }
 

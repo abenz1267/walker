@@ -14,6 +14,7 @@ hide_action_hints = false       # globally hide the action hints
 hide_action_hints_dmenu = true  # hide the actions hints for dmenu
 hide_return_action = false      # hide actions that are bound to Return
 resume_last_query = false       # open walker with the last query in place
+actions_as_menu = false         # display all possible actions in a submenu
 
 [shell]
 anchor_top = true
@@ -40,6 +41,7 @@ resume_last_query = ["ctrl r"]
 quick_activate = ["F1", "F2", "F3", "F4"]
 page_down = ["Page_Down"]
 page_up = ["Page_Up"]
+show_actions = ["alt j"]
 
 [providers]
 default = [

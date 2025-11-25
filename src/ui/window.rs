@@ -1261,7 +1261,16 @@ pub fn handle_grid_setting() {
             w.items.remove_all();
             w.list.set_max_columns(cols);
             w.list.set_min_columns(cols);
-            set_is_grid(cols > 1);
+
+            let is_grid = cols > 1;
+
+            set_is_grid(is_grid);
+
+            if is_grid {
+                w.list.add_css_class("grid");
+            } else {
+                w.list.remove_css_class("grid");
+            }
         });
 
         return;
@@ -1274,7 +1283,16 @@ pub fn handle_grid_setting() {
             w.items.remove_all();
             w.list.set_max_columns(*c);
             w.list.set_min_columns(*c);
-            set_is_grid(*c > 1);
+
+            let is_grid = *c > 1;
+
+            set_is_grid(is_grid);
+
+            if is_grid {
+                w.list.add_css_class("grid");
+            } else {
+                w.list.remove_css_class("grid");
+            }
         });
     }
 }

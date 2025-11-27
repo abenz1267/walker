@@ -60,8 +60,8 @@ use crate::state::{
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{
-    check_error, quit, resume_last_query, set_input_text, set_keybind_hint, setup_window,
-    with_window,
+    check_error, handle_grid_setting, quit, resume_last_query, set_input_text, set_keybind_hint,
+    setup_window, with_window,
 };
 
 static GLOBAL_DMENU_SENDER: RwLock<Option<Sender<String>>> = RwLock::new(None);
@@ -600,6 +600,10 @@ fn activate(app: &Application) {
 
     if is_dmenu_keep_open() && is_visible() {
         return;
+    }
+
+    if is_dmenu() {
+        handle_grid_setting();
     }
 
     with_window(|w| {

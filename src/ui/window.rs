@@ -1234,6 +1234,21 @@ pub fn select_page_up() {
 }
 
 pub fn handle_grid_setting() {
+    if is_emergency() {
+        return;
+    }
+
+    if is_dmenu() {
+        with_window(|w| {
+            w.list.set_max_columns(1);
+            w.list.set_min_columns(1);
+            w.list.remove_css_class("grid");
+            set_is_grid(false);
+        });
+
+        return;
+    }
+
     let p = if !get_provider().is_empty() {
         get_provider()
     } else {

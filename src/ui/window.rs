@@ -784,6 +784,21 @@ pub fn quit(app: &Application, cancelled: bool) {
                 set_initial_min_height(None);
             }
 
+            let cols = get_theme_grid_columns();
+            w.items.remove_all();
+            w.list.set_max_columns(cols);
+            w.list.set_min_columns(cols);
+
+            let is_grid = cols > 1;
+
+            set_is_grid(is_grid);
+
+            if is_grid {
+                w.list.add_css_class("grid");
+            } else {
+                w.list.remove_css_class("grid");
+            }
+
             set_theme(get_config().theme.clone());
         });
     });

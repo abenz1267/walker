@@ -252,7 +252,7 @@ pub fn setup_layer_shell(win: &Window) {
     win.set_anchor(Edge::Left, cfg.shell.anchor_left);
     win.set_anchor(Edge::Right, cfg.shell.anchor_right);
     win.set_anchor(Edge::Top, cfg.shell.anchor_top);
-    win.set_anchor(Edge::Bottom, cfg.shell.anchor_top);
+    win.set_anchor(Edge::Bottom, cfg.shell.anchor_bottom);
 }
 
 pub fn with_themes<F, R>(f: F) -> R

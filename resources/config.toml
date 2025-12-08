@@ -164,6 +164,7 @@ files = [
   { action = "copypath", label = "copy path", bind = "ctrl shift c" },
   { action = "copyfile", label = "copy file", bind = "ctrl c" },
   { action = "localsend", label = "localsend", bind = "ctrl l" },
+  { action = "refresh_index", label = "reload", bind = "ctrl r", after = "AsyncReload" },
 ]
 
 1password = [

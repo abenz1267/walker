@@ -13,7 +13,6 @@ static STATE: OnceLock<RwLock<AppState>> = OnceLock::new();
 
 #[derive(Debug, Clone, Default)]
 pub struct AppState {
-    theme_grid_columns: u32,
     global_provider_actions: Option<Vec<String>>,
     error: String,
     async_after: Option<AfterAction>,
@@ -75,14 +74,6 @@ pub fn get_theme() -> String {
 
 pub fn set_theme(val: String) {
     STATE.get().unwrap().write().unwrap().theme = val
-}
-
-pub fn get_theme_grid_columns() -> u32 {
-    STATE.get().unwrap().read().unwrap().theme_grid_columns
-}
-
-pub fn set_theme_grid_columns(val: u32) {
-    STATE.get().unwrap().write().unwrap().theme_grid_columns = val
 }
 
 pub fn set_global_provider_actions(val: Option<Vec<String>>) {

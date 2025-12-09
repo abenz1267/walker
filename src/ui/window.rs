@@ -1104,7 +1104,9 @@ pub fn set_global_keybind_hints(actions: Vec<String>, provider: String) {
                 k.remove(&child);
             }
 
-            if let Some(p) = providers.get(&provider) {
+            if let Some(p) = providers.get(&provider)
+                && !actions.is_empty()
+            {
                 generate_hints(p, &actions, k);
             }
         });
@@ -1116,13 +1118,14 @@ pub fn set_keybind_hint() {
         let k = &w.item_keybinds;
         let cfg = get_config();
 
+        w.keybinds.set_visible(false);
+
         if is_no_hints()
             || cfg.hide_action_hints
             || is_actions_menu()
             || (is_dmenu() && cfg.hide_action_hints_dmenu)
-            || w.items.n_items() == 0
         {
-            w.keybinds.set_visible(false);
+            return;
         } else {
             w.keybinds.set_visible(true);
         }
@@ -1149,11 +1152,15 @@ pub fn set_keybind_hint() {
         let providers = PROVIDERS.get().unwrap();
 
         if let Some(p) = providers.get(&provider) {
-            generate_hints(p, &actions, k);
+            if !actions.is_empty() {
+                generate_hints(p, &actions, k);
+            }
         } else if provider.starts_with("menus:")
             && let Some(p) = providers.get("menus")
         {
-            generate_hints(p, &actions, k);
+            if !actions.is_empty() {
+                generate_hints(p, &actions, k);
+            }
         } else if providers.get("menus").is_some() {
             while let Some(child) = k.first_child() {
                 k.remove(&child);
@@ -1166,6 +1173,10 @@ pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: 
     let mut hints = p.get_keybind_hint(actions);
     let len = hints.len();
     let cfg = get_config();
+
+    with_window(|w| {
+        w.keybinds.set_visible(true);
+    });
 
     if !get_prefix_provider().is_empty() {
         hints.retain(|a| a.action != "menus:parent");

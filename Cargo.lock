@@ -213,6 +213,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "chrono-humanize"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "799627e6b4d27827a814e837b9d8a504832086081806d45b1afa34dc982b023b"
+dependencies = [
+ "chrono",
+]
+
+[[package]]
 name = "config"
 version = "0.15.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2049,6 +2058,7 @@ version = "2.12.2"
 dependencies = [
  "cairo-rs 0.21.1",
  "chrono",
+ "chrono-humanize",
  "config",
  "dirs",
  "gdk-pixbuf 0.21.1",

@@ -1,4 +1,5 @@
 use chrono::DateTime;
+use chrono_humanize::HumanTime;
 
 use crate::{
     config::get_config, protos::generated_proto::query::query_response::Item, providers::Provider,
@@ -26,16 +27,7 @@ impl Provider for Clipboard {
 
     fn text_transformer(&self, item: &Item, label: &gtk4::Label) {
         if item.preview_type == "file" {
-            let Ok(dt) = DateTime::parse_from_rfc2822(&item.subtext) else {
-                label.set_label(&item.subtext);
-                return;
-            };
-
-            let formatted = dt
-                .format(&get_config().providers.clipboard.time_format)
-                .to_string();
-            label.set_label(&formatted);
-
+            label.set_label("Image");
             return;
         }
 
@@ -43,19 +35,17 @@ impl Provider for Clipboard {
     }
 
     fn subtext_transformer(&self, item: &Item, label: &gtk4::Label) {
-        if item.preview_type == "file" {
-            label.set_label("Image");
-            return;
-        }
-
         let Ok(dt) = DateTime::parse_from_rfc2822(&item.subtext) else {
             label.set_label(&item.subtext);
             return;
         };
 
-        let formatted = dt
-            .format(&get_config().providers.clipboard.time_format)
-            .to_string();
-        label.set_label(&formatted);
+        let fmt = &get_config().providers.clipboard.time_format;
+        let text = match fmt.as_str() {
+            "relative" => format!("{}", HumanTime::from(dt)),
+            _ => dt.format(fmt).to_string(),
+        };
+
+        label.set_label(&text);
     }
 }

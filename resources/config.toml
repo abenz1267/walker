@@ -55,7 +55,7 @@ ignore_preview = [] # providers that should not show previews
 max_results = 50 # global max results
 
 [providers.argument_delimiter] # define the argument delimiter per provider
-runner = " "
+# runner = " "
 
 [providers.sets] # define your own defaults/empty sets of providers
 [providers.max_results_provider] # define max results per provider in here

@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::sync::{OnceLock, RwLock};
 
 use crate::data::get_provider_state;
@@ -36,7 +36,7 @@ pub struct AppState {
     parameter_min_width: Option<i32>,
     parameter_max_height: Option<i32>,
     parameter_max_width: Option<i32>,
-    last_query: String,
+    last_query_by_provider: HashMap<String, String>,
     placeholder: String,
     initial_placeholder: String,
     available_themes: HashSet<String>,
@@ -174,12 +174,25 @@ pub fn set_error(val: String) {
     STATE.get().unwrap().write().unwrap().error = val
 }
 
-pub fn get_last_query() -> String {
-    STATE.get().unwrap().read().unwrap().last_query.clone()
+pub fn get_last_query(provider: &str) -> String {
+    STATE
+        .get()
+        .unwrap()
+        .read()
+        .unwrap()
+        .last_query_by_provider
+        .get(provider)
+        .map_or_else(String::default, String::to_owned)
 }
 
-pub fn set_last_query(val: String) {
-    STATE.get().unwrap().write().unwrap().last_query = val
+pub fn set_last_query(provider: String, val: String) {
+    STATE
+        .get()
+        .unwrap()
+        .write()
+        .unwrap()
+        .last_query_by_provider
+        .insert(provider, val);
 }
 
 pub fn set_is_service(val: bool) {

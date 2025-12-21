@@ -44,7 +44,7 @@ use crate::protos::QueryResponseObject;
 use crate::protos::generated_proto::query::{QueryResponse, query_response};
 use crate::providers::setup_providers;
 use crate::state::{
-    get_parameter_height, get_parameter_max_height, get_parameter_max_width,
+    get_last_query, get_parameter_height, get_parameter_max_height, get_parameter_max_width,
     get_parameter_min_height, get_parameter_min_width, get_parameter_width, get_placeholder,
     get_provider, get_theme, has_elephant, has_theme, is_connected, is_dmenu, is_dmenu_keep_open,
     is_emergency, is_input_only, is_no_hints, is_no_search, is_param_close, is_service,
@@ -59,8 +59,8 @@ use crate::state::{
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{
-    check_error, handle_grid_setting, quit, resume_last_query, set_input_text, set_keybind_hint,
-    setup_window, with_window,
+    check_error, handle_grid_setting, quit, set_input_text, set_keybind_hint, setup_window,
+    with_window,
 };
 
 static GLOBAL_DMENU_SENDER: RwLock<Option<Sender<String>>> = RwLock::new(None);
@@ -610,7 +610,7 @@ fn activate(app: &Application) {
 
         if let Some(input) = &w.input {
             if cfg.resume_last_query {
-                resume_last_query();
+                set_input_text(&get_last_query());
             } else {
                 set_input_text("");
             }

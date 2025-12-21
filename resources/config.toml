@@ -125,6 +125,8 @@ bluetooth = [
   { action = "pair", bind = "Return", after = "AsyncReload" },
   { action = "connect", default = true, bind = "Return", after = "AsyncReload" },
   { action = "disconnect", default = true, bind = "Return", after = "AsyncReload" },
+  { action = "power_on", label = "Power On", bind = "ctrl e", after = "AsyncReload" },
+  { action = "power_off", label = "Power Off", bind = "ctrl e", after = "AsyncReload" },
 ]
 
 archlinuxpkgs = [

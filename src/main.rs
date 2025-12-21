@@ -609,7 +609,7 @@ fn activate(app: &Application) {
         setup_css(get_theme());
 
         if let Some(input) = &w.input {
-            if cfg.resume_last_query {
+            if cfg.resume_last_query && !is_dmenu() {
                 set_input_text(&get_last_query());
             } else {
                 set_input_text("");

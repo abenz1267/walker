@@ -823,7 +823,9 @@ pub fn quit(app: &Application, cancelled: bool) {
     gtk4::glib::idle_add_once(|| {
         with_window(|w| {
             if let Some(input) = &w.input {
-                set_last_query(input.text().to_string());
+                if !is_dmenu() {
+                    set_last_query(input.text().to_string());
+                }
 
                 if !get_initial_placeholder().is_empty() {
                     input.set_placeholder_text(Some(&get_initial_placeholder()));

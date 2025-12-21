@@ -293,6 +293,8 @@ fn listen_bluetooth_loop() -> Result<(), Box<dyn std::error::Error>> {
                     with_window(|w| {
                         if let Some(p) = &w.placeholder {
                             match resp.value.as_str() {
+                                "bluetooth:poweron" => p.set_text("Power on..."),
+                                "bluetooth:poweroff" => p.set_text("Power off..."),
                                 "bluetooth:remove" => p.set_text("Removing..."),
                                 "bluetooth:connect" => p.set_text("Connecting..."),
                                 "bluetooth:disconnect" => p.set_text("Disconnecting..."),

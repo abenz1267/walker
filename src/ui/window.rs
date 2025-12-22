@@ -792,8 +792,10 @@ pub fn quit(app: &Application, cancelled: bool) {
     // Clear all preview caches
     crate::preview::clear_all_caches();
 
-    set_current_prefix(String::new());
+    let provider = get_provider();
+
     set_provider(String::new());
+    set_current_prefix(String::new());
     set_is_stay_open_explicit_provider(false);
     set_parameter_height(None);
     set_parameter_width(None);
@@ -824,7 +826,7 @@ pub fn quit(app: &Application, cancelled: bool) {
         with_window(|w| {
             if let Some(input) = &w.input {
                 if !is_dmenu() {
-                    set_last_query(input.text().to_string());
+                    set_last_query(provider, input.text().to_string());
                 }
 
                 if !get_initial_placeholder().is_empty() {
@@ -985,8 +987,8 @@ fn quick_activate(app: &Application, i: u32) {
 }
 
 pub fn resume_last_query() {
-    if !get_last_query().is_empty() {
-        set_input_text(&get_last_query());
+    if !get_last_query(&get_provider()).is_empty() {
+        set_input_text(&get_last_query(&get_provider()));
     }
 }
 

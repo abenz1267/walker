@@ -610,7 +610,7 @@ fn activate(app: &Application) {
 
         if let Some(input) = &w.input {
             if cfg.resume_last_query && !is_dmenu() {
-                set_input_text(&get_last_query());
+                set_input_text(&get_last_query(&get_provider()));
             } else {
                 set_input_text("");
             }

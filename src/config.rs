@@ -299,7 +299,17 @@ impl Providers {
             self.ignore_preview = v;
         }
         if let Some(v) = partial.prefixes {
-            self.prefixes = v;
+            for p in v {
+                if let Some(p_a) = self
+                    .prefixes
+                    .iter_mut()
+                    .find(|item| item.provider == p.provider)
+                {
+                    p_a.prefix = p.prefix;
+                } else {
+                    self.prefixes.push(p);
+                }
+            }
         }
         if let Some(v) = partial.sets {
             self.sets = v;

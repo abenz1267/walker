@@ -20,6 +20,7 @@ pub struct Theme {
     pub layout: String,
     pub keybind: String,
     pub preview: String,
+    pub scss: Option<PathBuf>,
     pub css: Option<gio::File>,
     pub items: HashMap<String, String>,
     pub grid_items: HashMap<String, String>,
@@ -31,6 +32,7 @@ impl Theme {
             layout: include_str!("../../resources/themes/default/layout.xml").to_string(),
             keybind: include_str!("../../resources/themes/default/keybind.xml").to_string(),
             preview: include_str!("../../resources/themes/default/preview.xml").to_string(),
+            scss: None,
             css: None,
             items: HashMap::new(),
             grid_items: HashMap::new(),
@@ -64,6 +66,7 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
     let files = vec![
         "layout.xml".to_string(),
         "keybind.xml".to_string(),
+        "style.scss".to_string(),
         "style.css".to_string(),
         "preview.xml".to_string(),
     ];
@@ -155,6 +158,11 @@ fn setup_theme_from_path(path: PathBuf, files: &Vec<String>) -> Option<Theme> {
                     theme.items.insert("default".to_string(), s);
                 }
             }
+            "style.scss" => {
+                pc.push("style.scss");
+                theme.scss = Some(pc.clone());
+                pc.pop();
+            }
             "style.css" => {
                 pc.push("style.css");
                 theme.css = Some(gio::File::for_path(&pc));
@@ -209,15 +217,30 @@ pub fn setup_css(theme: String) {
     with_themes(|t| {
         if let Some(t) = t.get(&theme) {
             with_css_provider(|p| {
+                if let Some(f) = &t.scss {
+                    if let Ok(scss) = fs::read_to_string(f) {
+                        let options = match f.parent() {
+                            Some(dir) => grass::Options::default().load_path(dir),
+                            None => grass::Options::default(),
+                        };
+                        match grass::from_string(scss, &options) {
+                            Ok(css) => {
+                                p.load_from_string(&css);
+                                return;
+                            }
+                            Err(err) => {
+                                eprintln!("SCSS parse error: {err}");
+                                return;
+                            }
+                        }
+                    }
+                };
                 if let Some(f) = &t.css {
                     p.load_from_file(f);
+                    return;
                 } else {
                     p.load_from_string(include_str!("../../resources/themes/default/style.css"));
                 }
-            });
-        } else {
-            with_css_provider(|p| {
-                p.load_from_string(include_str!("../../resources/themes/default/style.css"));
             });
         }
     });

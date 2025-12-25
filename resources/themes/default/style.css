@@ -178,7 +178,6 @@ child:selected .item-box {
 
 .keybind-button:hover {
   opacity: 0.75;
-  cursor: pointer;
 }
 
 .keybind-bind {

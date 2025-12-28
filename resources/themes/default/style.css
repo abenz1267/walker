@@ -202,6 +202,6 @@ child:selected .item-box {
   font-style: italic;
 }
 
-.preview-content.archlinuxpkgs {
+.preview-content.archlinuxpkgs, .preview-content.dnfpackages {
   font-family: monospace;
 }

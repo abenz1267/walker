@@ -20,8 +20,8 @@ use crate::{
     providers::{
         actionsmenu::ActionsMenu, archlinuxpkgs::ArchLinuxPkgs, bookmarks::Bookmarks, calc::Calc,
         clipboard::Clipboard, default_provider::DefaultProvider, dmenu::Dmenu,
-        emergency::Emergency, files::Files, providerlist::Providerlist, symbols::Symbols,
-        todo::Todo, unicode::Unicode,
+        emergency::Emergency, dnfpackages::DnfPackages, files::Files, providerlist::Providerlist, 
+        symbols::Symbols, todo::Todo, unicode::Unicode,
     },
 };
 
@@ -33,6 +33,7 @@ pub mod clipboard;
 pub mod default_provider;
 pub mod dmenu;
 pub mod emergency;
+pub mod dnfpackages;
 pub mod files;
 pub mod providerlist;
 pub mod symbols;
@@ -275,6 +276,9 @@ pub fn setup_providers(elephant: bool) {
             // ),
             "archlinuxpkgs" => {
                 providers.insert("archlinuxpkgs".to_string(), Box::new(ArchLinuxPkgs::new()))
+            }
+            "dnfpackages" => {
+                providers.insert("dnfpackages".to_string(), Box::new(DnfPackages::new()))
             }
             "bookmarks" => providers.insert("bookmarks".to_string(), Box::new(Bookmarks::new())),
             "todo" => providers.insert("todo".to_string(), Box::new(Todo::new())),

@@ -73,11 +73,15 @@ pub fn setup_themes(elephant: bool, theme: String, is_service: bool) {
 
     let combined = if elephant {
         let mut result = files;
-        let additional = PROVIDERS
-            .get()
-            .unwrap()
-            .iter()
-            .map(|v| format!("item_{}.xml", v.0));
+        let additional = PROVIDERS.get().unwrap().iter().map(|v| {
+            let p = if v.0.contains("menus:") {
+                v.0.replace("menus:", "menus-")
+            } else {
+                v.0.to_string()
+            };
+
+            format!("item_{}.xml", p)
+        });
         result.extend(additional);
         result
     } else {
@@ -190,7 +194,14 @@ fn setup_theme_from_path(path: PathBuf, files: &Vec<String>) -> Option<Theme> {
                         .unwrap()
                         .strip_suffix(".xml")
                         .unwrap();
-                    theme.grid_items.insert(key.to_string(), s);
+
+                    let actual_key = if key.contains("menus-") {
+                        key.replace("menus-", "menus:")
+                    } else {
+                        key.to_string()
+                    };
+
+                    theme.grid_items.insert(actual_key, s);
                 }
             }
             name if name.ends_with(".xml")
@@ -203,7 +214,14 @@ fn setup_theme_from_path(path: PathBuf, files: &Vec<String>) -> Option<Theme> {
                         .unwrap()
                         .strip_suffix(".xml")
                         .unwrap();
-                    theme.items.insert(key.to_string(), s);
+
+                    let actual_key = if key.contains("menus-") {
+                        key.replace("menus-", "menus:")
+                    } else {
+                        key.to_string()
+                    };
+
+                    theme.items.insert(actual_key, s);
                 }
             }
             _ => (),

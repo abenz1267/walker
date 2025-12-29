@@ -1,5 +1,3 @@
 ## Theme
 
-The following GTK elements are no mandatory: `Keybinds`, `GlobalKeybinds` and `ItemKeybinds`.
-
-Please refer to the default theme for reference.
+Previously, theme files for custom menus were of form `item_menus:themes.xml`. From now on it's `item_menus-themes.xml`.

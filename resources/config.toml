@@ -141,6 +141,7 @@ archlinuxpkgs = [
 calc = [
   { action = "copy", default = true, bind = "Return" },
   { action = "delete", bind = "ctrl d", after = "AsyncReload" },
+  { action = "delete_all", bind = "ctrl shift d", after = "AsyncReload" },
   { action = "save", bind = "ctrl s", after = "AsyncClearReload" },
 ]
 

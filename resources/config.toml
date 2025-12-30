@@ -223,8 +223,10 @@ clipboard = [
   { action = "show_images_only", label = "only images", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "show_text_only", label = "only text", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "show_combined", label = "show all", bind = "ctrl i", after = "AsyncClearReload" },
-  { action = "pause", bind = "ctrl p" },
-  { action = "unpause", bind = "ctrl p" },
+  { action = "pause", bind = "ctrl shift p" },
+  { action = "unpause", bind = "ctrl shift p" },
+  { action = "unpin", bind = "ctrl p", after = "AsyncClearReload" },
+  { action = "pin", bind = "ctrl p", after = "AsyncClearReload" },
   { action = "edit", bind = "ctrl o" },
   { action = "localsend", bind = "ctrl l" },
 ]

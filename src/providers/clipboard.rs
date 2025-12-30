@@ -41,9 +41,13 @@ impl Provider for Clipboard {
         };
 
         let fmt = &get_config().providers.clipboard.time_format;
-        let text = match fmt.as_str() {
+        let mut text = match fmt.as_str() {
             "relative" => format!("{}", HumanTime::from(dt)),
             _ => dt.format(fmt).to_string(),
+        };
+
+        if item.state.contains(&String::from("pinned")) {
+            text = format!("{} ✦", text);
         };
 
         label.set_label(&text);

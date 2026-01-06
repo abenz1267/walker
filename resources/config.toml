@@ -158,6 +158,15 @@ desktopapplications = [
   { action = "pindown", bind = "ctrl m", after = "AsyncReload" },
 ]
 
+dnfpackages = [
+  { action = "install", label = "Install Package", bind = "Return", default = true },
+  { action = "remove", label = "Remove Package", bind = "Return", default = true },
+  { action = "show_all", label = "Show All", bind = "ctrl i", after = "AsyncClearReload" },
+  { action = "show_installed", label = "Show Installed", bind = "ctrl i", after = "AsyncClearReload" },
+  { action = "refresh", label = "Refresh", bind = "ctrl r", after = "AsyncClearReload" },
+  { action = "visit_url", label = "Open URL", bind = "ctrl o" },
+]
+
 files = [
   { action = "open", default = true, bind = "Return" },
   { action = "opendir", label = "open dir", bind = "ctrl Return" },

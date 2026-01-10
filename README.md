@@ -140,7 +140,7 @@ programs.walker = {
 };
 ```
 
-Optionally, there is 2 binary caches which can be used by adding the following to you config:
+Optionally, there are 2 binary caches which can be used by adding the following to you config:
 
 ```nix
 nix.settings = {

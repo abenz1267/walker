@@ -11,7 +11,7 @@ mod ui;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual, SettingsExt};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard};
 use gtk4::glib::Priority;
-use gtk4::prelude::EntryExt;
+use gtk4::prelude::{EntryExt, ListModelExt};
 
 use config::get_config;
 use state::init_app_state;
@@ -502,6 +502,9 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
             async fn read_lines_async(stream: Rc<gio::DataInputStream>, items: gio::ListStore) {
                 let mut i = 0;
 
+                const BATCH_SIZE: usize = 500;
+                let mut buffer: Vec<QueryResponseObject> = Vec::with_capacity(BATCH_SIZE);
+
                 loop {
                     match stream.read_line_utf8_future(Priority::DEFAULT).await {
                         Ok(Some(line)) => {
@@ -520,11 +523,15 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
                                 let mut response = QueryResponse::new();
                                 response.item = protobuf::MessageField::some(item);
-
-                                items.append(&QueryResponseObject::new(response));
+                                buffer.push(QueryResponseObject::new(response));
                             }
 
                             i += 1;
+
+                            if buffer.len() >= BATCH_SIZE {
+                                items.splice(items.n_items(), 0, &buffer);
+                                buffer.clear();
+                            }
                         }
                         Ok(None) => {
                             set_keybind_hint();
@@ -535,6 +542,11 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
                             break;
                         }
                     }
+                }
+
+                // Process any remainders from the batch run, or if the data was smaller than single batch block
+                if !buffer.is_empty() {
+                    items.splice(items.n_items(), 0, &buffer);
                 }
             }
 

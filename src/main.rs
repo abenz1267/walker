@@ -26,7 +26,7 @@ use std::rc::Rc;
 use std::sync::RwLock;
 use std::thread;
 use std::{env, fs};
-use tokio::sync::oneshot::{self, Sender};
+use futures_channel::oneshot::{self, Sender};
 
 use gtk4::{
     Application,

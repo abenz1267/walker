@@ -373,7 +373,7 @@ fn setup_input_handling(input: &Entry) -> gdk::glib::SignalHandlerId {
     input.connect_changed(move |input| {
         disable_mouse();
 
-        let text = input.text().to_string();
+        let text = input.text().to_string().to_lowercase();
 
         let cfg = get_config();
 

@@ -20,7 +20,7 @@ nucleo-matcher = "0.3.1"
 which = "8.0"
 new_mime_guess = "4.0.4"
 mime = "0.3.17"
-tokio = { version = "1.47.1", features = ["full"] }
+futures-channel = "0.3"
 xdg = "3.0.0"
 chrono-humanize = "0.2.3"
 

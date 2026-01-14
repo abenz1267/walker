@@ -16,6 +16,8 @@ impl Clipboard {
     }
 }
 
+const LABEL_MAX_LEN: usize = 100;
+
 impl Provider for Clipboard {
     fn get_name(&self) -> &str {
         self.name
@@ -31,7 +33,9 @@ impl Provider for Clipboard {
             return;
         }
 
-        label.set_label(item.text.trim());
+        let text = item.text.trim();
+        let truncated: String = text.chars().take(LABEL_MAX_LEN).collect();
+        label.set_label(truncated.as_str());
     }
 
     fn subtext_transformer(&self, item: &Item, label: &gtk4::Label) {

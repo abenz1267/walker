@@ -251,3 +251,5 @@ bookmarks = [
   { action = "create", bind = "ctrl a", after = "AsyncClearReload" },
   { action = "search", bind = "ctrl a", after = "AsyncClearReload" },
 ]
+
+niriactions = [{ action = "execute", bind = "Return" }]

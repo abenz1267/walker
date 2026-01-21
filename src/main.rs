@@ -17,6 +17,7 @@ use config::get_config;
 use state::init_app_state;
 use which::which;
 
+use futures_channel::oneshot::{self, Sender};
 use std::cell::OnceCell;
 use std::os::fd::AsRawFd;
 use std::os::unix::net::UnixListener;
@@ -26,7 +27,6 @@ use std::rc::Rc;
 use std::sync::RwLock;
 use std::thread;
 use std::{env, fs};
-use futures_channel::oneshot::{self, Sender};
 
 use gtk4::{
     Application,
@@ -59,8 +59,8 @@ use crate::state::{
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{
-    check_error, handle_grid_setting, quit, set_input_text, set_keybind_hint, setup_window,
-    with_window,
+    check_error, handle_grid_setting, quit, set_input_text, set_keybind_hint, set_placeholder_text,
+    setup_window, with_window,
 };
 
 static GLOBAL_DMENU_SENDER: RwLock<Option<Sender<String>>> = RwLock::new(None);
@@ -666,9 +666,7 @@ fn apply_flag_logic() {
         if let Some(placeholders) = &cfg.placeholders
             && let Some(placeholder) = placeholders.get(provider)
         {
-            if let Some(input) = &w.input {
-                input.set_placeholder_text(Some(&placeholder.input));
-            }
+            set_placeholder_text(&placeholder.input);
 
             if let Some(p) = w.placeholder.as_ref() {
                 p.set_text(&placeholder.list)
@@ -682,7 +680,7 @@ fn apply_flag_logic() {
                 set_initial_placeholder(placeholder.to_string());
             }
 
-            input.set_placeholder_text(Some(&get_placeholder()));
+            set_placeholder_text(&get_placeholder());
         }
 
         if let Some(val) = get_parameter_height() {

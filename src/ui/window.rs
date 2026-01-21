@@ -39,7 +39,7 @@ use crate::{
 use gtk4::{
     Application, Builder, Button, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
-    SingleSelection, Window,
+    SingleSelection, Window, glib,
     prelude::{BoxExt, ButtonExt},
 };
 use gtk4::{Box, ListScrollFlags};
@@ -65,6 +65,7 @@ use std::{
     cell::{Cell, OnceCell, RefCell},
     collections::HashMap,
     process::{self, Command, Stdio},
+    thread,
 };
 
 thread_local! {
@@ -830,7 +831,7 @@ pub fn quit(app: &Application, cancelled: bool) {
                 }
 
                 if !get_initial_placeholder().is_empty() {
-                    input.set_placeholder_text(Some(&get_initial_placeholder()));
+                    set_placeholder_text(&get_initial_placeholder());
                     set_initial_placeholder(String::new());
                 }
             };
@@ -1561,6 +1562,43 @@ pub fn handle_changed_items() {
 
         if s.n_items() == 0 {
             crate::preview::clear_all_caches();
+        }
+    });
+}
+
+pub fn set_placeholder_text(text: &str) {
+    with_window(|w| {
+        if let Some(input) = &w.input {
+            let text = text.to_string();
+
+            if let Some(after) = text.strip_prefix("cmd:") {
+                let cmd = after.to_string();
+
+                thread::spawn(move || {
+                    let result = Command::new("sh").arg("-c").arg(&cmd).output();
+
+                    let placeholder = match result {
+                        Ok(out) => String::from_utf8(out.stdout)
+                            .unwrap_or_else(|_| "Invalid UTF-8".to_string())
+                            .trim()
+                            .to_string(),
+                        Err(e) => {
+                            eprintln!("Command failed: {}", e);
+                            "Error".to_string()
+                        }
+                    };
+
+                    glib::idle_add_once(move || {
+                        with_window(|w| {
+                            if let Some(input) = &w.input {
+                                input.set_placeholder_text(Some(&placeholder));
+                            }
+                        });
+                    });
+                });
+            } else {
+                input.set_placeholder_text(Some(&text));
+            }
         }
     });
 }

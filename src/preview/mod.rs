@@ -176,7 +176,8 @@ impl PreviewWidget {
         label.set_valign(gtk4::Align::Start);
 
         let display_text = if text.len() > 10000 {
-            format!("{}\n\n[Text truncated...]", &text[..10000])
+            let preview: String = text.chars().take(10000).collect();
+            format!("{}\n\n[Text truncated...]", &preview)
         } else {
             text.to_string()
         };

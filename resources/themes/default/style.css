@@ -97,7 +97,8 @@ child {
 }
 
 /* child:hover .item-box, */
-child:selected .item-box {
+child:selected .item-box,
+row:selected .item-box {
   background: alpha(@accent_bg_color, 0.25);
 }
 
@@ -201,6 +202,7 @@ child:selected .item-box {
   font-style: italic;
 }
 
-.preview-content.archlinuxpkgs, .preview-content.dnfpackages {
+.preview-content.archlinuxpkgs,
+.preview-content.dnfpackages {
   font-family: monospace;
 }

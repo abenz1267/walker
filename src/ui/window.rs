@@ -38,11 +38,12 @@ use crate::{
 };
 use gtk4::{
     Application, Builder, Button, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
-    FilterListModel, GestureClick, Label, PropagationPhase, ScrolledWindow, SignalListItemFactory,
-    SingleSelection, Window, glib,
+    FilterListModel, GestureClick, Label, ListView, PropagationPhase, ScrolledWindow,
+    SignalListItemFactory, SingleSelection, Window,
+    glib::{self, object::IsA},
     prelude::{BoxExt, ButtonExt},
 };
-use gtk4::{Box, ListScrollFlags};
+use gtk4::{Box, ListScrollFlags, ScrollInfo};
 use gtk4::{
     CssProvider,
     prelude::{EditableExt, EventControllerExt, ListItemExt, SelectionModelExt},
@@ -94,7 +95,7 @@ pub struct WindowData {
     pub app: Application,
     pub window: Window,
     pub selection: SingleSelection,
-    pub list: GridView,
+    pub list: ListContainer,
     pub list_max_columns: u32,
     pub input: Option<Entry>,
     pub items: ListStore,
@@ -130,6 +131,103 @@ where
     })
 }
 
+#[derive(Debug)]
+pub enum ListContainer {
+    Grid(GridView),
+    List(ListView),
+}
+
+impl ListContainer {
+    pub fn max_columns(&self) -> u32 {
+        match self {
+            ListContainer::Grid(grid) => grid.max_columns(),
+            ListContainer::List(_) => 1,
+        }
+    }
+
+    pub fn set_max_columns(&self, columns: u32) {
+        match self {
+            ListContainer::Grid(grid) => grid.set_max_columns(columns),
+            ListContainer::List(_) => {}
+        }
+    }
+
+    pub fn set_min_columns(&self, columns: u32) {
+        match self {
+            ListContainer::Grid(grid) => grid.set_min_columns(columns),
+            ListContainer::List(_) => {}
+        }
+    }
+
+    pub fn scroll_to(&self, pos: u32, flags: ListScrollFlags, scroll_hint: Option<ScrollInfo>) {
+        match self {
+            ListContainer::Grid(grid) => grid.scroll_to(pos, flags, scroll_hint),
+            ListContainer::List(list) => list.scroll_to(pos, flags, scroll_hint),
+        }
+    }
+
+    pub fn connect_activate<F>(&self, f: F) -> gdk::glib::SignalHandlerId
+    where
+        F: Fn(&gtk4::Widget, u32) + 'static,
+    {
+        match self {
+            ListContainer::Grid(grid) => grid
+                .connect_activate(move |widget, pos| f(widget.upcast_ref::<gtk4::Widget>(), pos)),
+            ListContainer::List(list) => list
+                .connect_activate(move |widget, pos| f(widget.upcast_ref::<gtk4::Widget>(), pos)),
+        }
+    }
+
+    pub fn set_single_click_activate(&self, single_click: bool) {
+        match self {
+            ListContainer::Grid(grid) => grid.set_single_click_activate(single_click),
+            ListContainer::List(list) => list.set_single_click_activate(single_click),
+        }
+    }
+
+    pub fn set_model<P: IsA<gtk4::SelectionModel>>(&self, model: Option<&P>) {
+        match self {
+            ListContainer::Grid(grid) => grid.set_model(model),
+            ListContainer::List(list) => list.set_model(model),
+        }
+    }
+
+    pub fn set_factory(&self, factory: Option<&SignalListItemFactory>) {
+        match self {
+            ListContainer::Grid(grid) => grid.set_factory(factory),
+            ListContainer::List(list) => list.set_factory(factory),
+        }
+    }
+
+    pub fn set_can_target(&self, can_target: bool) {
+        match self {
+            ListContainer::Grid(grid) => grid.set_can_target(can_target),
+            ListContainer::List(list) => list.set_can_target(can_target),
+        }
+    }
+
+    pub fn can_target(&self) -> bool {
+        match self {
+            ListContainer::Grid(grid) => grid.can_target(),
+            ListContainer::List(list) => list.can_target(),
+        }
+    }
+
+    pub fn add_css_class(&self, class: &str) {
+        match self {
+            ListContainer::Grid(grid) => grid.add_css_class(class),
+            ListContainer::List(list) => list.add_css_class(class),
+        }
+    }
+
+    pub fn remove_css_class(&self, class: &str) {
+        match self {
+            ListContainer::Grid(grid) => grid.remove_css_class(class),
+            ListContainer::List(list) => list.remove_css_class(class),
+        }
+    }
+}
+
 pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, String> {
     let builder = Builder::new();
     let _ = builder.add_from_string(&val.layout);
@@ -144,9 +242,12 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
         None => return Err("missing 'Scroll' object".into()),
     };
 
-    let list: GridView = match builder.object("List") {
-        Some(w) => w,
-        None => return Err("missing 'List' object".into()),
+    let list: ListContainer = match builder.object::<GridView>("List") {
+        Some(w) => ListContainer::Grid(w),
+        None => match builder.object::<ListView>("List") {
+            Some(w) => ListContainer::List(w),
+            None => return Err("missing 'List' object".into()),
+        },
     };
 
     let elephant_hint: Label = match builder.object("ElephantHint") {

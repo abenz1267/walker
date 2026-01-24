@@ -75,8 +75,13 @@ fn main() -> glib::ExitCode {
         .flags(ApplicationFlags::HANDLES_COMMAND_LINE)
         .build();
 
-    app.connect_handle_local_options(|_, _| -1);
-
+    app.connect_handle_local_options(|_app, options| {
+        if options.contains("version") {
+            println!("{}", env!("CARGO_PKG_VERSION"));
+            return 0;
+        }
+        -1
+    });
     add_flags(&app);
 
     app.connect_command_line(handle_command_line);
@@ -371,11 +376,6 @@ fn add_flags(app: &Application) {
 
 fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     let options = cmd.options_dict();
-
-    if options.contains("version") {
-        cmd.print_literal(&format!("{}\n", env!("CARGO_PKG_VERSION")));
-        return 0;
-    }
 
     set_is_stay_open_explicit_provider(false);
 

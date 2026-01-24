@@ -36,6 +36,7 @@ pub struct Walker {
     pub emergencies: Option<Vec<EmergencyEntry>>,
     pub keybinds: Keybinds,
     pub shell: Shell,
+    pub as_window: bool,
     pub additional_theme_location: Option<String>,
     pub placeholders: Option<HashMap<String, Placeholder>>,
     pub columns: Option<HashMap<String, u32>>,
@@ -96,6 +97,8 @@ struct PartialWalker {
     pub columns: Option<HashMap<String, u32>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub page_jump_items: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub as_window: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -274,7 +277,9 @@ impl Walker {
         if let Some(v) = partial.page_jump_items {
             self.page_jump_items = v;
         }
-
+        if let Some(v) = partial.as_window {
+            self.as_window = v;
+        }
         if let Some(p) = partial.providers {
             self.providers.merge(p);
         }

@@ -281,6 +281,10 @@ pub fn setup_layer_shell(win: &Window) {
 
     let cfg = get_config();
 
+    if cfg.as_window {
+        return;
+    }
+
     win.init_layer_shell();
     win.set_namespace(Some("walker"));
     win.set_exclusive_zone(-1);

@@ -288,7 +288,14 @@ pub fn setup_layer_shell(win: &Window) {
     win.init_layer_shell();
     win.set_namespace(Some("walker"));
     win.set_exclusive_zone(-1);
-    win.set_layer(Layer::Overlay);
+
+    let layer = match cfg.shell.layer {
+        crate::config::Layer::Top => Layer::Top,
+        crate::config::Layer::Overlay => Layer::Overlay,
+    };
+
+    win.set_layer(layer);
+
     win.set_keyboard_mode(if cfg.force_keyboard_focus {
         KeyboardMode::Exclusive
     } else {

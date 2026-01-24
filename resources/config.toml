@@ -18,6 +18,7 @@ resume_last_query = false       # open walker with the last query in place
 actions_as_menu = false         # display all possible actions in a submenu
 
 [shell]
+layer = "overlay"
 anchor_top = true
 anchor_bottom = true
 anchor_left = true

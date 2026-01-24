@@ -161,6 +161,8 @@ struct PartialShell {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub anchor_top: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub layer: Option<Layer>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub anchor_bottom: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub anchor_left: Option<bool>,
@@ -435,8 +437,16 @@ impl Clipboard {
     }
 }
 
+#[derive(Serialize, Deserialize, Debug, Clone)]
+#[serde(rename_all = "lowercase")]
+pub enum Layer {
+    Top,
+    Overlay,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Shell {
+    pub layer: Layer,
     pub anchor_top: bool,
     pub anchor_bottom: bool,
     pub anchor_left: bool,

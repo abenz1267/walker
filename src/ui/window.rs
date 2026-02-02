@@ -40,6 +40,7 @@ use gtk4::{
     Application, Builder, Button, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, ListView, PropagationPhase, ScrolledWindow,
     SignalListItemFactory, SingleSelection, Window,
+    gdk::ModifierType,
     glib::{self, object::IsA},
     prelude::{BoxExt, ButtonExt},
 };
@@ -653,6 +654,8 @@ fn setup_keyboard_handling(ui: &WindowData) {
         if k == gdk::Key::KP_Enter {
             k = gdk::Key::Return;
         }
+
+        let m = m & !ModifierType::LOCK_MASK;
 
         let handled = with_window(|w| {
             if !is_connected() && !is_dmenu() {

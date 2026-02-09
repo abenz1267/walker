@@ -16,6 +16,7 @@ hide_action_hints_dmenu = true  # hide the actions hints for dmenu
 hide_return_action = false      # hide actions that are bound to Return
 resume_last_query = false       # open walker with the last query in place
 actions_as_menu = false         # display all possible actions in a submenu
+autoplay_videos = false         # auto-play video previews
 
 [shell]
 layer = "overlay"

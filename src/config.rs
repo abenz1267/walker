@@ -41,6 +41,7 @@ pub struct Walker {
     pub placeholders: Option<HashMap<String, Placeholder>>,
     pub columns: Option<HashMap<String, u32>>,
     pub page_jump_items: u32,
+    pub autoplay_videos: bool,
 }
 
 // Partial config for user overrides
@@ -67,6 +68,8 @@ struct PartialWalker {
     pub hide_action_hints: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hide_action_hints_dmenu: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub autoplay_videos: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hide_return_action: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -242,6 +245,9 @@ impl Walker {
         }
         if let Some(v) = partial.hide_action_hints_dmenu {
             self.hide_action_hints_dmenu = v;
+        }
+        if let Some(v) = partial.autoplay_videos {
+            self.autoplay_videos = v;
         }
         if let Some(v) = partial.hide_return_action {
             self.hide_return_action = v;

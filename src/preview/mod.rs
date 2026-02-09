@@ -494,7 +494,7 @@ impl PreviewWidget {
 
             let file = gio::File::for_path(&file_path_clone);
             let video = Video::for_file(Some(&file));
-            video.set_autoplay(true);
+            video.set_autoplay(get_config().autoplay_videos);
 
             scrolled_clone.set_child(Some(&video));
 

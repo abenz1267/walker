@@ -62,6 +62,8 @@ static GRID_BINDS: LazyLock<RwLock<HashMap<Key, HashMap<gdk::ModifierType, Actio
 static PROVIDER_BINDS: LazyLock<
     RwLock<HashMap<String, HashMap<Key, HashMap<gdk::ModifierType, Vec<Action>>>>>,
 > = LazyLock::new(RwLock::default);
+static PROVIDER_BINDS_ACTIONS: LazyLock<RwLock<HashMap<String, Vec<String>>>> =
+    LazyLock::new(RwLock::default);
 
 pub static MODIFIERS: LazyLock<HashMap<&'static str, gdk::ModifierType>> = LazyLock::new(|| {
     let mut map = HashMap::new();
@@ -76,6 +78,14 @@ pub fn setup_binds() {
     PROVIDERS.get().unwrap().iter().for_each(|(k, v)| {
         v.get_actions().iter().for_each(|v| {
             parse_bind(v, k).unwrap();
+
+            let mut pba = PROVIDER_BINDS_ACTIONS.write().unwrap();
+
+            if let Some(actions) = pba.get_mut(k) {
+                actions.push(v.action.clone());
+            } else {
+                pba.insert(k.clone(), vec![v.action.clone()]);
+            }
         });
     });
 
@@ -459,6 +469,17 @@ pub fn get_provider_bind(
             });
 
         if action.is_none() {
+            let provider_actions = PROVIDER_BINDS_ACTIONS
+                .read()
+                .ok()
+                .and_then(|pba| pba.get(provider).cloned())
+                .unwrap_or_default();
+
+            let filtered_actions: Vec<_> = actions
+                .iter()
+                .filter(|a| !provider_actions.contains(a))
+                .collect();
+
             action = binds
                 .get("fallback")
                 .and_then(|keys| keys.get(&key.to_lower()))
@@ -466,7 +487,7 @@ pub fn get_provider_bind(
                 .and_then(|actions_list| {
                     actions_list
                         .iter()
-                        .find(|action| actions.contains(&&action.action))
+                        .find(|action| filtered_actions.contains(&&&action.action))
                         .cloned()
                 });
         }

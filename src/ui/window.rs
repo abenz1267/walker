@@ -20,19 +20,19 @@ use crate::{
         get_action_menu_item, get_action_menu_prefix, get_action_menu_query, get_current_prefix,
         get_error, get_global_provider_actions, get_initial_height, get_initial_max_height,
         get_initial_max_width, get_initial_min_height, get_initial_min_width,
-        get_initial_placeholder, get_initial_width, get_last_query, get_prefix_provider,
-        get_provider, get_query, get_theme, is_actions_menu, is_connected, is_dmenu,
-        is_dmenu_exit_after, is_dmenu_keep_open, is_emergency, is_grid, is_no_hints, is_service,
-        set_action_menu_item, set_action_menu_prefix, set_action_menu_query, set_async_after,
-        set_current_prefix, set_current_set, set_dmenu_current, set_dmenu_exit_after,
-        set_dmenu_keep_open, set_error, set_hide_qa, set_index, set_initial_height,
-        set_initial_max_height, set_initial_max_width, set_initial_min_height,
+        get_initial_placeholder, get_initial_width, get_last_query, get_placeholder,
+        get_prefix_provider, get_provider, get_query, get_theme, is_actions_menu, is_connected,
+        is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open, is_emergency, is_grid, is_no_hints,
+        is_service, set_action_menu_item, set_action_menu_prefix, set_action_menu_query,
+        set_async_after, set_current_prefix, set_current_set, set_dmenu_current,
+        set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa, set_index,
+        set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
         set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
         set_is_actions_menu, set_is_dmenu, set_is_grid, set_is_stay_open_explicit_provider,
         set_is_visible, set_last_query, set_no_hints, set_no_search, set_param_close,
         set_parameter_height, set_parameter_max_height, set_parameter_max_width,
-        set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_placeholder,
-        set_provider, set_query, set_theme,
+        set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_password_mode,
+        set_placeholder, set_provider, set_query, set_theme,
     },
     theme::{Theme, setup_layer_shell, with_themes},
 };
@@ -921,6 +921,7 @@ pub fn quit(app: &Application, cancelled: bool) {
     set_query("");
     set_current_set(String::new());
     set_index(false);
+    set_password_mode(false);
 
     if is_dmenu_exit_after() {
         set_dmenu_exit_after(false);
@@ -1675,7 +1676,9 @@ pub fn set_placeholder_text(text: &str) {
         if let Some(input) = &w.input {
             let text = text.to_string();
 
-            if let Some(after) = text.strip_prefix("cmd:") {
+            if get_placeholder().is_empty()
+                && let Some(after) = text.strip_prefix("cmd:")
+            {
                 let cmd = after.to_string();
 
                 thread::spawn(move || {

@@ -47,15 +47,16 @@ use crate::state::{
     get_last_query, get_parameter_height, get_parameter_max_height, get_parameter_max_width,
     get_parameter_min_height, get_parameter_min_width, get_parameter_width, get_placeholder,
     get_provider, get_theme, has_elephant, has_theme, is_connected, is_dmenu, is_dmenu_keep_open,
-    is_emergency, is_input_only, is_no_hints, is_no_search, is_param_close, is_service,
-    is_stay_open_explicit_provider, is_visible, set_current_set, set_dmenu_current,
+    is_emergency, is_input_only, is_no_hints, is_no_search, is_param_close, is_password_mode,
+    is_service, is_stay_open_explicit_provider, is_visible, set_current_set, set_dmenu_current,
     set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_has_elephant, set_hide_qa, set_index,
     set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
     set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
     set_is_dmenu, set_is_emergency, set_is_service, set_is_stay_open_explicit_provider,
     set_is_visible, set_no_hints, set_no_search, set_param_close, set_parameter_height,
     set_parameter_max_height, set_parameter_max_width, set_parameter_min_height,
-    set_parameter_min_width, set_parameter_width, set_placeholder, set_provider, set_theme,
+    set_parameter_min_width, set_parameter_width, set_password_mode, set_placeholder, set_provider,
+    set_theme,
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{
@@ -82,6 +83,7 @@ fn main() -> glib::ExitCode {
         }
         -1
     });
+
     add_flags(&app);
 
     app.connect_command_line(handle_command_line);
@@ -217,6 +219,15 @@ fn add_flags(app: &Application) {
         OptionFlags::NONE,
         glib::OptionArg::None,
         "only show input. dmenu only.",
+        None,
+    );
+
+    app.add_main_option(
+        "password",
+        b'x'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::None,
+        "use as password input. sets dmenu automatically.",
         None,
     );
 
@@ -442,6 +453,12 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     set_no_search(options.contains("nosearch"));
     set_no_hints(options.contains("nohints"));
 
+    if options.contains("password") {
+        set_password_mode(true);
+        set_input_only(true);
+        options.insert("dmenu", true);
+    }
+
     if let Some(val) = options.lookup_value("placeholder", Some(VariantTy::STRING)) {
         set_placeholder(val.str().unwrap().to_string());
     }
@@ -464,7 +481,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
         set_index(options.contains("index"));
 
-        set_input_only(options.contains("inputonly"));
+        set_input_only(options.contains("inputonly") || options.contains("password"));
 
         if options.contains("keepopen") && app.flags().contains(ApplicationFlags::IS_SERVICE) {
             set_dmenu_keep_open(true);
@@ -731,6 +748,10 @@ fn apply_flag_logic() {
 
         if is_no_hints() {
             w.keybinds.set_visible(false);
+        }
+
+        if let Some(input) = &w.input {
+            input.set_visibility(!is_password_mode());
         }
     });
 }

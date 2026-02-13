@@ -48,6 +48,7 @@ pub struct AppState {
     no_search: bool,
     no_hints: bool,
     input_only: bool,
+    password_mode: bool,
     index: bool,
     is_dmenu: bool,
     is_actions_menu: bool,
@@ -262,6 +263,14 @@ pub fn is_input_only() -> bool {
 
 pub fn set_input_only(val: bool) {
     STATE.get().unwrap().write().unwrap().input_only = val
+}
+
+pub fn is_password_mode() -> bool {
+    STATE.get().unwrap().read().unwrap().password_mode
+}
+
+pub fn set_password_mode(val: bool) {
+    STATE.get().unwrap().write().unwrap().password_mode = val
 }
 
 pub fn is_index() -> bool {

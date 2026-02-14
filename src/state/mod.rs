@@ -49,6 +49,7 @@ pub struct AppState {
     no_hints: bool,
     input_only: bool,
     password_mode: bool,
+    select_single: bool,
     index: bool,
     is_dmenu: bool,
     is_actions_menu: bool,
@@ -271,6 +272,14 @@ pub fn is_password_mode() -> bool {
 
 pub fn set_password_mode(val: bool) {
     STATE.get().unwrap().write().unwrap().password_mode = val
+}
+
+pub fn is_select_single() -> bool {
+    STATE.get().unwrap().read().unwrap().select_single
+}
+
+pub fn set_select_single(val: bool) {
+    STATE.get().unwrap().write().unwrap().select_single = val
 }
 
 pub fn is_index() -> bool {

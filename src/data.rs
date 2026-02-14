@@ -373,7 +373,6 @@ fn listen_loop() -> Result<(), Box<dyn std::error::Error>> {
             255 => {
                 glib::idle_add_once(|| {
                     check_error();
-
                     handle_changed_items();
                     set_keybind_hint();
                     crate::ui::window::handle_preview();

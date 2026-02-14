@@ -56,7 +56,7 @@ use crate::state::{
     set_is_visible, set_no_hints, set_no_search, set_param_close, set_parameter_height,
     set_parameter_max_height, set_parameter_max_width, set_parameter_min_height,
     set_parameter_min_width, set_parameter_width, set_password_mode, set_placeholder, set_provider,
-    set_theme,
+    set_select_single, set_theme,
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{
@@ -228,6 +228,15 @@ fn add_flags(app: &Application) {
         OptionFlags::NONE,
         glib::OptionArg::None,
         "use as password input. sets dmenu automatically.",
+        None,
+    );
+
+    app.add_main_option(
+        "selectsingle",
+        b'X'.into(),
+        OptionFlags::NONE,
+        glib::OptionArg::None,
+        "auto-select single entry",
         None,
     );
 
@@ -452,6 +461,8 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
 
     set_no_search(options.contains("nosearch"));
     set_no_hints(options.contains("nohints"));
+
+    set_select_single(options.contains("selectsingle"));
 
     if options.contains("password") {
         set_password_mode(true);

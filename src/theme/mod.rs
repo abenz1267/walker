@@ -287,7 +287,7 @@ pub fn setup_layer_shell(win: &Window) {
 
     win.init_layer_shell();
     win.set_namespace(Some("walker"));
-    win.set_exclusive_zone(-1);
+    win.set_exclusive_zone(cfg.shell.exclusive_zone);
 
     let layer = match cfg.shell.layer {
         crate::config::Layer::Top => Layer::Top,

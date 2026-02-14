@@ -19,6 +19,7 @@ actions_as_menu = false         # display all possible actions in a submenu
 autoplay_videos = false         # auto-play video previews
 
 [shell]
+exclusive_zone = -1
 layer = "overlay"
 anchor_top = true
 anchor_bottom = true

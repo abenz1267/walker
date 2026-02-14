@@ -171,6 +171,8 @@ struct PartialShell {
     pub anchor_left: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub anchor_right: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub exclusive_zone: Option<i32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -432,6 +434,9 @@ impl Shell {
         if let Some(v) = partial.anchor_right {
             self.anchor_right = v;
         }
+        if let Some(v) = partial.exclusive_zone {
+            self.exclusive_zone = v;
+        }
     }
 }
 
@@ -452,6 +457,7 @@ pub enum Layer {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Shell {
+    pub exclusive_zone: i32,
     pub layer: Layer,
     pub anchor_top: bool,
     pub anchor_bottom: bool,

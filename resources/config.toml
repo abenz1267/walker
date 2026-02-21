@@ -256,4 +256,12 @@ bookmarks = [
   { action = "search", bind = "ctrl a", after = "AsyncClearReload" },
 ]
 
+wireplumber = [
+  { action = "increase_volume", label = "+volume", bind = "ctrl y", after = "Nothing" },
+  { action = "decrease_volume", label = "-volume", bind = "ctrl n", after = "Nothing" },
+  { action = "mute", bind = "ctrl m", after = "Nothing" },
+  { action = "unmute", bind = "ctrl m", after = "Nothing" },
+  { action = "set_default_device", label = "set default", bind = "ctrl d", after = "Nothing" },
+]
+
 niriactions = [{ action = "execute", bind = "Return" }]

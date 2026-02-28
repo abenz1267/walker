@@ -20,7 +20,7 @@ use crate::{
     providers::{
         actionsmenu::ActionsMenu, archlinuxpkgs::ArchLinuxPkgs, bookmarks::Bookmarks, calc::Calc,
         clipboard::Clipboard, default_provider::DefaultProvider, dmenu::Dmenu,
-        emergency::Emergency, dnfpackages::DnfPackages, files::Files, providerlist::Providerlist, 
+        dnfpackages::DnfPackages, emergency::Emergency, files::Files, providerlist::Providerlist,
         symbols::Symbols, todo::Todo, unicode::Unicode,
     },
 };
@@ -32,8 +32,8 @@ pub mod calc;
 pub mod clipboard;
 pub mod default_provider;
 pub mod dmenu;
-pub mod emergency;
 pub mod dnfpackages;
+pub mod emergency;
 pub mod files;
 pub mod providerlist;
 pub mod symbols;

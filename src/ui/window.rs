@@ -1197,7 +1197,14 @@ pub fn clear_global_keybind_hints() {
 }
 
 pub fn set_global_keybind_hints(actions: Vec<String>, provider: String) {
-    if get_config().actions_as_menu {
+    let cfg = get_config();
+
+    if cfg.actions_as_menu
+        || is_no_hints()
+        || cfg.hide_action_hints
+        || is_actions_menu()
+        || (is_dmenu() && cfg.hide_action_hints_dmenu)
+    {
         return;
     }
 

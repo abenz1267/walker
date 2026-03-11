@@ -492,15 +492,16 @@ fn add_new_item(resp: QueryResponse) {
         let items = &w.items;
         let n_items = items.n_items();
 
-        if let Some(n_items) = n_items.checked_sub(1)
+        if let Some(last_idx) = n_items.checked_sub(1)
             && let Some(last_obj) = items
-                .item(n_items)
+                .item(last_idx)
                 .and_downcast::<crate::QueryResponseObject>()
         {
             let last_resp = last_obj.response();
 
             if resp.qid > last_resp.qid {
-                items.remove_all();
+                items.splice(0, n_items, &[crate::QueryResponseObject::new(resp)]);
+                return;
             }
         }
 

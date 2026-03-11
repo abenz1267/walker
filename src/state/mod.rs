@@ -135,6 +135,11 @@ pub fn get_prefix_provider() -> String {
 }
 
 pub fn set_prefix_provider(val: String) {
+    let changed = {
+        let state = STATE.get().unwrap().read().unwrap();
+        state.prefix_provider != val
+    };
+
     STATE.get().unwrap().write().unwrap().prefix_provider = val.clone();
 
     if !val.is_empty() {
@@ -143,7 +148,9 @@ pub fn set_prefix_provider(val: String) {
         clear_global_keybind_hints();
     }
 
-    handle_grid_setting();
+    if changed {
+        handle_grid_setting();
+    }
 }
 
 pub fn get_initial_placeholder() -> String {

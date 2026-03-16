@@ -27,6 +27,12 @@ The following Elephant providers are implemented by default:
 - **Todo List**: create simple todo items with basic time tracking, scheduling and notifications
 - **Bookmarks**: manage bookmarks, open with specified browsers, assign categories and import bookmarks from browsers
 - **Bluetooth**: basic bluetooth management
+- **Niri Actions**: list niri actions
+- **Niri Sessions**: create stored sets of workspaces/apps
+- **Bitwarden/1Password**: access your passwords
+- **Wireplumber**: handle sound input/output
+- **Snippets**: access text-snippets
+- **Windows**: list and focus opened windows
 
 ## Installation
 

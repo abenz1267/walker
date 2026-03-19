@@ -135,7 +135,7 @@ bluetooth = [
 
 archlinuxpkgs = [
   { action = "install", bind = "Return", default = true },
-  { action = "remove", bind = "Return" },
+  { action = "remove", bind = "Return", default = true },
   { action = "show_all", label = "show all", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "refresh", label = "refresh", bind = "ctrl r", after = "AsyncReload" },
   { action = "visit_url", label = "open URL", bind = "ctrl o" },

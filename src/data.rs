@@ -924,11 +924,13 @@ fn listen_wifi_loop() -> Result<(), Box<dyn std::error::Error>> {
                                 "wifi:disconnect" => p.set_text("Disconnecting..."),
                                 "wifi:forget" => p.set_text("Forgetting network..."),
                                 "wifi:scan" => p.set_text("Scanning..."),
-                                "wifi:password_required" => {
-                                    p.set_text("Password required. Type password after #");
-                                }
                                 "wifi:connect_failed" => {
                                     p.set_text("Connection failed. Wrong password?");
+                                }
+                                "wifi:reset" => {
+                                    p.set_visible(false);
+                                    w.scroll.set_visible(true);
+                                    return;
                                 }
                                 _ => (),
                             }

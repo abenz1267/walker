@@ -264,4 +264,17 @@ wireplumber = [
   { action = "set_default_device", label = "set default", bind = "ctrl d", after = "Nothing" },
 ]
 
+playerctl = [
+  { action = "pause", label = "pause", bind = "Return", after = "Nothing", default = true },
+  { action = "play", label = "play", bind = "Return", after = "Nothing", default = true },
+  { action = "prev", label = "prev", bind = "ctrl p", after = "Nothing" },
+  { action = "next", label = "next", bind = "ctrl n", after = "Nothing" },
+  { action = "vol_up", label = "vol+", bind = "ctrl y", after = "Nothing" },
+  { action = "vol_down", label = "vol-", bind = "ctrl h", after = "Nothing" },
+  { action = "mute", label = "mute", bind = "ctrl m", after = "Nothing" },
+  { action = "unmute", label = "unmute", bind = "ctrl m", after = "Nothing" },
+  { action = "seek_back", label = "backward", bind = "ctrl b", after = "Nothing" },
+  { action = "seek_forward", label = "forward", bind = "ctrl f", after = "Nothing" },
+]
+
 niriactions = [{ action = "execute", bind = "Return" }]

@@ -44,7 +44,8 @@ use crate::protos::QueryResponseObject;
 use crate::protos::generated_proto::query::{QueryResponse, query_response};
 use crate::providers::setup_providers;
 use crate::state::{
-    get_last_query, get_parameter_height, get_parameter_max_height, get_parameter_max_width,
+    get_last_query,
+    get_parameter_height, get_parameter_max_height, get_parameter_max_width,
     get_parameter_min_height, get_parameter_min_width, get_parameter_width, get_placeholder,
     get_provider, get_theme, has_elephant, has_theme, is_connected, is_dmenu, is_dmenu_keep_open,
     is_emergency, is_input_only, is_no_hints, is_no_search, is_param_close, is_password_mode,
@@ -712,42 +713,42 @@ fn apply_flag_logic() {
         }
 
         if let Some(val) = get_parameter_height() {
-            set_initial_height(Some(w.box_wrapper.height_request()));
+            set_initial_height(Some(w.default_box_height));
             w.box_wrapper.set_height_request(val);
         }
 
         if let Some(val) = get_parameter_width() {
-            set_initial_width(Some(w.box_wrapper.width_request()));
+            set_initial_width(Some(w.default_box_width));
             w.box_wrapper.set_width_request(val);
         }
 
         if let Some(val) = get_parameter_min_width() {
-            set_initial_min_width(Some(w.scroll.min_content_width()));
+            set_initial_min_width(Some(w.default_scroll_min_width));
             w.scroll.set_min_content_width(val);
         }
 
         if let Some(val) = get_parameter_min_height() {
-            set_initial_min_height(Some(w.scroll.min_content_height()));
+            set_initial_min_height(Some(w.default_scroll_min_height));
             w.scroll.set_min_content_height(val);
         }
 
         if let Some(val) = get_parameter_max_width() {
-            set_initial_max_width(Some(w.scroll.max_content_width()));
+            set_initial_max_width(Some(w.default_scroll_max_width));
             w.scroll.set_max_content_width(val);
         }
 
         if let Some(val) = get_parameter_max_height() {
-            set_initial_max_height(Some(w.scroll.max_content_height()));
+            set_initial_max_height(Some(w.default_scroll_max_height));
             w.scroll.set_max_content_height(val);
         }
 
         if get_parameter_min_width().is_some() || get_parameter_max_width().is_some() {
-            set_initial_width(Some(w.box_wrapper.width_request()));
+            set_initial_width(Some(w.default_box_width));
             w.box_wrapper.set_width_request(-1);
         }
 
         if get_parameter_min_height().is_some() || get_parameter_max_height().is_some() {
-            set_initial_height(Some(w.box_wrapper.height_request()));
+            set_initial_height(Some(w.default_box_height));
             w.box_wrapper.set_height_request(-1);
         }
 

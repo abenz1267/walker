@@ -238,10 +238,7 @@ pub fn setup_providers(elephant: bool) {
         } else if elephant {
             match Command::new("elephant").arg("listproviders").output() {
                 Ok(output) => match String::from_utf8(output.stdout) {
-                    Ok(stdout) => stdout
-                        .lines()
-                        .filter_map(|line| line.split_once(';').map(|(_, value)| value.to_string()))
-                        .collect(),
+                    Ok(stdout) => stdout.lines().map(|value| value.to_string()).collect(),
                     Err(e) => {
                         eprintln!("Error parsing elephant output as UTF-8: {}", e);
                         Vec::new()

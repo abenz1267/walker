@@ -112,6 +112,12 @@ pub struct WindowData {
     pub content_container: gtk4::Box,
     pub box_wrapper: gtk4::Box,
     pub error: gtk4::Label,
+    pub default_box_height: i32,
+    pub default_box_width: i32,
+    pub default_scroll_max_height: i32,
+    pub default_scroll_min_height: i32,
+    pub default_scroll_max_width: i32,
+    pub default_scroll_min_width: i32,
 }
 
 pub fn with_window<F, R>(f: F) -> R
@@ -339,7 +345,20 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
         keybinds,
         global_keybinds,
         item_keybinds,
+        default_box_height: 0,
+        default_box_width: 0,
+        default_scroll_max_height: 0,
+        default_scroll_min_height: 0,
+        default_scroll_max_width: 0,
+        default_scroll_min_width: 0,
     };
+
+    ui.default_box_height = ui.box_wrapper.height_request();
+    ui.default_box_width = ui.box_wrapper.width_request();
+    ui.default_scroll_max_height = ui.scroll.max_content_height();
+    ui.default_scroll_min_height = ui.scroll.min_content_height();
+    ui.default_scroll_max_width = ui.scroll.max_content_width();
+    ui.default_scroll_min_width = ui.scroll.min_content_width();
 
     if let Some(p) = &ui.preview_container {
         p.set_visible(false);

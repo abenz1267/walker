@@ -35,6 +35,7 @@ use std::{env, thread};
 static CONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 static MENUCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 static BLUETOOTHCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
+static WIFICONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 
 pub fn input_changed(text: &str) {
     set_current_prefix(String::new());
@@ -208,6 +209,21 @@ pub fn init_socket() -> Result<(), Box<dyn std::error::Error>> {
         subscribe_bluetooth().unwrap();
     }
 
+    if PROVIDERS.get().unwrap().get("wifi").is_some() {
+        let wificonn = loop {
+            match UnixStream::connect(&socket_path) {
+                Ok(conn) => break conn,
+                Err(e) => {
+                    println!("Failed to connect to wifi: {e}. Retrying in 1 second...");
+                    thread::sleep(Duration::from_secs(1));
+                }
+            }
+        };
+
+        *WIFICONN.lock().unwrap() = Some(wificonn);
+        subscribe_wifi().unwrap();
+    }
+
     subscribe_menu().unwrap();
     start_listening();
 
@@ -260,6 +276,15 @@ fn start_listening() {
         thread::spawn(|| {
             if let Err(e) = listen_bluetooth_loop() {
                 eprintln!("Listen bluetooth_loop error: {e}");
+                handle_disconnect();
+            }
+        });
+    }
+
+    if PROVIDERS.get().unwrap().get("wifi").is_some() {
+        thread::spawn(|| {
+            if let Err(e) = listen_wifi_loop() {
+                eprintln!("Listen wifi_loop error: {e}");
                 handle_disconnect();
             }
         });
@@ -842,6 +867,83 @@ fn subscribe_bluetooth() -> Result<(), Box<dyn std::error::Error>> {
     }
 
     Ok(())
+}
+
+fn subscribe_wifi() -> Result<(), Box<dyn std::error::Error>> {
+    let mut req = SubscribeRequest::new();
+    req.provider = "wifi".to_string();
+
+    let mut buffer = vec![2, 0];
+    let length = req.compute_size() as u32;
+    buffer.extend_from_slice(&length.to_be_bytes());
+    req.write_to_vec(&mut buffer).unwrap();
+
+    {
+        let mut conn_guard = WIFICONN.lock().unwrap();
+
+        if let Some(conn) = conn_guard.as_mut() {
+            conn.write_all(&buffer)?;
+        } else {
+            return Err("Connection not available".into());
+        }
+    }
+
+    Ok(())
+}
+
+fn listen_wifi_loop() -> Result<(), Box<dyn std::error::Error>> {
+    let mut conn_guard = WIFICONN.lock().unwrap();
+    let conn = conn_guard.as_mut().ok_or("Connection not initialized")?;
+
+    let mut conn_clone = conn.try_clone()?;
+    drop(conn_guard);
+
+    let mut reader = BufReader::new(&mut conn_clone);
+
+    loop {
+        let mut header = [0u8; 5];
+        reader.read_exact(&mut header)?;
+
+        match header[0] {
+            0 => {
+                let length = u32::from_be_bytes(header[1..].try_into().unwrap());
+
+                let mut payload = vec![0u8; length as usize];
+                reader.read_exact(&mut payload)?;
+
+                let mut resp = SubscribeResponse::new();
+                resp.merge_from_bytes(&payload)?;
+
+                glib::idle_add_once(move || {
+                    with_window(|w| {
+                        if let Some(p) = &w.placeholder {
+                            match resp.value.as_str() {
+                                "wifi:wifion" => p.set_text("Turning WiFi on..."),
+                                "wifi:wifioff" => p.set_text("Turning WiFi off..."),
+                                "wifi:connect" => p.set_text("Connecting..."),
+                                "wifi:disconnect" => p.set_text("Disconnecting..."),
+                                "wifi:forget" => p.set_text("Forgetting network..."),
+                                "wifi:scan" => p.set_text("Scanning..."),
+                                "wifi:connect_failed" => {
+                                    p.set_text("Connection failed. Wrong password?");
+                                }
+                                "wifi:reset" => {
+                                    p.set_visible(false);
+                                    w.scroll.set_visible(true);
+                                    return;
+                                }
+                                _ => (),
+                            }
+
+                            p.set_visible(true);
+                            w.scroll.set_visible(false);
+                        }
+                    });
+                });
+            }
+            _ => continue,
+        }
+    }
 }
 
 fn wait_for_file(path: &str) {

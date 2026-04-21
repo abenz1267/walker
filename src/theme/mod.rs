@@ -294,6 +294,8 @@ pub fn setup_layer_shell(win: &Window) {
         crate::config::Layer::Overlay => Layer::Overlay,
     };
 
+    println!("{:?}", layer);
+
     win.set_layer(layer);
 
     win.set_keyboard_mode(if cfg.force_keyboard_focus {

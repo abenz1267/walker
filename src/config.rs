@@ -437,6 +437,9 @@ impl Shell {
         if let Some(v) = partial.exclusive_zone {
             self.exclusive_zone = v;
         }
+        if let Some(v) = partial.layer {
+            self.layer = v;
+        }
     }
 }
 

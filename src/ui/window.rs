@@ -6,8 +6,8 @@ use crate::{
         ACTION_CLOSE, ACTION_QUICK_ACTIVATE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_DOWN,
         ACTION_SELECT_LEFT, ACTION_SELECT_NEXT, ACTION_SELECT_PAGE_DOWN, ACTION_SELECT_PAGE_UP,
         ACTION_SELECT_PREVIOUS, ACTION_SELECT_RIGHT, ACTION_SELECT_UP, ACTION_SHOW_ACTIONS,
-        ACTION_TOGGLE_EXACT, Action, AfterAction, get_bind, get_fallback_action, get_provider_bind,
-        get_provider_global_bind, get_show_actions_action,
+        ACTION_TOGGLE_EXACT, Action, AfterAction, format_bind_symbols, get_bind,
+        get_fallback_action, get_provider_bind, get_provider_global_bind, get_show_actions_action,
     },
     protos::generated_proto::query::{
         QueryResponse,
@@ -1434,7 +1434,12 @@ pub fn generate_hints(p: &std::boxed::Box<dyn Provider>, actions: &[String], k: 
             check_error();
 
             if let Some(b) = bind {
-                b.set_text(h.bind.as_ref().unwrap())
+                let raw = h.bind.as_ref().unwrap();
+                if cfg.keybind_symbols {
+                    b.set_text(&format_bind_symbols(raw));
+                } else {
+                    b.set_text(raw);
+                }
             }
 
             if let Some(l) = label {
@@ -1532,6 +1537,7 @@ pub fn show_actions_menu(response: Option<crate::protos::generated_proto::query:
 
         if let Some(p) = providers.get(provider) {
             let hints = p.get_keybind_hint(&actions);
+            let cfg = get_config();
 
             hints.iter().enumerate().for_each(|(i, h)| {
                 let mut item = query_response::Item::new();
@@ -1541,7 +1547,12 @@ pub fn show_actions_menu(response: Option<crate::protos::generated_proto::query:
                     h.action.clone()
                 };
 
-                item.subtext = h.bind.clone().unwrap();
+                let raw = h.bind.as_ref().unwrap();
+                item.subtext = if cfg.keybind_symbols {
+                    format_bind_symbols(raw)
+                } else {
+                    raw.clone()
+                };
                 item.provider = "actionmenu".to_string();
                 item.score = 1000000 - i as i32;
                 item.actions = vec!["select".to_string()];

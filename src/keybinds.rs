@@ -74,6 +74,73 @@ pub static MODIFIERS: LazyLock<HashMap<&'static str, gdk::ModifierType>> = LazyL
     map
 });
 
+/// Convert a textual bind like "ctrl Return" or "shift alt a" into a
+/// representation using key symbols joined by "+", e.g. "⌃+⏎" or "⇧+⌥+A".
+///
+/// Unknown tokens are passed through unchanged (single letters are
+/// uppercased so "ctrl a" becomes "⌃+A" rather than "⌃+a").
+pub fn format_bind_symbols(bind: &str) -> String {
+    bind.split_whitespace()
+        .map(token_to_symbol)
+        .collect::<Vec<_>>()
+        .join("+")
+}
+
+fn token_to_symbol(token: &str) -> String {
+    match token.to_lowercase().as_str() {
+        // Modifiers
+        "ctrl" | "control" => "⌃".to_string(),
+        "alt" | "meta" => "⌥".to_string(),
+        "shift" => "⇧".to_string(),
+        "super" | "mod4" | "win" => "⌘".to_string(),
+
+        // Common named keys
+        "return" | "enter" | "kp_enter" => "⏎".to_string(),
+        "backspace" => "⌫".to_string(),
+        "delete" | "kp_delete" => "⌦".to_string(),
+        "escape" | "esc" => "⎋".to_string(),
+        "tab" => "⇥".to_string(),
+        "iso_left_tab" => "⇤".to_string(),
+        "space" => "␣".to_string(),
+        "up" | "kp_up" => "↑".to_string(),
+        "down" | "kp_down" => "↓".to_string(),
+        "left" | "kp_left" => "←".to_string(),
+        "right" | "kp_right" => "→".to_string(),
+        "page_up" | "pageup" | "kp_page_up" | "prior" => "⇞".to_string(),
+        "page_down" | "pagedown" | "kp_page_down" => "⇟".to_string(),
+        "home" | "kp_home" => "⤒".to_string(),
+        "end" | "kp_end" => "⤓".to_string(),
+        "insert" | "kp_insert" => "Ins".to_string(),
+        "caps_lock" => "⇪".to_string(),
+        "menu" => "▤".to_string(),
+
+        // Punctuation that GDK names with a word
+        "plus" | "kp_add" => "+".to_string(),
+        "minus" | "kp_subtract" => "−".to_string(),
+        "equal" => "=".to_string(),
+        "comma" => ",".to_string(),
+        "period" | "kp_decimal" => ".".to_string(),
+        "slash" | "kp_divide" => "/".to_string(),
+        "backslash" => "\\".to_string(),
+        "semicolon" => ";".to_string(),
+        "apostrophe" => "'".to_string(),
+        "grave" => "`".to_string(),
+        "bracketleft" => "[".to_string(),
+        "bracketright" => "]".to_string(),
+        "asterisk" | "kp_multiply" => "*".to_string(),
+
+        // Fall-through: keep multi-char tokens (e.g. "F1") as-is,
+        // uppercase single letters.
+        _ => {
+            if token.chars().count() == 1 {
+                token.to_uppercase()
+            } else {
+                token.to_string()
+            }
+        }
+    }
+}
+
 pub fn setup_binds() {
     PROVIDERS.get().unwrap().iter().for_each(|(k, v)| {
         v.get_actions().iter().for_each(|v| {

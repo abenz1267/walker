@@ -887,9 +887,9 @@ pub fn quit(app: &Application, cancelled: bool) {
         return;
     }
 
-    app.active_window().unwrap().set_visible(false);
-
     with_window(|w| {
+        w.window.set_visible(false);
+
         while let Some(preview) = w.builder.object::<Box>("Preview")
             && let Some(child) = preview.first_child()
         {
@@ -933,74 +933,72 @@ pub fn quit(app: &Application, cancelled: bool) {
         set_dmenu_keep_open(false);
     }
 
-    gtk4::glib::idle_add_once(|| {
-        with_window(|w| {
-            if let Some(input) = &w.input {
-                if !is_dmenu() {
-                    set_last_query(provider, input.text().to_string());
-                }
-
-                if !get_initial_placeholder().is_empty() {
-                    set_placeholder_text(&get_initial_placeholder());
-                    set_initial_placeholder(String::new());
-                }
-            };
-
-            if let Some(search_container) = &w.search_container {
-                search_container.set_visible(true);
+    with_window(|w| {
+        if let Some(input) = &w.input {
+            if !is_dmenu() {
+                set_last_query(provider, input.text().to_string());
             }
 
-            w.item_keybinds.set_visible(true);
-            w.keybinds.set_visible(true);
-
-            w.content_container.set_visible(true);
-
-            if let Some(val) = get_initial_height() {
-                w.box_wrapper.set_height_request(val);
-                set_initial_height(None);
+            if !get_initial_placeholder().is_empty() {
+                set_placeholder_text(&get_initial_placeholder());
+                set_initial_placeholder(String::new());
             }
+        };
 
-            if let Some(val) = get_initial_width() {
-                w.box_wrapper.set_width_request(val);
-                set_initial_width(None);
-            }
+        if let Some(search_container) = &w.search_container {
+            search_container.set_visible(true);
+        }
 
-            if let Some(val) = get_initial_max_width() {
-                w.scroll.set_max_content_width(val);
-                set_initial_max_width(None);
-            }
+        w.item_keybinds.set_visible(true);
+        w.keybinds.set_visible(true);
 
-            if let Some(val) = get_initial_min_width() {
-                w.scroll.set_min_content_width(val);
-                set_initial_min_width(None);
-            }
+        w.content_container.set_visible(true);
 
-            if let Some(val) = get_initial_max_height() {
-                w.scroll.set_max_content_height(val);
-                set_initial_max_height(None);
-            }
+        if let Some(val) = get_initial_height() {
+            w.box_wrapper.set_height_request(val);
+            set_initial_height(None);
+        }
 
-            if let Some(val) = get_initial_min_height() {
-                w.scroll.set_min_content_height(val);
-                set_initial_min_height(None);
-            }
+        if let Some(val) = get_initial_width() {
+            w.box_wrapper.set_width_request(val);
+            set_initial_width(None);
+        }
 
-            w.items.remove_all();
-            w.list.set_max_columns(w.list_max_columns);
-            w.list.set_min_columns(w.list_max_columns);
+        if let Some(val) = get_initial_max_width() {
+            w.scroll.set_max_content_width(val);
+            set_initial_max_width(None);
+        }
 
-            let is_grid = w.list_max_columns > 1;
+        if let Some(val) = get_initial_min_width() {
+            w.scroll.set_min_content_width(val);
+            set_initial_min_width(None);
+        }
 
-            set_is_grid(is_grid);
+        if let Some(val) = get_initial_max_height() {
+            w.scroll.set_max_content_height(val);
+            set_initial_max_height(None);
+        }
 
-            if is_grid {
-                w.list.add_css_class("grid");
-            } else {
-                w.list.remove_css_class("grid");
-            }
+        if let Some(val) = get_initial_min_height() {
+            w.scroll.set_min_content_height(val);
+            set_initial_min_height(None);
+        }
 
-            set_theme(get_config().theme.clone());
-        });
+        w.items.remove_all();
+        w.list.set_max_columns(w.list_max_columns);
+        w.list.set_min_columns(w.list_max_columns);
+
+        let is_grid = w.list_max_columns > 1;
+
+        set_is_grid(is_grid);
+
+        if is_grid {
+            w.list.add_css_class("grid");
+        } else {
+            w.list.remove_css_class("grid");
+        }
+
+        set_theme(get_config().theme.clone());
     });
 }
 

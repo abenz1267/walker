@@ -2181,7 +2181,7 @@ dependencies = [
 
 [[package]]
 name = "walker"
-version = "2.16.1"
+version = "2.16.2"
 dependencies = [
  "bitflags 2.10.0",
  "cairo-rs 0.21.5",

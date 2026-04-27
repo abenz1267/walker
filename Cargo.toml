@@ -1,11 +1,16 @@
 [package]
 name = "walker"
-version = "2.16.0"
+version = "2.16.1"
 edition = "2024"
 
 [dependencies]
 gtk4 = { version = "^0.9.7", features = ["v4_6", "v4_12", "gio_v2_80"] }
 gtk4-layer-shell = "0.5.0"
+gdk4-wayland = { version = "^0.9", features = ["v4_12", "wayland_crate"] }
+wayland-client = { version = "0.31", features = ["dlopen"] }
+wayland-backend = { version = "0.3", features = ["client_system", "dlopen"] }
+wayland-scanner = "0.31"
+bitflags = "2"
 protobuf = "3.7.2"
 grass = "0.13.4"
 serde = { version = "1.0.219", features = ["derive"] }

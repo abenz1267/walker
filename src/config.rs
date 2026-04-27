@@ -42,6 +42,7 @@ pub struct Walker {
     pub columns: Option<HashMap<String, u32>>,
     pub page_jump_items: u32,
     pub autoplay_videos: bool,
+    pub ext_background_effect_blur: bool,
 }
 
 // Partial config for user overrides
@@ -102,6 +103,8 @@ struct PartialWalker {
     pub page_jump_items: Option<u32>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub as_window: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub ext_background_effect_blur: Option<bool>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -289,6 +292,9 @@ impl Walker {
         }
         if let Some(v) = partial.as_window {
             self.as_window = v;
+        }
+        if let Some(v) = partial.ext_background_effect_blur {
+            self.ext_background_effect_blur = v;
         }
         if let Some(p) = partial.providers {
             self.providers.merge(p);

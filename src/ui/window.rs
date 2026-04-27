@@ -360,6 +360,10 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
 
     setup_layer_shell(&ui.window);
 
+    if get_config().ext_background_effect_blur {
+        crate::wayland_blur::attach_blur(&ui.window, &ui.box_wrapper);
+    }
+
     Ok(ui)
 }
 

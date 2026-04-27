@@ -17,6 +17,7 @@ hide_return_action = false      # hide actions that are bound to Return
 resume_last_query = false       # open walker with the last query in place
 actions_as_menu = false         # display all possible actions in a submenu
 autoplay_videos = false         # auto-play video previews
+ext_background_effect_blur = false # request the compositor to blur behind the box-wrapper via ext-background-effect-v1 (compositor must support it)
 
 [shell]
 exclusive_zone = -1

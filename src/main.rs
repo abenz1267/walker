@@ -8,6 +8,7 @@ mod renderers;
 mod state;
 mod theme;
 mod ui;
+mod wayland_blur;
 use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual, SettingsExt};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard};
 use gtk4::glib::Priority;

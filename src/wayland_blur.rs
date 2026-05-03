@@ -3,7 +3,6 @@ use std::rc::Rc;
 
 use gdk4_wayland::prelude::WaylandSurfaceExtManual;
 use gdk4_wayland::{WaylandDisplay, WaylandSurface};
-use gtk4::glib::ControlFlow;
 use gtk4::prelude::*;
 use gtk4::{Box as GtkBox, Window};
 use wayland_client::protocol::wl_compositor::WlCompositor;
@@ -97,9 +96,31 @@ pub fn attach_blur(window: &Window, target: &GtkBox) {
 
     {
         let ctx = ctx.clone();
-        window.connect_realize(move |window| match init_context(window) {
-            Ok(c) => *ctx.borrow_mut() = Some(c),
-            Err(e) => eprintln!("background-effect-v1 unavailable: {e}"),
+        let target = target.clone();
+        window.connect_realize(move |window| {
+            let Ok(c) = init_context(window) else {
+                eprintln!("background-effect-v1 unavailable");
+                return;
+            };
+            *ctx.borrow_mut() = Some(c);
+
+            if let Some(fc) = window.frame_clock() {
+                let ctx = ctx.clone();
+                let target = target.clone();
+                let window = window.clone();
+                fc.connect_layout(move |_| {
+                    if let Some(c) = ctx.borrow_mut().as_mut()
+                        && let Some(bounds) = target.compute_bounds(&window)
+                    {
+                        c.update_region((
+                            bounds.x() as i32,
+                            bounds.y() as i32,
+                            bounds.width() as i32,
+                            bounds.height() as i32,
+                        ));
+                    }
+                });
+            }
         });
     }
 
@@ -107,24 +128,6 @@ pub fn attach_blur(window: &Window, target: &GtkBox) {
         let ctx = ctx.clone();
         window.connect_unrealize(move |_| {
             ctx.borrow_mut().take();
-        });
-    }
-
-    {
-        let ctx = ctx.clone();
-        let window = window.clone();
-        target.add_tick_callback(move |target, _| {
-            if let Some(c) = ctx.borrow_mut().as_mut() {
-                if let Some(bounds) = target.compute_bounds(&window) {
-                    c.update_region((
-                        bounds.x() as i32,
-                        bounds.y() as i32,
-                        bounds.width() as i32,
-                        bounds.height() as i32,
-                    ));
-                }
-            }
-            ControlFlow::Continue
         });
     }
 }

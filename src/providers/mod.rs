@@ -18,7 +18,8 @@ use crate::{
     keybinds::Action,
     protos::generated_proto::query::query_response::Item,
     providers::{
-        actionsmenu::ActionsMenu, archlinuxpkgs::ArchLinuxPkgs, bookmarks::Bookmarks, calc::Calc,
+        actionsmenu::ActionsMenu, archlinuxpkgs::ArchLinuxPkgs, aptpackages::AptPackages,
+        bookmarks::Bookmarks, calc::Calc,
         clipboard::Clipboard, default_provider::DefaultProvider, dmenu::Dmenu,
         dnfpackages::DnfPackages, emergency::Emergency, files::Files, providerlist::Providerlist,
         symbols::Symbols, todo::Todo, unicode::Unicode,
@@ -27,6 +28,7 @@ use crate::{
 
 pub mod actionsmenu;
 pub mod archlinuxpkgs;
+pub mod aptpackages;
 pub mod bookmarks;
 pub mod calc;
 pub mod clipboard;
@@ -273,6 +275,9 @@ pub fn setup_providers(elephant: bool) {
             // ),
             "archlinuxpkgs" => {
                 providers.insert("archlinuxpkgs".to_string(), Box::new(ArchLinuxPkgs::new()))
+            }
+            "aptpackages" => {
+                providers.insert("aptpackages".to_string(), Box::new(AptPackages::new()))
             }
             "dnfpackages" => {
                 providers.insert("dnfpackages".to_string(), Box::new(DnfPackages::new()))

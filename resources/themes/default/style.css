@@ -203,6 +203,7 @@ row:selected .item-box {
 }
 
 .preview-content.archlinuxpkgs,
-.preview-content.dnfpackages {
+.preview-content.dnfpackages,
+.preview-content.aptpackages {
   font-family: monospace;
 }

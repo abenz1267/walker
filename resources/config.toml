@@ -1,23 +1,23 @@
-force_keyboard_focus = false    # forces keyboard forcus to stay in Walker
-close_when_open = true          # close walker when invoking while already opened
-click_to_close = true           # closes walker if clicking outside of the main content area
-as_window = false               # launch walker as a regular window instead of layer shell application
-single_click_activation = true  # activate items with a single click opposed to a double click
-selection_wrap = false          # wrap list if at bottom or top
-global_argument_delimiter = "#" # query: firefox#https://benz.dev => part after delimiter will be ignored when querying. this should be the same as in the elephant config
-exact_search_prefix = "'"       # disable fuzzy searching
-theme = "default"               # theme to use
-disable_mouse = false           # disable mouse (on input and list only)
-debug = false                   # enables debug printing for some stuff, f.e. keybinds
-page_jump_items = 10            # number of items to skip with Page Up/Down
-hide_quick_activation = false   # globally hide the quick activation buttons
-hide_action_hints = false       # globally hide the action hints
-hide_action_hints_dmenu = true  # hide the actions hints for dmenu
-hide_return_action = false      # hide actions that are bound to Return
-keybind_symbols = true          # render keybind hints with key symbols (e.g. ⌃+⏎) instead of plain text ("ctrl Return")
-resume_last_query = false       # open walker with the last query in place
-actions_as_menu = false         # display all possible actions in a submenu
-autoplay_videos = false         # auto-play video previews
+force_keyboard_focus = false       # forces keyboard forcus to stay in Walker
+close_when_open = true             # close walker when invoking while already opened
+click_to_close = true              # closes walker if clicking outside of the main content area
+as_window = false                  # launch walker as a regular window instead of layer shell application
+single_click_activation = true     # activate items with a single click opposed to a double click
+selection_wrap = false             # wrap list if at bottom or top
+global_argument_delimiter = "#"    # query: firefox#https://benz.dev => part after delimiter will be ignored when querying. this should be the same as in the elephant config
+exact_search_prefix = "'"          # disable fuzzy searching
+theme = "default"                  # theme to use
+disable_mouse = false              # disable mouse (on input and list only)
+debug = false                      # enables debug printing for some stuff, f.e. keybinds
+page_jump_items = 10               # number of items to skip with Page Up/Down
+hide_quick_activation = false      # globally hide the quick activation buttons
+hide_action_hints = false          # globally hide the action hints
+hide_action_hints_dmenu = true     # hide the actions hints for dmenu
+hide_return_action = false         # hide actions that are bound to Return
+keybind_symbols = true             # render keybind hints with key symbols (e.g. ⌃+⏎) instead of plain text ("ctrl Return")
+resume_last_query = false          # open walker with the last query in place
+actions_as_menu = false            # display all possible actions in a submenu
+autoplay_videos = false            # auto-play video previews
 ext_background_effect_blur = false # request the compositor to blur behind the box-wrapper via ext-background-effect-v1 (compositor must support it)
 
 [shell]
@@ -237,6 +237,7 @@ clipboard = [
   { action = "remove", bind = "ctrl d", after = "AsyncClearReload" },
   { action = "remove_all", label = "clear", bind = "ctrl shift d", after = "AsyncClearReload" },
   { action = "show_images_only", label = "only images", bind = "ctrl i", after = "AsyncClearReload" },
+  { action = "show_pinned_only", label = "only pinned", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "show_text_only", label = "only text", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "show_combined", label = "show all", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "pause", bind = "ctrl shift p" },

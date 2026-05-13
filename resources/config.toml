@@ -196,8 +196,8 @@ bitwarden = [
   { action = "typepassword", label = "type password", default = true, bind = "ctrl p" },
   { action = "copyusername", label = "copy username", bind = "shift Return" },
   { action = "typeusername", label = "type username", bind = "ctrl u" },
-  { action = "copyotp", label = "copy 2fa", bind = "ctrl Return" },
-  { action = "typeotp", label = "type 2fa", bind = "ctrl t" },
+  { action = "copytotp", label = "copy 2fa", bind = "ctrl Return" },
+  { action = "typetotp", label = "type 2fa", bind = "ctrl t" },
   { action = "syncvault", label = "sync", bind = "ctrl s" },
 ]
 

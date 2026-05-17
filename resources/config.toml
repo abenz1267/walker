@@ -48,6 +48,9 @@ quick_activate = ["F1", "F2", "F3", "F4"]
 page_down = ["Page_Down"]
 page_up = ["Page_Up"]
 show_actions = ["alt j"]
+select_toggle_current = ["space"]
+select_extend_up = ["shift Up"]
+select_extend_down = ["shift Down"]
 
 [providers]
 default = [

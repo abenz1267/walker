@@ -4,8 +4,9 @@ use crate::{
     data::{activate, input_changed, set_state},
     keybinds::{
         ACTION_CLOSE, ACTION_QUICK_ACTIVATE, ACTION_RESUME_LAST_QUERY, ACTION_SELECT_DOWN,
-        ACTION_SELECT_LEFT, ACTION_SELECT_NEXT, ACTION_SELECT_PAGE_DOWN, ACTION_SELECT_PAGE_UP,
-        ACTION_SELECT_PREVIOUS, ACTION_SELECT_RIGHT, ACTION_SELECT_UP, ACTION_SHOW_ACTIONS,
+        ACTION_SELECT_EXTEND_DOWN, ACTION_SELECT_EXTEND_UP, ACTION_SELECT_LEFT, ACTION_SELECT_NEXT,
+        ACTION_SELECT_PAGE_DOWN, ACTION_SELECT_PAGE_UP, ACTION_SELECT_PREVIOUS,
+        ACTION_SELECT_RIGHT, ACTION_SELECT_TOGGLE_CURRENT, ACTION_SELECT_UP, ACTION_SHOW_ACTIONS,
         ACTION_TOGGLE_EXACT, Action, AfterAction, format_bind_symbols, get_bind,
         get_fallback_action, get_provider_bind, get_provider_global_bind, get_show_actions_action,
     },
@@ -23,17 +24,18 @@ use crate::{
         get_initial_placeholder, get_initial_width, get_last_query, get_placeholder,
         get_prefix_provider, get_provider, get_query, get_theme, is_actions_menu, is_connected,
         is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open, is_emergency, is_grid, is_no_hints,
-        is_select_single, is_service, set_action_menu_item, set_action_menu_prefix,
-        set_action_menu_query, set_async_after, set_current_prefix, set_current_set,
-        set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa,
-        set_index, set_initial_height, set_initial_max_height, set_initial_max_width,
-        set_initial_min_height, set_initial_min_width, set_initial_placeholder, set_initial_width,
-        set_input_only, set_is_actions_menu, set_is_dmenu, set_is_grid,
-        set_is_stay_open_explicit_provider, set_is_visible, set_last_query, set_no_hints,
-        set_no_search, set_param_close, set_parameter_height, set_parameter_max_height,
-        set_parameter_max_width, set_parameter_min_height, set_parameter_min_width,
-        set_parameter_width, set_password_mode, set_placeholder, set_provider, set_query,
-        set_theme,
+        is_select_single, is_service, multi_selected_clear, multi_selected_contains,
+        multi_selected_is_empty, multi_selected_snapshot, multi_selected_toggle,
+        set_action_menu_item, set_action_menu_prefix, set_action_menu_query, set_async_after,
+        set_current_prefix, set_current_set, set_dmenu_current, set_dmenu_exit_after,
+        set_dmenu_keep_open, set_error, set_hide_qa, set_index, set_initial_height,
+        set_initial_max_height, set_initial_max_width, set_initial_min_height,
+        set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
+        set_is_actions_menu, set_is_dmenu, set_is_grid, set_is_stay_open_explicit_provider,
+        set_is_visible, set_last_query, set_no_hints, set_no_search, set_param_close,
+        set_parameter_height, set_parameter_max_height, set_parameter_max_width,
+        set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_password_mode,
+        set_placeholder, set_provider, set_query, set_theme,
     },
     theme::{Theme, setup_layer_shell, with_themes},
 };
@@ -74,6 +76,48 @@ use std::{
 thread_local! {
     pub static WINDOWS: OnceCell<HashMap<String, WindowData>> = const { OnceCell::new() };
     pub static CSS_PROVIDER: RefCell<Option<CssProvider>> = const { RefCell::new(None) };
+    // Registry of currently-bound (position, itembox) rows. Maintained by the
+    // factory's connect_bind / connect_unbind. Used to repaint the
+    // `selected-multi` CSS class when the multi-select set changes without
+    // forcing a full rebind / scroll churn.
+    pub static BOUND_ROWS: RefCell<HashMap<u32, gtk4::Box>> = RefCell::new(HashMap::new());
+}
+
+/// CSS class added to a row widget while its index is in the multi-select set.
+pub const MULTI_SELECT_CSS_CLASS: &str = "selected-multi";
+
+/// Register a row widget under its current position so multi-select repaints
+/// can find it later.
+pub fn register_bound_row(pos: u32, itembox: &gtk4::Box) {
+    BOUND_ROWS.with(|r| {
+        r.borrow_mut().insert(pos, itembox.clone());
+    });
+    if multi_selected_contains(pos) {
+        itembox.add_css_class(MULTI_SELECT_CSS_CLASS);
+    } else {
+        itembox.remove_css_class(MULTI_SELECT_CSS_CLASS);
+    }
+}
+
+/// Drop a row widget from the registry (called from connect_unbind).
+pub fn unregister_bound_row(pos: u32) {
+    BOUND_ROWS.with(|r| {
+        r.borrow_mut().remove(&pos);
+    });
+}
+
+/// Refresh `selected-multi` on every currently-bound row to match the current
+/// `multi_selected` set. Cheap: only iterates visible rows.
+pub fn refresh_multi_select_styling() {
+    BOUND_ROWS.with(|r| {
+        for (pos, itembox) in r.borrow().iter() {
+            if multi_selected_contains(*pos) {
+                itembox.add_css_class(MULTI_SELECT_CSS_CLASS);
+            } else {
+                itembox.remove_css_class(MULTI_SELECT_CSS_CLASS);
+            }
+        }
+    });
 }
 
 pub fn set_css_provider(provider: CssProvider) {
@@ -449,6 +493,23 @@ fn setup_window_behavior(ui: &WindowData, app: &Application) {
 }
 
 fn activate_default(app: &Application) {
+    // Snapshot the multi-select set before touching the window. If any rows
+    // are checked off, iterate them in ascending order and fire each row's
+    // default action. The launcher is kept open across the iteration if any
+    // action requests KeepOpen — see below.
+    let multi = multi_selected_snapshot();
+
+    if multi.is_empty() {
+        // Fast-path / fully backwards-compatible single-row behaviour.
+        activate_single_selected(app);
+        return;
+    }
+
+    activate_multi_selected(app, &multi);
+}
+
+/// Original single-row activate path (the one before multi-select existed).
+fn activate_single_selected(app: &Application) {
     with_window(|w| {
         let query = w.input.as_ref().map(Entry::text).unwrap_or_default();
 
@@ -475,6 +536,149 @@ fn activate_default(app: &Application) {
             handle_after(&after, app, query.to_string());
         }
     });
+}
+
+/// Iterate the multi-selected indices (already ascending — BTreeSet) and fire
+/// the default action for each row. If any action wants `KeepOpen`, that's
+/// what we honor at the end — otherwise we use the last action's after value.
+/// A small delay between activates avoids overwhelming elephant.
+fn activate_multi_selected(app: &Application, indices: &[u32]) {
+    use std::{thread::sleep, time::Duration};
+
+    // Resolve every (response, provider, action) tuple up front so we don't
+    // re-enter `with_window` (and risk RefCell trouble) inside the loop.
+    let resolved: Vec<(QueryResponse, String, Action, String)> = with_window(|w| {
+        let query: String = w
+            .input
+            .as_ref()
+            .map(|e| e.text().to_string())
+            .unwrap_or_default();
+        let providers = PROVIDERS.get().unwrap();
+
+        indices
+            .iter()
+            .filter_map(|&idx| {
+                let obj = w
+                    .selection
+                    .item(idx)
+                    .map(Object::downcast::<QueryResponseObject>)
+                    .and_then(Result::ok)?;
+                let response = obj.response();
+                let item = response.item.as_ref()?.clone();
+                let provider = item.provider.clone();
+                let p = providers.get(&provider)?;
+                let actions = p.get_keybind_hint(&item.actions);
+                let action = if item.actions.len() == 1 {
+                    actions
+                        .iter()
+                        .find(|a| a.action == *item.actions.first().unwrap())
+                        .cloned()?
+                } else {
+                    actions
+                        .iter()
+                        .find(|a| a.default.unwrap_or(false))
+                        .cloned()?
+                };
+                Some((response, provider, action, query.clone()))
+            })
+            .collect()
+    });
+
+    if resolved.is_empty() {
+        multi_selected_clear();
+        return;
+    }
+
+    let mut keep_open = false;
+    let mut last_after = AfterAction::Close;
+    let last_idx = resolved.len() - 1;
+
+    for (i, (response, provider, action, query)) in resolved.into_iter().enumerate() {
+        activate(Some(response), &provider, &query, &action);
+
+        let after = action.after.as_ref().unwrap_or(&AfterAction::Close).clone();
+        if matches!(after, AfterAction::KeepOpen) {
+            keep_open = true;
+        }
+        if i == last_idx {
+            last_after = after;
+        }
+
+        // Small breather so elephant doesn't choke on rapid-fire Activates
+        // from the same client. Skip on the final iteration.
+        if i != last_idx {
+            sleep(Duration::from_millis(50));
+        }
+    }
+
+    // Clear selection state before handling `after`, because some after
+    // variants close the window (which already clears state) and we want a
+    // consistent post-condition either way.
+    multi_selected_clear();
+    refresh_multi_select_styling();
+
+    let final_after = if keep_open {
+        AfterAction::KeepOpen
+    } else {
+        last_after
+    };
+
+    let query = with_window(|w| {
+        w.input
+            .as_ref()
+            .map(|e| e.text().to_string())
+            .unwrap_or_default()
+    });
+    handle_after(&final_after, app, query);
+}
+
+/// Toggle multi-selection of the currently-highlighted row.
+pub fn select_toggle_current() {
+    with_window(|w| {
+        let n = w.selection.n_items();
+        if n == 0 {
+            return;
+        }
+        let cur = w.selection.selected();
+        if cur >= n {
+            return;
+        }
+        multi_selected_toggle(cur);
+    });
+    refresh_multi_select_styling();
+}
+
+/// Move the highlight up by one and toggle the row stepped onto.
+pub fn select_extend_up() {
+    // `select_previous` honors selection_wrap; we follow it for parity.
+    select_previous();
+    with_window(|w| {
+        let n = w.selection.n_items();
+        if n == 0 {
+            return;
+        }
+        let cur = w.selection.selected();
+        if cur < n {
+            multi_selected_toggle(cur);
+        }
+    });
+    refresh_multi_select_styling();
+}
+
+/// Move the highlight down by one and toggle the row stepped onto.
+pub fn select_extend_down() {
+    select_next();
+    with_window(|w| {
+        let n = w.selection.n_items();
+        if n == 0 {
+            return;
+        }
+        let cur = w.selection.selected();
+        if cur < n {
+            multi_selected_toggle(cur);
+        }
+    });
+    refresh_multi_select_styling();
 }
 
 fn setup_input_handling(input: &Entry) -> gdk::glib::SignalHandlerId {
@@ -714,6 +918,9 @@ fn setup_keyboard_handling(ui: &WindowData) {
                         ACTION_SELECT_PAGE_DOWN => select_page_down(),
                         ACTION_SELECT_PAGE_UP => select_page_up(),
                         ACTION_SHOW_ACTIONS => show_actions_menu(get_selected_query_response()),
+                        ACTION_SELECT_TOGGLE_CURRENT => select_toggle_current(),
+                        ACTION_SELECT_EXTEND_UP => select_extend_up(),
+                        ACTION_SELECT_EXTEND_DOWN => select_extend_down(),
                         action if action.starts_with(ACTION_QUICK_ACTIVATE) => {
                             if let Some((_, after)) = action.split_once(":") {
                                 let i: u32 = after.parse().unwrap();
@@ -796,6 +1003,7 @@ fn setup_list_behavior(ui: &WindowData) {
             .downcast_ref::<gtk4::ListItem>()
             .expect("failed casting to ListItem");
 
+        unregister_bound_row(item.position());
         item.set_child(None::<&gtk4::Widget>);
     });
 
@@ -820,6 +1028,43 @@ fn setup_list_behavior(ui: &WindowData) {
                 }
             }
         });
+
+        // After create_item has set the row widget, register it for
+        // multi-select CSS repainting. The factory may recycle widgets at
+        // different positions while scrolling — connect_unbind drops the
+        // stale entry, so the map only ever holds currently-bound rows.
+        if let Some(child) = item.child()
+            && let Ok(itembox) = child.downcast::<gtk4::Box>()
+        {
+            register_bound_row(item.position(), &itembox);
+
+            // ctrl+left-click toggles multi-select for this row instead of
+            // activating it. Plain click falls through to the existing
+            // single-click-activate path on the list view. We capture
+            // ctrl+click in the Capture phase and mark the gesture
+            // CLAIMED so the ListView's activation doesn't fire.
+            if !get_config().disable_mouse {
+                let gc = GestureClick::new();
+                gc.set_button(gdk::BUTTON_PRIMARY);
+                gc.set_propagation_phase(PropagationPhase::Capture);
+                let item_ref = item.clone();
+                gc.connect_pressed(move |gesture, _n_press, _x, _y| {
+                    let evt = match gesture.current_event() {
+                        Some(e) => e,
+                        None => return,
+                    };
+                    let m = evt.modifier_state() & !ModifierType::LOCK_MASK;
+                    if !m.contains(ModifierType::CONTROL_MASK) {
+                        return;
+                    }
+                    let pos = item_ref.position();
+                    multi_selected_toggle(pos);
+                    refresh_multi_select_styling();
+                    gesture.set_state(gtk4::EventSequenceState::Claimed);
+                });
+                itembox.add_controller(gc);
+            }
+        }
     });
 
     ui.list.set_model(Some(&ui.selection));
@@ -870,6 +1115,7 @@ fn reset_provider_states() {
 
 pub fn quit(app: &Application, cancelled: bool) {
     reset_provider_states();
+    multi_selected_clear();
 
     if GLOBAL_DMENU_SENDER.read().unwrap().is_some() {
         send_message("CNCLD".to_string());
@@ -1513,6 +1759,8 @@ pub fn show_actions_menu(response: Option<crate::protos::generated_proto::query:
     let Some(item) = response.item.as_ref() else {
         return;
     };
+
+    multi_selected_clear();
 
     with_window(move |w| {
         if let Some(p) = &w.preview_container {

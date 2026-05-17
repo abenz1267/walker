@@ -19,6 +19,9 @@ pub const ACTION_QUICK_ACTIVATE: &str = "%QUICK_ACTIVATE%";
 pub const ACTION_SELECT_PAGE_DOWN: &str = "%PAGE_DOWN%";
 pub const ACTION_SELECT_PAGE_UP: &str = "%PAGE_UP%";
 pub const ACTION_SHOW_ACTIONS: &str = "%SHOW_ACTIONS%";
+pub const ACTION_SELECT_TOGGLE_CURRENT: &str = "%SELECT_TOGGLE_CURRENT%";
+pub const ACTION_SELECT_EXTEND_UP: &str = "%SELECT_EXTEND_UP%";
+pub const ACTION_SELECT_EXTEND_DOWN: &str = "%SELECT_EXTEND_DOWN%";
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 pub enum AfterAction {
@@ -341,6 +344,51 @@ pub fn setup_binds() {
                 default: None,
                 bind: Some(b.clone()),
                 label: Some("select page up".to_string()),
+                after: Some(AfterAction::Nothing),
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.select_toggle_current.iter().for_each(|b| {
+        parse_bind(
+            &Action {
+                action: ACTION_SELECT_TOGGLE_CURRENT.to_string(),
+                unset: None,
+                default: None,
+                bind: Some(b.clone()),
+                label: Some("toggle multi-select".to_string()),
+                after: Some(AfterAction::Nothing),
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.select_extend_up.iter().for_each(|b| {
+        parse_bind(
+            &Action {
+                action: ACTION_SELECT_EXTEND_UP.to_string(),
+                unset: None,
+                default: None,
+                bind: Some(b.clone()),
+                label: Some("extend multi-select up".to_string()),
+                after: Some(AfterAction::Nothing),
+            },
+            "",
+        )
+        .unwrap();
+    });
+
+    config.keybinds.select_extend_down.iter().for_each(|b| {
+        parse_bind(
+            &Action {
+                action: ACTION_SELECT_EXTEND_DOWN.to_string(),
+                unset: None,
+                default: None,
+                bind: Some(b.clone()),
+                label: Some("extend multi-select down".to_string()),
                 after: Some(AfterAction::Nothing),
             },
             "",

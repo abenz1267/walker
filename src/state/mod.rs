@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeSet, HashMap, HashSet};
 use std::sync::{OnceLock, RwLock};
 
 use crate::data::get_provider_state;
@@ -62,6 +62,7 @@ pub struct AppState {
     current_set: String,
     is_visible: bool,
     query: String,
+    multi_selected: BTreeSet<u32>,
 }
 
 pub fn init_app_state() {
@@ -554,4 +555,53 @@ pub fn set_global_provider_state(state: ProviderStateResponse) {
     } else {
         clear_global_keybind_hints();
     }
+}
+
+// ---- Multi-row selection state ---------------------------------------------
+//
+// `multi_selected` tracks the *additional* set of selected rows by index,
+// parallel to the single-row highlight cursor maintained by SingleSelection.
+// When non-empty, activating the default action operates on each selected
+// row in ascending order. The set is cleared whenever the query changes
+// (see data::input_changed) and after a multi-activation pass.
+
+pub fn multi_selected_contains(idx: u32) -> bool {
+    STATE
+        .get()
+        .unwrap()
+        .read()
+        .unwrap()
+        .multi_selected
+        .contains(&idx)
+}
+
+pub fn multi_selected_toggle(idx: u32) -> bool {
+    let mut s = STATE.get().unwrap().write().unwrap();
+    if s.multi_selected.contains(&idx) {
+        s.multi_selected.remove(&idx);
+        false
+    } else {
+        s.multi_selected.insert(idx);
+        true
+    }
+}
+
+pub fn multi_selected_snapshot() -> Vec<u32> {
+    STATE
+        .get()
+        .unwrap()
+        .read()
+        .unwrap()
+        .multi_selected
+        .iter()
+        .copied()
+        .collect()
+}
+
+pub fn multi_selected_is_empty() -> bool {
+    STATE.get().unwrap().read().unwrap().multi_selected.is_empty()
+}
+
+pub fn multi_selected_clear() {
+    STATE.get().unwrap().write().unwrap().multi_selected.clear();
 }

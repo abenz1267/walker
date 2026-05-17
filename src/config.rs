@@ -162,6 +162,12 @@ struct PartialKeybinds {
     pub page_down: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub page_up: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub select_toggle_current: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub select_extend_up: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub select_extend_down: Option<Vec<String>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -429,6 +435,15 @@ impl Keybinds {
         if let Some(v) = partial.page_up {
             self.page_up = v;
         }
+        if let Some(v) = partial.select_toggle_current {
+            self.select_toggle_current = v;
+        }
+        if let Some(v) = partial.select_extend_up {
+            self.select_extend_up = v;
+        }
+        if let Some(v) = partial.select_extend_down {
+            self.select_extend_down = v;
+        }
     }
 }
 
@@ -501,6 +516,9 @@ pub struct Keybinds {
     pub quick_activate: Option<Vec<String>>,
     pub page_down: Vec<String>,
     pub page_up: Vec<String>,
+    pub select_toggle_current: Vec<String>,
+    pub select_extend_up: Vec<String>,
+    pub select_extend_down: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

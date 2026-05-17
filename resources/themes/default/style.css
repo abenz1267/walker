@@ -102,6 +102,22 @@ row:selected .item-box {
   background: alpha(@accent_bg_color, 0.25);
 }
 
+/* Multi-row selection: distinct from the single-row highlight cursor.
+   A row is added to this set via Space / shift+Arrow / ctrl+click; the
+   class is applied directly to the .item-box widget from Rust. The left
+   border + slightly stronger tint make multi-selected rows visually
+   distinct from both unselected rows and the highlight cursor. */
+.item-box.selected-multi {
+  background: alpha(@accent_bg_color, 0.35);
+  border-left: 3px solid @accent_bg_color;
+  padding-left: 7px;
+}
+
+child:selected .item-box.selected-multi,
+row:selected .item-box.selected-multi {
+  background: alpha(@accent_bg_color, 0.5);
+}
+
 .item-text-box {
 }
 

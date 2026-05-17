@@ -9,13 +9,14 @@ use crate::providers::PROVIDERS;
 use crate::state::{
     get_action_menu_query, get_async_after, get_current_prefix, get_current_set, get_error,
     get_prefix_provider, get_provider, is_actions_menu, is_connected, is_connecting, is_dmenu,
-    is_emergency, is_index, is_service, set_async_after, set_current_prefix, set_error,
-    set_global_provider_actions, set_global_provider_state, set_is_connected, set_is_connecting,
-    set_is_emergency, set_is_visible, set_prefix_provider, set_provider, set_query,
+    is_emergency, is_index, is_service, multi_selected_clear, set_async_after, set_current_prefix,
+    set_error, set_global_provider_actions, set_global_provider_state, set_is_connected,
+    set_is_connecting, set_is_emergency, set_is_visible, set_prefix_provider, set_provider,
+    set_query,
 };
 use crate::ui::window::{
-    check_error, handle_changed_items, reset_actions_menu, set_input_text, set_keybind_hint,
-    with_window,
+    check_error, handle_changed_items, refresh_multi_select_styling, reset_actions_menu,
+    set_input_text, set_keybind_hint, with_window,
 };
 use crate::{QueryResponseObject, send_message};
 use gtk4::glib::Object;
@@ -38,6 +39,12 @@ static BLUETOOTHCONN: Mutex<Option<UnixStream>> = Mutex::new(None);
 
 pub fn input_changed(text: &str) {
     set_current_prefix(String::new());
+
+    // Query changes always rebuild the result list, so any indices held in
+    // the multi-select set would be stale. Reset them and repaint visible
+    // rows to drop the highlight CSS class.
+    multi_selected_clear();
+    refresh_multi_select_styling();
 
     with_window(|w| {
         let is_empty = if text.is_empty() {

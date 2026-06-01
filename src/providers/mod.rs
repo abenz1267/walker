@@ -166,7 +166,14 @@ pub fn shared_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
     if let Some(image) = b.object::<Label>("ItemImageFont") {
         image.set_visible(false);
 
-        if !item.icon.is_ascii() {
+        // A non-ASCII string is *not* a reliable signal that the value is a
+        // glyph/text icon — absolute file paths can legitimately contain
+        // diacritics or non-Latin characters (e.g.
+        // `/home/user/.../walker_lang_cz_č.png`). Treat the value as a text
+        // icon only when it is *not* an absolute path AND not ASCII; the
+        // absolute-path branch lower in this function will load it as a
+        // file image. See https://github.com/abenz1267/walker/issues/696
+        if !item.icon.is_ascii() && !Path::new(&item.icon).is_absolute() {
             image.set_text(&item.icon);
             image.set_visible(true);
             is_text = true;

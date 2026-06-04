@@ -155,6 +155,8 @@ struct PartialKeybinds {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub toggle_exact: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
+    pub show_actions: Option<Vec<String>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub resume_last_query: Option<Vec<String>>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub quick_activate: Option<Vec<String>>,
@@ -416,6 +418,9 @@ impl Keybinds {
         }
         if let Some(v) = partial.toggle_exact {
             self.toggle_exact = v;
+        }
+        if let Some(v) = partial.show_actions {
+            self.show_actions = v;
         }
         if let Some(v) = partial.resume_last_query {
             self.resume_last_query = v;

@@ -4,7 +4,6 @@ A fast, customizable application launcher built with GTK4 and Rust, designed for
 
 [GitBook Documentation/Wiki](https://benz.gitbook.io/walker/)
 
-[![Discord](https://img.shields.io/discord/1402235361463242964?logo=discord)](https://discord.gg/mGQWBQHASt)
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
 
 ![screenshot](https://raw.githubusercontent.com/abenz1267/walker/refs/heads/master/resources/screenshot.png)

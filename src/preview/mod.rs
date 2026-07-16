@@ -202,6 +202,10 @@ impl PreviewWidget {
     }
 
     pub fn preview_file(&mut self, file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+        // Providers (e.g. the clipboard) may hand us a `file://` URI rather than a
+        // plain path; strip the scheme so Path::exists()/mime detection/drag source
+        // all operate on a real filesystem path.
+        let file_path = file_path.strip_prefix("file://").unwrap_or(file_path);
         self.current_content = format!("file{}", file_path);
         self.clear_preview();
 

@@ -32,3 +32,10 @@ chrono-humanize = "0.2.3"
 [build-dependencies]
 protobuf-codegen = "3.4"
 protoc-bin-vendored = "3.0"
+
+
+[package.metadata.deb]
+maintainer = "Andrej Benz"
+copyright = "© copyright Andrej Benz, GPL-3.0"
+extended-description = "Multi-Purpose Launcher with a lot of features. Highly Customizable and fast."
+depends = "$auto"

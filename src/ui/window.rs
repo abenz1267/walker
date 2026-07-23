@@ -21,14 +21,14 @@ use crate::{
         get_error, get_global_provider_actions, get_initial_height, get_initial_max_height,
         get_initial_max_width, get_initial_min_height, get_initial_min_width,
         get_initial_placeholder, get_initial_width, get_last_query, get_placeholder,
-        get_prefix_provider, get_provider, get_query, get_theme, is_actions_menu, is_connected,
-        is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open, is_emergency, is_grid, is_no_hints,
-        is_select_single, is_service, set_action_menu_item, set_action_menu_prefix,
+        get_prefix_provider, get_provider, get_query, get_theme, is_actions_menu, is_auto_launched,
+        is_connected, is_dmenu, is_dmenu_exit_after, is_dmenu_keep_open, is_emergency, is_grid,
+        is_no_hints, is_select_single, is_service, set_action_menu_item, set_action_menu_prefix,
         set_action_menu_query, set_async_after, set_current_prefix, set_current_set,
         set_dmenu_current, set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_hide_qa,
         set_index, set_initial_height, set_initial_max_height, set_initial_max_width,
         set_initial_min_height, set_initial_min_width, set_initial_placeholder, set_initial_width,
-        set_input_only, set_is_actions_menu, set_is_dmenu, set_is_grid,
+        set_input_only, set_is_actions_menu, set_is_auto_launched, set_is_dmenu, set_is_grid,
         set_is_stay_open_explicit_provider, set_is_visible, set_last_query, set_no_hints,
         set_no_search, set_param_close, set_parameter_height, set_parameter_max_height,
         set_parameter_max_width, set_parameter_min_height, set_parameter_min_width,
@@ -37,6 +37,7 @@ use crate::{
     },
     theme::{Theme, setup_layer_shell, with_themes},
 };
+use gtk4::gio::prelude::{ApplicationExt, ListModelExt};
 use gtk4::{
     Application, Builder, Button, CustomFilter, Entry, EventControllerKey, EventControllerMotion,
     FilterListModel, GestureClick, Label, ListView, PropagationPhase, ScrolledWindow,
@@ -56,10 +57,6 @@ use gtk4::{
 };
 use gtk4::{gdk, prelude::WidgetExt};
 use gtk4::{gio::ListStore, glib::object::Cast};
-use gtk4::{
-    gio::prelude::{ApplicationExt, ListModelExt},
-    prelude::GtkApplicationExt,
-};
 use gtk4::{
     glib::Object,
     prelude::{EntryExt, GtkWindowExt},
@@ -667,6 +664,7 @@ fn setup_keyboard_handling(ui: &WindowData) {
                 if let Some(action) = get_bind(k, m, is_grid())
                     && action.action == ACTION_CLOSE
                 {
+                    run_auto_launch_escape_command(k);
                     quit(&app, true);
                 }
 
@@ -702,7 +700,10 @@ fn setup_keyboard_handling(ui: &WindowData) {
 
                 if let Some(action) = get_bind(k, m, is_grid) {
                     match action.action.as_str() {
-                        ACTION_CLOSE => quit(&app, true),
+                        ACTION_CLOSE => {
+                            run_auto_launch_escape_command(k);
+                            quit(&app, true);
+                        }
                         ACTION_SELECT_NEXT if !is_grid => select_next(),
                         ACTION_SELECT_PREVIOUS if !is_grid => select_previous(),
                         ACTION_SELECT_LEFT if is_grid => select_previous(),
@@ -739,6 +740,28 @@ fn setup_keyboard_handling(ui: &WindowData) {
     });
 
     ui.window.add_controller(controller);
+}
+
+fn run_auto_launch_escape_command(key: gdk::Key) {
+    if key != gdk::Key::Escape || !is_auto_launched() {
+        return;
+    }
+
+    let command = get_config().niri.cmd_on_esc.trim();
+    if command.is_empty() {
+        return;
+    }
+
+    if let Err(error) = Command::new("sh")
+        .arg("-c")
+        .arg(command)
+        .stdin(Stdio::null())
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .spawn()
+    {
+        eprintln!("couldn't run niri cmd_on_esc: {error}");
+    }
 }
 
 pub fn reset_actions_menu() {
@@ -923,6 +946,7 @@ pub fn quit(app: &Application, cancelled: bool) {
     set_input_only(false);
     set_param_close(false);
     set_hide_qa(false);
+    set_is_auto_launched(false);
     set_query("");
     set_current_set(String::new());
     set_index(false);

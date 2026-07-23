@@ -20,6 +20,11 @@ actions_as_menu = false            # display all possible actions in a submenu
 autoplay_videos = false            # auto-play video previews
 ext_background_effect_blur = false # request the compositor to blur behind the box-wrapper via ext-background-effect-v1 (compositor must support it)
 
+[niri]
+launch_on_empty_workspace = false # automatically launch walker when an empty workspace receives focus (requires walker to run as a service)
+launch_on_startup = false         # launch walker on the initially focused workspace if it is empty
+cmd_on_esc = ""                   # shell command to run when pressing Escape after an automatic launch
+
 [shell]
 exclusive_zone = -1
 layer = "overlay"

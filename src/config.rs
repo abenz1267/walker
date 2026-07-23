@@ -44,6 +44,7 @@ pub struct Walker {
     pub page_jump_items: u32,
     pub autoplay_videos: bool,
     pub ext_background_effect_blur: bool,
+    pub niri: Niri,
 }
 
 // Partial config for user overrides
@@ -108,6 +109,8 @@ struct PartialWalker {
     pub as_window: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub ext_background_effect_blur: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub niri: Option<PartialNiri>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -188,6 +191,17 @@ struct PartialShell {
 struct PartialClipboard {
     #[serde(skip_serializing_if = "Option::is_none")]
     pub time_format: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Default)]
+#[serde(default)]
+struct PartialNiri {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub launch_on_empty_workspace: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub launch_on_startup: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cmd_on_esc: Option<String>,
 }
 
 impl Walker {
@@ -312,6 +326,9 @@ impl Walker {
         }
         if let Some(s) = partial.shell {
             self.shell.merge(s);
+        }
+        if let Some(n) = partial.niri {
+            self.niri.merge(n);
         }
     }
 }
@@ -468,6 +485,20 @@ impl Clipboard {
     }
 }
 
+impl Niri {
+    fn merge(&mut self, partial: PartialNiri) {
+        if let Some(v) = partial.launch_on_empty_workspace {
+            self.launch_on_empty_workspace = v;
+        }
+        if let Some(v) = partial.launch_on_startup {
+            self.launch_on_startup = v;
+        }
+        if let Some(v) = partial.cmd_on_esc {
+            self.cmd_on_esc = v;
+        }
+    }
+}
+
 #[derive(Serialize, Deserialize, Debug, Clone)]
 #[serde(rename_all = "lowercase")]
 pub enum Layer {
@@ -537,6 +568,13 @@ pub struct Prefix {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Clipboard {
     pub time_format: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Niri {
+    pub launch_on_empty_workspace: bool,
+    pub launch_on_startup: bool,
+    pub cmd_on_esc: String,
 }
 
 pub fn load() -> Result<(), Box<dyn std::error::Error>> {

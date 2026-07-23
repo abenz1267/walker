@@ -58,6 +58,7 @@ pub struct AppState {
     action_menu_query: String,
     is_emergency: bool,
     is_param_close: bool,
+    is_auto_launched: bool,
     current_prefix: String,
     current_set: String,
     is_visible: bool,
@@ -393,6 +394,14 @@ pub fn is_hide_qa() -> bool {
 
 pub fn set_hide_qa(val: bool) {
     STATE.get().unwrap().write().unwrap().hide_qa = val
+}
+
+pub fn is_auto_launched() -> bool {
+    STATE.get().unwrap().read().unwrap().is_auto_launched
+}
+
+pub fn set_is_auto_launched(val: bool) {
+    STATE.get().unwrap().write().unwrap().is_auto_launched = val
 }
 
 pub fn get_query() -> String {

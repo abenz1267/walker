@@ -184,6 +184,22 @@ nc -U /run/user/1000/walker/walker.sock
 
 The downside of the socket call is that it does not handle any commandline options, so it's just a faster alternative to a simple `walker` call.
 
+### Niri workspace launch
+
+When Walker runs as a service, it can watch Niri's event stream and open automatically whenever an
+empty workspace receives focus:
+
+```toml
+[niri]
+launch_on_empty_workspace = true
+launch_on_startup = true
+cmd_on_esc = "niri msg action focus-workspace-previous"
+```
+
+`launch_on_startup` opens Walker once when the initially focused workspace is empty. `cmd_on_esc`
+is optional and only runs when Escape closes Walker after an automatic launch.
+Automatic launches are deferred while Niri's overview is open and rechecked when it closes.
+
 ## Keybinds
 
 The following modifier keys are valid: `ctrl`, `alt`, `shift`, `super`.

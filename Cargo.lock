@@ -1315,6 +1315,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "niri-ipc"
+version = "26.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6a4adbddf4037ce047854d36a60b5bf80a7990b8db2f0a0b9ede7534b0bae09a"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
 name = "notify"
 version = "8.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2197,6 +2207,7 @@ dependencies = [
  "gtk4-layer-shell",
  "mime",
  "new_mime_guess",
+ "niri-ipc",
  "notify",
  "nucleo-matcher",
  "poppler-rs",

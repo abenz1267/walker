@@ -1,6 +1,7 @@
 mod config;
 mod data;
 mod keybinds;
+mod niri;
 mod preview;
 mod protos;
 mod providers;
@@ -20,8 +21,9 @@ use which::which;
 
 use futures_channel::oneshot::{self, Sender};
 use std::cell::OnceCell;
+use std::io::{Read, Write};
 use std::os::fd::AsRawFd;
-use std::os::unix::net::UnixListener;
+use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::PathBuf;
 use std::process;
 use std::rc::Rc;
@@ -53,11 +55,11 @@ use crate::state::{
     set_dmenu_exit_after, set_dmenu_keep_open, set_error, set_has_elephant, set_hide_qa, set_index,
     set_initial_height, set_initial_max_height, set_initial_max_width, set_initial_min_height,
     set_initial_min_width, set_initial_placeholder, set_initial_width, set_input_only,
-    set_is_dmenu, set_is_emergency, set_is_service, set_is_stay_open_explicit_provider,
-    set_is_visible, set_no_hints, set_no_search, set_param_close, set_parameter_height,
-    set_parameter_max_height, set_parameter_max_width, set_parameter_min_height,
-    set_parameter_min_width, set_parameter_width, set_password_mode, set_placeholder, set_provider,
-    set_select_single, set_theme,
+    set_is_auto_launched, set_is_dmenu, set_is_emergency, set_is_service,
+    set_is_stay_open_explicit_provider, set_is_visible, set_no_hints, set_no_search,
+    set_param_close, set_parameter_height, set_parameter_max_height, set_parameter_max_width,
+    set_parameter_min_height, set_parameter_min_width, set_parameter_width, set_password_mode,
+    set_placeholder, set_provider, set_select_single, set_theme,
 };
 use crate::theme::{setup_css, setup_css_provider, setup_themes};
 use crate::ui::window::{
@@ -398,6 +400,7 @@ fn add_flags(app: &Application) {
 fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     let options = cmd.options_dict();
 
+    set_is_auto_launched(false);
     set_is_stay_open_explicit_provider(false);
 
     if let Some(val) = options.lookup_value("provider", Some(VariantTy::STRING)) {
@@ -802,6 +805,64 @@ fn startup(app: &Application) {
     init_ui(app, dmenu, theme);
 
     listen_activation_socket(app.clone());
+    listen_niri_workspaces(app.clone());
+}
+
+fn listen_niri_workspaces(app: Application) {
+    let launch_on_empty_workspace = get_config().niri.launch_on_empty_workspace;
+    let launch_on_startup = get_config().niri.launch_on_startup;
+
+    if !launch_on_empty_workspace && !launch_on_startup {
+        return;
+    }
+
+    if !app.flags().contains(ApplicationFlags::IS_SERVICE) {
+        eprintln!("niri workspace launch requires walker to run as a service");
+        return;
+    }
+
+    let (mut receiver, mut sender) =
+        UnixStream::pair().expect("couldn't create niri event channel");
+    receiver
+        .set_nonblocking(true)
+        .expect("couldn't configure niri event channel");
+
+    thread::spawn(move || {
+        niri::watch_empty_workspace_focuses(
+            launch_on_empty_workspace,
+            launch_on_startup,
+            move || {
+                if let Err(error) = sender.write_all(&[1]) {
+                    eprintln!("niri event channel: {error}");
+                }
+            },
+        );
+    });
+
+    let fd = receiver.as_raw_fd();
+    glib::unix_fd_add_local(fd, glib::IOCondition::IN, move |_, condition| {
+        if condition.contains(glib::IOCondition::IN) {
+            let mut buffer = [0; 64];
+
+            loop {
+                match receiver.read(&mut buffer) {
+                    Ok(0) => return glib::ControlFlow::Break,
+                    Ok(_) if !is_visible() => {
+                        set_is_auto_launched(true);
+                        activate(&app);
+                    }
+                    Ok(_) => {}
+                    Err(error) if error.kind() == std::io::ErrorKind::WouldBlock => break,
+                    Err(error) => {
+                        eprintln!("niri event channel: {error}");
+                        return glib::ControlFlow::Break;
+                    }
+                }
+            }
+        }
+
+        glib::ControlFlow::Continue
+    });
 }
 
 fn listen_activation_socket(app_clone: Application) {

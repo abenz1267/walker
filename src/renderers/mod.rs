@@ -7,8 +7,10 @@ use crate::ui::window::{quit, with_window};
 use gtk4::gdk::ContentProvider;
 use gtk4::gio::File;
 use gtk4::gio::prelude::FileExt;
+use gtk4::glib::object::CastNone;
 use gtk4::prelude::{ListItemExt, WidgetExt};
-use gtk4::{Box, Builder, DragSource, Label, ListItem, glib};
+use gtk4::{Widget, Box, Builder, DragSource, Label, ListItem, glib, Overlay};
+use crate::ui::layoutmanager::PercentageLayoutManager;
 use std::path::Path;
 
 pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
@@ -51,24 +53,44 @@ pub fn create_item(list_item: &ListItem, item: &Item, theme: &Theme) {
         }
     };
 
-    itembox.add_css_class(&item.provider.replace("menus:", "menus-"));
+    let widget: Widget;
+    if let Some(overlay) = b.object::<Overlay>("ItemOverlay") {
+        // Ensure the overlay size adjust to the size of the
+        // itembox child (the child overlayed on top)
+        overlay.set_measure_overlay(&itembox, true);
+        widget = overlay.into();
+    } else {
+        widget = itembox.into();
+    }
+
+    widget.add_css_class(&item.provider.replace("menus:", "menus-"));
 
     item.state
         .iter()
         .filter(|i| !i.is_empty())
-        .for_each(|i| itembox.add_css_class(i));
+        .for_each(|i| widget.add_css_class(i));
 
     if get_dmenu_current() != 0 && get_dmenu_current() as u32 == list_item.position() + 1 {
-        itembox.add_css_class("current");
+        widget.add_css_class("current");
     }
 
-    list_item.set_child(Some(&itembox));
+    list_item.set_child(Some(&widget));
 
     if Path::new(&item.text).is_absolute() {
-        itembox.add_controller(create_drag_source(&item.text));
+        widget.add_controller(create_drag_source(&item.text));
     }
 
+
     let p = PROVIDERS.get().unwrap().get(&item.provider).unwrap();
+
+    if let Some(progressbar) = b.object::<Box>("ProgressBar") {
+        if let Some(layout) = progressbar
+            .layout_manager()
+            .and_downcast::<PercentageLayoutManager>()
+        {
+            p.progress_transformer(item, layout);
+        }
+    }
 
     if let Some(text) = b.object::<Label>("ItemText") {
         p.text_transformer(item, &text);

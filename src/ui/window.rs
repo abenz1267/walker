@@ -43,6 +43,7 @@ use gtk4::{
     SignalListItemFactory, SingleSelection, Window,
     gdk::ModifierType,
     glib::{self, object::IsA},
+    glib::prelude::StaticType,
     prelude::{BoxExt, ButtonExt},
 };
 use gtk4::{Box, ListScrollFlags, ScrollInfo};
@@ -231,6 +232,7 @@ impl ListContainer {
 }
 
 pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, String> {
+    crate::ui::layoutmanager::PercentageLayoutManager::static_type();
     let builder = Builder::new();
     let _ = builder.add_from_string(&val.layout);
 

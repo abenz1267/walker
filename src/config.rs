@@ -45,6 +45,7 @@ pub struct Walker {
     pub autoplay_videos: bool,
     pub ext_background_effect_blur: bool,
     pub niri: Niri,
+    pub blur_corner_radius: i32,
 }
 
 // Partial config for user overrides
@@ -111,6 +112,8 @@ struct PartialWalker {
     pub ext_background_effect_blur: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub niri: Option<PartialNiri>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub blur_corner_radius: Option<i32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
@@ -317,6 +320,9 @@ impl Walker {
         }
         if let Some(v) = partial.ext_background_effect_blur {
             self.ext_background_effect_blur = v;
+        }
+        if let Some(v) = partial.blur_corner_radius {
+            self.blur_corner_radius = v;
         }
         if let Some(p) = partial.providers {
             self.providers.merge(p);

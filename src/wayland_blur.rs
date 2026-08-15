@@ -1,6 +1,7 @@
 use std::cell::RefCell;
 use std::rc::Rc;
 
+use crate::config::get_config;
 use gdk4_wayland::prelude::WaylandSurfaceExtManual;
 use gdk4_wayland::{WaylandDisplay, WaylandSurface};
 use gtk4::prelude::*;
@@ -65,18 +66,40 @@ struct BlurContext {
     compositor: WlCompositor,
     bg_effect: ExtBackgroundEffectSurfaceV1,
     last_rect: Option<(i32, i32, i32, i32)>,
+    radius: i32,
+    last_radius: i32,
 }
 
 impl BlurContext {
     fn update_region(&mut self, rect: (i32, i32, i32, i32)) {
-        if self.last_rect == Some(rect) {
+        if self.last_rect == Some(rect) && self.last_radius == self.radius {
             return;
         }
         self.last_rect = Some(rect);
+        self.last_radius = self.radius;
 
         let region = self.compositor.create_region(&self.qh, ());
         let (x, y, w, h) = rect;
-        region.add(x, y, w.max(0), h.max(0));
+        let w = w.max(0);
+        let h = h.max(0);
+        let r = self.radius.clamp(0, w / 2).clamp(0, h / 2);
+
+        if r <= 0 {
+            region.add(x, y, w, h);
+        } else {
+            let step = 1;
+            let mut yy = 0;
+            while yy < r {
+                let d = r - yy;
+                let inset = (r as f64 - f64::from(r * r - d * d).sqrt()).round() as i32;
+                let inner_w = (w - 2 * inset).max(0);
+                region.add(x + inset, y + yy, inner_w, step);
+                region.add(x + inset, y + h - yy - step, inner_w, step);
+                yy += step;
+            }
+            region.add(x, y + r, w, (h - 2 * r).max(0));
+        }
+
         self.bg_effect.set_blur_region(Some(&region));
         region.destroy();
 
@@ -177,11 +200,15 @@ fn init_context(window: &Window) -> Result<BlurContext, String> {
 
     let _ = connection.flush();
 
+    let radius = get_config().blur_corner_radius;
+
     Ok(BlurContext {
         queue,
         qh,
         compositor,
         bg_effect,
         last_rect: None,
+        radius,
+        last_radius: 0,
     })
 }

@@ -20,6 +20,9 @@ pub struct Walker {
     pub actions_as_menu: bool,
     pub force_keyboard_focus: bool,
     pub disable_mouse: bool,
+    /// Keep result widgets targetable for touch when no pointer motion occurs.
+    #[serde(default)]
+    pub touch_mode: bool,
     pub click_to_close: bool,
     pub close_when_open: bool,
     pub hide_quick_activation: bool,
@@ -64,6 +67,8 @@ struct PartialWalker {
     pub actions_as_menu: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub disable_mouse: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub touch_mode: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub hide_quick_activation: Option<bool>,
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -241,6 +246,9 @@ impl Walker {
         }
         if let Some(v) = partial.actions_as_menu {
             self.actions_as_menu = v;
+        }
+        if let Some(v) = partial.touch_mode {
+            self.touch_mode = v;
         }
         if let Some(v) = partial.disable_mouse {
             self.disable_mouse = v;
@@ -542,4 +550,39 @@ pub fn load() -> Result<(), Box<dyn std::error::Error>> {
 
 pub fn get_config() -> &'static Walker {
     LOADED_CONFIG.get().expect("config not initialized")
+}
+
+#[cfg(test)]
+mod touch_mode_tests {
+    use super::*;
+
+    #[test]
+    fn touch_mode_is_opt_in_and_can_be_enabled_by_user_config() {
+        let mut config: Walker = Config::builder()
+            .add_source(File::from_str(DEFAULT_CONFIG, FileFormat::Toml))
+            .build()
+            .unwrap()
+            .try_deserialize()
+            .unwrap();
+        assert!(!config.touch_mode);
+
+        let partial: PartialWalker = Config::builder()
+            .add_source(File::from_str("touch_mode = true", FileFormat::Toml))
+            .build()
+            .unwrap()
+            .try_deserialize()
+            .unwrap();
+        config.merge(partial);
+        assert!(config.touch_mode);
+        assert!(!config.disable_mouse);
+
+        let partial: PartialWalker = Config::builder()
+            .add_source(File::from_str("touch_mode = false", FileFormat::Toml))
+            .build()
+            .unwrap()
+            .try_deserialize()
+            .unwrap();
+        config.merge(partial);
+        assert!(!config.touch_mode);
+    }
 }

@@ -1121,6 +1121,11 @@ pub fn toggle_exact() {
 }
 
 fn disable_mouse() {
+    // Touchscreens do not emit the pointer motion used to re-enable the list.
+    // Keep GTK hit testing and kinetic scrolling available in touch mode.
+    if get_config().touch_mode {
+        return;
+    }
     with_window(|w| {
         w.mouse_x.set(0.0);
         w.mouse_y.set(0.0);

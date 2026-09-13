@@ -245,7 +245,7 @@ nirisessions = [
 
 clipboard = [
   { action = "copy", default = true, bind = "Return" },
-  { action = "remove", bind = "ctrl d", after = "AsyncClearReload" },
+  { action = "remove", bind = "ctrl d", after = "SimpleDelete" },
   { action = "remove_all", label = "clear", bind = "ctrl shift d", after = "AsyncClearReload" },
   { action = "show_images_only", label = "only images", bind = "ctrl i", after = "AsyncClearReload" },
   { action = "show_pinned_only", label = "only pinned", bind = "ctrl i", after = "AsyncClearReload" },

@@ -779,6 +779,25 @@ fn handle_after(a: &AfterAction, app: &Application, query: String) {
         AfterAction::Close => {
             quit(app, false);
         }
+        AfterAction::SimpleDelete => {
+            with_window(|w| {
+                let selected = w.selection.selected();
+                let Some(item) = w.selection.selected_item() else {
+                    return;
+                };
+                // The visible index may differ from the backing store's index.
+                let Some(position) = w.items.find(&item) else {
+                    return;
+                };
+
+                w.items.remove(position);
+                if let Some(last) = w.selection.n_items().checked_sub(1) {
+                    w.selection.set_selected(selected.min(last));
+                }
+                handle_changed_items();
+                set_keybind_hint();
+            });
+        }
         AfterAction::KeepOpen => {
             reset_actions_menu();
 

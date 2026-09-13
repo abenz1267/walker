@@ -26,6 +26,7 @@ pub enum AfterAction {
     #[default]
     Close,
     Nothing,
+    SimpleDelete,
     Reload,
     ClearReload,
     AsyncClearReload,

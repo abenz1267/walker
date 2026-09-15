@@ -171,6 +171,7 @@ desktopapplications = [
   { action = "unpin", bind = "ctrl p", after = "AsyncReload" },
   { action = "pinup", bind = "ctrl n", after = "AsyncReload" },
   { action = "pindown", bind = "ctrl m", after = "AsyncReload" },
+  { action = "edit", bind = "ctrl e" },
 ]
 
 dnfpackages = [

@@ -181,6 +181,14 @@ row:selected .item-box {
   opacity: 0.75;
 }
 
+.progressbar-container {
+  border-radius: 10px;
+}
+
+.progressbar-done {
+  background: lighter(lighter(@window_bg_color));
+}
+
 .keybind-bind {
   text-transform: lowercase;
   opacity: 0.35;

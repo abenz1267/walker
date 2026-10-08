@@ -4,9 +4,10 @@ version = "2.17.1"
 edition = "2024"
 
 [dependencies]
-gtk4 = { version = "^0.9.7", features = ["v4_6", "v4_12", "gio_v2_80"] }
-gtk4-layer-shell = "0.5.0"
-gdk4-wayland = { version = "^0.9", features = ["v4_12", "wayland_crate"] }
+gtk4 = { version = "^0.11.5", features = ["v4_6", "v4_12", "gio_v2_80"] }
+glib-unix = "0.22"
+gtk4-layer-shell = "0.8.1"
+gdk4-wayland = { version = "^0.11.5", features = ["v4_12", "wayland_crate"] }
 wayland-client = { version = "0.31", features = ["dlopen"] }
 wayland-backend = { version = "0.3", features = ["client_system", "dlopen"] }
 wayland-scanner = "0.31"

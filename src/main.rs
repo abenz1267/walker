@@ -10,7 +10,10 @@ mod state;
 mod theme;
 mod ui;
 mod wayland_blur;
-use gtk4::gio::prelude::{ApplicationCommandLineExt, DataInputStreamExtManual, SettingsExt};
+use gtk4::gio::prelude::{
+    ApplicationCommandLineExt, ApplicationCommandLineExtManual, DataInputStreamExtManual,
+    SettingsExt,
+};
 use gtk4::gio::{self, ApplicationCommandLine, ApplicationHoldGuard};
 use gtk4::glib::Priority;
 use gtk4::prelude::{EntryExt, ListModelExt};
@@ -22,6 +25,7 @@ use which::which;
 use futures_channel::oneshot::{self, Sender};
 use std::cell::OnceCell;
 use std::io::{Read, Write};
+use std::ops::ControlFlow;
 use std::os::fd::AsRawFd;
 use std::os::unix::net::{UnixListener, UnixStream};
 use std::path::PathBuf;
@@ -82,9 +86,9 @@ fn main() -> glib::ExitCode {
     app.connect_handle_local_options(|_app, options| {
         if options.contains("version") {
             println!("{}", env!("CARGO_PKG_VERSION"));
-            return 0;
+            return ControlFlow::Break(glib::ExitCode::SUCCESS);
         }
-        -1
+        ControlFlow::Continue(())
     });
 
     add_flags(&app);
@@ -397,7 +401,7 @@ fn add_flags(app: &Application) {
     );
 }
 
-fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
+fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> glib::ExitCode {
     let options = cmd.options_dict();
 
     set_is_auto_launched(false);
@@ -601,13 +605,13 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
             match receiver.await {
                 Ok(message) => match message.as_str() {
                     "CNCLD" => {
-                        cmd.set_exit_status(130);
+                        cmd.set_exit_code(130.into());
                     }
                     msg => cmd.print_literal(&format!("{msg}\n")),
                 },
                 Err(_) => {
                     println!("the sender dropped");
-                    cmd.set_exit_status(130);
+                    cmd.set_exit_code(130.into());
                 }
             }
 
@@ -616,7 +620,7 @@ fn handle_command_line(app: &Application, cmd: &ApplicationCommandLine) -> i32 {
     }
 
     app.activate();
-    0
+    glib::ExitCode::SUCCESS
 }
 
 fn activate(app: &Application) {
@@ -840,7 +844,7 @@ fn listen_niri_workspaces(app: Application) {
     });
 
     let fd = receiver.as_raw_fd();
-    glib::unix_fd_add_local(fd, glib::IOCondition::IN, move |_, condition| {
+    glib_unix::unix_fd_add_local(fd, glib::IOCondition::IN, move |_, condition| {
         if condition.contains(glib::IOCondition::IN) {
             let mut buffer = [0; 64];
 
@@ -884,7 +888,7 @@ fn listen_activation_socket(app_clone: Application) {
 
     let fd = listener.as_raw_fd();
 
-    glib::unix_fd_add_local(fd, glib::IOCondition::IN, move |_fd, condition| {
+    glib_unix::unix_fd_add_local(fd, glib::IOCondition::IN, move |_fd, condition| {
         if condition.contains(glib::IOCondition::IN) {
             match listener.accept() {
                 Ok((stream, _)) => {

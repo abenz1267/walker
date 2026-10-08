@@ -357,7 +357,8 @@ pub fn setup_theme_window(app: &Application, val: &Theme) -> Result<WindowData, 
 
     setup_layer_shell(&ui.window);
 
-    if get_config().ext_background_effect_blur {
+    // GTK 4.24 owns the background effect object and derives its region from CSS.
+    if get_config().ext_background_effect_blur && gtk4::minor_version() < 24 {
         crate::wayland_blur::attach_blur(&ui.window, &ui.box_wrapper);
     }
 

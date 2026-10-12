@@ -22,8 +22,9 @@ use crate::{
         bookmarks::Bookmarks, calc::Calc,
         clipboard::Clipboard, default_provider::DefaultProvider, dmenu::Dmenu,
         dnfpackages::DnfPackages, emergency::Emergency, files::Files, providerlist::Providerlist,
-        symbols::Symbols, todo::Todo, unicode::Unicode,
+        symbols::Symbols, todo::Todo, unicode::Unicode, wireplumber::Wireplumber,
     },
+    ui::layoutmanager::PercentageLayoutManager,
 };
 
 pub mod actionsmenu;
@@ -41,6 +42,7 @@ pub mod providerlist;
 pub mod symbols;
 pub mod todo;
 pub mod unicode;
+pub mod wireplumber;
 
 pub trait Provider: Sync + Send + Debug {
     fn get_name(&self) -> &str;
@@ -157,6 +159,10 @@ pub trait Provider: Sync + Send + Debug {
 
     fn image_transformer(&self, b: &Builder, i: &ListItem, item: &Item) {
         shared_image_transformer(b, i, item);
+    }
+
+    fn progress_transformer(&self, _item: &Item, layout: PercentageLayoutManager) {
+        layout.set_percentage(0.0);
     }
 }
 
@@ -291,6 +297,7 @@ pub fn setup_providers(elephant: bool) {
             }
             "bookmarks" => providers.insert("bookmarks".to_string(), Box::new(Bookmarks::new())),
             "todo" => providers.insert("todo".to_string(), Box::new(Todo::new())),
+            "wireplumber" => providers.insert("wireplumber".to_string(), Box::new(Wireplumber::new())),
             provider => providers.insert(
                 provider.to_string(),
                 Box::new(DefaultProvider::new(provider.to_string())),

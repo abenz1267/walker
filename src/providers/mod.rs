@@ -197,6 +197,15 @@ pub fn shared_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
             return;
         };
 
+        if Path::new(&item.icon)
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("svg"))
+        {
+            let icon = gtk4::IconPaintable::for_file(&gio::File::for_path(&item.icon), 128, 1);
+            image.set_paintable(Some(&icon));
+            return;
+        }
+
         let icon = item.icon.clone();
         glib::spawn_future_local(async move {
             let Ok((bytes, _)) = gio::File::for_path(&icon).load_contents_future().await else {
@@ -215,6 +224,15 @@ pub fn shared_image_transformer(b: &Builder, _: &ListItem, item: &Item) {
 
         if item.icon.is_empty() {
             image.set_visible(false);
+            return;
+        }
+
+        if Path::new(&item.icon)
+            .extension()
+            .is_some_and(|e| e.eq_ignore_ascii_case("svg"))
+        {
+            let icon = gtk4::IconPaintable::for_file(&gio::File::for_path(&item.icon), 128, 1);
+            image.set_paintable(Some(&icon));
             return;
         }
 

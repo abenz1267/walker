@@ -1713,11 +1713,15 @@ pub fn handle_changed_items() {
                 if s.n_items() == 0 {
                     let ph = placeholders
                         .get(&provider)
-                        .or(placeholders.get("default"))
-                        .unwrap();
+                        .or(placeholders.get("default"));
+
+                    if ph.is_none() {
+                        return;
+                    }
+                    let ph = ph.unwrap();
 
                     p.set_text(&ph.list);
-                    p.set_visible(s.n_items() == 0);
+                    p.set_visible(true); // s.n_items() == 0 redundant check was here previously, 
                 } else {
                     p.set_visible(false);
                 }

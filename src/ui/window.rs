@@ -1713,11 +1713,13 @@ pub fn handle_changed_items() {
                 if s.n_items() == 0 {
                     let ph = placeholders
                         .get(&provider)
-                        .or(placeholders.get("default"))
-                        .unwrap();
+                        .or(placeholders.get("default"));
 
-                    p.set_text(&ph.list);
-                    p.set_visible(s.n_items() == 0);
+                    match ph {
+                        Some(ph) => p.set_text(&ph.list),
+                        None => p.set_text("No Results"),
+                    }
+                    p.set_visible(true);
                 } else {
                     p.set_visible(false);
                 }

@@ -1715,13 +1715,11 @@ pub fn handle_changed_items() {
                         .get(&provider)
                         .or(placeholders.get("default"));
 
-                    if ph.is_none() {
-                        return;
+                    match ph {
+                        Some(ph) => p.set_text(&ph.list),
+                        None => p.set_text("No Results"),
                     }
-                    let ph = ph.unwrap();
-
-                    p.set_text(&ph.list);
-                    p.set_visible(true); // s.n_items() == 0 redundant check was here previously, 
+                    p.set_visible(true);
                 } else {
                     p.set_visible(false);
                 }

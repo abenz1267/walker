@@ -49,6 +49,31 @@ cargo build --release
 ./target/release/walker
 ```
 
+### Docker
+
+Build the image:
+
+```bash
+docker build -t walker:local .
+```
+
+Run from a Wayland desktop session with Elephant running on the host:
+
+```bash
+docker run --rm --user "$(id -u):$(id -g)" \
+  -e XDG_RUNTIME_DIR -e WAYLAND_DISPLAY -e DBUS_SESSION_BUS_ADDRESS \
+  --mount "type=bind,src=$XDG_RUNTIME_DIR,dst=$XDG_RUNTIME_DIR" \
+  walker:local
+```
+
+The runtime directory mount provides access to the compositor, session bus, and
+Elephant socket. Walker's default configuration and theme are embedded in the
+binary. To use your own configuration, add
+`--mount "type=bind,src=$HOME/.config/walker,dst=/home/walker/.config/walker,readonly"`
+before the image name. Command-line options can follow the image name.
+Applications and commands launched inside the container use its filesystem and
+installed programs; Elephant providers continue to run on the host.
+
 ### Dependencies
 
 - GTK4 (version 4.6+)

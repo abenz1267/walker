@@ -28,7 +28,7 @@ impl Provider for Clipboard {
     }
 
     fn text_transformer(&self, item: &Item, label: &gtk4::Label) {
-        if item.preview_type == "file" {
+        if item.preview_type == "file" && item.text.trim().is_empty() {
             label.set_label("Image");
             return;
         }
